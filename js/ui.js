@@ -135,14 +135,14 @@ export function renderRegList() {
               ${c.stage === 'preg' ? `🤰 임신 ${c.week}주 · 예정일 ${c.due || '미정'}` : ageFmt(c.birth)}
             </div>
           </div>
-          <button onclick="removeChild(${i})"
+          <button onclick="deleteChild(${i})"
                   style="background:none;border:none;cursor:pointer;color:var(--txl);font-size:.9rem">🗑</button>
         </div>`).join('')}
     </div>`;
 }
 
 /** 아이 삭제 */
-export function removeChild(i) {
+export function deleteChild(i) {
   S.children.splice(i, 1);
   if (S.selC >= S.children.length) S.selC = Math.max(0, S.children.length - 1);
   renderRegList();
@@ -157,4 +157,4 @@ window.setRStage   = setRStage;
 window.sg          = sg;
 window.regChild    = regChild;
 window.renderRegList = renderRegList;
-window.removeChild = removeChild;
+window.deleteChild = deleteChild;

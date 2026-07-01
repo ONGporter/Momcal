@@ -2,6 +2,11 @@
  * js/app.js
  * 앱 메인 진입점
  * Firebase Auth 상태 감시 → 로그인/로그아웃 처리 → 데이터 로드 → UI 렌더
+ *
+ * Bug Fix:
+ * - _firstLoad 플래그로 초기 로드와 onSnapshot 재발동 구분
+ * - 초기 로드: renderChecklist() (자동 카테고리 선택 포함)
+ * - 이후 onSnapshot: renderClSidebar()만 호출 (카테고리 선택 유지)
  */
 
 import { auth, onAuthStateChanged } from './firebase.js';
@@ -11,7 +16,10 @@ import {
 import { showApp, showAuthScreen } from './auth.js';
 import { renderHome, renderRegList, gp } from './ui.js';
 import { renderCal, renderStickerPicker } from './calendar.js';
-import { renderChecklist } from './checklist.js';
+import { renderChecklist, renderClSidebar } from './checklist.js';
+
+/* ── 초기 로드 여부 플래그 ── */
+let _firstLoad = true;
 
 /* ── 테마 버튼 UI 동기화 ── */
 function syncThemeUI() {
@@ -30,19 +38,28 @@ function onDataLoaded(data) {
   renderHome();
   renderRegList();
 
-  // 현재 열려있는 페이지만 렌더 (불필요한 중복 렌더 방지)
   if (document.getElementById('pg-calendar').classList.contains('on')) {
     renderCal();
     renderStickerPicker();
   }
+
   if (document.getElementById('pg-checklist').classList.contains('on')) {
-    renderChecklist();
+    if (_firstLoad) {
+      // 초기 로드: 자동 카테고리 선택 포함 전체 렌더
+      renderChecklist();
+    } else {
+      // onSnapshot 재발동: 사이드바 % 만 업데이트 (카테고리 선택 유지)
+      renderClSidebar();
+    }
   }
+
+  _firstLoad = false;
 }
 
 /* ── Firebase Auth 상태 감시 ── */
 onAuthStateChanged(auth, (user) => {
   if (user) {
+    _firstLoad = true; // 로그인 시 첫 로드로 초기화
     setCurrentUser(user);
     showApp(user);
     subscribeToUserData(onDataLoaded);
