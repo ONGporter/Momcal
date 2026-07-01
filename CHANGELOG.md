@@ -1,0 +1,33 @@
+# Changelog
+
+> 완료된 작업을 날짜와 함께 기록합니다.
+> 최신 항목이 위에 옵니다.
+
+---
+
+## [Sprint 1] 2025-07-01 — 모듈 리팩터링
+
+### 구조 변경
+
+- 단일 `index.html` (1,512줄) → 모듈 구조 19개 파일로 분리
+  - `css/` 5개: main, auth, calendar, checklist, modal
+  - `js/` 9개: app, firebase, state, auth, ui, calendar, checklist, modal, utils
+  - `data/` 4개: vaccines, pregnancy, milestones, checklist-data
+- ES6 Module (`import/export`) 방식으로 전환
+- `window.S = S` — 인라인 onclick 하위 호환성 유지
+- 각 모듈 하단 `window.xxx = xxx` 노출 패턴 적용
+
+### 버그 수정
+
+- **Bug #6** — 체크박스 클릭 시 퍼센트 즉시 반영 안 되던 문제
+  - `tgCk()` 에서 `renderClMain()` 먼저 호출 → 체크박스 즉시 시각 반영
+  - 이후 `renderClSidebar()` 호출 → 사이드바 % 업데이트
+- **Bug #7** — 스티커 여러 개 겹치던 문제
+  - `position: absolute` 제거, `.sticker-row` flex 배치 적용
+  - 최대 3개 표시 + 초과 시 `+N` 배지
+
+### 유지된 기능
+
+- Firebase Auth (Email/Password + Google) 동일 동작
+- Firestore 저장 구조 (`users/{uid}`) 동일
+- 기존 모든 기능 (캘린더, 체크리스트, 스티커, 테마, 등록) 정상 동작

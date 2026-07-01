@@ -1,0 +1,117 @@
+/* ── CALENDAR TOOLBAR ── */
+.cal-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+.cal-toolbar h2 { font-size: 1.1rem; font-weight: 900; }
+.cal-nav-btn {
+  background: var(--card); border: 1.5px solid #EEE0F0; border-radius: 10px;
+  padding: 7px 15px; cursor: pointer; font-weight: 800; font-family: inherit;
+  color: var(--tx); font-size: .88rem;
+  box-shadow: 0 2px 7px rgba(160,80,140,.07); transition: all .2s;
+}
+.cal-nav-btn:hover { border-color: var(--pk); color: var(--pk); }
+
+.cal-view-toggle { display: flex; gap: 4px; margin-bottom: 14px; }
+.cvt {
+  padding: 7px 15px; border-radius: 40px; font-size: .74rem; font-weight: 800;
+  cursor: pointer; border: none; font-family: inherit;
+  background: #EEE5F4; color: var(--txl); transition: all .2s;
+}
+.cvt.on { background: linear-gradient(135deg, #F06292, #9C27B0); color: #fff; box-shadow: 0 3px 12px rgba(200,80,180,.22); }
+
+/* ── THEME BAR ── */
+.theme-bar  { display: flex; gap: 7px; align-items: center; }
+.theme-label{ font-size: .71rem; font-weight: 800; color: var(--txl); }
+.theme-btn  { width: 22px; height: 22px; border-radius: 50%; border: 2.5px solid transparent; cursor: pointer; transition: all .2s; box-shadow: 0 2px 6px rgba(0,0,0,.12); }
+.theme-btn.on { border-color: var(--tx); transform: scale(1.2); }
+
+/* ── CALENDAR GRID ── */
+.cal-wrap { background: var(--card); border-radius: var(--radius); box-shadow: var(--card-shadow); overflow: hidden; }
+.cal-head-row  { display: grid; grid-template-columns: repeat(7,1fr); padding: 13px 0; }
+.cal-head-cell { text-align: center; font-size: .71rem; font-weight: 900; color: #fff; }
+.cal-body      { display: grid; grid-template-columns: repeat(7,1fr); }
+
+.cal-cell {
+  min-height: 80px; border: 1px solid #F5EEF8;
+  padding: 6px 4px; cursor: pointer;
+  transition: background .14s; position: relative;
+}
+.cal-cell:hover        { background: #FFF5FA; }
+.cal-cell.other-month  { opacity: .28; }
+.cal-cell.today .day-num { background: var(--pk); color: #fff; border-radius: 50%; }
+.cal-cell.selected     { background: var(--pkl); }
+
+.day-num {
+  width: 22px; height: 22px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .72rem; font-weight: 800; margin-bottom: 3px;
+}
+
+/* ── EVENT PILLS ── */
+.ev-pill {
+  border-radius: 5px; padding: 2px 4px;
+  font-size: .57rem; font-weight: 700;
+  margin-bottom: 2px; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.ep-req    { background: linear-gradient(90deg, #F06292, #E91E63); color: #fff; }
+.ep-rec    { background: linear-gradient(90deg, #4DB6AC, #00897B); color: #fff; }
+.ep-vax    { background: linear-gradient(90deg, #9575CD, #6A1B9A); color: #fff; }
+.ep-diary  { background: linear-gradient(90deg, #FFD54F, #FFA000); color: #fff; }
+.ep-custom { background: linear-gradient(90deg, #64B5F6, #1976D2); color: #fff; }
+
+/* ── STICKERS ON CALENDAR ── */
+/* Bug #7 fix: stickers display in a small row, max 4, with +N overflow */
+.sticker-row {
+  position: absolute; bottom: 2px; right: 2px;
+  display: flex; gap: 1px; flex-wrap: wrap;
+  justify-content: flex-end; max-width: 100%;
+}
+.sticker-on-cal   { font-size: .8rem; line-height: 1; }
+.sticker-overflow {
+  font-size: .5rem; background: var(--txl); color: #fff;
+  border-radius: 4px; padding: 1px 3px; font-weight: 800; line-height: 1.4;
+  align-self: center;
+}
+
+/* ── DAY PANEL ── */
+.day-panel { background: var(--card); border-radius: var(--radius); box-shadow: var(--card-shadow); padding: 22px; margin-top: 14px; }
+.dp-date   { font-size: .97rem; font-weight: 900; margin-bottom: 16px; display: flex; align-items: center; gap: 7px; }
+.dp-ev     { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border-radius: 13px; margin-bottom: 8px; }
+.dp-ev-main  { flex: 1; }
+.dp-ev-title { font-weight: 800; font-size: .84rem; margin-bottom: 2px; color: var(--tx); }
+.dp-ev-note  { font-size: .73rem; color: var(--txl); }
+.dp-ev-badge { font-size: .62rem; font-weight: 800; padding: 3px 8px; border-radius: 10px; color: #fff; flex-shrink: 0; }
+
+/* ── STICKER PICKER ── */
+.sticker-picker { background: var(--card); border-radius: var(--radius); box-shadow: var(--card-shadow); padding: 20px; margin-top: 14px; }
+.sp-tabs { display: flex; gap: 5px; margin-bottom: 12px; overflow-x: auto; scrollbar-width: none; }
+.sp-tabs::-webkit-scrollbar { display: none; }
+.sp-tab {
+  padding: 6px 12px; border-radius: 40px; border: none;
+  background: #EEE5F4; color: var(--txl);
+  font-size: .71rem; font-weight: 800; cursor: pointer;
+  font-family: inherit; white-space: nowrap; transition: all .2s;
+}
+.sp-tab.on { background: linear-gradient(135deg, #F06292, #9C27B0); color: #fff; }
+.sp-grid   { display: flex; gap: 6px; flex-wrap: wrap; }
+.sp-sticker {
+  font-size: 1.45rem; cursor: pointer; padding: 6px;
+  border-radius: 10px; transition: all .2s; border: 2px solid transparent;
+}
+.sp-sticker:hover { background: var(--pkl); border-color: var(--pk); transform: scale(1.2); }
+
+/* ── ADD EVENT FORM ── */
+.add-ev-form { background: var(--card); border-radius: var(--radius); box-shadow: var(--card-shadow); padding: 22px; margin-top: 14px; }
+
+.type-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.type-btn {
+  padding: 7px 12px; border-radius: 40px;
+  border: 1.5px solid #EEE0F0; background: var(--wh);
+  cursor: pointer; font-size: .73rem; font-weight: 800;
+  color: var(--txl); font-family: inherit; transition: all .2s;
+}
+.type-btn.on { border-color: var(--pk); background: var(--pkl); color: var(--pkd); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 640px) {
+  .cal-cell { min-height: 52px; }
+}

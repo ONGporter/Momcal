@@ -1,0 +1,79 @@
+/* ── AUTH SCREEN ── */
+#authScreen {
+  position: fixed; inset: 0; z-index: 1000;
+  background: linear-gradient(135deg, #F48FB1 0%, #CE93D8 50%, #90CAF9 100%);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+}
+
+.auth-box {
+  background: #fff; border-radius: 26px;
+  padding: 36px 28px; width: 100%; max-width: 380px;
+  box-shadow: 0 20px 60px rgba(120,40,100,.25);
+  text-align: center;
+}
+
+.auth-logo {
+  font-size: 1.7rem; font-weight: 900; margin-bottom: 4px;
+  background: linear-gradient(135deg, #F06292, #9C27B0);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+
+.auth-sub { font-size: .78rem; color: var(--txl); margin-bottom: 24px; }
+
+.auth-tabs {
+  display: flex; gap: 6px; margin-bottom: 18px;
+  background: #F3EAF2; border-radius: 14px; padding: 4px;
+}
+.auth-tab {
+  flex: 1; padding: 9px; border: none; border-radius: 11px;
+  background: none; cursor: pointer; font-family: inherit;
+  font-weight: 800; font-size: .8rem; color: var(--txl); transition: all .2s;
+}
+.auth-tab.on { background: #fff; color: var(--pkd); box-shadow: 0 2px 8px rgba(160,80,140,.12); }
+
+.auth-form .fg { text-align: left; margin-bottom: 12px; }
+.auth-err { color: #E53935; font-size: .74rem; font-weight: 700; margin: -4px 0 10px; min-height: 1em; }
+
+.auth-divider {
+  display: flex; align-items: center; gap: 10px;
+  margin: 18px 0; color: var(--txl); font-size: .72rem; font-weight: 700;
+}
+.auth-divider::before, .auth-divider::after { content: ''; flex: 1; height: 1px; background: #EEE0F0; }
+
+.btn-google {
+  width: 100%; padding: 11px; border-radius: 13px; border: 1.5px solid #E0E0E0;
+  background: #fff; cursor: pointer; font-family: inherit; font-weight: 800;
+  font-size: .83rem; color: var(--tx);
+  display: flex; align-items: center; justify-content: center; gap: 9px; transition: all .2s;
+}
+.btn-google:hover { background: #FAFAFA; border-color: #CCC; }
+
+.auth-loading { display: none; font-size: .78rem; color: var(--txl); margin-top: 14px; }
+
+/* ── USER CHIP (TOPBAR) ── */
+.user-chip {
+  display: flex; align-items: center; gap: 7px;
+  background: var(--pkl); border-radius: 40px;
+  padding: 5px 12px 5px 6px; cursor: pointer; flex-shrink: 0;
+  font-size: .74rem; font-weight: 800; color: var(--pkd);
+  border: none; font-family: inherit;
+}
+.user-avatar {
+  width: 24px; height: 24px; border-radius: 50%;
+  background: linear-gradient(135deg, #F06292, #9C27B0);
+  color: #fff; display: flex; align-items: center;
+  justify-content: center; font-size: .72rem; font-weight: 900; flex-shrink: 0;
+}
+
+/* ── USER DROPDOWN MENU ── */
+#userMenu {
+  display: none; position: fixed; top: 60px; right: 16px;
+  background: #fff; border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(120,40,100,.18);
+  padding: 8px; z-index: 250; min-width: 160px;
+}
+#userMenuEmail {
+  padding: 10px 12px; font-size: .74rem; color: var(--txl);
+  font-weight: 700; border-bottom: 1px solid #F3EAF2; margin-bottom: 4px;
+}

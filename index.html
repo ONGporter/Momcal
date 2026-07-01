@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>맘캘 MomCal 💕</title>
+
+<!-- CSS 모듈 -->
+<link rel="stylesheet" href="./css/main.css">
+<link rel="stylesheet" href="./css/auth.css">
+<link rel="stylesheet" href="./css/calendar.css">
+<link rel="stylesheet" href="./css/checklist.css">
+<link rel="stylesheet" href="./css/modal.css">
+
+<!-- JS 앱 진입점 (type="module" → 모든 import/export 사용 가능) -->
+<script type="module" src="./js/app.js"></script>
+</head>
+<body>
+
+<!-- ════════════════════════════════════
+     AUTH SCREEN
+════════════════════════════════════ -->
+<div id="authScreen">
+  <div class="auth-box">
+    <div class="auth-logo">맘캘 💕</div>
+    <div class="auth-sub">임신부터 육아까지, 함께해요</div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab on" id="tabLogin"  onclick="setAuthTab('login')">로그인</button>
+      <button class="auth-tab"   id="tabSignup" onclick="setAuthTab('signup')">회원가입</button>
+    </div>
+
+    <div class="auth-form">
+      <div class="fg" id="nameFg" style="display:none">
+        <label>이름</label>
+        <input id="authName" placeholder="홍길동"/>
+      </div>
+      <div class="fg">
+        <label>이메일</label>
+        <input id="authEmail" type="email" placeholder="example@email.com"/>
+      </div>
+      <div class="fg">
+        <label>비밀번호</label>
+        <input id="authPw" type="password" placeholder="6자 이상"/>
+      </div>
+      <div class="auth-err" id="authErr"></div>
+      <button class="btn bpk" id="authSubmitBtn" onclick="submitAuth()">로그인</button>
+    </div>
+
+    <div class="auth-divider">또는</div>
+
+    <button class="btn-google" onclick="signInGoogle()">
+      <svg width="18" height="18" viewBox="0 0 18 18">
+        <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84c-.21 1.13-.84 2.08-1.8 2.72v2.26h2.91c1.7-1.57 2.69-3.88 2.69-6.62z"/>
+        <path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.91-2.26c-.81.54-1.84.86-3.05.86-2.34 0-4.33-1.58-5.04-3.71H.96v2.33C2.44 15.98 5.48 18 9 18z"/>
+        <path fill="#FBBC05" d="M3.96 10.71c-.18-.54-.28-1.11-.28-1.71s.1-1.17.28-1.71V4.96H.96A8.996 8.996 0 0 0 0 9c0 1.45.35 2.83.96 4.04l3-2.33z"/>
+        <path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0 5.48 0 2.44 2.02.96 4.96l3 2.33C4.67 5.16 6.66 3.58 9 3.58z"/>
+      </svg>
+      Google로 계속하기
+    </button>
+
+    <div class="auth-loading" id="authLoading">처리 중...</div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════
+     TOPBAR
+════════════════════════════════════ -->
+<div class="topbar">
+  <div class="logo">맘캘 💕</div>
+  <nav class="nav-pills">
+    <button class="np on" onclick="gp('home',this)">🏠 홈</button>
+    <button class="np"    onclick="gp('register',this)">+ 등록</button>
+    <button class="np"    onclick="gp('calendar',this)">📅 캘린더</button>
+    <button class="np"    onclick="gp('checklist',this)">✅ 체크리스트</button>
+  </nav>
+  <button class="user-chip" id="userChip" onclick="toggleUserMenu()" style="position:relative">
+    <span class="user-avatar" id="userAvatar">?</span>
+    <span id="userLabel">···</span>
+  </button>
+</div>
+
+<!-- 사용자 드롭다운 메뉴 -->
+<div id="userMenu">
+  <div id="userMenuEmail"></div>
+  <button onclick="doSignOut()"
+          style="width:100%;text-align:left;padding:10px 12px;border:none;background:none;
+                 border-radius:10px;cursor:pointer;font-family:inherit;font-size:.82rem;
+                 font-weight:800;color:#E53935"
+          onmouseover="this.style.background='#FFF0F0'"
+          onmouseout="this.style.background='none'">🚪 로그아웃</button>
+</div>
+
+<!-- 저장 알림 배지 -->
+<div class="save-badge" id="saveBadge">💾 저장됨</div>
+
+<!-- ════════════════════════════════════
+     HOME PAGE
+════════════════════════════════════ -->
+<div id="pg-home" class="pg on">
+  <div class="home-hero">
+    <span class="hero-emoji">🌸</span>
+    <h1>우리 아이 무럭무럭! 💕</h1>
+    <p>임신부터 육아까지, 맘캘이 함께해요</p>
+  </div>
+
+  <div class="sec">👨‍👩‍👧 우리 가족</div>
+  <div class="profile-strip" id="homeProfiles"></div>
+
+  <div class="sec">📋 오늘의 일정</div>
+  <div class="today-strip" id="homeTodayEvs">
+    <p style="color:var(--txl);font-size:.84rem;text-align:center;padding:12px">아이를 등록하면 오늘 일정이 나타나요!</p>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="sec">빠른 이동</div>
+  <div class="qm-grid">
+    <div class="qm-card" onclick="gp('calendar',document.querySelectorAll('.np')[2])">
+      <div class="qm-icon" style="background:linear-gradient(135deg,#FCE4EC,#E8D5F5)">📅</div>
+      <div><div class="qm-title">캘린더</div><div class="qm-sub">일정 &amp; 스티커 꾸미기</div></div>
+    </div>
+    <div class="qm-card" onclick="gp('checklist',document.querySelectorAll('.np')[3])">
+      <div class="qm-icon" style="background:linear-gradient(135deg,#E0F2F1,#C8E6C9)">✅</div>
+      <div><div class="qm-title">체크리스트</div><div class="qm-sub">단계별 할 일 확인</div></div>
+    </div>
+    <div class="qm-card" onclick="gp('register',document.querySelectorAll('.np')[1])">
+      <div class="qm-icon" style="background:linear-gradient(135deg,#FFF9C4,#FFE0B2)">👶</div>
+      <div><div class="qm-title">아이 등록</div><div class="qm-sub">임신·육아 프로필</div></div>
+    </div>
+    <div class="qm-card" onclick="showModal('💕 맘캘 사용법','<div style=\'line-height:2;font-size:.87rem\'><b>1️⃣ 아이/임신 등록</b><br>+ 등록 탭에서 아이 정보를 입력해요<br><b>2️⃣ 캘린더 자동 생성</b><br>예방접종·검진·이유식 일정이 자동으로 채워져요<br><b>3️⃣ 체크리스트</b><br>임신/육아/이유식 단계별 할 일을 체크해요<br><b>4️⃣ 스티커 꾸미기</b><br>캘린더 날짜에 귀여운 스티커를 붙여보세요 🎀<br><br>✅ <b>데이터는 Firebase에 자동 저장</b>돼요!</div>')">
+      <div class="qm-icon" style="background:linear-gradient(135deg,#EDE7F6,#E3F2FD)">💡</div>
+      <div><div class="qm-title">사용 가이드</div><div class="qm-sub">맘캘 시작하기</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════
+     REGISTER PAGE
+════════════════════════════════════ -->
+<div id="pg-register" class="pg">
+  <div class="reg-card">
+    <div class="sec">새 프로필 등록</div>
+    <div class="stage-toggle">
+      <button class="st-btn on" onclick="setRStage('born',this)">👶 태어난 아이</button>
+      <button class="st-btn"    onclick="setRStage('preg',this)">🤰 임신 중</button>
+    </div>
+    <div class="fg">
+      <label>이름 / 태명</label>
+      <input id="rName" placeholder="예) 민준, 하늘이"/>
+    </div>
+    <div class="fg">
+      <label>성별</label>
+      <div class="g-btns">
+        <button class="g-btn on" id="gm" onclick="sg('m')">👦 남자</button>
+        <button class="g-btn"    id="gf" onclick="sg('f')">👧 여자</button>
+        <button class="g-btn"    id="gu" onclick="sg('u')">🤷 미정</button>
+      </div>
+    </div>
+    <div id="rBornWrap">
+      <div class="fg"><label>생년월일</label><input type="date" id="rBirth"/></div>
+    </div>
+    <div id="rPregWrap" style="display:none">
+      <div class="fg"><label>출산 예정일</label><input type="date" id="rDue"/></div>
+      <div class="fg"><label>현재 임신 주수</label><input type="number" id="rWeek" placeholder="예) 16" min="1" max="42"/></div>
+    </div>
+    <button class="btn bpk" onclick="regChild()">✨ 등록 완료</button>
+  </div>
+  <div id="regList" style="max-width:480px;margin:14px auto 0"></div>
+</div>
+
+<!-- ════════════════════════════════════
+     CALENDAR PAGE
+════════════════════════════════════ -->
+<div id="pg-calendar" class="pg">
+  <div class="cal-toolbar">
+    <button class="cal-nav-btn" onclick="calMove(-1)">◀</button>
+    <h2 id="calTitle"></h2>
+    <button class="cal-nav-btn" onclick="calMove(1)">▶</button>
+  </div>
+
+  <!-- 아이 선택 버튼 -->
+  <div style="display:flex;gap:7px;margin-bottom:12px;align-items:center;flex-wrap:wrap">
+    <span style="font-size:.72rem;font-weight:800;color:var(--txl)">아이:</span>
+    <div id="calChildSel" style="display:flex;gap:5px;flex-wrap:wrap"></div>
+  </div>
+
+  <!-- 뷰 전환 + 테마 -->
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px">
+    <div class="cal-view-toggle">
+      <button class="cvt on" onclick="setCalView('month',this)">월간</button>
+      <button class="cvt"    onclick="setCalView('week',this)">주간</button>
+    </div>
+    <div class="theme-bar">
+      <span class="theme-label">테마</span>
+      <div class="theme-btn on" style="background:linear-gradient(135deg,#F48FB1,#CE93D8)" onclick="setTheme('rose',this)"></div>
+      <div class="theme-btn"    style="background:linear-gradient(135deg,#80DEEA,#4DB6AC)" onclick="setTheme('mint',this)"></div>
+      <div class="theme-btn"    style="background:linear-gradient(135deg,#FFD54F,#FF8A65)" onclick="setTheme('sunny',this)"></div>
+      <div class="theme-btn"    style="background:linear-gradient(135deg,#B39DDB,#80CBC4)" onclick="setTheme('lavender',this)"></div>
+      <div class="theme-btn"    style="background:linear-gradient(135deg,#FFAB91,#F48FB1)" onclick="setTheme('peach',this)"></div>
+    </div>
+  </div>
+
+  <!-- 캘린더 본체 -->
+  <div id="calView"></div>
+
+  <!-- 날짜 패널 (선택 시 표시) -->
+  <div id="dayPanel" style="display:none"></div>
+
+  <!-- 스티커 피커 -->
+  <div class="sticker-picker">
+    <div class="sec" style="margin-bottom:10px">
+      🎀 스티커 <span style="font-size:.7rem;color:var(--txl);font-weight:500;letter-spacing:0">날짜 선택 후 붙이기</span>
+    </div>
+    <div class="sp-tabs" id="spTabs"></div>
+    <div class="sp-grid" id="spGrid"></div>
+  </div>
+
+  <!-- 일정 직접 추가 폼 -->
+  <div class="add-ev-form">
+    <div class="sec" style="margin-bottom:14px">일정 직접 추가</div>
+    <div class="fg2">
+      <div class="fg" style="margin:0"><label>날짜</label><input type="date" id="evDate"/></div>
+      <div class="fg" style="margin:0"><label>시간 (선택)</label><input type="time" id="evTime"/></div>
+    </div>
+    <div class="fg" style="margin-top:10px">
+      <label>제목</label>
+      <input id="evTitle" placeholder="예) 소아과 방문, 이유식 시작"/>
+    </div>
+    <div class="fg">
+      <label>메모</label>
+      <input id="evNote" placeholder="추가 메모 (선택)"/>
+    </div>
+    <div class="fg">
+      <label>종류</label>
+      <div class="type-row">
+        <button class="type-btn on" onclick="setEvType('custom',this)">📌 내 일정</button>
+        <button class="type-btn"    onclick="setEvType('req',this)">★ 필수</button>
+        <button class="type-btn"    onclick="setEvType('rec',this)">✓ 추천</button>
+        <button class="type-btn"    onclick="setEvType('vax',this)">💉 접종</button>
+      </div>
+    </div>
+    <button class="btn bpk" style="margin-top:6px" onclick="addCustomEv()">일정 추가</button>
+  </div>
+
+  <!-- 범례 -->
+  <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:14px;font-size:.7rem;font-weight:700;color:var(--txl)">
+    <span>🔴 필수</span><span>🟢 추천·이유식</span><span>🟣 접종</span><span>🔵 내일정</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════
+     CHECKLIST PAGE
+════════════════════════════════════ -->
+<div id="pg-checklist" class="pg">
+  <div style="display:flex;gap:7px;margin-bottom:12px;align-items:center;flex-wrap:wrap">
+    <span style="font-size:.72rem;font-weight:800;color:var(--txl)">아이:</span>
+    <select id="clChildSel"
+            onchange="S.selC=this.value;S.clTab=0;S.selClCat=0;renderChecklist()"
+            style="padding:7px 12px;border:1.5px solid #EEE0F0;border-radius:11px;
+                   font-family:inherit;font-size:.81rem;color:var(--tx);outline:none;
+                   background:var(--wh);box-shadow:0 2px 7px rgba(160,80,140,.07)"></select>
+  </div>
+  <div class="cl-tab-bar" id="clTabBar"></div>
+  <div class="cl-layout">
+    <div class="cl-sidebar">
+      <div class="cl-sb-hd">카테고리</div>
+      <div id="clSidebar"></div>
+    </div>
+    <div class="cl-main" id="clMain"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════
+     MODAL
+════════════════════════════════════ -->
+<div class="mo" id="modal">
+  <div class="md">
+    <button class="mc" onclick="cm()">✕</button>
+    <h2 id="mT"></h2>
+    <div id="mB"></div>
+  </div>
+</div>
+
+</body>
+</html>
