@@ -115,3 +115,64 @@
 @media (max-width: 640px) {
   .cal-cell { min-height: 52px; }
 }
+
+/* ══════════════════════════════════════
+ *  Sprint 2 추가 스타일
+ * ══════════════════════════════════════ */
+
+/* ── 완료된 이벤트 필 ── */
+.ev-pill.ev-done {
+  opacity: .75;
+  text-decoration: line-through;
+  filter: grayscale(30%);
+}
+
+/* ── 완료된 이벤트 (데이 패널) ── */
+.dp-ev.dp-done {
+  opacity: .72;
+}
+.dp-ev.dp-done .dp-ev-title {
+  text-decoration: line-through;
+  color: var(--txl);
+}
+
+/* ── 드래그 타겟 강조 ── */
+.cal-cell.drag-over {
+  background: var(--pkl) !important;
+  border: 2px dashed var(--pk) !important;
+}
+
+/* ── 모바일 드래그 고스트 ── */
+.drag-ghost {
+  position: fixed;
+  z-index: 9999;
+  background: linear-gradient(135deg, #F06292, #9C27B0);
+  color: #fff;
+  padding: 7px 14px;
+  border-radius: 40px;
+  font-size: .8rem;
+  font-weight: 800;
+  font-family: 'Nunito', sans-serif;
+  pointer-events: none;
+  box-shadow: 0 6px 20px rgba(200,80,180,.35);
+  white-space: nowrap;
+  transform: rotate(-3deg);
+}
+
+/* ── 수정 Modal 내 수정 버튼 ── */
+.dp-ev .dp-edit-btn {
+  background: none;
+  border: 1px solid #EEE0F0;
+  border-radius: 8px;
+  padding: 3px 8px;
+  font-size: .65rem;
+  font-weight: 800;
+  color: var(--txl);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all .2s;
+}
+.dp-ev .dp-edit-btn:hover {
+  border-color: var(--pk);
+  color: var(--pk);
+}

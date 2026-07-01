@@ -15,6 +15,7 @@ export function emptyState() {
     customEvs:   [],   // 사용자가 직접 추가한 일정
     dayStickers: {},   // { 'YYYY-MM-DD': [emoji, ...] }
     checks:      {},   // { 'childId_catKey': { itemId: true } }
+    eventMods:   {},   // { 'eventKey': { actualDate, hospital, memo, done } }
     theme:       'rose',
     selC:        0,    // 현재 선택된 아이 인덱스
   };
@@ -57,6 +58,7 @@ export async function saveState() {
       customEvs:   S.customEvs,
       dayStickers: S.dayStickers,
       checks:      S.checks,
+      eventMods:   S.eventMods || {},
       theme:       S.theme,
       selC:        S.selC,
       updatedAt:   Date.now(),
@@ -110,6 +112,7 @@ export function applyData(data) {
   S.customEvs   = fresh.customEvs   || [];
   S.dayStickers = fresh.dayStickers || {};
   S.checks      = fresh.checks      || {};
+  S.eventMods   = fresh.eventMods   || {};
   S.theme       = fresh.theme       || 'rose';
   // selC 범위 보정
   S.selC = Math.max(0, Math.min(fresh.selC || 0, S.children.length - 1));
