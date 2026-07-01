@@ -59,3 +59,105 @@
   .cl-layout  { grid-template-columns: 1fr; }
   .cl-sidebar { position: static; }
 }
+
+/* ══════════════════════════════════════
+ *  Sprint 3 추가 스타일
+ * ══════════════════════════════════════ */
+
+/* ── 현재 주차/월령 컨텍스트 배너 ── */
+.cl-context-banner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #FFF5F8, #F5EEFF);
+  border: 1.5px solid #F0C8DC;
+  border-radius: 14px;
+  padding: 10px 16px;
+  margin-bottom: 12px;
+  font-size: .84rem;
+  font-weight: 800;
+  color: var(--pkd);
+  animation: fadeUp .22s ease;
+}
+.cl-context-banner:empty { display: none; }
+
+/* ── 사이드바 필수 완료 배지 ── */
+.cl-sb-pct-full {
+  background: #E8F5E9 !important;
+  color: #2E7D32 !important;
+}
+
+/* ── 메인 상태 배지 ── */
+.cl-status {
+  font-size: .76rem;
+  font-weight: 800;
+  color: var(--mn);
+  background: var(--mnl);
+  padding: 3px 9px;
+  border-radius: 10px;
+}
+.cl-status-full {
+  color: #2E7D32;
+  background: #E8F5E9;
+}
+.cl-status-gold {
+  color: #7B5800;
+  background: linear-gradient(135deg, #FFF8E1, #FFF3CD);
+  border: 1px solid #FFE082;
+}
+
+/* ── 진행률 바 티어 색상 ── */
+.progress-fill.full    { background: linear-gradient(90deg, #FFD700, #FFA000); }
+.progress-fill.master  { background: linear-gradient(90deg, #9C27B0, #6A1B9A); }
+.progress-fill.rainbow {
+  background: linear-gradient(90deg, #F06292, #FFD54F, #4DB6AC, #64B5F6, #9C27B0);
+  background-size: 200%;
+  animation: rainbowShift 2s linear infinite;
+}
+@keyframes rainbowShift {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+/* ── 사이드바 티어 배지 ── */
+.cl-sb-pct-full   { background: #E8F5E9 !important; color: #2E7D32 !important; }
+.cl-sb-perfect    { background: #FFF8E1 !important; color: #7B5800 !important; border: 1px solid #FFE082; }
+.cl-sb-master     { background: #EDE7F6 !important; color: #4A148C !important; }
+.cl-sb-legend     { background: linear-gradient(135deg, #FCE4EC, #F3E5F5, #E3F2FD) !important; color: var(--pkd) !important; }
+
+/* ── 달성 배지 (메인 영역) ── */
+.cl-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: .76rem;
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: 12px;
+  animation: fadeUp .22s ease;
+}
+.cl-badge-perfect {
+  background: linear-gradient(135deg, #FFF8E1, #FFF3CD);
+  color: #7B5800;
+  border: 1.5px solid #FFE082;
+}
+.cl-badge-master {
+  background: linear-gradient(135deg, #EDE7F6, #D1C4E9);
+  color: #4A148C;
+  border: 1.5px solid #CE93D8;
+}
+.cl-badge-legend {
+  background: linear-gradient(135deg, #FCE4EC, #F3E5F5, #E3F2FD);
+  color: var(--pkd);
+  border: 1.5px solid var(--pk);
+}
+
+/* ── 상태 배지 (미달성) ── */
+.cl-status {
+  font-size: .76rem;
+  font-weight: 800;
+  color: var(--mn);
+  background: var(--mnl);
+  padding: 3px 9px;
+  border-radius: 10px;
+}
