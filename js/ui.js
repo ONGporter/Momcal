@@ -10,6 +10,7 @@ import { getAllEvs }             from './calendar.js';
 import { getTodayCategoryInfo }  from './checklist.js';
 import { getLatestGrowth }       from './growth.js';
 import { getDailyTip }           from '../data/tips.js';
+import { renderPwaInstallLink }  from './pwaInstall.js';
 
 /* ════════════════════════════════════
  *  네비게이션
@@ -53,6 +54,9 @@ export function renderHome() {
       <span class="pst ${c.stage === 'preg' ? 'st-preg' : 'st-born'}">${c.stage === 'preg' ? '임신중' : '육아중'}</span>
     </div>`
   ).join('') + `<div class="add-pcard" onclick="gp('register',document.querySelector('.np[data-page=register]'))"><span>＋</span><p>등록하기</p></div>`;
+
+  // 홈 화면 추가(PWA 설치) 링크
+  renderPwaInstallLink();
 }
 
 /* ════════════════════════════════════

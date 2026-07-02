@@ -204,6 +204,24 @@ body {
   .dash-grid { grid-template-columns: 1fr 1fr; }
 }
 
+/* ── PWA 설치 링크 (Sprint 12) ── */
+.install-link {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--card); border-radius: 18px; padding: 14px 16px;
+  box-shadow: var(--card-shadow); cursor: pointer;
+  transition: all .22s;
+}
+.install-link:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(180,80,160,.16); }
+.install-ico {
+  width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
+  background: var(--pkl); display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem;
+}
+.install-txt   { flex: 1; min-width: 0; }
+.install-title { font-size: .87rem; font-weight: 900; color: var(--tx); }
+.install-sub   { font-size: .71rem; color: var(--txl); font-weight: 700; margin-top: 2px; }
+.install-arrow { font-size: 1.3rem; color: var(--pk); font-weight: 900; flex-shrink: 0; }
+
 /* ── QUICK MENU ── */
 .qm-grid {
   display: grid; grid-template-columns: 1fr 1fr;

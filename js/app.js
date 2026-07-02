@@ -21,6 +21,7 @@ import { renderGrowthPage } from './growthChart.js';
 import './growth.js';
 import './demoMode.js';
 import './checklistCalendarLink.js';
+import './pwaInstall.js';
 
 /* ── 초기 로드 여부 플래그 ── */
 let _firstLoad = true;
