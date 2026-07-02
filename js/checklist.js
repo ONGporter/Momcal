@@ -354,16 +354,33 @@ export function renderClMain() {
       ? `<div style="font-size:.68rem;color:#5B4FCF;font-weight:700;margin:-10px 0 14px">🌟 선택 항목까지 체크하면 최대 200%까지 올라가요!</div>`
       : ''
     }
-    ${cat.items.map(it => `
-      <div class="ci ${S.checks[key][it.id] ? 'done' : ''}" onclick="tgCk('${key}','${it.id}')">
-        <div class="ci-box"></div>
-        <div style="flex:1">
-          <div class="ci-title">${it.t}
-            ${it.r ? '<span class="badge-r">필수</span>' : '<span class="badge-o">선택</span>'}
+    ${cat.items.map(it => {
+      const uid     = `${key}_${it.id}`;
+      const checked = !!S.checks[key][it.id];
+      return `
+      <div class="ci-wrap" id="ciwrap_${uid}">
+        <div class="ci ${checked ? 'done' : ''}" onclick="tgCk('${key}','${it.id}')">
+          <div class="ci-box"></div>
+          <div style="flex:1;min-width:0">
+            <div class="ci-title">${it.t}
+              ${it.r ? '<span class="badge-r">필수</span>' : '<span class="badge-o">선택</span>'}
+            </div>
+            ${it.d ? `<div class="ci-desc">${it.d}</div>` : ''}
           </div>
-          ${it.d ? `<div class="ci-desc">${it.d}</div>` : ''}
+          ${it.dd ? `
+          <button type="button" class="ci-expand-btn" aria-label="자세히 보기"
+                  onclick="event.stopPropagation();toggleCiDetail('${uid}')">
+            <span class="ci-expand-arrow">▾</span>
+          </button>` : ''}
         </div>
-      </div>`).join('')}`;
+        ${it.dd ? `<div class="ci-detail">📖 ${it.dd}</div>` : ''}
+      </div>`;
+    }).join('')}`;
+}
+
+/** 체크리스트 항목 상세 설명 펼치기/접기 (Sprint 14) */
+export function toggleCiDetail(uid) {
+  document.getElementById('ciwrap_' + uid)?.classList.toggle('open');
 }
 
 /**
@@ -395,3 +412,4 @@ window.renderClSidebar = renderClSidebar;
 window.renderClMain    = renderClMain;
 window.tgCk            = tgCk;
 window.switchClTab     = switchClTab;
+window.toggleCiDetail  = toggleCiDetail;

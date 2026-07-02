@@ -55,6 +55,29 @@
 .badge-r { display: inline-block; background: #FFEBEE; color: #C62828; font-size: .58rem; font-weight: 800; padding: 2px 6px; border-radius: 7px; margin-left: 4px; }
 .badge-o { display: inline-block; background: #E0F2F1; color: #00695C; font-size: .58rem; font-weight: 800; padding: 2px 6px; border-radius: 7px; margin-left: 4px; }
 
+/* ── 체크리스트 항목 상세 설명 펼치기 (Sprint 14) ── */
+.ci-wrap { margin-bottom: 7px; }
+.ci-wrap .ci { margin-bottom: 0; transition: border-radius .15s, all .2s; }
+.ci-wrap.open .ci { border-radius: 13px 13px 0 0; }
+
+.ci-expand-btn {
+  flex-shrink: 0; width: 26px; height: 26px; border-radius: 8px;
+  border: none; background: transparent; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--pk); font-size: .78rem; align-self: flex-start; margin-top: 1px;
+  transition: background .15s;
+}
+.ci-expand-btn:hover { background: var(--pkl); }
+.ci-expand-arrow { display: inline-block; transition: transform .2s; }
+.ci-wrap.open .ci-expand-arrow { transform: rotate(180deg); }
+
+.ci-detail {
+  display: none; font-size: .76rem; color: var(--tx); font-weight: 600;
+  line-height: 1.7; background: #FBF6FA; border: 1.5px solid #F0D0E0; border-top: none;
+  border-radius: 0 0 13px 13px; margin-top: -1.5px; padding: 4px 14px 12px 43px;
+}
+.ci-wrap.open .ci-detail { display: block; animation: fadeUp .2s ease; }
+
 /* ── RESPONSIVE ── */
 @media (max-width: 640px) {
   .cl-layout  { grid-template-columns: 1fr; }
