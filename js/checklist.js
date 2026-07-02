@@ -26,6 +26,7 @@
 import { S, debounceSave } from './state.js';
 import { clData }          from '../data/checklist-data.js';
 import { renderGovChecklistTab } from './govSupport.js';
+import { syncChecklistToCalendar } from './checklistCalendarLink.js';
 
 /* ────────────────────────────────────
  *  점수 계산 유틸
@@ -372,6 +373,16 @@ export function renderClMain() {
 export function tgCk(key, id) {
   if (!S.checks[key]) S.checks[key] = {};
   S.checks[key][id] = !S.checks[key][id];
+
+  // Sprint 11: 캘린더 연동 — 예방접종·건강검진처럼 연결된 캘린더 일정이 있으면 완료 상태도 함께 갱신
+  const child = S.children[S.selC];
+  if (child && syncChecklistToCalendar(child, id, S.checks[key][id])) {
+    if (document.getElementById('pg-calendar')?.classList.contains('on')) {
+      window.renderCal?.();
+      if (S.selDate) window.showDayPanel?.(S.selDate);
+    }
+  }
+
   renderClSidebar();  // 사이드바 % + 메인 화면(1회) 갱신
   debounceSave();
 }

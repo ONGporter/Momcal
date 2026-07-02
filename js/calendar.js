@@ -103,33 +103,51 @@ export function getAllEvs() {
   return _cachedEvs;
 }
 
-/* ══════════════════════════════════════
- *  이벤트 이동 (드래그 결과)
- * ══════════════════════════════════════ */
-function moveEvent(idx, newDate) {
-  const ev = _cachedEvs[idx];
-  if (!ev) return;
+/**
+ * 이벤트 이동 (드래그 결과)
+ * Sprint 11: idx 하나 또는 배열(묶음 예방접종 그룹 전체 이동) 모두 지원
+ */
+function moveEvent(idxOrArr, newDate) {
+  const indices = Array.isArray(idxOrArr) ? idxOrArr : [idxOrArr];
   if (!S.eventMods) S.eventMods = {};
-  const key = getEventKey(ev);
+  const child = S.children[S.selC];
 
-  let recalced = [];
-  if (ev.auto) {
-    // 자동 이벤트 → eventMods 에 실제일 저장
-    S.eventMods[key] = { ...(S.eventMods[key] || {}), actualDate: newDate };
-    // Sprint 6: 예방접종이면 이후 회차 자동 재계산
-    if (ev.type === 'vax') {
-      const autoVaxEvs = getAutoEvs(S.children[S.selC]).filter(e => e.type === 'vax');
-      recalced = recalcVaccineSeries(autoVaxEvs, ev.title, newDate);
+  let allRecalced = [];
+  indices.forEach(idx => {
+    const ev = _cachedEvs[idx];
+    if (!ev) return;
+    const key = getEventKey(ev);
+
+    if (ev.auto) {
+      // 자동 이벤트 → eventMods 에 실제일 저장
+      S.eventMods[key] = { ...(S.eventMods[key] || {}), actualDate: newDate };
+      // Sprint 6: 예방접종이면 이후 회차 자동 재계산
+      if (ev.type === 'vax') {
+        const autoVaxEvs = getAutoEvs(child).filter(e => e.type === 'vax');
+        allRecalced = allRecalced.concat(recalcVaccineSeries(autoVaxEvs, ev.title, newDate));
+      }
+    } else {
+      // 커스텀 이벤트 → 직접 날짜 변경
+      const ce = S.customEvs.find(e => e._id === ev._id);
+      if (ce) ce.date = newDate;
     }
-  } else {
-    // 커스텀 이벤트 → 직접 날짜 변경
-    const ce = S.customEvs.find(e => e._id === ev._id);
-    if (ce) ce.date = newDate;
-  }
+  });
+
   renderCal();
   if (S.selDate) showDayPanel(S.selDate);
   debounceSave();
-  if (recalced.length) showRecalcNotice(recalced);
+
+  if (allRecalced.length) {
+    // 그룹 이동 시 중복 안내 방지 (같은 항목이 두 번 잡히는 경우 제거)
+    const seen = new Set();
+    const uniq = allRecalced.filter(c => {
+      const k = c.title + '|' + c.newDate;
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+    showRecalcNotice(uniq);
+  }
 }
 
 /* ══════════════════════════════════════
@@ -268,6 +286,11 @@ export function saveEventMod() {
     recalced = recalcVaccineSeries(autoVaxEvs, ev.title, actualDate);
   }
 
+  // Sprint 11: 체크리스트 연동 — 예방접종·건강검진처럼 연결된 체크리스트 항목이 있으면 함께 갱신
+  if (ev.auto && (ev.type === 'vax' || ev.type === 'req' || ev.type === 'rec')) {
+    window.syncCalendarToChecklist?.(S.children[S.selC], ev.title, done);
+  }
+
   cm();
   renderCal();
   if (S.selDate) showDayPanel(S.selDate);
@@ -359,9 +382,12 @@ export function onTouchStart(evt, idx) {
     if (navigator.vibrate) navigator.vibrate(60);
 
     const touch = evt.touches[0];
+    const label = Array.isArray(idx)
+      ? `💉 예방접종 ${idx.length}건`
+      : '📌 ' + (_cachedEvs[idx]?.title?.slice(0, 10) || '이동 중');
     _ghostEl = document.createElement('div');
     _ghostEl.className   = 'drag-ghost';
-    _ghostEl.textContent = '📌 ' + (_cachedEvs[idx]?.title?.slice(0, 10) || '이동 중');
+    _ghostEl.textContent = label;
     _ghostEl.style.left  = touch.clientX - 50 + 'px';
     _ghostEl.style.top   = touch.clientY - 25 + 'px';
     document.body.appendChild(_ghostEl);
@@ -504,6 +530,29 @@ function renderMonthView() {
 }
 
 /**
+ * Sprint 11: 캘린더 타입 필터 — 이유식/예방접종/정부지원
+ * S.calFilter의 값이 모두 false면 전체 표시, 하나라도 true면 선택된 타입만 표시.
+ */
+function applyCalFilter(dayEvs) {
+  const f = S.calFilter;
+  if (!f || (!f.food && !f.vax && !f.gov)) return dayEvs;
+  return dayEvs.filter(e =>
+    (f.vax  && e.type === 'vax') ||
+    (f.gov  && e.type === 'gov') ||
+    (f.food && e.cat  === 'food')
+  );
+}
+
+/** 필터 버튼 클릭 */
+export function toggleCalFilter(type, btn) {
+  if (!S.calFilter) S.calFilter = { food: false, vax: false, gov: false };
+  S.calFilter[type] = !S.calFilter[type];
+  if (btn) btn.classList.toggle('on', S.calFilter[type]);
+  renderCal();
+  if (S.selDate) showDayPanel(S.selDate);
+}
+
+/**
  * Sprint 10: 같은 날짜의 예방접종 이벤트들을 화면 표시용으로 하나의 그룹으로 묶기.
  * 데이터(S.eventMods, 재계산 로직)는 그대로 개별 항목 단위를 유지하고,
  * 오직 "보여주는 방식"만 묶는다 — 그룹 항목을 펼치면 원래 개별 항목이 그대로 나온다.
@@ -542,7 +591,7 @@ function groupVaxEvents(dayEvs) {
  * - 이벤트 필: 드래그 가능, 클릭 → 수정 Modal, ✅ 완료 표시
  */
 function cellHTML(ds, d, other, evs, td, th) {
-  const de          = groupVaxEvents(evs.filter(e => e.date === ds));
+  const de          = groupVaxEvents(applyCalFilter(evs.filter(e => e.date === ds)));
   const stickersAll = S.dayStickers[ds] || [];
   const overflow    = Math.max(0, stickersAll.length - 3);
   const showCount   = overflow > 0 ? 3 : stickersAll.length;
@@ -561,10 +610,20 @@ function cellHTML(ds, d, other, evs, td, th) {
       : e.type === 'req' ? '★' : e.type === 'rec' ? '✓' : e.type === 'vax' ? '💉' : '📌';
     const safTitle = e.title.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
-    // 그룹 필은 드래그 불가 + 클릭 시 날짜 선택(day panel)으로 펼쳐 보기 — 개별 이동은 day panel에서
+    // Sprint 11 버그 수정: 묶음 필도 꾹 눌러(길게 누르기) 통째로 이동 가능하도록 드래그/터치 활성화
+    // (탭은 여전히 셀 클릭으로 버블링되어 day panel에서 개별 항목을 펼쳐볼 수 있음)
     if (e._isVaxGroup) {
+      const groupIndices = `[${e._groupItems.map(item => item._idx).join(',')}]`;
       return `
-        <div class="ev-pill ep-vax${e.done ? ' ev-done' : ''}" title="${safTitle} — 탭해서 자세히 보기">
+        <div class="ev-pill ep-vax${e.done ? ' ev-done' : ''}"
+             draggable="true"
+             ondragstart="onDragStart(event,${groupIndices})"
+             ondragend="onDragEnd(event)"
+             ontouchstart="onTouchStart(event,${groupIndices})"
+             ontouchmove="onTouchMove(event)"
+             ontouchend="onTouchEnd(event)"
+             ontouchcancel="onTouchCancel(event)"
+             title="${safTitle} — 탭하면 자세히, 꾹 눌러 이동">
           ${icon}${e.title.slice(0, 7)}
         </div>`;
     }
@@ -628,7 +687,7 @@ function renderWeekView() {
     html += `<div style="font-size:.62rem;color:var(--txl);font-weight:700;padding:8px 4px;text-align:right;border-bottom:1px solid #F5EEF8">${h}시</div>`;
     weekDays.forEach(d => {
       const ds   = d.toISOString().split('T')[0];
-      const de   = groupVaxEvents(evs.filter(e => e.date === ds));
+      const de   = groupVaxEvents(applyCalFilter(evs.filter(e => e.date === ds)));
       const isTd = ds === td;
       html += `
         <div onclick="selectDate('${ds}')"
@@ -661,7 +720,7 @@ function renderWeekView() {
  * ══════════════════════════════════════ */
 export function showDayPanel(ds) {
   const allEvs   = getAllEvs();
-  const evs      = groupVaxEvents(allEvs.filter(e => e.date === ds));
+  const evs      = groupVaxEvents(applyCalFilter(allEvs.filter(e => e.date === ds)));
   const stickers = S.dayStickers[ds] || [];
   const panel    = document.getElementById('dayPanel');
   const dow      = ['일', '월', '화', '수', '목', '금', '토'][new Date(ds).getDay()];
@@ -878,7 +937,7 @@ export function getAutoEvs(child) {
       const d = new Date(birth);
       d.setDate(d.getDate() + ev.m * 30.44 + ev.day);
       const ds = d.toISOString().split('T')[0];
-      evs.push({ date: ds, _origDate: ds, title: ev.t, type: ev.r ? 'req' : 'rec', auto: true });
+      evs.push({ date: ds, _origDate: ds, title: ev.t, type: ev.r ? 'req' : 'rec', auto: true, cat: 'food' });
     });
 
     // 정부지원 (출산 직후) — Sprint 6
@@ -941,3 +1000,4 @@ window.onTouchStart        = onTouchStart;
 window.onTouchMove         = onTouchMove;
 window.onTouchEnd          = onTouchEnd;
 window.onTouchCancel       = onTouchCancel;
+window.toggleCalFilter     = toggleCalFilter;

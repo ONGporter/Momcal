@@ -29,11 +29,20 @@ function ageDaysAt(birth, dateStr) {
   return Math.max(0, days);
 }
 
-/** X축 최대값 — 100일 단위로, 기록이 늘어나면 100→200→300... 자동 확장 */
-const AXIS_STEP = 100;
-function computeAxisMax(ageDaysList) {
-  const maxAge = ageDaysList.length ? Math.max(...ageDaysList) : 0;
-  return Math.max(AXIS_STEP, Math.ceil((maxAge + 1) / AXIS_STEP) * AXIS_STEP);
+/**
+ * X축 최대값 계산 (Sprint 11)
+ * "오늘 기준 우리 아이 생후 일수"가 축의 약 70% 지점에 오도록 계산하고,
+ * 보기 좋게 100일 단위로 반올림한다. (예: 오늘 140일 → 200일까지 표시)
+ * 단, 실제 기록이 이보다 더 최근/많으면(예: 미래 날짜 오기록 등) 기록도 항상 포함되도록 보정한다.
+ */
+const AXIS_STEP    = 100;
+const AXIS_POSITION = 0.7; // 오늘 날짜가 축의 70% 지점에 오도록
+
+function computeAxisMax(todayAgeDays, ageDaysList) {
+  const maxRecordAge = ageDaysList.length ? Math.max(...ageDaysList) : 0;
+  const baseAge = Math.max(todayAgeDays, maxRecordAge);
+  const target  = baseAge / AXIS_POSITION;
+  return Math.max(AXIS_STEP, Math.ceil(target / AXIS_STEP) * AXIS_STEP);
 }
 
 /* ══════════════════════════════════════
@@ -228,11 +237,12 @@ function renderChart(child, metric) {
 
   const { label, unit } = growthMetricLabel[metric];
 
-  // Sprint 10: X축을 "생후 일수" 고정 축으로 — 기록 날짜 간격과 무관하게 실제 날짜 비례 위치에 표시되고,
-  // 100일을 넘으면 축이 100→200→300...으로 자동 확장된다.
-  const ageDaysList = records.map(r => ageDaysAt(child.birth, r.date));
-  const axisMax     = computeAxisMax(ageDaysList);
-  const refStep     = axisMax <= 200 ? 5 : 10; // 참고선을 촘촘하게 그릴 간격(일)
+  // Sprint 10/11: X축을 "생후 일수" 고정 축으로 — 오늘 날짜가 축의 70% 지점에 오도록 계산되고,
+  // 100일 단위로 반올림해서 100→200→300...으로 자연스럽게 확장된다.
+  const ageDaysList  = records.map(r => ageDaysAt(child.birth, r.date));
+  const todayAgeDays = ageDaysAt(child.birth, new Date());
+  const axisMax      = computeAxisMax(todayAgeDays, ageDaysList);
+  const refStep      = axisMax <= 200 ? 5 : 10; // 참고선을 촘촘하게 그릴 간격(일)
 
   const myPoints = records.map((r, i) => ({ x: ageDaysList[i], y: r[metric] }));
 

@@ -120,12 +120,18 @@ function dashChecklistCard(child) {
   return dashCard('📋', 'var(--mnl)', info.cat.label, `${info.doneTotal} / ${info.itemsTotal} 완료`, '', "gp('checklist',document.querySelector('.np[data-page=checklist]'))");
 }
 
-/** 📈 성장 기록 */
+/** 📈 성장 기록 (+ Sprint 11: 30일 이상 기록 없으면 리마인더) */
 function dashGrowthCard(child) {
   const { latest, prev } = getLatestGrowth(child.id);
   if (!latest) {
     return dashCard('📈', 'var(--yll)', '성장 기록', '아직 기록 없어요', '탭해서 첫 기록 남기기', 'openGrowthModal()');
   }
+
+  const daysSince = Math.floor((new Date(today()) - new Date(latest.date)) / 86400000);
+  if (daysSince >= 30) {
+    return dashCard('📈', 'var(--yll)', '성장 기록', `마지막 기록 ${daysSince}일 전`, '탭해서 새 기록 남기기 ✏️', 'openGrowthModal()');
+  }
+
   const parts = [];
   if (latest.height != null) {
     const d = prev?.height != null ? latest.height - prev.height : null;

@@ -20,6 +20,7 @@ import { renderChecklist, renderClSidebar } from './checklist.js';
 import { renderGrowthPage } from './growthChart.js';
 import './growth.js';
 import './demoMode.js';
+import './checklistCalendarLink.js';
 
 /* ── 초기 로드 여부 플래그 ── */
 let _firstLoad = true;
@@ -76,3 +77,12 @@ onAuthStateChanged(auth, (user) => {
     showAuthScreen();
   }
 });
+
+/* ── PWA 서비스 워커 등록 (Sprint 11: 홈 화면 추가) ── */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {
+      // 서비스 워커 등록 실패해도 앱 사용에는 지장 없음 (오프라인 캐싱만 못 함)
+    });
+  });
+}

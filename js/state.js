@@ -37,6 +37,7 @@ export const S = Object.assign(emptyState(), {
   selClCat: 0,           // 체크리스트 선택된 사이드바 항목
   growthMetric: 'height', // 성장그래프 탭에서 선택된 지표 ('height'|'weight'|'head')
   isDemoMode: false,      // Sprint 8: 체험 모드 여부 (로그인 없이 샘플 데이터로 둘러보기)
+  calFilter: { food: false, vax: false, gov: false }, // Sprint 11: 캘린더 타입 필터 (전부 false = 전체 표시)
 });
 
 // 인라인 onclick 에서 S.xxx 직접 접근 가능하도록 window에 노출

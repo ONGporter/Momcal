@@ -2,8 +2,16 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>맘캘 MomCal 💕</title>
+
+<!-- PWA (Sprint 11: 홈 화면 추가) -->
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#F06292">
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="맘캘">
 
 <!-- CSS 모듈 -->
 <link rel="stylesheet" href="./css/main.css">
@@ -175,6 +183,14 @@
   <div style="display:flex;gap:7px;margin-bottom:12px;align-items:center;flex-wrap:wrap">
     <span style="font-size:.72rem;font-weight:800;color:var(--txl)">아이:</span>
     <div id="calChildSel" style="display:flex;gap:5px;flex-wrap:wrap"></div>
+  </div>
+
+  <!-- Sprint 11: 캘린더 필터 -->
+  <div style="display:flex;gap:6px;margin-bottom:12px;align-items:center;flex-wrap:wrap">
+    <span style="font-size:.72rem;font-weight:800;color:var(--txl)">🔍 필터:</span>
+    <button class="cal-filter-btn" data-filter="food" onclick="toggleCalFilter('food',this)">🥣 이유식</button>
+    <button class="cal-filter-btn" data-filter="vax"  onclick="toggleCalFilter('vax',this)">💉 예방접종</button>
+    <button class="cal-filter-btn" data-filter="gov"  onclick="toggleCalFilter('gov',this)">🟢 정부지원</button>
   </div>
 
   <!-- 뷰 전환 + 테마 -->
