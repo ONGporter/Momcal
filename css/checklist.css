@@ -23,6 +23,7 @@
 .cl-sb-item:hover { background: var(--pkl); }
 .cl-sb-item.on    { background: var(--pkl); color: var(--pkd); font-weight: 900; }
 .cl-sb-pct { font-size: .65rem; color: var(--mn); font-weight: 800; background: var(--mnl); padding: 2px 6px; border-radius: 8px; }
+.cl-sb-pct.cl-sb-low { color: #757575; background: #EEEEEE; }
 
 .cl-main { background: var(--card); border-radius: 18px; box-shadow: var(--card-shadow); padding: 22px; }
 
@@ -96,6 +97,10 @@
   padding: 3px 9px;
   border-radius: 10px;
 }
+.cl-status-low {
+  color: #757575;
+  background: #EEEEEE;
+}
 .cl-status-full {
   color: #2E7D32;
   background: #E8F5E9;
@@ -152,12 +157,21 @@
   border: 1.5px solid var(--pk);
 }
 
-/* ── 상태 배지 (미달성) ── */
-.cl-status {
-  font-size: .76rem;
-  font-weight: 800;
-  color: var(--mn);
-  background: var(--mnl);
-  padding: 3px 9px;
-  border-radius: 10px;
+/* ── Sprint 6: 정부지원 체크리스트 탭 항목 ── */
+.gov-cl-item {
+  display: flex; align-items: center; gap: 11px;
+  padding: 12px 14px; background: #FAFAFA; border-radius: 13px;
+  margin-bottom: 7px; cursor: pointer; transition: all .2s;
+  border: 1.5px solid transparent;
 }
+.gov-cl-item:hover { border-color: #C8E6C9; background: #F3FAF4; }
+.gov-cl-icon  { font-size: 1.15rem; flex-shrink: 0; }
+.gov-cl-title { font-size: .85rem; font-weight: 800; color: var(--tx); }
+.gov-cl-desc  { font-size: .71rem; color: var(--txl); margin-top: 2px; }
+.gov-cl-status {
+  font-size: .65rem; font-weight: 800; padding: 3px 9px;
+  border-radius: 10px; white-space: nowrap; flex-shrink: 0;
+}
+.gov-cl-status.status-none    { background: #E8F5E9; color: #2E7D32; }
+.gov-cl-status.status-applied { background: #E3F2FD; color: #1565C0; }
+.gov-cl-status.status-paid    { background: #C8E6C9; color: #1B5E20; }

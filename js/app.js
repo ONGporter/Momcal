@@ -17,6 +17,9 @@ import { showApp, showAuthScreen } from './auth.js';
 import { renderHome, renderRegList, gp } from './ui.js';
 import { renderCal, renderStickerPicker } from './calendar.js';
 import { renderChecklist, renderClSidebar } from './checklist.js';
+import { renderGrowthPage } from './growthChart.js';
+import './growth.js';
+import './demoMode.js';
 
 /* ── 초기 로드 여부 플래그 ── */
 let _firstLoad = true;
@@ -51,6 +54,10 @@ function onDataLoaded(data) {
       // onSnapshot 재발동: 사이드바 % 만 업데이트 (카테고리 선택 유지)
       renderClSidebar();
     }
+  }
+
+  if (document.getElementById('pg-growth').classList.contains('on')) {
+    renderGrowthPage();
   }
 
   _firstLoad = false;

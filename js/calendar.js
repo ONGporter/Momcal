@@ -15,6 +15,8 @@ import { showModal, cm }   from './modal.js';
 import { vaxSched }        from '../data/vaccines.js';
 import { pregEvMap }       from '../data/pregnancy.js';
 import { checkEvs, foodEvs } from '../data/milestones.js';
+import { recalcVaccineSeries } from './vaccineSeries.js';
+import { govSupportSchedule } from '../data/government-support.js';
 
 /* ══════════════════════════════════════
  *  테마
@@ -70,6 +72,8 @@ function applyMods(evs) {
       hospital: mod.hospital || '',
       note:     mod.memo     || ev.note || '',
       done:     !!mod.done,
+      recalculated: !!mod.recalculated,    // Sprint 6: 자동 재계산으로 조정된 일정인지
+      govStatus: mod.govStatus || 'none',  // Sprint 6: 정부지원 진행 상태
     };
   });
 }
@@ -108,9 +112,15 @@ function moveEvent(idx, newDate) {
   if (!S.eventMods) S.eventMods = {};
   const key = getEventKey(ev);
 
+  let recalced = [];
   if (ev.auto) {
     // 자동 이벤트 → eventMods 에 실제일 저장
     S.eventMods[key] = { ...(S.eventMods[key] || {}), actualDate: newDate };
+    // Sprint 6: 예방접종이면 이후 회차 자동 재계산
+    if (ev.type === 'vax') {
+      const autoVaxEvs = getAutoEvs(S.children[S.selC]).filter(e => e.type === 'vax');
+      recalced = recalcVaccineSeries(autoVaxEvs, ev.title, newDate);
+    }
   } else {
     // 커스텀 이벤트 → 직접 날짜 변경
     const ce = S.customEvs.find(e => e._id === ev._id);
@@ -119,6 +129,7 @@ function moveEvent(idx, newDate) {
   renderCal();
   if (S.selDate) showDayPanel(S.selDate);
   debounceSave();
+  if (recalced.length) showRecalcNotice(recalced);
 }
 
 /* ══════════════════════════════════════
@@ -139,13 +150,30 @@ export function openEvModal(idx) {
   const hospital = mod.hospital || '';
   const memo     = mod.memo     || ev.note || '';
   const done     = !!mod.done;
+  const isGov    = ev.type === 'gov';
+  const govStatus = mod.govStatus || 'none';
 
   const typeLabel = {
-    req: '★ 필수', rec: '✓ 추천', vax: '💉 접종', custom: '📌 내 일정',
+    req: '★ 필수', rec: '✓ 추천', vax: '💉 접종', gov: '🟢 정부지원', custom: '📌 내 일정',
   }[ev.type] || '';
 
+  const govStatusOptions = [
+    { val: 'none',    label: '신청 전' },
+    { val: 'applied', label: '신청 완료' },
+    { val: 'paid',    label: '지급 완료' },
+  ];
+
   showModal(ev.title, `
-    <div style="font-size:.72rem;font-weight:800;color:var(--txl);margin:-4px 0 14px">${typeLabel}</div>
+    <div style="font-size:.72rem;font-weight:800;color:var(--txl);margin:-4px 0 14px">
+      ${typeLabel}${isGov && ev.imp ? (ev.imp === 'req' ? '<span class="badge-r">필수</span>' : '<span class="badge-o">해당자</span>') : ''}
+    </div>
+
+    ${isGov ? `
+      <div style="background:#F8F4FA;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:.78rem;color:var(--tx);line-height:1.6">
+        ${ev.desc ? `<div>${ev.desc}</div>` : ''}
+        ${(ev.deadlineDate || ev.deadlineNote) ? `<div style="color:#C62828;font-weight:800;margin-top:6px">⏰ 마감: ${ev.deadlineDate || ev.deadlineNote}</div>` : ''}
+        ${ev.link ? `<a href="${ev.link}" target="_blank" rel="noopener" style="display:inline-block;margin-top:6px;color:var(--bl);font-weight:800;text-decoration:underline">🔗 관련 기관 바로가기</a>` : ''}
+      </div>` : ''}
 
     ${ev.auto ? `
       <div class="fg">
@@ -155,31 +183,42 @@ export function openEvModal(idx) {
       </div>` : ''}
 
     <div class="fg">
-      <label>📅 실제 일정</label>
+      <label>${isGov ? '📅 신청 예정일' : '📅 실제 일정'}</label>
       <input type="date" id="evModDate" value="${actDate}">
     </div>
-    <div class="fg">
-      <label>🏥 병원명</label>
-      <input id="evModHospital" placeholder="예) 서울소아과" value="${hospital}">
-    </div>
+    ${!isGov ? `
+      <div class="fg">
+        <label>🏥 병원명</label>
+        <input id="evModHospital" placeholder="예) 서울소아과" value="${hospital}">
+      </div>` : ''}
     <div class="fg">
       <label>📝 메모</label>
       <input id="evModMemo" placeholder="메모 (선택)" value="${memo}">
     </div>
 
-    <div style="display:flex;align-items:center;gap:10px;
-                padding:12px 14px;background:#F0FFF4;border-radius:12px;
-                margin-bottom:14px;cursor:pointer"
-         onclick="document.getElementById('evModDone').click()">
-      <input type="checkbox" id="evModDone"
-             style="width:18px;height:18px;accent-color:var(--mn);cursor:pointer"
-             ${done ? 'checked' : ''}
-             onclick="event.stopPropagation()">
-      <label for="evModDone"
-             style="font-weight:800;font-size:.9rem;cursor:pointer;color:#2E7D32">
-        ✅ 완료로 표시
-      </label>
-    </div>
+    ${isGov ? `
+      <input type="hidden" id="evModGovStatus" value="${govStatus}">
+      <div class="fg">
+        <label>📌 진행 상태</label>
+        <div class="type-row" id="govStatusRow">
+          ${govStatusOptions.map(o => `
+            <button type="button" class="type-btn${o.val === govStatus ? ' on' : ''}"
+                    onclick="setGovStatusRadio('${o.val}')">${o.label}</button>`).join('')}
+        </div>
+      </div>` : `
+      <div style="display:flex;align-items:center;gap:10px;
+                  padding:12px 14px;background:#F0FFF4;border-radius:12px;
+                  margin-bottom:14px;cursor:pointer"
+           onclick="document.getElementById('evModDone').click()">
+        <input type="checkbox" id="evModDone"
+               style="width:18px;height:18px;accent-color:var(--mn);cursor:pointer"
+               ${done ? 'checked' : ''}
+               onclick="event.stopPropagation()">
+        <label for="evModDone"
+               style="font-weight:800;font-size:.9rem;cursor:pointer;color:#2E7D32">
+          ✅ 완료로 표시
+        </label>
+      </div>`}
 
     <button class="btn bpk" onclick="saveEventMod()">💾 저장</button>
     ${!ev.auto ? `
@@ -189,19 +228,32 @@ export function openEvModal(idx) {
   `);
 }
 
+/** Sprint 6: 정부지원 진행 상태 버튼 클릭 */
+export function setGovStatusRadio(val) {
+  const input = document.getElementById('evModGovStatus');
+  if (input) input.value = val;
+  document.querySelectorAll('#govStatusRow .type-btn').forEach(b => {
+    b.classList.toggle('on', b.textContent.trim() === ({ none: '신청 전', applied: '신청 완료', paid: '지급 완료' })[val]);
+  });
+}
+
 /** 수정 내용 저장 */
 export function saveEventMod() {
   const ev = _cachedEvs[_editingIdx];
   if (!ev) { cm(); return; }
 
   if (!S.eventMods) S.eventMods = {};
-  const key       = getEventKey(ev);
+  const key        = getEventKey(ev);
+  const isGov      = ev.type === 'gov';
   const actualDate = document.getElementById('evModDate')?.value    || ev.date;
-  const hospital   = document.getElementById('evModHospital')?.value || '';
+  const hospital   = isGov ? '' : (document.getElementById('evModHospital')?.value || '');
   const memo       = document.getElementById('evModMemo')?.value     || '';
-  const done       = document.getElementById('evModDone')?.checked   || false;
+  const govStatus  = isGov ? (document.getElementById('evModGovStatus')?.value || 'none') : undefined;
+  const done       = isGov ? govStatus === 'paid' : (document.getElementById('evModDone')?.checked || false);
 
-  S.eventMods[key] = { actualDate, hospital, memo, done };
+  S.eventMods[key] = isGov
+    ? { actualDate, hospital, memo, done, govStatus }
+    : { actualDate, hospital, memo, done };
 
   // 커스텀 이벤트는 날짜도 직접 반영
   if (!ev.auto) {
@@ -209,10 +261,38 @@ export function saveEventMod() {
     if (ce) ce.date = actualDate;
   }
 
+  // Sprint 6: 예방접종이면 이후 회차 자동 재계산 (병원 권장 최소 간격 유지)
+  let recalced = [];
+  if (ev.auto && ev.type === 'vax') {
+    const autoVaxEvs = getAutoEvs(S.children[S.selC]).filter(e => e.type === 'vax');
+    recalced = recalcVaccineSeries(autoVaxEvs, ev.title, actualDate);
+  }
+
   cm();
   renderCal();
   if (S.selDate) showDayPanel(S.selDate);
   debounceSave();
+
+  if (recalced.length) showRecalcNotice(recalced);
+}
+
+/** Sprint 6: 예방접종 회차 자동 조정 안내 모달 */
+function showRecalcNotice(changed) {
+  showModal('🔄 이후 접종일 자동 조정', `
+    <p style="font-size:.86rem;line-height:1.7;margin-bottom:12px;color:var(--tx)">
+      실제 접종일 기준으로 이후 일정을 자동 조정했습니다.<br>
+      <span style="font-size:.74rem;color:var(--txl);font-weight:600">(병원 권장 최소 간격은 유지했어요)</span>
+    </p>
+    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
+      ${changed.map(c => `
+        <div style="display:flex;justify-content:space-between;align-items:center;
+                    padding:9px 13px;background:var(--pul);border-radius:11px;
+                    font-size:.8rem;font-weight:800;color:#4A148C">
+          <span>💉 ${c.title}</span><span>📅 ${c.newDate}</span>
+        </div>`).join('')}
+    </div>
+    <button class="btn bpk" onclick="cm()">확인</button>
+  `);
 }
 
 /* ══════════════════════════════════════
@@ -249,9 +329,24 @@ export function onDrop(evt, ds) {
 
 /* ══════════════════════════════════════
  *  드래그앤드롭 — 모바일 (Long Press 500ms)
+ *
+ * Sprint 9 버그 수정: 길게 눌러 드래그하는 도중 스크롤 등 시스템 제스처가 끼어들면
+ * 브라우저가 touchend 대신 touchcancel을 발생시키는데, 기존엔 이 경우를 처리하지
+ * 않아 고스트 요소(.drag-ghost)가 화면에 그대로 남아 마치 일정이 캘린더 셀 밖으로
+ * 삐져나와 중복된 것처럼 보이는 버그가 있었다. touchcancel을 명시적으로 처리해
+ * 고스트를 반드시 제거하고 드래그 상태를 초기화한다.
  * ══════════════════════════════════════ */
 
+/** 드래그 상태 완전 초기화 (고스트 제거 포함) */
+function resetTouchDrag() {
+  clearTimeout(_touchTimer);
+  if (_ghostEl) { _ghostEl.remove(); _ghostEl = null; }
+  _mobileDragging = false;
+  _touchIdx       = null;
+}
+
 export function onTouchStart(evt, idx) {
+  resetTouchDrag(); // 이전에 정리되지 않은 고스트/타이머가 남아있다면 먼저 정리 (안전장치)
   _touchIdx   = idx;
   _touchTimer = setTimeout(() => {
     _mobileDragging = true;
@@ -297,6 +392,15 @@ export function onTouchEnd(evt) {
   _mobileDragging = false;
   _touchIdx       = null;
 }
+
+/** 터치가 취소된 경우(스크롤·전화 알림 등 시스템 제스처 개입) — 이동 없이 상태만 정리 */
+export function onTouchCancel(_evt) {
+  resetTouchDrag();
+}
+
+// 안전장치: 드래그 도중 앱 전환·알림 등으로 화면 포커스를 잃으면 고스트가 남지 않도록 정리
+document.addEventListener('visibilitychange', () => { if (document.hidden) resetTouchDrag(); });
+window.addEventListener('blur', resetTouchDrag);
 
 /* ══════════════════════════════════════
  *  네비게이션
@@ -413,7 +517,9 @@ function cellHTML(ds, d, other, evs, td, th) {
     : '';
 
   const pillsHtml = de.slice(0, 2).map(e => {
-    const icon = e.done ? '✅' : (e.type === 'req' ? '★' : e.type === 'rec' ? '✓' : e.type === 'vax' ? '💉' : '📌');
+    const icon = e.done ? '✅'
+      : e.type === 'gov' ? (e.govStatus === 'applied' ? '🔵' : '🟢')
+      : e.type === 'req' ? '★' : e.type === 'rec' ? '✓' : e.type === 'vax' ? '💉' : '📌';
     const safTitle = e.title.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     return `
       <div class="ev-pill ep-${e.type}${e.done ? ' ev-done' : ''}"
@@ -423,6 +529,7 @@ function cellHTML(ds, d, other, evs, td, th) {
            ontouchstart="onTouchStart(event,${e._idx})"
            ontouchmove="onTouchMove(event)"
            ontouchend="onTouchEnd(event)"
+           ontouchcancel="onTouchCancel(event)"
            onclick="event.stopPropagation();openEvModal(${e._idx})"
            title="${safTitle}">
         ${icon}${e.title.slice(0, 5)}
@@ -486,7 +593,9 @@ function renderWeekView() {
              onmouseover="this.style.background='var(--pkl)'"
              onmouseout="this.style.background='${isTd ? th.cell : 'var(--wh)'}'">
           ${de.slice(0, 1).map(e => {
-            const icon = e.done ? '✅' : (e.type === 'req' ? '★' : e.type === 'rec' ? '✓' : e.type === 'vax' ? '💉' : '📌');
+            const icon = e.done ? '✅'
+              : e.type === 'gov' ? (e.govStatus === 'applied' ? '🔵' : '🟢')
+              : e.type === 'req' ? '★' : e.type === 'rec' ? '✓' : e.type === 'vax' ? '💉' : '📌';
             return `<div class="ev-pill ep-${e.type}${e.done ? ' ev-done' : ''}" style="font-size:.53rem"
                          onclick="event.stopPropagation();openEvModal(${e._idx})">${icon}${e.title.slice(0, 5)}</div>`;
           }).join('')}
@@ -531,20 +640,31 @@ export function showDayPanel(ds) {
 
       ${evs.length
         ? evs.map(e => {
-            const bg  = e.type === 'req' ? '#FFF0F5' : e.type === 'rec' ? '#E0F2F1' : e.type === 'vax' ? '#EDE7F6' : '#E3F2FD';
-            const bc  = e.type === 'req' ? '#F06292' : e.type === 'rec' ? '#4DB6AC' : e.type === 'vax' ? '#9575CD' : '#64B5F6';
-            const lbl = e.type === 'req' ? '★필수'  : e.type === 'rec' ? '추천'    : e.type === 'vax' ? '접종'    : '내일정';
+            const bg  = e.type === 'req' ? '#FFF0F5' : e.type === 'rec' ? '#E0F2F1' : e.type === 'vax' ? '#EDE7F6' : e.type === 'gov' ? '#E8F5E9' : '#E3F2FD';
+            const bc  = e.type === 'req' ? '#F06292' : e.type === 'rec' ? '#4DB6AC' : e.type === 'vax' ? '#9575CD' : e.type === 'gov' ? '#43A047' : '#64B5F6';
+            const govLbl = e.govStatus === 'paid' ? '✅지급완료' : e.govStatus === 'applied' ? '🔵신청완료' : '🟢정부지원';
+            const lbl = e.type === 'req' ? '★필수'  : e.type === 'rec' ? '추천'    : e.type === 'vax' ? '접종'    : e.type === 'gov' ? govLbl : '내일정';
             return `
               <div class="dp-ev${e.done ? ' dp-done' : ''}" style="background:${bg}">
                 <div class="dp-ev-main">
                   <div class="dp-ev-title">
                     ${e.title}
                     ${e.done ? '<span style="color:var(--mn);margin-left:5px">✅</span>' : ''}
+                    ${e.type === 'gov' && e.imp === 'req' ? '<span class="badge-r" style="margin-left:5px">필수</span>' : ''}
+                    ${e.type === 'gov' && e.imp === 'rec' ? '<span class="badge-o" style="margin-left:5px">해당자</span>' : ''}
                   </div>
                   ${e.hospital ? `<div class="dp-ev-note">🏥 ${e.hospital}</div>` : ''}
                   ${e.note     ? `<div class="dp-ev-note">📝 ${e.note}</div>`     : ''}
                   ${e.recDate && e.recDate !== e.date
                     ? `<div class="dp-ev-note" style="color:var(--pu)">🗓 권장일: ${e.recDate}</div>` : ''}
+                  ${e.recalculated
+                    ? `<div class="dp-ev-note" style="color:#7B1FA2;font-weight:800">🔄 실접종일 기준 자동 조정됨</div>` : ''}
+                  ${e.type === 'gov' && e.desc
+                    ? `<div class="dp-ev-note" style="margin-top:4px">${e.desc}</div>` : ''}
+                  ${e.type === 'gov' && (e.deadlineDate || e.deadlineNote)
+                    ? `<div class="dp-ev-note" style="color:#C62828">⏰ 마감: ${e.deadlineDate || e.deadlineNote}</div>` : ''}
+                  ${e.type === 'gov' && e.link
+                    ? `<a href="${e.link}" target="_blank" rel="noopener" style="font-size:.72rem;color:var(--bl);font-weight:800;text-decoration:underline">🔗 관련 기관 바로가기</a>` : ''}
                 </div>
                 <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;flex-shrink:0">
                   <span class="dp-ev-badge" style="background:${bc}">${lbl}</span>
@@ -644,15 +764,29 @@ export function getAutoEvs(child) {
         date: ds, _origDate: ds, title: it.t, type: it.r ? 'req' : 'rec', auto: true,
       }));
     });
+
+    // 정부지원 (임신 중) — Sprint 6
+    govSupportSchedule.preg.forEach(it => {
+      const d = new Date(due);
+      d.setDate(d.getDate() - (40 - it.week) * 7);
+      const ds = d.toISOString().split('T')[0];
+      evs.push({
+        date: ds, _origDate: ds, title: `🟢 ${it.title}`, type: 'gov', auto: true,
+        imp: it.importance, desc: it.desc, link: it.link, deadlineNote: it.deadlineNote || null,
+      });
+    });
   } else {
     const birth = new Date(child.birth);
 
-    // 예방접종
+    // 예방접종 — Sprint 6: 회차별 자동 재계산을 위해 방문(월) 단위 병합 대신
+    // 백신 1종당 1개 이벤트로 생성 (같은 날짜에 여러 개 표시될 수 있음, 캘린더 셀은 +N 배지로 처리됨)
     vaxSched.forEach(v => {
       const d = new Date(birth);
       d.setDate(d.getDate() + v.m * 30.44);
       const ds = d.toISOString().split('T')[0];
-      evs.push({ date: ds, _origDate: ds, title: `💉 ${v.items.join(', ')}`, type: 'vax', auto: true });
+      v.items.forEach(it => evs.push({
+        date: ds, _origDate: ds, title: `💉 ${it}`, type: 'vax', auto: true,
+      }));
     });
 
     // 건강검진 & 마일스톤
@@ -671,6 +805,35 @@ export function getAutoEvs(child) {
       d.setDate(d.getDate() + ev.m * 30.44 + ev.day);
       const ds = d.toISOString().split('T')[0];
       evs.push({ date: ds, _origDate: ds, title: ev.t, type: ev.r ? 'req' : 'rec', auto: true });
+    });
+
+    // 정부지원 (출산 직후) — Sprint 6
+    govSupportSchedule.postpartum.forEach(it => {
+      const d = new Date(birth);
+      d.setDate(d.getDate() + it.day);
+      const ds = d.toISOString().split('T')[0];
+      let deadlineDate = null;
+      if (it.deadlineDay != null) {
+        const dd = new Date(birth);
+        dd.setDate(dd.getDate() + it.deadlineDay);
+        deadlineDate = dd.toISOString().split('T')[0];
+      }
+      evs.push({
+        date: ds, _origDate: ds, title: `🟢 ${it.title}`, type: 'gov', auto: true,
+        imp: it.importance, desc: it.desc, link: it.link,
+        deadlineNote: it.deadlineNote || null, deadlineDate,
+      });
+    });
+
+    // 정부지원 (육아) — Sprint 6
+    govSupportSchedule.parenting.forEach(it => {
+      const d = new Date(birth);
+      d.setDate(d.getDate() + it.month * 30.44);
+      const ds = d.toISOString().split('T')[0];
+      evs.push({
+        date: ds, _origDate: ds, title: `🟢 ${it.title}`, type: 'gov', auto: true,
+        imp: it.importance, desc: it.desc, link: it.link, deadlineNote: it.deadlineNote || null,
+      });
     });
   }
   return evs;
@@ -694,6 +857,7 @@ window.placeSticker        = placeSticker;
 window.removeSticker       = removeSticker;
 window.openEvModal         = openEvModal;
 window.saveEventMod        = saveEventMod;
+window.setGovStatusRadio   = setGovStatusRadio;
 window.onDragStart         = onDragStart;
 window.onDragEnd           = onDragEnd;
 window.onDragOver          = onDragOver;
@@ -702,3 +866,4 @@ window.onDrop              = onDrop;
 window.onTouchStart        = onTouchStart;
 window.onTouchMove         = onTouchMove;
 window.onTouchEnd          = onTouchEnd;
+window.onTouchCancel       = onTouchCancel;

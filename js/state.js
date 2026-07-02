@@ -16,6 +16,7 @@ export function emptyState() {
     dayStickers: {},   // { 'YYYY-MM-DD': [emoji, ...] }
     checks:      {},   // { 'childId_catKey': { itemId: true } }
     eventMods:   {},   // { 'eventKey': { actualDate, hospital, memo, done } }
+    growthRecords: [], // [{ id, childId, date, height, weight, head }] — 성장 기록 (Sprint 4)
     theme:       'rose',
     selC:        0,    // 현재 선택된 아이 인덱스
   };
@@ -34,6 +35,8 @@ export const S = Object.assign(emptyState(), {
   selSCat:  0,           // 선택된 스티커 카테고리 인덱스
   clTab:    0,           // 체크리스트 탭 인덱스
   selClCat: 0,           // 체크리스트 선택된 사이드바 항목
+  growthMetric: 'height', // 성장그래프 탭에서 선택된 지표 ('height'|'weight'|'head')
+  isDemoMode: false,      // Sprint 8: 체험 모드 여부 (로그인 없이 샘플 데이터로 둘러보기)
 });
 
 // 인라인 onclick 에서 S.xxx 직접 접근 가능하도록 window에 노출
@@ -59,6 +62,7 @@ export async function saveState() {
       dayStickers: S.dayStickers,
       checks:      S.checks,
       eventMods:   S.eventMods || {},
+      growthRecords: S.growthRecords || [],
       theme:       S.theme,
       selC:        S.selC,
       updatedAt:   Date.now(),
@@ -113,6 +117,7 @@ export function applyData(data) {
   S.dayStickers = fresh.dayStickers || {};
   S.checks      = fresh.checks      || {};
   S.eventMods   = fresh.eventMods   || {};
+  S.growthRecords = fresh.growthRecords || [];
   S.theme       = fresh.theme       || 'rose';
   // selC 범위 보정
   S.selC = Math.max(0, Math.min(fresh.selC || 0, S.children.length - 1));

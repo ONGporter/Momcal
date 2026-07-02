@@ -33,6 +33,7 @@
   min-height: 80px; border: 1px solid #F5EEF8;
   padding: 6px 4px; cursor: pointer;
   transition: background .14s; position: relative;
+  overflow: hidden; /* Sprint 9: 긴 텍스트·잔여 요소가 옆 셀로 삐져나오지 않도록 */
 }
 .cal-cell:hover        { background: #FFF5FA; }
 .cal-cell.other-month  { opacity: .28; }
@@ -51,10 +52,12 @@
   font-size: .57rem; font-weight: 700;
   margin-bottom: 2px; white-space: nowrap;
   overflow: hidden; text-overflow: ellipsis;
+  max-width: 100%; box-sizing: border-box; /* Sprint 9: 셀 폭을 절대 넘지 않도록 */
 }
 .ep-req    { background: linear-gradient(90deg, #F06292, #E91E63); color: #fff; }
 .ep-rec    { background: linear-gradient(90deg, #4DB6AC, #00897B); color: #fff; }
 .ep-vax    { background: linear-gradient(90deg, #9575CD, #6A1B9A); color: #fff; }
+.ep-gov    { background: linear-gradient(90deg, #66BB6A, #2E7D32); color: #fff; }
 .ep-diary  { background: linear-gradient(90deg, #FFD54F, #FFA000); color: #fff; }
 .ep-custom { background: linear-gradient(90deg, #64B5F6, #1976D2); color: #fff; }
 

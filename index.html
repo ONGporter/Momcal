@@ -11,6 +11,11 @@
 <link rel="stylesheet" href="./css/calendar.css">
 <link rel="stylesheet" href="./css/checklist.css">
 <link rel="stylesheet" href="./css/modal.css">
+<link rel="stylesheet" href="./css/growth.css">
+
+<!-- Chart.js (성장그래프 전용). cdnjs가 막히는 네트워크 환경 대비 jsDelivr 폴백 포함 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"
+        onerror="this.onerror=null;var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js';document.head.appendChild(s);"></script>
 
 <!-- JS 앱 진입점 (type="module" → 모든 import/export 사용 가능) -->
 <script type="module" src="./js/app.js"></script>
@@ -60,7 +65,15 @@
     </button>
 
     <div class="auth-loading" id="authLoading">처리 중...</div>
+
+    <button class="btn-demo" onclick="startDemoMode()">🎬 로그인 없이 체험하기</button>
   </div>
+</div>
+
+<!-- 체험 모드 안내 배너 -->
+<div class="demo-banner" id="demoBanner">
+  🎬 체험 모드로 둘러보는 중이에요 — 입력한 내용은 저장되지 않아요
+  <button onclick="exitDemoMode()">체험 종료</button>
 </div>
 
 <!-- ════════════════════════════════════
@@ -73,6 +86,7 @@
     <button class="np"    onclick="gp('register',this)">+ 등록</button>
     <button class="np"    onclick="gp('calendar',this)">📅 캘린더</button>
     <button class="np"    onclick="gp('checklist',this)">✅ 체크리스트</button>
+    <button class="np"    onclick="gp('growth',this)">📈 성장</button>
   </nav>
   <button class="user-chip" id="userChip" onclick="toggleUserMenu()" style="position:relative">
     <span class="user-avatar" id="userAvatar">?</span>
@@ -107,32 +121,8 @@
   <div class="sec">👨‍👩‍👧 우리 가족</div>
   <div class="profile-strip" id="homeProfiles"></div>
 
-  <div class="sec">📋 오늘의 일정</div>
-  <div class="today-strip" id="homeTodayEvs">
-    <p style="color:var(--txl);font-size:.84rem;text-align:center;padding:12px">아이를 등록하면 오늘 일정이 나타나요!</p>
-  </div>
-
-  <div class="divider"></div>
-
-  <div class="sec">빠른 이동</div>
-  <div class="qm-grid">
-    <div class="qm-card" onclick="gp('calendar',document.querySelectorAll('.np')[2])">
-      <div class="qm-icon" style="background:linear-gradient(135deg,#FCE4EC,#E8D5F5)">📅</div>
-      <div><div class="qm-title">캘린더</div><div class="qm-sub">일정 &amp; 스티커 꾸미기</div></div>
-    </div>
-    <div class="qm-card" onclick="gp('checklist',document.querySelectorAll('.np')[3])">
-      <div class="qm-icon" style="background:linear-gradient(135deg,#E0F2F1,#C8E6C9)">✅</div>
-      <div><div class="qm-title">체크리스트</div><div class="qm-sub">단계별 할 일 확인</div></div>
-    </div>
-    <div class="qm-card" onclick="gp('register',document.querySelectorAll('.np')[1])">
-      <div class="qm-icon" style="background:linear-gradient(135deg,#FFF9C4,#FFE0B2)">👶</div>
-      <div><div class="qm-title">아이 등록</div><div class="qm-sub">임신·육아 프로필</div></div>
-    </div>
-    <div class="qm-card" onclick="showModal('💕 맘캘 사용법','<div style=\'line-height:2;font-size:.87rem\'><b>1️⃣ 아이/임신 등록</b><br>+ 등록 탭에서 아이 정보를 입력해요<br><b>2️⃣ 캘린더 자동 생성</b><br>예방접종·검진·이유식 일정이 자동으로 채워져요<br><b>3️⃣ 체크리스트</b><br>임신/육아/이유식 단계별 할 일을 체크해요<br><b>4️⃣ 스티커 꾸미기</b><br>캘린더 날짜에 귀여운 스티커를 붙여보세요 🎀<br><br>✅ <b>데이터는 Firebase에 자동 저장</b>돼요!</div>')">
-      <div class="qm-icon" style="background:linear-gradient(135deg,#EDE7F6,#E3F2FD)">💡</div>
-      <div><div class="qm-title">사용 가이드</div><div class="qm-sub">맘캘 시작하기</div></div>
-    </div>
-  </div>
+  <div class="sec">✨ 오늘의 대시보드</div>
+  <div class="dash-grid" id="dashGrid"></div>
 </div>
 
 <!-- ════════════════════════════════════
@@ -245,7 +235,7 @@
 
   <!-- 범례 -->
   <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:14px;font-size:.7rem;font-weight:700;color:var(--txl)">
-    <span>🔴 필수</span><span>🟢 추천·이유식</span><span>🟣 접종</span><span>🔵 내일정</span>
+    <span>🔴 필수</span><span>🟢 추천·이유식</span><span>🟣 접종</span><span>🟩 정부지원</span><span>🔵 내일정</span>
   </div>
 </div>
 
@@ -271,6 +261,36 @@
     </div>
     <div class="cl-main" id="clMain"></div>
   </div>
+</div>
+
+<!-- ════════════════════════════════════
+     GROWTH PAGE (Sprint 5)
+════════════════════════════════════ -->
+<div id="pg-growth" class="pg">
+  <div style="display:flex;gap:7px;margin-bottom:14px;align-items:center;flex-wrap:wrap">
+    <span style="font-size:.72rem;font-weight:800;color:var(--txl)">아이:</span>
+    <select id="growthChildSel"
+            onchange="switchGrowthChild(this.value)"
+            style="padding:7px 12px;border:1.5px solid #EEE0F0;border-radius:11px;
+                   font-family:inherit;font-size:.81rem;color:var(--tx);outline:none;
+                   background:var(--wh);box-shadow:0 2px 7px rgba(160,80,140,.07)"></select>
+  </div>
+
+  <div id="growthEmptyMsg"></div>
+
+  <div class="growth-pct-grid" id="growthSummaryGrid"></div>
+
+  <div class="growth-chart-card" id="growthChartWrap">
+    <div class="cal-view-toggle" id="growthMetricToggle"></div>
+    <div style="position:relative;height:220px">
+      <canvas id="growthChartCanvas"></canvas>
+    </div>
+    <div class="growth-disclaimer">📌 실선은 우리 아이, 점선은 또래 평균(P50)·상위 10%(P90)·하위 10%(P10) 참고선이에요. 그래프와 백분위는 참고용 추정치이며 의학적 진단이 아닙니다. 정확한 발달 평가는 소아과 영유아 건강검진을 따라주세요.</div>
+  </div>
+
+  <div class="sec" style="margin-top:18px">📋 기록 목록</div>
+  <div id="growthRecordList"></div>
+  <button class="btn bpk" style="margin-top:10px" onclick="openGrowthModal()">＋ 성장 기록 추가</button>
 </div>
 
 <!-- ════════════════════════════════════

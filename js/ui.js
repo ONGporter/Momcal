@@ -3,11 +3,13 @@
  * 홈 화면, 등록 기능, 네비게이션
  */
 
-import { S, debounceSave } from './state.js';
-import { ageFmt }          from './utils.js';
-import { showModal }       from './modal.js';
-import { getAutoEvs }      from './calendar.js';
-import { today }           from './utils.js';
+import { S, debounceSave }       from './state.js';
+import { ageFmt, ageD, today }   from './utils.js';
+import { showModal }             from './modal.js';
+import { getAllEvs }             from './calendar.js';
+import { getTodayCategoryInfo }  from './checklist.js';
+import { getLatestGrowth }       from './growth.js';
+import { getDailyTip }           from '../data/tips.js';
 
 /* ════════════════════════════════════
  *  네비게이션
@@ -29,6 +31,7 @@ export function gp(id, btn) {
     home:      () => renderHome(),
     calendar:  () => { window.renderCal(); window.renderStickerPicker(); },
     checklist: () => window.renderChecklist(),
+    growth:    () => window.renderGrowthPage(),
     register:  () => renderRegList(),
   };
   pageRender[id]?.();
@@ -38,6 +41,8 @@ export function gp(id, btn) {
  *  홈 화면
  * ════════════════════════════════════ */
 export function renderHome() {
+  renderDashboard();
+
   // 프로필 카드
   const ps = document.getElementById('homeProfiles');
   ps.innerHTML = S.children.map((c, i) => `
@@ -48,27 +53,120 @@ export function renderHome() {
       <span class="pst ${c.stage === 'preg' ? 'st-preg' : 'st-born'}">${c.stage === 'preg' ? '임신중' : '육아중'}</span>
     </div>`
   ).join('') + `<div class="add-pcard" onclick="gp('register',document.querySelectorAll('.np')[1])"><span>＋</span><p>등록하기</p></div>`;
+}
 
-  // 오늘 일정
-  const te = document.getElementById('homeTodayEvs');
-  if (!S.children.length) {
-    te.innerHTML = '<p style="color:var(--txl);font-size:.84rem;text-align:center;padding:12px">아이를 등록하면 오늘 일정이 나타나요!</p>';
+/* ════════════════════════════════════
+ *  홈 대시보드 (Sprint 4)
+ *  오늘 상태를 한눈에: 아이 나이·다음 일정·체크리스트·성장·최근 접종·육아 팁
+ * ════════════════════════════════════ */
+export function renderDashboard() {
+  const el = document.getElementById('dashGrid');
+  if (!el) return;
+
+  const child = S.children[S.selC];
+  if (!child) {
+    el.innerHTML = `
+      <div class="dash-card dash-empty" onclick="gp('register',document.querySelectorAll('.np')[1])">
+        <div class="dash-icon" style="background:var(--pkl)">👶</div>
+        <div class="dash-label">아직 등록된 아이가 없어요</div>
+        <div class="dash-value" style="font-size:.78rem;color:var(--pk)">＋ 지금 등록하기</div>
+      </div>`;
     return;
   }
+
+  el.innerHTML = [
+    dashAgeCard(child),
+    dashNextEventCard(child),
+    dashChecklistCard(child),
+    dashGrowthCard(child),
+    dashVaxCard(child),
+    dashTipCard(),
+  ].join('');
+}
+
+/** 👶 오늘 며칠째 / 몇 주차 */
+function dashAgeCard(child) {
+  if (child.stage === 'preg') {
+    const week = parseInt(child.week) || 0;
+    const left = Math.max(0, 40 - week);
+    return dashCard('🤰', 'var(--pul)', '임신 주차', `${week}주차`, `출산까지 약 ${left}주`);
+  }
+  const d = ageD(child.birth);
+  const m = Math.floor(d / 30.44);
+  return dashCard('👶', 'var(--pkl)', `${child.name} 오늘`, `${d}일째`, m >= 1 ? `${m}개월` : '신생아');
+}
+
+/** 📅 다음 일정 */
+function dashNextEventCard(child) {
   const todayStr = today();
-  const evs = getAutoEvs(S.children[S.selC]).filter(e => e.date === todayStr).slice(0, 5);
-  te.innerHTML = evs.length
-    ? evs.map(e => {
-        const bg  = e.type === 'req' ? '#FFF0F5' : e.type === 'rec' ? '#E0F2F1' : e.type === 'vax' ? '#EDE7F6' : '#E3F2FD';
-        const dc  = e.type === 'req' ? '#F06292' : e.type === 'rec' ? '#4DB6AC' : e.type === 'vax' ? '#9575CD' : '#64B5F6';
-        const lbl = e.type === 'req' ? '★필수'  : e.type === 'rec' ? '추천'    : e.type === 'vax' ? '접종'    : '일정';
-        return `<div class="today-ev" style="background:${bg}">
-                  <div class="tev-dot" style="background:${dc}"></div>
-                  <div class="tev-text">${e.title}</div>
-                  <span class="tev-badge" style="background:${dc}">${lbl}</span>
-                </div>`;
-      }).join('')
-    : '<p style="color:var(--txl);font-size:.84rem;text-align:center;padding:12px">오늘은 등록된 일정이 없어요 🌟</p>';
+  const upcoming = getAllEvs()
+    .filter(e => e.date >= todayStr && !e.done)
+    .sort((a, b) => a.date < b.date ? -1 : 1)[0];
+
+  if (!upcoming) {
+    return dashCard('📅', 'var(--bll)', '다음 일정', '예정된 일정 없음', '캘린더에서 추가해보세요', "gp('calendar',document.querySelectorAll('.np')[2])");
+  }
+  const days = Math.round((new Date(upcoming.date) - new Date(todayStr)) / 86400000);
+  const dLabel = days === 0 ? '오늘' : `${days}일 후`;
+  return dashCard('📅', 'var(--bll)', '다음 일정', upcoming.title.replace(/^\d{2}:\d{2}\s/, ''), dLabel, "gp('calendar',document.querySelectorAll('.np')[2])");
+}
+
+/** 📋 오늘 체크리스트 진행 */
+function dashChecklistCard(child) {
+  const info = getTodayCategoryInfo(child);
+  if (!info) {
+    return dashCard('📋', 'var(--mnl)', '체크리스트', '-', '', "gp('checklist',document.querySelectorAll('.np')[3])");
+  }
+  return dashCard('📋', 'var(--mnl)', info.cat.label, `${info.doneTotal} / ${info.itemsTotal} 완료`, '', "gp('checklist',document.querySelectorAll('.np')[3])");
+}
+
+/** 📈 성장 기록 */
+function dashGrowthCard(child) {
+  const { latest, prev } = getLatestGrowth(child.id);
+  if (!latest) {
+    return dashCard('📈', 'var(--yll)', '성장 기록', '아직 기록 없어요', '탭해서 첫 기록 남기기', 'openGrowthModal()');
+  }
+  const parts = [];
+  if (latest.height != null) {
+    const d = prev?.height != null ? latest.height - prev.height : null;
+    parts.push(`키 ${latest.height}cm${d != null ? ` (${d >= 0 ? '+' : ''}${d.toFixed(1)})` : ''}`);
+  }
+  if (latest.weight != null) {
+    const d = prev?.weight != null ? latest.weight - prev.weight : null;
+    parts.push(`몸무게 ${latest.weight}kg${d != null ? ` (${d >= 0 ? '+' : ''}${d.toFixed(1)})` : ''}`);
+  }
+  return dashCard('📈', 'var(--yll)', '성장 기록', parts[0] || '-', parts[1] || `${latest.date} 기록`, 'openGrowthModal()');
+}
+
+/** 💉 최근 접종 */
+function dashVaxCard(child) {
+  const todayStr = today();
+  const recent = getAllEvs()
+    .filter(e => e.type === 'vax' && e.done && e.date <= todayStr)
+    .sort((a, b) => a.date > b.date ? -1 : 1)[0];
+
+  if (!recent) {
+    return dashCard('💉', 'var(--pul)', '최근 접종', '완료 기록 없음', '캘린더에서 완료 체크하기', "gp('calendar',document.querySelectorAll('.np')[2])");
+  }
+  return dashCard('💉', 'var(--pul)', '최근 접종', recent.title.replace(/^💉\s*/, ''), `${recent.date} 완료`, "gp('calendar',document.querySelectorAll('.np')[2])");
+}
+
+/** ⭐ 오늘의 육아 팁 */
+function dashTipCard() {
+  return dashCard('⭐', 'var(--pkl)', '오늘의 육아 팁', getDailyTip(), '', '', true);
+}
+
+/** 대시보드 카드 공통 HTML */
+function dashCard(icon, bg, label, value, sub, onclick, isTip) {
+  return `
+    <div class="dash-card${isTip ? ' dash-tip' : ''}" ${onclick ? `onclick="${onclick}"` : ''}>
+      <div class="dash-icon" style="background:${bg}">${icon}</div>
+      <div class="dash-body">
+        <div class="dash-label">${label}</div>
+        <div class="dash-value${isTip ? ' dash-tip-text' : ''}">${value}</div>
+        ${sub ? `<div class="dash-sub">${sub}</div>` : ''}
+      </div>
+    </div>`;
 }
 
 /* ════════════════════════════════════
@@ -151,8 +249,9 @@ export function deleteChild(i) {
 }
 
 // window 노출
-window.gp          = gp;
-window.renderHome  = renderHome;
+window.gp               = gp;
+window.renderHome       = renderHome;
+window.renderDashboard  = renderDashboard;
 window.setRStage   = setRStage;
 window.sg          = sg;
 window.regChild    = regChild;

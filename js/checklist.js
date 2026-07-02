@@ -1,32 +1,48 @@
 /**
- * js/checklist.js — Sprint 3 업데이트
+ * js/checklist.js — Sprint 7 버그 수정
  * 체크리스트 렌더링 및 항목 토글
  *
- * Bug #6 fix: tgCk에서 renderClMain을 먼저 호출하여 체크박스 시각 즉시 반영 후
- *             renderClSidebar로 퍼센트 업데이트
+ * Sprint 7 버그 수정:
+ * 1. 사이드바 카테고리 클릭 시 renderClSidebar()를 호출하도록 수정
+ *    (기존엔 renderClMain()만 호출해 선택된 카테고리 하이라이트 색이 바뀌지 않았음 —
+ *     체크리스트 항목을 체크해야만(renderClSidebar 트리거) 색이 바뀌는 것처럼 보였던 버그)
+ * 2. 진행률 0~49% 구간을 회색으로 표시 (기존엔 항상 녹색)
+ * 3. calcScore 공식 수정 — 필수 100% 달성 전에는 선택 항목이 점수에 전혀 반영되지 않도록 변경
+ * 4. 선택 항목까지 모두 완료 시 최대 200%까지 오르도록 변경 (기존 150% → 200%)
+ * 5. tgCk에서 renderClMain()을 두 번 호출하던 것을 renderClSidebar() 한 번으로 통합
+ *    (배지 애니메이션이 두 번 재생되어 깜빡임이 2회로 보이던 버그 수정)
  *
  * Sprint 3 추가:
  * - 임신 주차별 세분화: 9개 주차 범위 카테고리 (4~7주 / 8~11주 / ... / 36~40주)
  * - 월령 자동 선택: 현재 임신 주차·아이 월령에 맞는 카테고리 자동 이동
  * - 컨텍스트 배너: 현재 주차·분기 또는 월령 표시
- * - 진행률 티어 시스템:
- *     100% = 필수 완료 → Perfect 🏅 (금색)
- *     120% = 필수 완료 + 선택 40% → Master 👑 (보라)
- *     150% = 필수 + 선택 모두 완료 → Legend 🌈 (레인보우)
+ * - 진행률 티어 시스템 (Sprint 7 기준):
+ *     필수 미완료 = 회색 %, 배지 없음
+ *     100% = 필수 완료(선택 0개) → Perfect 🏅 (금색)
+ *     100~199% = 필수 완료 + 선택 일부 → Master 👑 (보라)
+ *     200% = 필수 + 선택 모두 완료 → Legend 🌈 (레인보우)
  */
 
 import { S, debounceSave } from './state.js';
 import { clData }          from '../data/checklist-data.js';
+import { renderGovChecklistTab } from './govSupport.js';
 
 /* ────────────────────────────────────
  *  점수 계산 유틸
  * ──────────────────────────────────── */
 
 /**
- * 점수 계산 — 0~150%
- * base (필수 100%) + bonus (선택 50%)
+ * 점수 계산 — 0~200%
+ * 필수 항목을 100% 채우기 전에는 선택 항목이 점수에 전혀 반영되지 않는다.
+ * 필수 100% 달성 후에만 선택 완료율(0~100%)이 그대로 보너스로 더해진다.
+ *   예) 필수 4개·선택 2개 중 필수 3개+선택 1개 완료 → 75% (선택 무시)
+ *       필수 4개 모두 완료 (선택 0개) → 100%
+ *       필수 4개 모두 완료 + 선택 1개 → 150%
+ *       필수 4개 모두 완료 + 선택 2개 모두 → 200%
+ * 매번 현재 checks 상태로부터 처음부터 다시 계산하므로, 체크 순서나
+ * 체크/해제 이력과 무관하게 항상 "지금 체크된 항목"만 기준으로 정확한 값이 나온다.
  */
-function calcScore(cat, checks) {
+export function calcScore(cat, checks) {
   const reqItems = cat.items.filter(it => it.r);
   const optItems = cat.items.filter(it => !it.r);
   const reqDone  = reqItems.filter(it => checks[it.id]).length;
@@ -35,10 +51,11 @@ function calcScore(cat, checks) {
   const optTotal = optItems.length;
 
   const basePct  = reqTotal ? Math.round(reqDone / reqTotal * 100) : 100;
-  const bonusPct = optTotal ? Math.round(optDone / optTotal * 50)  : 0;
+  const bonusPct = basePct >= 100 && optTotal ? Math.round(optDone / optTotal * 100) : 0;
+
   return {
-    score:    basePct + bonusPct,   // 0~150
-    basePct,                         // 0~100 (필수만)
+    score:    Math.min(200, basePct + bonusPct), // 0~200
+    basePct,                                      // 0~100 (필수만)
     optDone,
     optTotal,
     reqDone,
@@ -46,12 +63,12 @@ function calcScore(cat, checks) {
   };
 }
 
-/** 점수 → 티어 */
-function getTier(score) {
-  if (score >= 150) return 'legend';
-  if (score >= 120) return 'master';
-  if (score >= 100) return 'perfect';
-  return null;
+/** 점수 → 티어 (필수/선택 완료 개수 기준 — score 임계값이 아닌 실제 완료 여부로 판단) */
+function getTier(reqDone, reqTotal, optDone, optTotal) {
+  if (reqTotal > 0 && reqDone < reqTotal) return null; // 필수 미완료
+  if (optTotal === 0 || optDone === 0)    return 'perfect'; // 필수만 100%
+  if (optDone === optTotal)               return 'legend';  // 필수+선택 모두 완료
+  return 'master';                                            // 필수 100% + 선택 일부
 }
 
 /* ────────────────────────────────────
@@ -68,8 +85,8 @@ export function renderChecklist() {
   const child   = S.children[S.selC];
   const tabDefs = child
     ? (child.stage === 'preg'
-        ? [{ label: '🤰 임신 체크', key: 'preg' }, { label: '📦 출산 준비물', key: 'prep' }]
-        : [{ label: '👶 육아 체크', key: 'born' }, { label: '🥣 이유식', key: 'food' }])
+        ? [{ label: '🤰 임신 체크', key: 'preg' }, { label: '📦 출산 준비물', key: 'prep' }, { label: '🟢 정부지원', key: 'gov' }]
+        : [{ label: '👶 육아 체크', key: 'born' }, { label: '🥣 이유식', key: 'food' }, { label: '🟢 정부지원', key: 'gov' }])
     : [];
 
   // Sprint 3: 현재 주차/월령에 맞는 카테고리 자동 선택
@@ -137,6 +154,56 @@ function autoSelectCat(child) {
 }
 
 /* ────────────────────────────────────
+ *  Sprint 4: 홈 대시보드용 — 오늘에 해당하는 카테고리 조회 (읽기 전용)
+ *  autoSelectCat과 동일한 매핑 로직을 사용하지만 S.selClCat/S.clTab을
+ *  변경하지 않아 체크리스트 페이지의 현재 선택 상태에 영향을 주지 않습니다.
+ * ──────────────────────────────────── */
+export function getTodayCategoryInfo(child) {
+  if (!child) return null;
+
+  const cats = child.stage === 'preg'
+    ? clData.preg.filter(c => c.key !== 'preg_prep')
+    : clData.born;
+  if (!cats.length) return null;
+
+  let idx = 0;
+  if (child.stage === 'preg' && child.week) {
+    const week = parseInt(child.week) || 1;
+    const weekKey =
+      week <= 7  ? 'preg_w04' :
+      week <= 11 ? 'preg_w08' :
+      week <= 15 ? 'preg_w12' :
+      week <= 19 ? 'preg_w16' :
+      week <= 23 ? 'preg_w20' :
+      week <= 27 ? 'preg_w24' :
+      week <= 31 ? 'preg_w28' :
+      week <= 35 ? 'preg_w32' :
+                   'preg_w36';
+    const found = cats.findIndex(c => c.key === weekKey);
+    if (found >= 0) idx = found;
+  } else if (child.stage === 'born' && child.birth) {
+    const ageMonths = Math.floor(
+      (Date.now() - new Date(child.birth).getTime()) / (30.44 * 24 * 60 * 60 * 1000)
+    );
+    const milestones = [0, 2, 4, 6, 9, 12, 18, 24, 36];
+    for (let i = 0; i < milestones.length; i++) {
+      if (ageMonths >= milestones[i]) idx = i;
+    }
+    idx = Math.min(idx, cats.length - 1);
+  }
+
+  const cat = cats[idx];
+  const key = `${child.id}_${cat.key}`;
+  const checks = S.checks[key] || {};
+  const { reqDone, reqTotal, optDone, optTotal } = calcScore(cat, checks);
+  return {
+    cat, reqDone, reqTotal, optDone, optTotal,
+    doneTotal:  reqDone + optDone,
+    itemsTotal: cat.items.length,
+  };
+}
+
+/* ────────────────────────────────────
  *  현재 주차/월령 컨텍스트 배너
  * ──────────────────────────────────── */
 function renderContextBanner(child) {
@@ -175,11 +242,13 @@ export function getCats() {
   if (!child) return [];
   const tab = S.clTab || 0;
   if (child.stage === 'preg') {
-    return tab === 0
-      ? clData.preg.filter(c => c.key !== 'preg_prep')
-      : clData.preg.filter(c => c.key === 'preg_prep');
+    if (tab === 0) return clData.preg.filter(c => c.key !== 'preg_prep');
+    if (tab === 1) return clData.preg.filter(c => c.key === 'preg_prep');
+    return []; // tab 2 = 🟢 정부지원 (getCats 대상 아님, renderGovChecklistTab 에서 별도 렌더링)
   }
-  return tab === 0 ? clData.born : clData.food;
+  if (tab === 0) return clData.born;
+  if (tab === 1) return clData.food;
+  return []; // tab 2 = 🟢 정부지원
 }
 
 /* ────────────────────────────────────
@@ -194,6 +263,12 @@ export function renderClSidebar() {
     return;
   }
 
+  // Sprint 6: 정부지원 탭(항상 마지막, index 2)은 별도 모듈에서 렌더링
+  if ((S.clTab || 0) === 2) {
+    renderGovChecklistTab(child);
+    return;
+  }
+
   const cats = getCats();
   if (S.selClCat >= cats.length) S.selClCat = 0;
 
@@ -201,8 +276,8 @@ export function renderClSidebar() {
     const key = `${child.id}_${cat.key}`;
     if (!S.checks[key]) S.checks[key] = {};
 
-    const { score, basePct } = calcScore(cat, S.checks[key]);
-    const tier = getTier(score);
+    const { score, basePct, reqDone, reqTotal, optDone, optTotal } = calcScore(cat, S.checks[key]);
+    const tier = getTier(reqDone, reqTotal, optDone, optTotal);
 
     let pctHtml;
     if (tier === 'legend') {
@@ -212,11 +287,12 @@ export function renderClSidebar() {
     } else if (tier === 'perfect') {
       pctHtml = `<span class="cl-sb-pct cl-sb-perfect">🏅 100%</span>`;
     } else {
-      pctHtml = `<span class="cl-sb-pct">${basePct}%</span>`;
+      // Bug fix: 0~49% 구간은 회색으로 표시 (기존엔 항상 녹색이었음)
+      pctHtml = `<span class="cl-sb-pct${basePct < 50 ? ' cl-sb-low' : ''}">${basePct}%</span>`;
     }
 
     return `<div class="cl-sb-item ${i === S.selClCat ? 'on' : ''}"
-                 onclick="S.selClCat=${i};renderClMain()">
+                 onclick="S.selClCat=${i};renderClSidebar()">
               <span>${cat.label}</span>
               ${pctHtml}
             </div>`;
@@ -243,7 +319,7 @@ export function renderClMain() {
   if (!S.checks[key]) S.checks[key] = {};
 
   const { score, basePct, optDone, optTotal, reqDone, reqTotal } = calcScore(cat, S.checks[key]);
-  const tier = getTier(score);
+  const tier = getTier(reqDone, reqTotal, optDone, optTotal);
 
   // ── 배지 & 상태 텍스트 ──
   let badgeHtml;
@@ -254,7 +330,7 @@ export function renderClMain() {
   } else if (tier === 'perfect') {
     badgeHtml = `<div class="cl-badge cl-badge-perfect">🏅 Perfect — 필수 100%</div>`;
   } else {
-    badgeHtml = `<span class="cl-status">필수 ${reqDone}/${reqTotal}${optDone > 0 ? ` · 선택 +${optDone}` : ''}</span>`;
+    badgeHtml = `<span class="cl-status${basePct < 50 ? ' cl-status-low' : ''}">필수 ${reqDone}/${reqTotal}</span>`;
   }
 
   // ── 진행률 바 색상 ──
@@ -269,10 +345,12 @@ export function renderClMain() {
     <div class="progress-bar">
       <div class="progress-fill${barClass ? ' ' + barClass : ''}" style="width:${barWidth}%"></div>
     </div>
-    ${tier ? '' : (optDone > 0
-      ? `<div style="font-size:.68rem;color:#5B4FCF;font-weight:700;margin:-10px 0 14px">🌟 선택 항목 ${optDone}개 완료 — Master까지 ${120 - score}%!</div>`
-      : `<div style="font-size:.68rem;color:var(--txl);font-weight:700;margin:-10px 0 14px">필수 완료 시 🏅 Perfect 배지 획득!</div>`
-    )}
+    ${tier === null
+      ? `<div style="font-size:.68rem;color:var(--txl);font-weight:700;margin:-10px 0 14px">필수 항목을 먼저 모두 체크하면 선택 항목이 점수에 반영돼요 (필수 완료 시 🏅 Perfect 배지 획득!)</div>`
+      : tier === 'perfect' && optTotal > 0
+      ? `<div style="font-size:.68rem;color:#5B4FCF;font-weight:700;margin:-10px 0 14px">🌟 선택 항목까지 체크하면 최대 200%까지 올라가요!</div>`
+      : ''
+    }
     ${cat.items.map(it => `
       <div class="ci ${S.checks[key][it.id] ? 'done' : ''}" onclick="tgCk('${key}','${it.id}')">
         <div class="ci-box"></div>
@@ -286,15 +364,15 @@ export function renderClMain() {
 }
 
 /**
- * 체크 토글 (Bug #6 fix)
- * renderClMain() 먼저 → 체크박스 즉시 시각 반영
- * 이후 renderClSidebar() → 사이드바 % 업데이트
+ * 체크 토글
+ * Bug fix: 기존엔 renderClMain()을 먼저 호출한 뒤 renderClSidebar()가 내부에서
+ * renderClMain()을 또 호출해 메인 영역이 두 번 렌더링되어 배지가 두 번 깜빡였음.
+ * renderClSidebar() 한 번만 호출하면 사이드바 %와 메인 화면이 함께 정확히 갱신된다.
  */
 export function tgCk(key, id) {
   if (!S.checks[key]) S.checks[key] = {};
   S.checks[key][id] = !S.checks[key][id];
-  renderClMain();     // 즉시 시각 업데이트
-  renderClSidebar();  // 사이드바 % 업데이트
+  renderClSidebar();  // 사이드바 % + 메인 화면(1회) 갱신
   debounceSave();
 }
 

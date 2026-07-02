@@ -51,6 +51,32 @@
 
 .auth-loading { display: none; font-size: .78rem; color: var(--txl); margin-top: 14px; }
 
+/* ── Sprint 8: 체험하기(데모 모드) ── */
+.btn-demo {
+  width: 100%; padding: 11px; border-radius: 13px;
+  border: 1.5px dashed var(--pk); background: var(--pkl);
+  cursor: pointer; font-family: inherit; font-weight: 800;
+  font-size: .8rem; color: var(--pkd); margin-top: 12px; transition: all .2s;
+}
+.btn-demo:hover { background: #FCE4EC; }
+
+.demo-banner {
+  display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 500;
+  background: linear-gradient(90deg, #F06292, #9C27B0);
+  color: #fff; text-align: center; padding: 8px 14px;
+  font-size: .74rem; font-weight: 800;
+  align-items: center; justify-content: center; gap: 10px;
+}
+.demo-banner.show { display: flex; }
+.demo-banner button {
+  background: rgba(255,255,255,.25); border: 1px solid rgba(255,255,255,.5);
+  color: #fff; border-radius: 20px; padding: 3px 11px;
+  font-size: .68rem; font-weight: 800; cursor: pointer; font-family: inherit;
+}
+.demo-banner button:hover { background: rgba(255,255,255,.4); }
+body.demo-active .topbar { top: 36px; }
+body.demo-active #authScreen { padding-top: 36px; }
+
 /* ── USER CHIP (TOPBAR) ── */
 .user-chip {
   display: flex; align-items: center; gap: 7px;

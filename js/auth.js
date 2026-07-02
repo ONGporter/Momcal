@@ -8,6 +8,7 @@ import {
   signInWithEmailAndPassword, createUserWithEmailAndPassword,
   signInWithPopup, signOut, updateProfile,
 } from './firebase.js';
+import { S } from './state.js';
 
 /* ── 로그인/회원가입 탭 전환 ── */
 let authMode = 'login'; // 'login' | 'signup'
@@ -75,6 +76,7 @@ export async function signInGoogle() {
 
 /* ── 로그아웃 ── */
 export async function doSignOut() {
+  if (S.isDemoMode) { window.exitDemoMode?.(); return; } // Sprint 8: 체험 모드는 Firebase 없이 종료
   await signOut(auth);
   toggleUserMenu(false);
 }

@@ -163,6 +163,37 @@ body {
 .tev-text    { flex: 1; font-weight: 700; font-size: .82rem; color: var(--tx); }
 .tev-badge   { font-size: .62rem; font-weight: 800; padding: 3px 8px; border-radius: 10px; color: #fff; flex-shrink: 0; }
 
+/* ── HOME DASHBOARD (Sprint 4) ── */
+.dash-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 12px; margin-bottom: 22px;
+}
+.dash-card {
+  background: var(--card); border-radius: 18px; padding: 15px 16px;
+  box-shadow: var(--card-shadow); cursor: pointer;
+  transition: all .22s; display: flex; align-items: flex-start; gap: 12px;
+  min-height: 76px;
+}
+.dash-card:not([onclick]) { cursor: default; }
+.dash-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(180,80,160,.16); }
+.dash-icon {
+  width: 40px; height: 40px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem; flex-shrink: 0;
+}
+.dash-body   { min-width: 0; flex: 1; }
+.dash-label  { font-size: .68rem; font-weight: 800; color: var(--txl); margin-bottom: 3px; text-transform: uppercase; letter-spacing: .03em; }
+.dash-value  { font-size: .87rem; font-weight: 900; color: var(--tx); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dash-sub    { font-size: .68rem; color: var(--pk); font-weight: 700; margin-top: 2px; }
+.dash-tip .dash-value,
+.dash-tip-text { font-size: .78rem; font-weight: 700; color: var(--tx); white-space: normal; line-height: 1.4; }
+.dash-tip { grid-column: 1 / -1; }
+.dash-empty { grid-column: 1 / -1; flex-direction: column; align-items: center; text-align: center; gap: 6px; }
+
+@media (max-width: 640px) {
+  .dash-grid { grid-template-columns: 1fr 1fr; }
+}
+
 /* ── QUICK MENU ── */
 .qm-grid {
   display: grid; grid-template-columns: 1fr 1fr;
