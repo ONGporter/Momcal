@@ -11,6 +11,8 @@ import { getTodayCategoryInfo }  from './checklist.js';
 import { getLatestGrowth }       from './growth.js';
 import { getDailyTip }           from '../data/tips.js';
 import { renderPwaInstallLink }  from './pwaInstall.js';
+import { renderFamilyShareLink } from './familyShare.js';
+import { renderAdSlot }          from './adSlot.js';
 
 /* ════════════════════════════════════
  *  네비게이션
@@ -57,6 +59,8 @@ export function renderHome() {
 
   // 홈 화면 추가(PWA 설치) 링크
   renderPwaInstallLink();
+  // 배우자와 함께 쓰기 링크
+  renderFamilyShareLink();
 }
 
 /* ════════════════════════════════════
@@ -66,6 +70,8 @@ export function renderHome() {
 export function renderDashboard() {
   const el = document.getElementById('dashGrid');
   if (!el) return;
+
+  renderAdSlot('adSlotHome', 'home'); // 대시보드 하단 — 아이 등록 여부와 무관하게 항상 표시
 
   const child = S.children[S.selC];
   if (!child) {

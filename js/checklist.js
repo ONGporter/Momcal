@@ -27,6 +27,7 @@ import { S, debounceSave } from './state.js';
 import { clData }          from '../data/checklist-data.js';
 import { renderGovChecklistTab } from './govSupport.js';
 import { syncChecklistToCalendar } from './checklistCalendarLink.js';
+import { renderAdSlot } from './adSlot.js';
 
 /* ────────────────────────────────────
  *  점수 계산 유틸
@@ -101,6 +102,7 @@ export function renderChecklist() {
 
   renderContextBanner(child);
   renderClSidebar();
+  renderAdSlot('adSlotChecklist', 'checklist');
 }
 
 /* ────────────────────────────────────

@@ -1,6 +1,6 @@
 /**
  * js/pwaInstall.js
- * 홈 탭 "우리 가족" 아래 — 홈 화면에 추가(PWA 설치) 링크 (Sprint 12)
+ * 홈 탭 "우리 가족" 아래 — 어플로 추가(PWA 설치) 링크 (Sprint 12, Sprint 13에서 문구 변경)
  *
  * - Android/Chrome 등: beforeinstallprompt 이벤트를 캡처해뒀다가
  *   링크 탭 시 네이티브 설치 프롬프트를 띄움
@@ -57,7 +57,7 @@ function installLinkHTML(onclick) {
     <div class="install-link" onclick="${onclick}">
       <span class="install-ico">📲</span>
       <div class="install-txt">
-        <div class="install-title">홈 화면에 추가</div>
+        <div class="install-title">어플로 추가</div>
         <div class="install-sub">앱처럼 빠르고 편하게 열어보세요</div>
       </div>
       <span class="install-arrow">›</span>
@@ -75,7 +75,7 @@ async function installPwa() {
 
 /** iOS — 수동 설치 안내 모달 */
 function showIosInstallGuide() {
-  showModal('📲 홈 화면에 추가하기', `
+  showModal('📲 어플로 추가하기', `
     <div style="font-size:.86rem;font-weight:700;color:var(--tx);line-height:1.7">
       <p style="margin-bottom:14px">사파리 브라우저에서 아래 순서대로 진행해주세요.</p>
       <ol style="padding-left:18px;margin:0;display:flex;flex-direction:column;gap:10px">
@@ -87,7 +87,7 @@ function showIosInstallGuide() {
         ※ 아이폰의 크롬 등 다른 브라우저를 쓰신다면 메뉴 위치가 조금 다를 수 있어요. 사파리 사용을 권장해요.
       </p>
     </div>
-    <button class="bpk" style="width:100%;margin-top:18px" onclick="cm()">확인했어요</button>
+    <button class="btn bpk" style="width:100%;margin-top:18px" onclick="cm()">확인했어요</button>
   `);
 }
 

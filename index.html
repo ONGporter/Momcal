@@ -85,23 +85,25 @@
 </div>
 
 <!-- ════════════════════════════════════
-     TOPBAR
+     TOPBAR (Sprint 13: 탭이 화면 밖으로 잘리는 문제 수정 — 2줄 구조로 변경)
 ════════════════════════════════════ -->
 <div class="topbar">
-  <div class="logo">맘캘 💕</div>
+  <div class="topbar-top">
+    <div class="logo">맘캘 💕</div>
+    <div class="topbar-right">
+      <button class="np np-register" data-page="register" onclick="gp('register',this)">＋ 등록</button>
+      <button class="user-chip" id="userChip" onclick="toggleUserMenu()" style="position:relative">
+        <span class="user-avatar" id="userAvatar">?</span>
+        <span id="userLabel">···</span>
+      </button>
+    </div>
+  </div>
   <nav class="nav-pills">
     <button class="np on" data-page="home"      onclick="gp('home',this)">🏠 홈</button>
     <button class="np"    data-page="calendar"  onclick="gp('calendar',this)">📅 캘린더</button>
     <button class="np"    data-page="checklist" onclick="gp('checklist',this)">✅ 체크리스트</button>
     <button class="np"    data-page="growth"    onclick="gp('growth',this)">📈 성장</button>
   </nav>
-  <div class="topbar-right">
-    <button class="np np-register" data-page="register" onclick="gp('register',this)">＋ 등록</button>
-    <button class="user-chip" id="userChip" onclick="toggleUserMenu()" style="position:relative">
-      <span class="user-avatar" id="userAvatar">?</span>
-      <span id="userLabel">···</span>
-    </button>
-  </div>
 </div>
 
 <!-- 사용자 드롭다운 메뉴 -->
@@ -130,11 +132,14 @@
 
   <div class="sec">✨ 오늘의 대시보드</div>
   <div class="dash-grid" id="dashGrid"></div>
+  <div id="adSlotHome" class="ad-slot-wrap"></div>
 
   <div class="sec">👨‍👩‍👧 우리 가족</div>
   <div class="profile-strip" id="homeProfiles"></div>
 
+  <div class="sec" style="margin-top:22px">📱 더 편하게 쓰기</div>
   <div id="pwaInstallWrap"></div>
+  <div id="familyShareWrap" style="margin-top:10px"></div>
 </div>
 
 <!-- ════════════════════════════════════
@@ -281,6 +286,7 @@
     </div>
     <div class="cl-main" id="clMain"></div>
   </div>
+  <div id="adSlotChecklist" class="ad-slot-wrap"></div>
 </div>
 
 <!-- ════════════════════════════════════
@@ -311,6 +317,8 @@
   <div class="sec" style="margin-top:18px">📋 기록 목록</div>
   <div id="growthRecordList"></div>
   <button class="btn bpk" style="margin-top:10px" onclick="openGrowthModal()">＋ 성장 기록 추가</button>
+
+  <div id="adSlotGrowth" class="ad-slot-wrap" style="margin-top:18px"></div>
 </div>
 
 <!-- ════════════════════════════════════

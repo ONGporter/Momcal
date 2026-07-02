@@ -24,24 +24,30 @@ body {
   min-height: 100vh;
 }
 
-/* ── TOPBAR ── */
+/* ── TOPBAR (Sprint 13: 2줄 구조 — 로고/유저 줄 + 탭 줄) ── */
 .topbar {
   background: rgba(255,255,255,.95);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid rgba(240,98,146,.12);
-  height: 58px;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 20px;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 16px 8px;
   position: sticky;
   top: 0;
   z-index: 200;
 }
 
+.topbar-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 32px;
+}
+
 .logo {
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   font-weight: 900;
   background: linear-gradient(135deg, #F06292, #9C27B0);
   -webkit-background-clip: text;
@@ -51,26 +57,38 @@ body {
   flex-shrink: 0;
 }
 
-.nav-pills { display: flex; gap: 3px; overflow-x: auto; scrollbar-width: none; }
-.nav-pills::-webkit-scrollbar { display: none; }
+/* 탭 줄 — 4개 탭이 화면 너비에 맞춰 균등하게 나뉘어, 기종에 상관없이 전부 보임 */
+.nav-pills {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+  width: 100%;
+}
 
 .np {
   border: none;
-  padding: 7px 14px;
+  padding: 8px 4px;
   border-radius: 40px;
-  font-size: .75rem;
+  font-size: .72rem;
   font-weight: 800;
   cursor: pointer;
   font-family: inherit;
-  background: none;
+  background: #EEE5F4;
   color: var(--txl);
   transition: all .2s;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
 }
 .np.on {
   background: linear-gradient(135deg, #F06292, #9C27B0);
   color: #fff;
   box-shadow: 0 3px 12px rgba(200,80,180,.28);
+}
+
+@media (max-width: 380px) {
+  .np { font-size: .64rem; padding: 7px 2px; }
 }
 
 /* ── Sprint 10: 등록 버튼을 유저칩 옆으로 이동 ── */
@@ -79,6 +97,7 @@ body {
   border: 1.5px dashed #E8B4CC;
   color: var(--pkd);
   padding: 6px 12px;
+  background: none;
 }
 .np-register:hover { background: var(--pkl); }
 .np-register.on { border: none; } /* 등록 페이지가 활성화되면 기존 그라디언트가 우선 적용됨 */
@@ -175,14 +194,14 @@ body {
 
 /* ── HOME DASHBOARD (Sprint 4) ── */
 .dash-grid {
-  display: grid; grid-template-columns: 1fr 1fr;
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px; margin-bottom: 22px;
 }
 .dash-card {
   background: var(--card); border-radius: 18px; padding: 15px 16px;
   box-shadow: var(--card-shadow); cursor: pointer;
   transition: all .22s; display: flex; align-items: flex-start; gap: 12px;
-  min-height: 76px;
+  min-height: 76px; min-width: 0;
 }
 .dash-card:not([onclick]) { cursor: default; }
 .dash-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(180,80,160,.16); }
@@ -200,9 +219,7 @@ body {
 .dash-tip { grid-column: 1 / -1; }
 .dash-empty { grid-column: 1 / -1; flex-direction: column; align-items: center; text-align: center; gap: 6px; }
 
-@media (max-width: 640px) {
-  .dash-grid { grid-template-columns: 1fr 1fr; }
-}
+/* .dash-grid는 base 스타일에서 이미 반응형 2열 grid(minmax(0,1fr))로 처리됨 — 기종별 별도 미디어쿼리 불필요 */
 
 /* ── PWA 설치 링크 (Sprint 12) ── */
 .install-link {
@@ -221,6 +238,24 @@ body {
 .install-title { font-size: .87rem; font-weight: 900; color: var(--tx); }
 .install-sub   { font-size: .71rem; color: var(--txl); font-weight: 700; margin-top: 2px; }
 .install-arrow { font-size: 1.3rem; color: var(--pk); font-weight: 900; flex-shrink: 0; }
+
+/* ── 광고 슬롯 (Sprint 13) ──
+   AdSense 미연동 시엔 .ad-fallback(육아 팁)이 대신 표시되어 빈 공간이 생기지 않음 */
+.ad-slot-wrap { margin-top: 16px; }
+.ad-slot { width: 100%; }
+.ad-fallback {
+  display: flex; align-items: center; gap: 12px;
+  background: linear-gradient(135deg, #FFF8FA, #F8F2FC);
+  border: 1.5px dashed #E8CADC;
+  border-radius: 18px; padding: 14px 16px;
+}
+.ad-fallback-ico  { font-size: 1.3rem; flex-shrink: 0; }
+.ad-fallback-body { min-width: 0; }
+.ad-fallback-label{
+  font-size: .66rem; font-weight: 900; color: var(--pk);
+  text-transform: uppercase; letter-spacing: .04em; margin-bottom: 3px;
+}
+.ad-fallback-text { font-size: .8rem; font-weight: 700; color: var(--tx); line-height: 1.5; }
 
 /* ── QUICK MENU ── */
 .qm-grid {

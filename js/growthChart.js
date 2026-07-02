@@ -12,6 +12,7 @@ import { S, debounceSave }               from './state.js';
 import { showModal, cm }                 from './modal.js';
 import { getGrowthRecords, getLatestGrowth, openGrowthModal } from './growth.js';
 import { refTableFor, growthMetricLabel } from '../data/who-growth.js';
+import { renderAdSlot } from './adSlot.js';
 
 /* ══════════════════════════════════════
  *  나이(개월) 계산
@@ -113,6 +114,8 @@ export function referencePercentileAt(ageMonths, gender, metric, z) {
 let _chart = null; // Chart.js 인스턴스 (탭 재진입 시 재사용/파괴)
 
 export function renderGrowthPage() {
+  renderAdSlot('adSlotGrowth', 'growth'); // 성장 페이지 하단 — 아이 등록 여부와 무관하게 항상 표시
+
   const sel = document.getElementById('growthChildSel');
   sel.innerHTML = S.children.length
     ? S.children.map((c, i) =>
