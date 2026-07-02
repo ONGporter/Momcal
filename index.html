@@ -82,16 +82,18 @@
 <div class="topbar">
   <div class="logo">맘캘 💕</div>
   <nav class="nav-pills">
-    <button class="np on" onclick="gp('home',this)">🏠 홈</button>
-    <button class="np"    onclick="gp('register',this)">+ 등록</button>
-    <button class="np"    onclick="gp('calendar',this)">📅 캘린더</button>
-    <button class="np"    onclick="gp('checklist',this)">✅ 체크리스트</button>
-    <button class="np"    onclick="gp('growth',this)">📈 성장</button>
+    <button class="np on" data-page="home"      onclick="gp('home',this)">🏠 홈</button>
+    <button class="np"    data-page="calendar"  onclick="gp('calendar',this)">📅 캘린더</button>
+    <button class="np"    data-page="checklist" onclick="gp('checklist',this)">✅ 체크리스트</button>
+    <button class="np"    data-page="growth"    onclick="gp('growth',this)">📈 성장</button>
   </nav>
-  <button class="user-chip" id="userChip" onclick="toggleUserMenu()" style="position:relative">
-    <span class="user-avatar" id="userAvatar">?</span>
-    <span id="userLabel">···</span>
-  </button>
+  <div class="topbar-right">
+    <button class="np np-register" data-page="register" onclick="gp('register',this)">＋ 등록</button>
+    <button class="user-chip" id="userChip" onclick="toggleUserMenu()" style="position:relative">
+      <span class="user-avatar" id="userAvatar">?</span>
+      <span id="userLabel">···</span>
+    </button>
+  </div>
 </div>
 
 <!-- 사용자 드롭다운 메뉴 -->
@@ -118,11 +120,11 @@
     <p>임신부터 육아까지, 맘캘이 함께해요</p>
   </div>
 
-  <div class="sec">👨‍👩‍👧 우리 가족</div>
-  <div class="profile-strip" id="homeProfiles"></div>
-
   <div class="sec">✨ 오늘의 대시보드</div>
   <div class="dash-grid" id="dashGrid"></div>
+
+  <div class="sec">👨‍👩‍👧 우리 가족</div>
+  <div class="profile-strip" id="homeProfiles"></div>
 </div>
 
 <!-- ════════════════════════════════════

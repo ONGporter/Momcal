@@ -52,7 +52,7 @@ export function renderHome() {
       <div class="pag">${c.stage === 'preg' ? `🤰 ${c.week}주차` : ageFmt(c.birth)}</div>
       <span class="pst ${c.stage === 'preg' ? 'st-preg' : 'st-born'}">${c.stage === 'preg' ? '임신중' : '육아중'}</span>
     </div>`
-  ).join('') + `<div class="add-pcard" onclick="gp('register',document.querySelectorAll('.np')[1])"><span>＋</span><p>등록하기</p></div>`;
+  ).join('') + `<div class="add-pcard" onclick="gp('register',document.querySelector('.np[data-page=register]'))"><span>＋</span><p>등록하기</p></div>`;
 }
 
 /* ════════════════════════════════════
@@ -66,7 +66,7 @@ export function renderDashboard() {
   const child = S.children[S.selC];
   if (!child) {
     el.innerHTML = `
-      <div class="dash-card dash-empty" onclick="gp('register',document.querySelectorAll('.np')[1])">
+      <div class="dash-card dash-empty" onclick="gp('register',document.querySelector('.np[data-page=register]'))">
         <div class="dash-icon" style="background:var(--pkl)">👶</div>
         <div class="dash-label">아직 등록된 아이가 없어요</div>
         <div class="dash-value" style="font-size:.78rem;color:var(--pk)">＋ 지금 등록하기</div>
@@ -104,20 +104,20 @@ function dashNextEventCard(child) {
     .sort((a, b) => a.date < b.date ? -1 : 1)[0];
 
   if (!upcoming) {
-    return dashCard('📅', 'var(--bll)', '다음 일정', '예정된 일정 없음', '캘린더에서 추가해보세요', "gp('calendar',document.querySelectorAll('.np')[2])");
+    return dashCard('📅', 'var(--bll)', '다음 일정', '예정된 일정 없음', '캘린더에서 추가해보세요', "gp('calendar',document.querySelector('.np[data-page=calendar]'))");
   }
   const days = Math.round((new Date(upcoming.date) - new Date(todayStr)) / 86400000);
   const dLabel = days === 0 ? '오늘' : `${days}일 후`;
-  return dashCard('📅', 'var(--bll)', '다음 일정', upcoming.title.replace(/^\d{2}:\d{2}\s/, ''), dLabel, "gp('calendar',document.querySelectorAll('.np')[2])");
+  return dashCard('📅', 'var(--bll)', '다음 일정', upcoming.title.replace(/^\d{2}:\d{2}\s/, ''), dLabel, "gp('calendar',document.querySelector('.np[data-page=calendar]'))");
 }
 
 /** 📋 오늘 체크리스트 진행 */
 function dashChecklistCard(child) {
   const info = getTodayCategoryInfo(child);
   if (!info) {
-    return dashCard('📋', 'var(--mnl)', '체크리스트', '-', '', "gp('checklist',document.querySelectorAll('.np')[3])");
+    return dashCard('📋', 'var(--mnl)', '체크리스트', '-', '', "gp('checklist',document.querySelector('.np[data-page=checklist]'))");
   }
-  return dashCard('📋', 'var(--mnl)', info.cat.label, `${info.doneTotal} / ${info.itemsTotal} 완료`, '', "gp('checklist',document.querySelectorAll('.np')[3])");
+  return dashCard('📋', 'var(--mnl)', info.cat.label, `${info.doneTotal} / ${info.itemsTotal} 완료`, '', "gp('checklist',document.querySelector('.np[data-page=checklist]'))");
 }
 
 /** 📈 성장 기록 */
@@ -146,9 +146,9 @@ function dashVaxCard(child) {
     .sort((a, b) => a.date > b.date ? -1 : 1)[0];
 
   if (!recent) {
-    return dashCard('💉', 'var(--pul)', '최근 접종', '완료 기록 없음', '캘린더에서 완료 체크하기', "gp('calendar',document.querySelectorAll('.np')[2])");
+    return dashCard('💉', 'var(--pul)', '최근 접종', '완료 기록 없음', '캘린더에서 완료 체크하기', "gp('calendar',document.querySelector('.np[data-page=calendar]'))");
   }
-  return dashCard('💉', 'var(--pul)', '최근 접종', recent.title.replace(/^💉\s*/, ''), `${recent.date} 완료`, "gp('calendar',document.querySelectorAll('.np')[2])");
+  return dashCard('💉', 'var(--pul)', '최근 접종', recent.title.replace(/^💉\s*/, ''), `${recent.date} 완료`, "gp('calendar',document.querySelector('.np[data-page=calendar]'))");
 }
 
 /** ⭐ 오늘의 육아 팁 */
@@ -213,7 +213,7 @@ export function regChild() {
       캘린더에 일정이 자동으로 채워졌어요!<br>
       <span style="font-size:.78rem;color:var(--txl)">Firebase에 자동 저장돼요 💾</span>
     </p><br>
-    <button class="btn bpk" onclick="cm();gp('calendar',document.querySelectorAll('.np')[2])">캘린더 보러가기 →</button>`
+    <button class="btn bpk" onclick="cm();gp('calendar',document.querySelector('.np[data-page=calendar]'))">캘린더 보러가기 →</button>`
   );
 }
 

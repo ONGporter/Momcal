@@ -273,6 +273,12 @@ export function saveEventMod() {
   if (S.selDate) showDayPanel(S.selDate);
   debounceSave();
 
+  // Sprint 10 버그 수정: 체크리스트 "🟢 정부지원" 탭이 열려 있을 때, 캘린더 모달에서
+  // 상태를 바꿔도 반영이 안 되고 다른 탭을 다녀와야만 갱신되던 문제 수정
+  if (document.getElementById('pg-checklist')?.classList.contains('on')) {
+    window.renderClSidebar?.();
+  }
+
   if (recalced.length) showRecalcNotice(recalced);
 }
 
@@ -498,12 +504,45 @@ function renderMonthView() {
 }
 
 /**
+ * Sprint 10: 같은 날짜의 예방접종 이벤트들을 화면 표시용으로 하나의 그룹으로 묶기.
+ * 데이터(S.eventMods, 재계산 로직)는 그대로 개별 항목 단위를 유지하고,
+ * 오직 "보여주는 방식"만 묶는다 — 그룹 항목을 펼치면 원래 개별 항목이 그대로 나온다.
+ */
+function groupVaxEvents(dayEvs) {
+  const vaxEvs = dayEvs.filter(e => e.type === 'vax');
+  if (vaxEvs.length <= 1) return dayEvs;
+
+  const doseSuffixes = vaxEvs.map(e => (e.title.match(/(\d+차)$/) || [])[1]);
+  const allSameDose  = doseSuffixes.every(s => s && s === doseSuffixes[0]);
+  const groupTitle   = allSameDose
+    ? `💉 ${doseSuffixes[0]} 접종 (${vaxEvs.length}종)`
+    : `💉 예방접종 (${vaxEvs.length}건)`;
+  const allDone = vaxEvs.every(e => e.done);
+
+  const groupEv = {
+    date: vaxEvs[0].date, type: 'vax', title: groupTitle, done: allDone,
+    _isVaxGroup: true, _groupItems: vaxEvs,
+  };
+
+  let inserted = false;
+  const result = [];
+  dayEvs.forEach(e => {
+    if (e.type === 'vax') {
+      if (!inserted) { result.push(groupEv); inserted = true; }
+    } else {
+      result.push(e);
+    }
+  });
+  return result;
+}
+
+/**
  * 캘린더 셀 HTML
  * - 드래그 타겟 (data-date, ondragover, ondrop)
  * - 이벤트 필: 드래그 가능, 클릭 → 수정 Modal, ✅ 완료 표시
  */
 function cellHTML(ds, d, other, evs, td, th) {
-  const de          = evs.filter(e => e.date === ds);
+  const de          = groupVaxEvents(evs.filter(e => e.date === ds));
   const stickersAll = S.dayStickers[ds] || [];
   const overflow    = Math.max(0, stickersAll.length - 3);
   const showCount   = overflow > 0 ? 3 : stickersAll.length;
@@ -521,6 +560,15 @@ function cellHTML(ds, d, other, evs, td, th) {
       : e.type === 'gov' ? (e.govStatus === 'applied' ? '🔵' : '🟢')
       : e.type === 'req' ? '★' : e.type === 'rec' ? '✓' : e.type === 'vax' ? '💉' : '📌';
     const safTitle = e.title.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+    // 그룹 필은 드래그 불가 + 클릭 시 날짜 선택(day panel)으로 펼쳐 보기 — 개별 이동은 day panel에서
+    if (e._isVaxGroup) {
+      return `
+        <div class="ev-pill ep-vax${e.done ? ' ev-done' : ''}" title="${safTitle} — 탭해서 자세히 보기">
+          ${icon}${e.title.slice(0, 7)}
+        </div>`;
+    }
+
     return `
       <div class="ev-pill ep-${e.type}${e.done ? ' ev-done' : ''}"
            draggable="true"
@@ -580,7 +628,7 @@ function renderWeekView() {
     html += `<div style="font-size:.62rem;color:var(--txl);font-weight:700;padding:8px 4px;text-align:right;border-bottom:1px solid #F5EEF8">${h}시</div>`;
     weekDays.forEach(d => {
       const ds   = d.toISOString().split('T')[0];
-      const de   = evs.filter(e => e.date === ds);
+      const de   = groupVaxEvents(evs.filter(e => e.date === ds));
       const isTd = ds === td;
       html += `
         <div onclick="selectDate('${ds}')"
@@ -596,8 +644,8 @@ function renderWeekView() {
             const icon = e.done ? '✅'
               : e.type === 'gov' ? (e.govStatus === 'applied' ? '🔵' : '🟢')
               : e.type === 'req' ? '★' : e.type === 'rec' ? '✓' : e.type === 'vax' ? '💉' : '📌';
-            return `<div class="ev-pill ep-${e.type}${e.done ? ' ev-done' : ''}" style="font-size:.53rem"
-                         onclick="event.stopPropagation();openEvModal(${e._idx})">${icon}${e.title.slice(0, 5)}</div>`;
+            const clickAttr = e._isVaxGroup ? '' : `onclick="event.stopPropagation();openEvModal(${e._idx})"`;
+            return `<div class="ev-pill ep-${e.type}${e.done ? ' ev-done' : ''}" style="font-size:.53rem" ${clickAttr}>${icon}${e.title.slice(0, 5)}</div>`;
           }).join('')}
           ${(S.dayStickers[ds] || []).slice(0, 1).map(s => `<span style="font-size:.78rem">${s}</span>`).join('')}
         </div>`;
@@ -613,7 +661,7 @@ function renderWeekView() {
  * ══════════════════════════════════════ */
 export function showDayPanel(ds) {
   const allEvs   = getAllEvs();
-  const evs      = allEvs.filter(e => e.date === ds);
+  const evs      = groupVaxEvents(allEvs.filter(e => e.date === ds));
   const stickers = S.dayStickers[ds] || [];
   const panel    = document.getElementById('dayPanel');
   const dow      = ['일', '월', '화', '수', '목', '금', '토'][new Date(ds).getDay()];
@@ -642,6 +690,32 @@ export function showDayPanel(ds) {
         ? evs.map(e => {
             const bg  = e.type === 'req' ? '#FFF0F5' : e.type === 'rec' ? '#E0F2F1' : e.type === 'vax' ? '#EDE7F6' : e.type === 'gov' ? '#E8F5E9' : '#E3F2FD';
             const bc  = e.type === 'req' ? '#F06292' : e.type === 'rec' ? '#4DB6AC' : e.type === 'vax' ? '#9575CD' : e.type === 'gov' ? '#43A047' : '#64B5F6';
+
+            // Sprint 10: 예방접종 그룹 카드 — 회차별 개별 항목을 리스트로 펼쳐 보여줌
+            if (e._isVaxGroup) {
+              return `
+                <div class="dp-ev" style="background:${bg};flex-direction:column;align-items:stretch">
+                  <div class="dp-ev-title" style="margin-bottom:8px">
+                    ${e.title}
+                    ${e.done ? '<span style="color:var(--mn);margin-left:5px">✅ 모두 완료</span>' : ''}
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:6px">
+                    ${e._groupItems.map(item => `
+                      <div style="display:flex;justify-content:space-between;align-items:center;
+                                  background:rgba(255,255,255,.6);border-radius:9px;padding:6px 10px">
+                        <span style="font-size:.78rem;font-weight:700;color:var(--tx)">
+                          ${item.done ? '✅' : '⬜'} ${item.title.replace(/^💉\s*/, '')}
+                          ${item.recalculated ? '<span style="color:#7B1FA2;font-size:.65rem;margin-left:4px">🔄조정됨</span>' : ''}
+                        </span>
+                        <button onclick="openEvModal(${item._idx})"
+                                style="background:none;border:1px solid #EEE0F0;border-radius:8px;
+                                       padding:2px 8px;font-size:.62rem;font-weight:800;
+                                       color:var(--txl);cursor:pointer;font-family:inherit">✏️ 수정</button>
+                      </div>`).join('')}
+                  </div>
+                </div>`;
+            }
+
             const govLbl = e.govStatus === 'paid' ? '✅지급완료' : e.govStatus === 'applied' ? '🔵신청완료' : '🟢정부지원';
             const lbl = e.type === 'req' ? '★필수'  : e.type === 'rec' ? '추천'    : e.type === 'vax' ? '접종'    : e.type === 'gov' ? govLbl : '내일정';
             return `

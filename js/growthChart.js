@@ -23,6 +23,19 @@ function ageMonthsAt(birth, dateStr) {
   return Math.max(0, days / 30.44);
 }
 
+/** 출생일과 기록일 사이의 일수 (정수) — Sprint 10: 고정 X축 계산용 */
+function ageDaysAt(birth, dateStr) {
+  const days = Math.round((new Date(dateStr) - new Date(birth)) / 86400000);
+  return Math.max(0, days);
+}
+
+/** X축 최대값 — 100일 단위로, 기록이 늘어나면 100→200→300... 자동 확장 */
+const AXIS_STEP = 100;
+function computeAxisMax(ageDaysList) {
+  const maxAge = ageDaysList.length ? Math.max(...ageDaysList) : 0;
+  return Math.max(AXIS_STEP, Math.ceil((maxAge + 1) / AXIS_STEP) * AXIS_STEP);
+}
+
 /* ══════════════════════════════════════
  *  참고 테이블 보간 + 백분위 계산 (근사)
  * ══════════════════════════════════════ */
@@ -214,11 +227,23 @@ function renderChart(child, metric) {
     .sort((a, b) => a.date < b.date ? -1 : 1);
 
   const { label, unit } = growthMetricLabel[metric];
-  const labels    = records.map(r => r.date.slice(5)); // MM-DD
-  const myValues  = records.map(r => r[metric]);
-  const refValues = records.map(r => referenceMedianAt(ageMonthsAt(child.birth, r.date), child.gender, metric));
-  const p90Values = records.map(r => referencePercentileAt(ageMonthsAt(child.birth, r.date), child.gender, metric, Z_P90));
-  const p10Values = records.map(r => referencePercentileAt(ageMonthsAt(child.birth, r.date), child.gender, metric, Z_P10));
+
+  // Sprint 10: X축을 "생후 일수" 고정 축으로 — 기록 날짜 간격과 무관하게 실제 날짜 비례 위치에 표시되고,
+  // 100일을 넘으면 축이 100→200→300...으로 자동 확장된다.
+  const ageDaysList = records.map(r => ageDaysAt(child.birth, r.date));
+  const axisMax     = computeAxisMax(ageDaysList);
+  const refStep     = axisMax <= 200 ? 5 : 10; // 참고선을 촘촘하게 그릴 간격(일)
+
+  const myPoints = records.map((r, i) => ({ x: ageDaysList[i], y: r[metric] }));
+
+  // 또래 평균/P90/P10 참고선은 기록 유무와 무관하게 0~axisMax 전체를 매끄러운 곡선으로 생성
+  const refPoints = [], p90Points = [], p10Points = [];
+  for (let d = 0; d <= axisMax; d += refStep) {
+    const ageM = d / 30.44;
+    refPoints.push({ x: d, y: +referenceMedianAt(ageM, child.gender, metric).toFixed(1) });
+    p90Points.push({ x: d, y: +referencePercentileAt(ageM, child.gender, metric, Z_P90).toFixed(1) });
+    p10Points.push({ x: d, y: +referencePercentileAt(ageM, child.gender, metric, Z_P10).toFixed(1) });
+  }
 
   if (_chart) { _chart.destroy(); _chart = null; }
 
@@ -234,11 +259,10 @@ function renderChart(child, metric) {
   _chart = new Chart(canvas.getContext('2d'), {
     type: 'line',
     data: {
-      labels,
       datasets: [
         {
           label: `${child.name} ${label}`,
-          data: myValues,
+          data: myPoints,
           borderColor: '#F06292',
           backgroundColor: 'rgba(240,98,146,.12)',
           borderWidth: 2.5,
@@ -249,7 +273,7 @@ function renderChart(child, metric) {
         },
         {
           label: '또래 평균 (P50)',
-          data: refValues,
+          data: refPoints,
           borderColor: '#B0A8C0',
           borderDash: [5, 4],
           borderWidth: 1.5,
@@ -259,7 +283,7 @@ function renderChart(child, metric) {
         },
         {
           label: '상위 10% (P90)',
-          data: p90Values,
+          data: p90Points,
           borderColor: '#FFB74D',
           borderDash: [3, 3],
           borderWidth: 1.2,
@@ -269,7 +293,7 @@ function renderChart(child, metric) {
         },
         {
           label: '하위 10% (P10)',
-          data: p10Values,
+          data: p10Points,
           borderColor: '#FFB74D',
           borderDash: [3, 3],
           borderWidth: 1.2,
@@ -285,11 +309,22 @@ function renderChart(child, metric) {
       maintainAspectRatio: false,
       plugins: {
         legend: { position: 'bottom', labels: { font: { size: 11, family: 'Nunito' }, boxWidth: 12 } },
-        tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y}${unit}` } },
+        tooltip: {
+          callbacks: {
+            title: (items) => `생후 ${items[0]?.parsed.x ?? ''}일`,
+            label:  (ctx)   => `${ctx.dataset.label}: ${ctx.parsed.y}${unit}`,
+          },
+        },
       },
       scales: {
+        x: {
+          type: 'linear',
+          min: 0,
+          max: axisMax,
+          title: { display: true, text: '생후 일수(일)', font: { size: 10, weight: 800 }, color: '#8A849A' },
+          ticks: { stepSize: axisMax / 10, font: { size: 10 } },
+        },
         y: { ticks: { font: { size: 10 } } },
-        x: { ticks: { font: { size: 10 } } },
       },
     },
   });

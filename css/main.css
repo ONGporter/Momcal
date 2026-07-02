@@ -73,6 +73,16 @@ body {
   box-shadow: 0 3px 12px rgba(200,80,180,.28);
 }
 
+/* ── Sprint 10: 등록 버튼을 유저칩 옆으로 이동 ── */
+.topbar-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.np-register {
+  border: 1.5px dashed #E8B4CC;
+  color: var(--pkd);
+  padding: 6px 12px;
+}
+.np-register:hover { background: var(--pkl); }
+.np-register.on { border: none; } /* 등록 페이지가 활성화되면 기존 그라디언트가 우선 적용됨 */
+
 /* ── PAGES ── */
 .pg { display: none; max-width: 960px; margin: 0 auto; padding: 22px 16px; animation: fadeUp .28s ease; }
 .pg.on { display: block; }
