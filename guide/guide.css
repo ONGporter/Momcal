@@ -6,7 +6,7 @@
  * 색상·타이포는 UI_GUIDELINE.md의 브랜드 톤(파스텔 핑크/민트, Nunito)을 그대로 따름.
  */
 
-@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Jua&display=swap');
 
 :root {
   --pk:  #F06292;
@@ -29,7 +29,7 @@
 
 body {
   margin: 0;
-  font-family: 'Nunito', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+  font-family: 'Jua', 'Nunito', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
   background: var(--bg);
   color: var(--tx);
   line-height: 1.7;
@@ -48,7 +48,6 @@ a:hover { text-decoration: underline; }
   flex-wrap: wrap; gap: 10px;
 }
 .g-logo {
-  font-family: 'Fredoka', 'Nunito', 'Apple SD Gothic Neo', sans-serif;
   font-size: 1.22rem; font-weight: 700; letter-spacing: -.3px;
   background: linear-gradient(135deg, #F06292, #9C27B0);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;

@@ -716,20 +716,25 @@ function cellHTML(ds, d, other, evs, td, th) {
 }
 
 /**
- * 하루치 이벤트 표시 (Sprint 21)
- * - 이모지 아이콘 대신 색상으로만 구분 (⚠️ 예전엔 타입 아이콘 + 제목의 자체 이모지가 겹쳐
- *   "🟢🟢 …" 처럼 두 번 표시되고, 그만큼 글자가 잘려 모바일 앱에서 "…"만 보이는 원인이었음)
- * - 가장 중요한 1건만 색상 필 + 텍스트로 보여주고, 나머지는 타입별 색상 점(dot)으로 표시
+ * 하루치 이벤트 표시 (Sprint 26)
+ * - 네이티브 캘린더 앱(삼성 캘린더 등)처럼 배경색 박스 없이 "색상 글자"로만 구분해서
+ *   보여주는 방식으로 변경. Sprint 21~23에서 배경 필 + 아이콘/점 조합으로 여러 번
+ *   손봤지만, 배경 박스 자체가 안쪽 여백을 잡아먹어 글자가 들어갈 자리가 좁았던 게
+ *   근본 원인이었음 — 박스를 없애고 나니 훨씬 많은 글자가 그대로 보임
+ * - 최대 3건까지 각각 한 줄씩 색상 텍스트로 보여주고, 그 이상은 "+N"으로 표시
  */
 function renderCellEvents(de) {
   if (!de.length) return '';
+  const MAX = 3;
   const sorted  = [...de].sort((a, b) => evPriority(a) - evPriority(b));
-  const primary = sorted[0];
-  const rest    = sorted.slice(1);
-  return renderPrimaryPill(primary) + (rest.length ? renderEvDots(rest) : '');
+  const shown   = sorted.slice(0, MAX);
+  const overflow = sorted.length - shown.length;
+  const lines = shown.map(renderEventLine).join('');
+  const moreHtml = overflow > 0 ? `<div class="ev-more">+${overflow}건 더보기</div>` : '';
+  return `<div class="ev-lines">${lines}${moreHtml}</div>`;
 }
 
-/** 대표로 보여줄 1건을 고르는 우선순위 (숫자가 작을수록 우선) */
+/** 대표로 보여줄 순서를 고르는 우선순위 (숫자가 작을수록 먼저 표시) */
 function evPriority(e) {
   if (isGovDeadlineSoon(e)) return 0;
   const order = { vax: 1, req: 2, gov: 3, food: 4, rec: 5, custom: 6 };
@@ -740,20 +745,19 @@ function esc(str) {
   return String(str).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
-/** 대표 이벤트 1건 — 색상 배경 + 텍스트 필 (아이콘 없음) */
-function renderPrimaryPill(e) {
-  const color   = getEvColor(getEvCategory(e));
-  const urgent  = isGovDeadlineSoon(e);
-  const label   = stripLeadingEmoji(e.title);
-  const safe    = esc(label);
-  const doneCss = e.done ? 'opacity:.65;text-decoration:line-through;filter:grayscale(35%);' : '';
-  const urgentCss = urgent ? 'box-shadow:0 0 0 1.5px #C62828;' : '';
-  const style   = `background:${color};color:#fff;${doneCss}${urgentCss}`;
+/** 이벤트 1건 — 배경 없이 카테고리 색상 그대로 텍스트에 입힘 (네이티브 캘린더 스타일) */
+function renderEventLine(e) {
+  const urgent = isGovDeadlineSoon(e);
+  const color  = urgent ? '#C62828' : getEvColor(getEvCategory(e));
+  const label  = stripLeadingEmoji(e.title);
+  const safe   = esc(label);
+  const doneCss = e.done ? 'text-decoration:line-through;opacity:.55;' : '';
+  const style  = `color:${color};${doneCss}`;
 
   if (e._isVaxGroup) {
     const groupIndices = `[${e._groupItems.map(item => item._idx).join(',')}]`;
     return `
-      <div class="ev-pill"
+      <div class="ev-line"
            style="${style}"
            draggable="true"
            ondragstart="onDragStart(event,${groupIndices})"
@@ -762,13 +766,11 @@ function renderPrimaryPill(e) {
            ontouchmove="onTouchMove(event)"
            ontouchend="onTouchEnd(event)"
            ontouchcancel="onTouchCancel(event)"
-           title="${safe} — 탭하면 자세히, 꾹 눌러 이동">
-        ${e.done ? '✅ ' : ''}${label}
-      </div>`;
+           title="${safe} — 탭하면 자세히, 꾹 눌러 이동">${label}</div>`;
   }
 
   return `
-    <div class="ev-pill"
+    <div class="ev-line"
          style="${style}"
          draggable="true"
          ondragstart="onDragStart(event,${e._idx})"
@@ -778,25 +780,7 @@ function renderPrimaryPill(e) {
          ontouchend="onTouchEnd(event)"
          ontouchcancel="onTouchCancel(event)"
          onclick="event.stopPropagation();openEvModal(${e._idx})"
-         title="${safe}${urgent ? ' — ⏰ 마감 임박' : ''}">
-      ${e.done ? '✅ ' : ''}${label}
-    </div>`;
-}
-
-/** 대표 이벤트 외 나머지 — 색상 점으로만 표시 (탭하면 날짜 셀 전체가 선택되어 day panel에서 전부 확인 가능) */
-function renderEvDots(rest) {
-  const MAX = 4;
-  const shown    = rest.slice(0, MAX);
-  const overflow = rest.length - shown.length;
-  const dots = shown.map(e => {
-    const color  = getEvColor(getEvCategory(e));
-    const urgent = isGovDeadlineSoon(e);
-    const label  = stripLeadingEmoji(e.title);
-    return `<span class="ev-dot${e.done ? ' ev-dot-done' : ''}${urgent ? ' ev-dot-urgent' : ''}"
-                  style="background:${color}" title="${esc(label)}"></span>`;
-  }).join('');
-  const moreHtml = overflow > 0 ? `<span class="ev-dot-more">+${overflow}</span>` : '';
-  return `<div class="ev-dots">${dots}${moreHtml}</div>`;
+         title="${safe}${urgent ? ' — ⏰ 마감 임박' : ''}">${label}</div>`;
 }
 
 /* ── 주간 뷰 ── */
@@ -842,14 +826,13 @@ function renderWeekView() {
             const sorted  = [...de].sort((a, b) => evPriority(a) - evPriority(b));
             const primary = sorted[0];
             if (!primary) return '';
-            const color   = getEvColor(getEvCategory(primary));
             const urgent  = isGovDeadlineSoon(primary);
+            const color   = urgent ? '#C62828' : getEvColor(getEvCategory(primary));
             const label   = stripLeadingEmoji(primary.title);
             const clickAttr = primary._isVaxGroup ? '' : `onclick="event.stopPropagation();openEvModal(${primary._idx})"`;
-            const doneCss = primary.done ? 'opacity:.65;text-decoration:line-through;' : '';
-            const urgentCss = urgent ? 'box-shadow:0 0 0 1.5px #C62828;' : '';
+            const doneCss = primary.done ? 'text-decoration:line-through;opacity:.55;' : '';
             const extra = de.length > 1 ? `<div style="font-size:.5rem;color:var(--txl)">+${de.length - 1}</div>` : '';
-            return `<div class="ev-pill" style="font-size:.53rem;background:${color};color:#fff;${doneCss}${urgentCss}" ${clickAttr}>${primary.done ? '✅ ' : ''}${label}</div>${extra}`;
+            return `<div class="ev-line" style="font-size:.6rem;color:${color};${doneCss}" ${clickAttr}>${label}</div>${extra}`;
           })()}
           ${(S.dayStickers[ds] || []).slice(0, 1).map(s => `<span style="font-size:.78rem">${s}</span>`).join('')}
         </div>`;

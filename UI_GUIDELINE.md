@@ -69,8 +69,10 @@ background: linear-gradient(135deg, #F06292, #9C27B0);
 ## 타이포그래피
 
 ```css
-font-family: 'Nunito', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+font-family: 'Jua', 'Nunito', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
 ```
+
+앱 전체(본문·제목·버튼·로고 전부)에 귀엽고 동글동글한 한글 폰트 **Jua**를 우선 적용합니다 (Sprint 26). 숫자·영문처럼 Jua가 못 그리는 글자나 로딩 실패 시에는 자동으로 Nunito로 대체됩니다.
 
 | 용도 | size | weight |
 |------|------|--------|
@@ -81,16 +83,7 @@ font-family: 'Nunito', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
 | 배지/태그 | 0.58~0.72rem | 800 |
 | 섹션 라벨 | 0.82rem | 900, uppercase |
 
-### 브랜드 워드마크 전용 폰트 (Sprint 22)
-
-"맘캘" 글자가 로고로 쓰이는 자리(상단 topbar `.logo`, 로그인 화면 `.auth-logo`, 육아정보 페이지 `.g-logo`)만 예외적으로 **Fredoka**(Google Fonts, 귀엽고 둥근 느낌)를 사용합니다. 그 외 본문·버튼·라벨 등 나머지 UI 전체는 기존처럼 Nunito를 그대로 유지합니다.
-
-```css
-font-family: 'Fredoka', 'Nunito', 'Apple SD Gothic Neo', sans-serif;
-```
-
-- 새로운 로고/워드마크 자리를 추가할 때만 이 폰트를 적용하고, 일반 텍스트에는 사용하지 않습니다.
-- Fredoka는 가변 폰트라 굵기가 최대 700까지만 지원돼요 — 로고에 900을 쓰지 말고 700을 최댓값으로 사용하세요.
+⚠️ **Jua는 굵기가 하나(400)뿐인 폰트**라, 위 표의 weight 값(700/800/900)을 지정해도 실제로 더 굵어지지 않고 브라우저가 자동으로 흉내 낸(faux bold) 정도로만 보일 수 있습니다. 그래도 폰트 자체가 이미 두툼하고 동글동글해서 무게감 차이가 크게 아쉽지 않지만, 위계가 중요한 곳(페이지 제목 vs 본문)은 weight보다 font-size 차이로 구분하는 걸 우선 고려하세요.
 
 ---
 

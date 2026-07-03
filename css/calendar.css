@@ -59,34 +59,20 @@
   font-size: .72rem; font-weight: 800; margin-bottom: 3px;
 }
 
-/* ── EVENT PILLS ── */
-/* Sprint 22: 네이티브 캘린더 앱처럼 실제 글자가 보이도록 개선.
-   Sprint 21에서 중복 아이콘은 없앴지만, 좁은 셀 폭에서 한 줄 말줄임(ellipsis)만 쓰다 보니
-   "2차 접종 (5종)" 같은 자동 생성 제목은 여전히 "2차..."처럼 한두 글자만 보이고 잘렸음
-   (배경색은 JS에서 카테고리별 색상을 인라인 style로 지정) */
-.ev-pill {
-  border-radius: 6px; padding: 2px 5px;
-  font-size: .58rem; font-weight: 700; line-height: 1.25;
-  margin-bottom: 2px;
-  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
-  overflow: hidden;
-  max-width: 100%; box-sizing: border-box;
+/* ── EVENT LINES (Sprint 26) ── */
+/* 네이티브 캘린더 앱(삼성 캘린더 등)처럼 배경색 박스 없이 "색상 글자"로만 구분.
+   Sprint 21~23은 배경 필 안에서 아이콘 제거·2줄 줄바꿈으로 글자 잘림을 줄여보려 했지만,
+   배경 박스의 안쪽 여백 자체가 좁은 셀에서 글자 공간을 계속 잡아먹는 게 근본 원인이었음.
+   박스를 없애고 나니 훨씬 많은 글자가 그대로 보임 (색상은 JS에서 인라인 style로 지정) */
+.ev-lines { display: flex; flex-direction: column; gap: 1px; margin-top: 1px; }
+.ev-line {
+  font-size: .58rem; font-weight: 800; line-height: 1.35;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 100%;
 }
-.ep-req    { background: linear-gradient(90deg, #F06292, #E91E63); color: #fff; }
-.ep-rec    { background: linear-gradient(90deg, #4DB6AC, #00897B); color: #fff; }
-.ep-vax    { background: linear-gradient(90deg, #9575CD, #6A1B9A); color: #fff; }
-.ep-gov    { background: linear-gradient(90deg, #66BB6A, #2E7D32); color: #fff; }
-.ep-diary  { background: linear-gradient(90deg, #FFD54F, #FFA000); color: #fff; }
-.ep-custom { background: linear-gradient(90deg, #64B5F6, #1976D2); color: #fff; }
-
-/* ── 대표 필 외 나머지 이벤트 — 색상 점 (Sprint 21) ── */
-.ev-dots { display: flex; align-items: center; gap: 3px; flex-wrap: wrap; margin-top: 2px; }
-.ev-dot {
-  width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+.ev-more {
+  font-size: .5rem; font-weight: 700; color: var(--txl); margin-top: 1px;
 }
-.ev-dot-done { opacity: .35; }
-.ev-dot-urgent { box-shadow: 0 0 0 1.5px #C62828; }
-.ev-dot-more { font-size: .5rem; color: var(--txl); font-weight: 800; line-height: 7px; }
 
 /* ── STICKERS ON CALENDAR ── */
 /* Bug #7 fix: stickers display in a small row, max 4, with +N overflow */
@@ -146,26 +132,14 @@
   .cal-cell { min-height: 76px; }
 
   /* Sprint 25: 모바일 화면은 PC보다 셀 폭이 훨씬 좁아서 같은 글자 크기라도
-     한 줄에 들어가는 글자 수가 적음 — 모바일에서만 필 글자를 한 단계 더 줄여서
+     한 줄에 들어가는 글자 수가 적음 — 모바일에서만 이벤트 글자를 한 단계 더 줄여서
      "2차 접종 (5종)" 같은 메모/제목이 잘리지 않고 더 많이 보이도록 함 */
-  .ev-pill {
-    font-size: .5rem;
-    padding: 2px 4px;
-    line-height: 1.2;
-  }
-  .ev-dot { width: 6px; height: 6px; }
+  .ev-line { font-size: .5rem; }
 }
 
 /* ══════════════════════════════════════
  *  Sprint 2 추가 스타일
  * ══════════════════════════════════════ */
-
-/* ── 완료된 이벤트 필 ── */
-.ev-pill.ev-done {
-  opacity: .75;
-  text-decoration: line-through;
-  filter: grayscale(30%);
-}
 
 /* ── 완료된 이벤트 (데이 패널) ── */
 .dp-ev.dp-done {
@@ -177,10 +151,6 @@
 }
 
 /* ── Sprint 20: 정부지원 마감 임박 강조 ── */
-.ev-pill.ev-urgent {
-  border: 1.5px solid #C62828;
-  box-shadow: 0 0 0 1px rgba(198,40,40,.25);
-}
 .dp-ev.dp-ev-urgent {
   border: 2px solid #C62828;
 }

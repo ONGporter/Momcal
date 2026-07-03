@@ -26,7 +26,7 @@
 - **Frontend**: Vanilla JS (ES6 Module), HTML5, CSS3
 - **Backend**: Firebase Auth + Cloud Firestore
 - **배포**: GitHub Push → Vercel 자동 배포
-- **폰트**: Nunito (Google Fonts CDN)
+- **폰트**: Jua (Google Fonts CDN, Sprint 26부터 앱 전체 기본 폰트) — Jua가 못 그리는 글자(숫자·영문 일부)는 Nunito로 자동 대체
 - **아이콘**: 이모지 전용 (외부 아이콘 라이브러리 없음)
 - **차트**: Chart.js (CDN, jsDelivr 폴백)
 - **PWA**: manifest.json + sw.js (홈 화면 설치·오프라인 앱 셸 캐싱)
@@ -336,3 +336,4 @@ momcal/
 | 23 | 캘린더 필 글자 잘림 추가 수정 — 실사용 확인 결과 Sprint 21의 아이콘 제거만으로는 부족했음이 확인되어, 1줄 말줄임 → 최대 2줄 줄바꿈(`-webkit-line-clamp:2`) 방식으로 전환, 셀 높이 확대(80→96px, 모바일 52→76px) |
 | 24 | "맘캘 💕" 로고의 하트 이모지를 실제 마스코트 이미지(`icons/logo-mark.png`)로 교체(topbar·로그인 화면·육아정보 페이지 5곳), 서비스 워커 캐시 버전 갱신(`momcal-shell-v1`→`v2`)으로 최근 스프린트들의 아이콘·폰트 변경사항이 기존 사용자에게도 확실히 반영되도록 함 |
 | 25 | 모바일 캘린더 필 글자 크기 축소(`.58rem`→`.5rem`, 모바일 전용) — 기존 640px 반응형 브레이크포인트에 규칙 추가, PC는 영향 없음 |
+| 26 | 앱 전체 폰트를 Fredoka(한글 미지원으로 실제 미적용 상태였음)→Jua(한글 지원 귀여운 폰트)로 교체, 캘린더 필을 배경 박스 방식에서 네이티브 캘린더 스타일의 색상 텍스트 줄 방식으로 전면 개편(`renderPrimaryPill`/`renderEvDots` → `renderCellEvents`/`renderEventLine`) |
