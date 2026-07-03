@@ -56,11 +56,15 @@
 
 <!-- ════════════════════════════════════
      AUTH SCREEN
+     Sprint 15: 로그인 없이도 게스트 모드로 앱을 바로 쓸 수 있어서,
+     이 화면은 더 이상 "필수 관문"이 아니라 언제든 열고 닫을 수 있는 화면입니다.
 ════════════════════════════════════ -->
 <div id="authScreen">
   <div class="auth-box">
+    <button class="auth-close" onclick="closeAuthScreen()" aria-label="닫기">✕</button>
     <div class="auth-logo">맘캘 💕</div>
     <div class="auth-sub">임신부터 육아까지, 함께해요</div>
+    <div class="auth-sub-guest">로그인하면 다른 기기에서도 같은 데이터를 볼 수 있어요 (백업·동기화)</div>
 
     <div class="auth-tabs">
       <button class="auth-tab on" id="tabLogin"  onclick="setAuthTab('login')">로그인</button>
@@ -98,7 +102,7 @@
 
     <div class="auth-loading" id="authLoading">처리 중...</div>
 
-    <button class="btn-demo" onclick="startDemoMode()">🎬 로그인 없이 체험하기</button>
+    <button class="btn-demo" onclick="startDemoMode()">🎬 예시 데이터로 둘러보기</button>
   </div>
 </div>
 
@@ -116,6 +120,11 @@
     <div class="logo">맘캘 💕</div>
     <div class="topbar-right">
       <button class="np np-register" data-page="register" onclick="gp('register',this)">＋ 등록</button>
+      <!-- Sprint 15: 게스트 모드일 때는 "로그인" 칩, 로그인 상태일 때는 기존 유저칩 (JS가 display 전환) -->
+      <button class="user-chip guest-login-chip" id="guestLoginChip" onclick="showAuthScreen()" style="display:none">
+        <span class="user-avatar">🔐</span>
+        <span>로그인</span>
+      </button>
       <button class="user-chip" id="userChip" onclick="toggleUserMenu()" style="position:relative">
         <span class="user-avatar" id="userAvatar">?</span>
         <span id="userLabel">···</span>

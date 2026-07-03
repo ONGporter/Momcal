@@ -91,6 +91,12 @@ export function toggleUserMenu(force) {
 /* ── 앱 화면 표시 / 인증 화면 표시 ── */
 export function showApp(user) {
   document.getElementById('authScreen').style.display = 'none';
+  // Sprint 15: 로그인 상태에서는 유저칩을 보여주고, 게스트용 "로그인" 칩은 숨김
+  const userChip  = document.getElementById('userChip');
+  const loginChip = document.getElementById('guestLoginChip');
+  if (userChip)  userChip.style.display  = 'flex';
+  if (loginChip) loginChip.style.display = 'none';
+
   const label = (user.displayName || user.email || '').split('@')[0];
   document.getElementById('userLabel').textContent   = label;
   document.getElementById('userAvatar').textContent  = (label || '?')[0].toUpperCase();
@@ -99,6 +105,11 @@ export function showApp(user) {
 
 export function showAuthScreen() {
   document.getElementById('authScreen').style.display = 'flex';
+}
+
+/** Sprint 15: 로그인 화면 닫기(✕) — 로그인하지 않고 이전 화면(게스트 모드)으로 돌아가기 */
+export function closeAuthScreen() {
+  document.getElementById('authScreen').style.display = 'none';
 }
 
 // 외부 클릭 시 사용자 메뉴 닫기
@@ -111,8 +122,10 @@ document.addEventListener('click', (e) => {
 });
 
 // window 노출
-window.setAuthTab     = setAuthTab;
-window.submitAuth     = submitAuth;
-window.signInGoogle   = signInGoogle;
-window.doSignOut      = doSignOut;
-window.toggleUserMenu = toggleUserMenu;
+window.setAuthTab      = setAuthTab;
+window.submitAuth      = submitAuth;
+window.signInGoogle    = signInGoogle;
+window.doSignOut       = doSignOut;
+window.toggleUserMenu  = toggleUserMenu;
+window.showAuthScreen  = showAuthScreen;
+window.closeAuthScreen = closeAuthScreen;

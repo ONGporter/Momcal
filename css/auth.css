@@ -11,7 +11,19 @@
   padding: 36px 28px; width: 100%; max-width: 380px;
   box-shadow: 0 20px 60px rgba(120,40,100,.25);
   text-align: center;
+  position: relative;
 }
+
+/* Sprint 15: 게스트 모드에서 열었을 때 로그인 없이 되돌아갈 수 있는 닫기 버튼 */
+.auth-close {
+  position: absolute; top: 14px; right: 14px;
+  width: 30px; height: 30px; border-radius: 50%;
+  border: none; background: #F5EEF5; color: var(--txl);
+  font-size: .85rem; font-weight: 800; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .18s;
+}
+.auth-close:hover { background: var(--pkl); color: var(--pkd); }
 
 .auth-logo {
   font-size: 1.7rem; font-weight: 900; margin-bottom: 4px;
@@ -19,7 +31,12 @@
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
 }
 
-.auth-sub { font-size: .78rem; color: var(--txl); margin-bottom: 24px; }
+.auth-sub { font-size: .78rem; color: var(--txl); margin-bottom: 8px; }
+.auth-sub-guest {
+  font-size: .7rem; color: var(--pkd); font-weight: 700;
+  background: var(--pkl); border-radius: 10px; padding: 8px 10px;
+  margin-bottom: 20px; line-height: 1.5;
+}
 
 .auth-tabs {
   display: flex; gap: 6px; margin-bottom: 18px;

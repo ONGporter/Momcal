@@ -11,9 +11,10 @@
 
 import { auth, onAuthStateChanged } from './firebase.js';
 import {
-  S, applyData, setCurrentUser, subscribeToUserData, unsubscribeUserData,
+  S, applyData, setCurrentUser, subscribeToUserData, unsubscribeUserData, saveState,
 } from './state.js';
-import { showApp, showAuthScreen } from './auth.js';
+import { showApp } from './auth.js';
+import { enterGuestMode, hasGuestData, getGuestData, clearGuestData } from './guestMode.js';
 import { renderHome, renderRegList, gp } from './ui.js';
 import { renderCal, renderStickerPicker } from './calendar.js';
 import { renderChecklist, renderClSidebar } from './checklist.js';
@@ -35,10 +36,20 @@ function syncThemeUI() {
 
 /**
  * Firestore 데이터를 S에 적용하고 현재 페이지 렌더
+ * Sprint 15: Firestore에 아직 문서가 없는 완전히 새 계정(data === null)이고
+ * 이 기기에 게스트로 쓰던 데이터가 있으면, 그 데이터를 그대로 계정으로 옮겨준다
+ * (기존 계정으로 로그인한 경우엔 클라우드 데이터를 그대로 쓰고 게스트 데이터는 건드리지 않음).
  * @param {Object|null} data
  */
 function onDataLoaded(data) {
-  applyData(data);
+  if (!data && hasGuestData()) {
+    applyData(getGuestData());
+    S.isGuestMode = false;
+    saveState();       // 최초 1회 Firestore에 업로드 (이후 onSnapshot이 다시 자연스럽게 발동됨)
+    clearGuestData();   // 계정으로 옮겨졌으니 이 기기의 로컬 게스트 데이터는 정리
+  } else {
+    applyData(data);
+  }
   syncThemeUI();
   renderHome();
   renderRegList();
@@ -69,13 +80,15 @@ function onDataLoaded(data) {
 onAuthStateChanged(auth, (user) => {
   if (user) {
     _firstLoad = true; // 로그인 시 첫 로드로 초기화
+    S.isGuestMode = false;
     setCurrentUser(user);
     showApp(user);
     subscribeToUserData(onDataLoaded);
   } else {
     setCurrentUser(null);
     unsubscribeUserData();
-    showAuthScreen();
+    // Sprint 15: 로그인 안 된 기본 상태 = 게스트 모드 (로그인 화면으로 막지 않고 바로 앱 사용)
+    enterGuestMode();
   }
 });
 

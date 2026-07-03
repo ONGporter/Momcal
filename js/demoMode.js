@@ -1,15 +1,20 @@
 /**
- * js/demoMode.js — Sprint 8
- * "체험하기" — 로그인 없이 샘플 데이터로 앱을 둘러보는 기능
+ * js/demoMode.js — Sprint 8, Sprint 15 안전장치 보강
+ * "체험하기" — 예시로 미리 채워진 샘플 데이터로 앱을 둘러보는 기능
  *
  * 실제 Firebase(Auth/Firestore)에는 전혀 연결되지 않습니다.
  * setCurrentUser()를 호출하지 않으므로 js/state.js의 saveState()가
  * `if (!_currentUser) return;` 가드에 걸려 항상 조용히 스킵됩니다 — 즉 저장 시도 자체가 없습니다.
  * 기존 로그인 플로우·Firebase 구조는 전혀 건드리지 않는 완전히 독립적인 로컬 미리보기 모드입니다.
+ *
+ * Sprint 15: 로그인 없는 기본 상태가 "게스트 모드"(실제 데이터를 로컬에 저장)로 바뀌면서,
+ * 체험 모드 진입 시 S.isGuestMode를 꺼서 샘플 데이터가 실수로 게스트의 진짜 로컬 데이터를
+ * 덮어쓰지 않도록 안전장치를 추가. 체험 종료 시에는 로그인 화면이 아니라 원래 쓰던
+ * 게스트 화면(자신의 실제 데이터)으로 돌아가도록 변경.
  */
 
 import { S }              from './state.js';
-import { showApp, showAuthScreen } from './auth.js';
+import { showApp }        from './auth.js';
 import { clData }         from '../data/checklist-data.js';
 
 const toStr   = (d) => d.toISOString().split('T')[0];
@@ -65,7 +70,8 @@ function seedDemoData() {
 
 /** 체험 모드 시작 */
 export function startDemoMode() {
-  S.isDemoMode = true;
+  S.isDemoMode  = true;
+  S.isGuestMode = false; // Sprint 15: 샘플 데이터가 게스트의 실제 로컬 데이터를 덮어쓰지 않도록 저장 경로 차단
   seedDemoData();
 
   document.body.classList.add('demo-active');
@@ -88,14 +94,14 @@ export function startDemoMode() {
   }
 }
 
-/** 체험 모드 종료 → 로그인 화면으로 */
+/** 체험 모드 종료 → 원래 쓰던 게스트 화면(자신의 실제 데이터)으로 복귀 (Sprint 15) */
 export function exitDemoMode() {
   S.isDemoMode = false;
   document.body.classList.remove('demo-active');
   document.getElementById('demoBanner')?.classList.remove('show');
   const menu = document.getElementById('userMenu');
   if (menu) menu.style.display = 'none';
-  showAuthScreen();
+  window.enterGuestMode?.();
 }
 
 window.startDemoMode = startDemoMode;

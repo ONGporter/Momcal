@@ -37,6 +37,7 @@ export const S = Object.assign(emptyState(), {
   selClCat: 0,           // 체크리스트 선택된 사이드바 항목
   growthMetric: 'height', // 성장그래프 탭에서 선택된 지표 ('height'|'weight'|'head')
   isDemoMode: false,      // Sprint 8: 체험 모드 여부 (로그인 없이 샘플 데이터로 둘러보기)
+  isGuestMode: false,     // Sprint 15: 게스트 모드 여부 (로그인 없이 실제 데이터를 로컬에 저장해 사용)
   calFilter: { food: false, vax: false, gov: false }, // Sprint 11: 캘린더 타입 필터 (전부 false = 전체 표시)
 });
 
@@ -55,6 +56,12 @@ export function userDocRef() {
 
 /* ── 상태 저장 ── */
 export async function saveState() {
+  // Sprint 15: 게스트 모드(로그인 안 함)는 로컬(localStorage)에 저장 — js/guestMode.js가 처리
+  // (순환 import 방지를 위해 window 경유 호출 — 프로젝트 전반의 기존 패턴과 동일)
+  if (S.isGuestMode) {
+    window.saveGuestData?.();
+    return;
+  }
   if (!_currentUser) return;
   try {
     await setDoc(userDocRef(), {
