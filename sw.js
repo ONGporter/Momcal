@@ -9,7 +9,10 @@
  * Firebase 등 외부 도메인 요청(인증·데이터 동기화)은 건드리지 않고 그대로 통과시킵니다.
  */
 
-const CACHE_NAME = 'momcal-shell-v1';
+// Sprint 24: 아이콘·로고·폰트(css/main.css) 등 정적 자산이 여러 스프린트에 걸쳐 바뀌었는데
+// CACHE_NAME이 그대로라 기존 설치 사용자에게는 캐시된 예전 파일(특히 아이콘)이 계속 보일 수 있었음.
+// 버전을 올리면 activate 단계에서 이전 캐시가 통째로 삭제되고 최신 파일로 다시 채워짐.
+const CACHE_NAME = 'momcal-shell-v2';
 
 const APP_SHELL = [
   './',
@@ -47,6 +50,10 @@ const APP_SHELL = [
   './data/who-growth.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
+  './icons/icon-192-maskable.png',
+  './icons/icon-512-maskable.png',
+  './icons/apple-touch-icon.png',
+  './icons/logo-mark.png',
 ];
 
 self.addEventListener('install', (event) => {

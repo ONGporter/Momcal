@@ -107,7 +107,7 @@ function faqJsonLd(cats, questionFn, answerFn) {
 
 function header() {
   return `<header class="g-header">
-  <a class="g-logo" href="./index.html">맘캘 💕</a>
+  <a class="g-logo" href="./index.html">맘캘 <img src="${SITE}/icons/logo-mark.png" alt="" class="brand-mark"></a>
   <a class="g-cta js-cta" href="${SITE}/">📅 맘캘 앱 무료로 쓰기</a>
 </header>`;
 }

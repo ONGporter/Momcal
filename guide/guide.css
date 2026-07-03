@@ -53,6 +53,13 @@ a:hover { text-decoration: underline; }
   background: linear-gradient(135deg, #F06292, #9C27B0);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
 }
+/* Sprint 24: 로고 옆 하트 이모지 대신 실제 마스코트 캐릭터 이미지 */
+.brand-mark {
+  height: 1.35em;
+  width: auto;
+  vertical-align: -.32em;
+  margin-left: 2px;
+}
 .g-cta {
   background: linear-gradient(135deg, #F06292, #9C27B0);
   color: #fff; font-weight: 800; font-size: .82rem;

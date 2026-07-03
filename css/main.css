@@ -59,6 +59,13 @@ body {
   letter-spacing: -.3px;
   flex-shrink: 0;
 }
+/* Sprint 24: 로고 옆 하트 이모지(💕) 대신 실제 마스코트 캐릭터 이미지 사용 */
+.brand-mark {
+  height: 1.35em;
+  width: auto;
+  vertical-align: -.32em;
+  margin-left: 2px;
+}
 
 /* 탭 줄 — 4개 탭이 화면 너비에 맞춰 균등하게 나뉘어, 기종에 상관없이 전부 보임 */
 .nav-pills {
