@@ -41,7 +41,7 @@ const govCats = Object.entries(govSupportSchedule).map(([key, items]) => ({
 }));
 
 /* ── 공통 head/header/footer ── */
-function head(title, desc, path) {
+function head(title, desc, path, jsonLd) {
   return `<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${title}</title>
@@ -57,7 +57,31 @@ function head(title, desc, path) {
 <meta property="og:locale" content="ko_KR">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="${SITE}/icons/icon-192.png">
-<link rel="stylesheet" href="./guide.css">`;
+<link rel="stylesheet" href="./guide.css">${jsonLd ? `\n${jsonLd}` : ''}`;
+}
+
+/**
+ * FAQPage 구조화 데이터(JSON-LD) 생성 (Sprint 19)
+ * - 검색결과 리치 스니펫은 2023년 이후 구글이 정부·의료기관 사이트로 제한해서 일반 사이트엔 잘 안 뜨지만,
+ *   AI 개요/생성형 검색이 콘텐츠를 인용할 때 구조를 더 명확히 파악하는 데 도움이 됨 (GEO 목적)
+ * - items: 카테고리 배열의 items를 평탄화한 배열
+ * - questionFn(item) => 질문 문자열, answerFn(item) => 답변 문자열
+ */
+function faqJsonLd(cats, questionFn, answerFn) {
+  const items = cats.flatMap(c => c.items);
+  const data = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: items.map(it => ({
+      '@type': 'Question',
+      name: questionFn(it),
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: answerFn(it),
+      },
+    })),
+  };
+  return `<script type="application/ld+json">\n${JSON.stringify(data, null, 2)}\n</script>`;
 }
 
 function header() {
@@ -114,11 +138,12 @@ function renderGovSection(cat) {
   </section>`;
 }
 
-function page({ title, desc, path, heroTitle, heroDesc, intro, cats, ctaText, disclaimer, renderCat = renderSection }) {
+function page({ title, desc, path, heroTitle, heroDesc, intro, cats, ctaText, disclaimer, renderCat = renderSection, questionFn, answerFn }) {
+  const jsonLd = (questionFn && answerFn) ? faqJsonLd(cats, questionFn, answerFn) : '';
   return `<!DOCTYPE html>
 <html lang="ko">
 <head>
-${head(title, desc, path)}
+${head(title, desc, path, jsonLd)}
 </head>
 <body>
 ${header()}
@@ -156,6 +181,8 @@ const pregHtml = page({
   cats: clData.preg,
   ctaText: '이 일정, 캘린더에 자동으로 채워드릴까요?',
   disclaimer: '이 페이지의 의학·영양 정보는 일반적인 참고용 요약이며, 병원의 공식 안내를 대체하지 않습니다. 개인 건강 상태에 따라 다를 수 있으니 담당 산부인과와 상담해주세요.',
+  questionFn: (it) => `${it.t}, 언제 어떻게 해야 하나요?`,
+  answerFn:   (it) => it.dd || it.d || it.t,
 });
 
 /* ── 2. 육아(예방접종·건강검진) 가이드 ── */
@@ -169,6 +196,8 @@ const parentingHtml = page({
   cats: clData.born,
   ctaText: '우리 아이 접종 일정, 자동으로 계산해드릴까요?',
   disclaimer: '이 페이지의 예방접종·발달 정보는 일반적인 참고용 요약이며, 병원의 공식 안내를 대체하지 않습니다. 정확한 접종 일정과 개별 건강 상태는 반드시 소아과와 상담해주세요.',
+  questionFn: (it) => `${it.t}, 언제 어떻게 해야 하나요?`,
+  answerFn:   (it) => it.dd || it.d || it.t,
 });
 
 /* ── 3. 이유식 가이드 ── */
@@ -182,6 +211,8 @@ const foodHtml = page({
   cats: clData.food,
   ctaText: '이유식 진행 상황, 체크리스트로 관리해보세요',
   disclaimer: '이 페이지의 이유식·영양 정보는 일반적인 참고용 요약입니다. 아이마다 알레르기·소화 상태가 다르니, 새로운 재료를 시작할 때는 소아과 상담을 권장합니다.',
+  questionFn: (it) => `${it.t}, 어떻게 하나요?`,
+  answerFn:   (it) => it.dd || it.d || it.t,
 });
 
 /* ── 4. 정부지원금 가이드 ── */
@@ -196,6 +227,8 @@ const govHtml = page({
   ctaText: '지원금 신청 마감, 놓치지 않게 캘린더로 관리해보세요',
   disclaimer: '제도명·지원 대상·금액·마감 기한은 매년 바뀔 수 있습니다. 이 페이지는 신청 시기를 놓치지 않기 위한 참고용 안내이며, 정확한 자격 요건과 금액은 반드시 링크된 기관 홈페이지 또는 주민센터에서 다시 확인해주세요.',
   renderCat: renderGovSection,
+  questionFn: (it) => `${it.title}, 어떻게 신청하나요?`,
+  answerFn:   (it) => it.desc + (it.deadlineNote ? ` (${it.deadlineNote})` : ''),
 });
 
 /* ── 5. 허브 페이지 ── */
