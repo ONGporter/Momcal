@@ -14,11 +14,16 @@ import {
   GoogleAuthProvider,
   signOut,
   updateProfile,
+  deleteUser,
+  reauthenticateWithCredential,
+  reauthenticateWithPopup,
+  EmailAuthProvider,
 } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js';
 import {
   getFirestore,
   doc,
   setDoc,
+  deleteDoc,
   onSnapshot,
 } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
 
@@ -45,7 +50,12 @@ export {
   signInWithPopup,
   signOut,
   updateProfile,
+  deleteUser,
+  reauthenticateWithCredential,
+  reauthenticateWithPopup,
+  EmailAuthProvider,
   doc,
   setDoc,
+  deleteDoc,
   onSnapshot,
 };

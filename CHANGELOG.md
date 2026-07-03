@@ -1,5 +1,58 @@
 # Changelog
 
+## [Sprint 17] 2026-07-03 — 계정 영구 삭제 기능 + 문의 이메일 반영
+
+### 1. 계정 영구 삭제(자체 탈퇴) 기능
+- 사용자 메뉴(우측 상단 프로필 클릭) → "계정 영구 삭제"에서 로그인 계정을 스스로 탈퇴할 수 있음
+- 삭제 대상: Firestore 문서(`users/{uid}` — 아이 프로필·캘린더·체크리스트·성장 기록 전부) + Firebase Auth 계정 자체
+- 되돌릴 수 없는 동작이라 "삭제"라는 문구를 정확히 입력해야만 삭제 버튼이 활성화되는 확인 모달을 거침 (오조작 방지)
+- Firebase가 오래된 세션에서는 계정 삭제를 거부(`auth/requires-recent-login`)하는 것에 대응해, 로그인 방식(이메일/비밀번호 vs Google)에 맞춰 자동으로 재인증을 요청한 뒤 삭제를 재시도하도록 처리
+- 삭제 완료 후 별도 처리 없이 Sprint 15의 게스트 모드 전환 로직이 자연스럽게 이어받음
+- 신규 파일: `js/accountDelete.js`
+- 관련 코드: `js/firebase.js`(`deleteUser`, `deleteDoc`, `reauthenticateWithCredential`, `reauthenticateWithPopup`, `EmailAuthProvider` export 추가), `index.html`(사용자 메뉴에 버튼 추가)
+
+### 2. 문의 페이지 이메일 반영
+- `contact.html`의 placeholder 이메일(`contact@momcal.app`)을 실제 이메일(`jws12131411@gmail.com`)로 교체
+
+### 3. 개인정보처리방침 갱신
+- "계정 삭제는 문의 이메일로 요청" 문구를, 앱 내 자체 탈퇴 기능이 생긴 것에 맞춰 갱신
+- 개별 자녀 프로필은 기존부터 있던 등록 화면의 삭제 기능으로, 계정 전체 삭제는 새로 추가된 "계정 영구 삭제"로 안내하도록 구분해서 명시
+
+### 유지된 기능
+- Sprint 1~16 기존 기능 전부 변경 없음
+- Firestore 문서 스키마 변경 없음 — 이번 추가분은 기존 문서를 지우는 삭제 로직이며 스키마 자체에는 변화 없음
+
+---
+
+## [Sprint 16] 2026-07-03 — 공개 육아정보 페이지 + AdSense 심사 준비
+
+### 1. 로그인 없이 보는 공개 육아정보 콘텐츠 (`guide/`)
+- 검색엔진이 실제로 색인할 수 있는 순수 정적 HTML 페이지 신규 추가 — 앱 본체(SPA)와 완전히 분리되어 Firebase·앱 JS를 전혀 로드하지 않음
+- `guide/index.html`(허브) + `guide/pregnancy.html`(임신 47항목) + `guide/parenting.html`(예방접종·건강검진 60항목) + `guide/food.html`(이유식 30항목) — 총 137개 체크리스트 항목의 상세 설명을 공개 콘텐츠로 노출
+- **콘텐츠는 직접 손으로 쓰지 않고 `data/checklist-data.js`에서 스크립트로 생성** — 신규 파일 `scripts/build-guide.mjs`. 앱 체크리스트 내용과 항상 일치하도록 보장하고, 체크리스트가 바뀌면 스크립트만 재실행하면 됨 (`node scripts/build-guide.mjs`)
+- 각 페이지에 개별 title/description/canonical/OG 메타, "맘캘 앱 무료로 쓰기" CTA, 페이지 간 상호 링크 배치 — 콘텐츠 → 실제 앱 유입 동선 확보
+- 전용 스타일시트 `guide/guide.css` 신규 추가 (UI_GUIDELINE.md 브랜드 컬러·폰트 준수, 앱 css와는 독립적)
+- 앱 하단 푸터·로그인 화면에 육아정보 링크 추가 (`index.html`)
+
+### 2. Google AdSense 심사 준비 — 정책 페이지
+- `privacy.html`(개인정보처리방침), `terms.html`(이용약관), `contact.html`(문의) 신규 추가 — 전부 로그인 불필요
+- 개인정보처리방침에 수집 항목(계정 정보·자녀 정보), 아동(자녀) 정보 처리 안내, Firebase 위탁 처리, AdSense 쿠키·맞춤광고 안내, 이용자 권리, 문의처 등을 명시
+- 이용약관에 서비스 내용, 게스트 모드 데이터 특성(로컬 저장·기기 종속), **의료 정보 면책 조항**(체크리스트·가이드 정보는 참고용이며 병원 안내를 대체하지 않음) 등을 명시
+- ⚠️ **`contact.html`의 연락처는 placeholder(`contact@momcal.app`)** — 실제 이메일로 교체 필요 (TODO.md에 확인 항목으로 남김)
+
+### 3. sitemap.xml 갱신
+- 기존 루트 URL 1개에서 `guide/` 4개 페이지 + 정책 페이지 3개를 추가해 총 8개 URL로 확장
+
+### 유지된 기능
+- Sprint 1~15 기존 기능 전부 변경 없음, Firebase 스키마 변경 없음 — 이번 추가분은 전부 정적 파일이며 앱의 JS 런타임·Firestore와 무관
+
+### ⚠️ 참고 — 이번 스프린트에서 하지 않은 것
+- 계정 탈퇴(자체 삭제) 기능은 아직 없음 — 개인정보처리방침에는 문의 이메일로 수동 요청하도록 안내
+- `guide/` 페이지는 체크리스트 데이터 변경 시 자동으로 갱신되지 않음 — `scripts/build-guide.mjs`를 다시 실행해야 함
+- AdSense 실제 신청·심사는 진행하지 않음 (페이지만 준비)
+
+---
+
 ## [Sprint 15] 2026-07-03 — 게스트 모드 (로그인 없이 실사용)
 
 ### 1. 로그인 없이 바로 쓸 수 있는 게스트 모드

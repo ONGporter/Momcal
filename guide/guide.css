@@ -1,0 +1,162 @@
+/**
+ * guide/guide.css — Sprint 16
+ * 로그인 없이 보는 공개 콘텐츠 페이지(육아 정보 가이드 / 정책 페이지) 전용 스타일.
+ * 앱 본체(css/main.css 등)와는 독립적으로 동작 — SEO를 위해 순수 정적 HTML로 서빙되는
+ * 페이지라, 앱 전용 스타일(topbar/캘린더 그리드 등)을 끌어오지 않고 필요한 것만 담음.
+ * 색상·타이포는 UI_GUIDELINE.md의 브랜드 톤(파스텔 핑크/민트, Nunito)을 그대로 따름.
+ */
+
+:root {
+  --pk:  #F06292;
+  --pkl: #FFF0F5;
+  --pkd: #C2185B;
+  --pk2: #CE93D8;
+  --mn:  #4DB6AC;
+  --mnl: #E0F2F1;
+  --pu:  #9575CD;
+  --pul: #EDE7F6;
+  --tx:  #2D2D3A;
+  --txl: #8A849A;
+  --bg:  #F8F4FA;
+  --card: #ffffff;
+  --card-shadow: 0 2px 16px rgba(160,80,140,.09);
+  --radius: 20px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: 'Nunito', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+  background: var(--bg);
+  color: var(--tx);
+  line-height: 1.7;
+}
+
+a { color: var(--pkd); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ── 상단 헤더 ── */
+.g-header {
+  background: rgba(255,255,255,.95);
+  border-bottom: 1px solid rgba(240,98,146,.12);
+  position: sticky; top: 0; z-index: 10;
+  padding: 14px 20px;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 10px;
+}
+.g-logo {
+  font-size: 1.15rem; font-weight: 900; letter-spacing: -.5px;
+  background: linear-gradient(135deg, #F06292, #9C27B0);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.g-cta {
+  background: linear-gradient(135deg, #F06292, #9C27B0);
+  color: #fff; font-weight: 800; font-size: .82rem;
+  padding: 9px 16px; border-radius: 40px;
+  box-shadow: 0 4px 14px rgba(200,80,180,.28);
+}
+.g-cta:hover { opacity: .88; text-decoration: none; }
+
+/* ── 히어로 ── */
+.g-hero {
+  background: linear-gradient(135deg, #F48FB1 0%, #CE93D8 50%, #90CAF9 100%);
+  color: #fff; padding: 40px 20px; text-align: center;
+}
+.g-hero h1 { font-size: 1.5rem; font-weight: 900; margin: 0 0 8px; }
+.g-hero p  { font-size: .9rem; opacity: .95; margin: 0; max-width: 520px; margin: 0 auto; }
+
+/* ── 본문 레이아웃 ── */
+.g-wrap { max-width: 720px; margin: 0 auto; padding: 28px 20px 60px; }
+
+.g-breadcrumb { font-size: .78rem; color: var(--txl); margin-bottom: 18px; }
+.g-breadcrumb a { color: var(--txl); }
+
+.g-intro {
+  background: var(--card); border-radius: var(--radius); box-shadow: var(--card-shadow);
+  padding: 20px 22px; margin-bottom: 26px; font-size: .88rem; color: var(--tx); font-weight: 600;
+}
+
+/* ── 허브 페이지: 카테고리 카드 ── */
+.g-card-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+@media (min-width: 560px) { .g-card-grid { grid-template-columns: 1fr 1fr; } }
+
+.g-cat-card {
+  display: block; background: var(--card); border-radius: var(--radius);
+  box-shadow: var(--card-shadow); padding: 22px; transition: transform .2s, box-shadow .2s;
+}
+.g-cat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(180,80,160,.18); text-decoration: none; }
+.g-cat-card .ico { font-size: 1.8rem; margin-bottom: 10px; }
+.g-cat-card h2 { font-size: 1.02rem; font-weight: 900; margin: 0 0 6px; color: var(--tx); }
+.g-cat-card p  { font-size: .8rem; color: var(--txl); margin: 0; font-weight: 700; }
+
+/* ── 상세 콘텐츠: 월령/주차별 섹션 ── */
+.g-section {
+  background: var(--card); border-radius: var(--radius); box-shadow: var(--card-shadow);
+  padding: 22px; margin-bottom: 18px;
+}
+.g-section h2 {
+  font-size: 1rem; font-weight: 900; color: var(--pkd); margin: 0 0 16px;
+  padding-bottom: 10px; border-bottom: 2px solid var(--pkl);
+}
+
+.g-item { padding: 14px 0; border-bottom: 1px solid #F3EAF2; }
+.g-item:last-child { border-bottom: none; padding-bottom: 0; }
+.g-item h3 {
+  font-size: .88rem; font-weight: 800; color: var(--tx); margin: 0 0 6px;
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+}
+.g-item .req { display: inline-block; background: #FFEBEE; color: #C62828; font-size: .6rem; font-weight: 800; padding: 2px 7px; border-radius: 8px; }
+.g-item .opt { display: inline-block; background: var(--mnl); color: #00695C; font-size: .6rem; font-weight: 800; padding: 2px 7px; border-radius: 8px; }
+.g-item p { font-size: .82rem; color: var(--tx); margin: 0; opacity: .88; }
+
+/* ── 정책 페이지(개인정보처리방침/이용약관) ── */
+.g-doc h2 { font-size: 1rem; font-weight: 900; color: var(--tx); margin: 26px 0 10px; }
+.g-doc h2:first-child { margin-top: 0; }
+.g-doc p, .g-doc li { font-size: .86rem; color: var(--tx); }
+.g-doc ul { padding-left: 20px; }
+.g-doc .updated { font-size: .76rem; color: var(--txl); margin-bottom: 20px; }
+
+/* ── 문의 페이지 ── */
+.g-contact-box {
+  background: var(--card); border-radius: var(--radius); box-shadow: var(--card-shadow);
+  padding: 26px; text-align: center;
+}
+.g-contact-box .ico { font-size: 2rem; margin-bottom: 10px; }
+.g-contact-box a.email {
+  display: inline-block; margin-top: 14px; font-weight: 800; font-size: .92rem;
+  background: var(--pkl); color: var(--pkd); padding: 10px 20px; border-radius: 40px;
+}
+
+/* ── 하단 네비게이션 (허브로) ── */
+.g-nav-links { display: flex; flex-wrap: wrap; gap: 8px; margin: 30px 0; }
+.g-nav-links a {
+  background: #EEE5F4; color: var(--txl); font-size: .76rem; font-weight: 800;
+  padding: 8px 14px; border-radius: 40px;
+}
+.g-nav-links a:hover { background: var(--pkl); color: var(--pkd); text-decoration: none; }
+
+/* ── 하단 CTA 배너 ── */
+.g-cta-banner {
+  background: linear-gradient(135deg, #F06292, #9C27B0); color: #fff;
+  border-radius: var(--radius); padding: 26px; text-align: center; margin: 30px 0;
+}
+.g-cta-banner h2 { font-size: 1.05rem; font-weight: 900; margin: 0 0 8px; }
+.g-cta-banner p { font-size: .82rem; opacity: .92; margin: 0 0 16px; }
+.g-cta-banner a {
+  display: inline-block; background: #fff; color: var(--pkd); font-weight: 800;
+  font-size: .85rem; padding: 10px 22px; border-radius: 40px;
+}
+.g-cta-banner a:hover { text-decoration: none; opacity: .9; }
+
+/* ── 안내 문구 ── */
+.g-disclaimer {
+  font-size: .74rem; color: var(--txl); background: #F5F0F6; border-radius: 12px;
+  padding: 12px 14px; margin-bottom: 24px; line-height: 1.6;
+}
+
+/* ── 푸터 ── */
+.g-footer {
+  text-align: center; padding: 26px 20px 40px; font-size: .74rem; color: var(--txl);
+}
+.g-footer a { color: var(--txl); margin: 0 6px; }

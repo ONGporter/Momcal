@@ -38,10 +38,21 @@
 ```
 momcal/
 ├── index.html              # 앱 진입점 (SEO 메타·OG 태그·PWA 메타 포함)
+├── privacy.html             # 개인정보처리방침 (Sprint 16, 로그인 불필요)
+├── terms.html                # 이용약관 (Sprint 16, 로그인 불필요)
+├── contact.html              # 문의 페이지 (Sprint 16, 로그인 불필요)
 ├── manifest.json            # PWA 매니페스트
 ├── sw.js                     # 서비스 워커 (정적 파일 캐싱)
 ├── robots.txt                # 검색엔진 크롤링 허용 + sitemap 위치 안내 (Sprint 14)
-├── sitemap.xml                # 검색엔진 제출용 사이트맵 (Sprint 14)
+├── sitemap.xml                # 검색엔진 제출용 사이트맵 (Sprint 14, Sprint 16에서 guide/정책 페이지 URL 추가)
+├── guide/                    # 로그인 없이 보는 공개 육아정보 콘텐츠 (Sprint 16, SEO 목적)
+│   ├── index.html             # 육아정보 허브 (카테고리 목록)
+│   ├── pregnancy.html         # 임신 주차별 체크리스트 상세 (정적 HTML, JS 불필요)
+│   ├── parenting.html         # 월령별 예방접종·건강검진 상세
+│   ├── food.html               # 이유식 단계별 가이드
+│   └── guide.css               # 공개 페이지 전용 스타일 (앱 css와 독립)
+├── scripts/
+│   └── build-guide.mjs        # data/checklist-data.js → guide/*.html 정적 생성 스크립트 (Sprint 16)
 ├── icons/
 │   ├── icon-192.png, icon-512.png (+maskable 버전)
 │   ├── apple-touch-icon.png
@@ -69,6 +80,7 @@ momcal/
 │   ├── pwaInstall.js         # "어플로 추가" 링크 (설치 프롬프트/iOS 안내)
 │   ├── familyShare.js        # "배우자와 함께 쓰기" 공유 링크
 │   ├── guestMode.js          # 게스트 모드 — 로그인 없이 로컬(localStorage)에 실제 데이터 저장 (Sprint 15)
+│   ├── accountDelete.js      # 계정 영구 삭제(자체 탈퇴) — Firestore 문서 + Auth 계정 삭제 (Sprint 17)
 │   ├── adSlot.js              # 광고 슬롯 컴포넌트 (AdSense 연동 준비)
 │   ├── demoMode.js            # 예시 데이터로 둘러보기 (샘플 데이터, 저장 안 함 — 게스트 모드와는 별개)
 │   ├── modal.js               # showModal(), cm()
@@ -169,6 +181,39 @@ momcal/
 
 ---
 
+## 공개 콘텐츠 페이지 (SEO) — Sprint 16
+
+`guide/` 아래 3개 페이지(`pregnancy.html`, `parenting.html`, `food.html`)와 허브(`guide/index.html`)는 로그인·JS 실행 없이도 검색엔진이 텍스트를 그대로 읽을 수 있는 **순수 정적 HTML**입니다. 앱 본체(SPA)와는 완전히 분리되어 있습니다 — 같은 저장소·같은 배포에 포함되지만, Firebase나 앱의 JS 모듈을 전혀 로드하지 않습니다.
+
+- **콘텐츠 출처**: `data/checklist-data.js`의 체크리스트 항목(제목·상세설명 `dd`)을 그대로 사용 — 앱 체크리스트와 내용이 어긋나지 않도록 직접 손으로 쓰지 않고 스크립트로 생성함
+- **생성 방법**: `node scripts/build-guide.mjs`를 저장소 루트에서 실행하면 `data/checklist-data.js`를 읽어 `guide/*.html`을 다시 만듦
+- **⚠️ 체크리스트 내용을 수정했다면 반드시 이 스크립트를 다시 실행**해서 가이드 페이지도 함께 갱신해야 함 (자동으로 동기화되지 않음 — 정적 파일이기 때문)
+- **스타일**: `guide/guide.css` 하나로 `guide/` 페이지와 `privacy.html`/`terms.html`/`contact.html`이 공통으로 사용. UI_GUIDELINE.md의 브랜드 컬러·폰트를 따르지만 앱 전용 CSS(`css/main.css` 등)와는 독립적 (앱에 불필요한 스타일을 끌어오지 않기 위함)
+- **앱과의 연결**: 앱 하단 푸터·로그인 화면에 육아정보/정책 페이지 링크가 있고, 가이드 페이지에는 "맘캘 앱 무료로 쓰기" CTA가 곳곳에 있어 콘텐츠 → 앱 유입 동선을 만듦
+
+### 정책 페이지 (Google AdSense 심사 준비)
+
+`privacy.html`(개인정보처리방침), `terms.html`(이용약관), `contact.html`(문의)은 향후 AdSense 심사에 대비해 만들어둠.
+
+- 문의 이메일은 `jws12131411@gmail.com`으로 반영됨 (Sprint 17)
+- 개인정보처리방침의 "계정 삭제·데이터 삭제는 문의 이메일로 요청" 문구는 Sprint 17에서 앱 내 자체 탈퇴 기능이 추가되며 함께 갱신됨 (아래 "계정 영구 삭제" 섹션 참고)
+
+---
+
+## 계정 영구 삭제 (자체 탈퇴) — Sprint 17
+
+사용자 메뉴(우측 상단 프로필 클릭) → "계정 영구 삭제"에서 로그인 계정을 스스로 탈퇴할 수 있음.
+
+- **삭제 대상**: Firestore 문서(`users/{uid}`, 아이 프로필·캘린더·체크리스트·성장 기록 전부) + Firebase Auth 계정 자체
+- **삭제 순서**: Firestore 문서 삭제 → Auth 계정 삭제 (Firestore 문서가 이미 없어도 에러 없이 무시하고 계속 진행하도록 처리)
+- **오조작 방지**: 되돌릴 수 없는 파괴적 동작이라, "삭제"라는 문구를 정확히 입력해야만 삭제 버튼이 활성화되는 확인 모달을 거침
+- **재인증 처리**: Firebase는 로그인한 지 오래된 세션에서는 보안상 계정 삭제를 거부하고 `auth/requires-recent-login` 에러를 던짐 — 이 경우 로그인 방식에 맞춰 자동으로 재인증을 요청한 뒤 삭제를 재시도함
+  - 이메일/비밀번호 로그인 → 비밀번호 재입력 모달
+  - Google 로그인 → Google 재인증 팝업(`reauthenticateWithPopup`)
+- 삭제 완료 후에는 `onAuthStateChanged`가 자동으로 게스트 모드로 전환함 (Sprint 15 게스트 모드 로직 재사용, 별도 처리 불필요)
+- 신규 파일: `js/accountDelete.js`
+
+---
 ## 전역 상태 객체 (S)
 
 `js/state.js`에 정의. 모든 모듈이 `import { S } from './state.js'`로 공유.
@@ -230,10 +275,9 @@ momcal/
 - `js/adSlot.js` — 홈 대시보드·체크리스트·성장 페이지 하단에 광고 슬롯 컴포넌트 배치. 현재는 AdSense 미연동 상태(`AD_ENABLED=false`)라 육아 팁으로 대체 표시되며, 심사 통과 후 값만 채우면 바로 전환됨 (Sprint 13)
 
 ### 조회수·유입 확대를 위해 고려할 점
-- **로그인 장벽 (Sprint 15에서 완화)**: 이전엔 로그인해야만 앱을 쓸 수 있어 신규 방문자 이탈이 컸는데, 이제 게스트 모드로 로그인 없이 바로 실사용이 가능해져 가입 장벽 자체는 낮아짐. 다만 ⚠️ **이것만으로 SEO가 좋아지는 건 아님** — 검색엔진 크롤러는 로그인 상태가 없어 항상 빈 상태(아이 미등록)의 홈 화면만 보게 되고, SPA 특성상 색인 가능한 URL도 여전히 1개뿐. 게스트 모드는 신규 사용자 이탈률 감소·입소문 확산에는 도움이 되지만, 검색엔진에 걸릴 "콘텐츠"가 생기는 것은 아님 — 진짜 SEO 트래픽을 원하면 아래처럼 로그인 없이도 검색엔진이 색인할 수 있는 공개 콘텐츠 페이지가 별도로 필요함
-- **로그인 없이도 볼 수 있는 공개 콘텐츠**: 체크리스트에 추가한 예방접종·이유식 상세 설명 같은 육아 정보를 블로그/정보 페이지 형태로 별도 노출하는 방안을 중장기적으로 검토 (게스트 모드의 실제 앱 화면과는 별개로, 검색엔진이 색인할 정적/서버 렌더링 콘텐츠 페이지가 필요함)
-- **SEO 기본기**: `robots.txt`, `sitemap.xml`, Open Graph/Twitter 메타 태그 적용 완료 (Sprint 14) — 상세 내용은 아래 "SEO" 절 참고
-- **콘텐츠 확장**: 체크리스트 항목의 상세 설명(dd) 데이터는 향후 공개 콘텐츠 페이지의 원천 데이터로도 재활용 가능하도록 설계됨 (data/checklist-data.js)
+- **로그인 장벽 (Sprint 15에서 완화, Sprint 16에서 실질적 콘텐츠 확보)**: 게스트 모드로 가입 장벽은 낮아졌고, `guide/` 공개 콘텐츠 페이지로 검색엔진이 실제로 색인할 수 있는 텍스트 콘텐츠(임신·예방접종·이유식 상세 정보, 총 137개 항목)가 생김. 이전엔 "SPA라 색인할 페이지가 사실상 1개뿐"이었는데, 이제 `guide/` 하위 4개 페이지가 추가되어 "DTaP 1차 예방접종", "이유식 쌀미음" 같은 구체적인 키워드로도 검색엔진에 걸릴 가능성이 생김
+- **SEO 기본기**: `robots.txt`, `sitemap.xml`(guide·정책 페이지 URL 포함), Open Graph/Twitter 메타 태그 적용 완료 — 상세 내용은 아래 "SEO" 절 참고
+- **콘텐츠 확장**: `guide/` 페이지는 `data/checklist-data.js`에서 스크립트로 생성되므로, 체크리스트에 항목을 추가할 때마다 `node scripts/build-guide.mjs`만 다시 실행하면 공개 콘텐츠도 함께 늘어남
 - **재방문율**: 광고 노출 총량은 결국 "얼마나 자주 여는 앱인가"에 달려 있음 — 알림(FCM), 매일 확인할 이유(오늘의 팁, 다가오는 일정)를 늘리는 기능이 광고 수익과도 직결됨
 
 ### SEO 적용 현황 (Sprint 14)
@@ -244,8 +288,10 @@ momcal/
 | sitemap.xml | ✅ 적용 | 현재는 SPA라 단일 URL만 포함 |
 | robots.txt | ✅ 적용 | 전체 허용 + sitemap 위치 안내 |
 | Open Graph / Twitter Card | ✅ 적용 | 카카오톡·페이스북·트위터 공유 시 미리보기 이미지(`icons/og-image.png`) 노출 |
-| Google Search Console 등록 | ⏳ 미등록 | 소유자 계정 인증 필요 — 등록 절차는 TODO.md 참고 |
-| 네이버 서치어드바이저 등록 | ⏳ 미등록 | 소유자 계정 인증 필요 — 등록 절차는 TODO.md 참고 |
+| 로그인 없이 보는 공개 콘텐츠 | ✅ 적용 (Sprint 16) | `guide/` — 임신·예방접종·이유식 상세 정보 137개 항목, 정적 HTML |
+| AdSense 심사용 정책 페이지 | ✅ 적용 (Sprint 16) | `privacy.html`/`terms.html`/`contact.html` (Sprint 17에서 문의 이메일 반영) |
+| Google Search Console 등록 | ✅ 소유권 확인 완료 | 사이트맵 제출 등 후속 절차는 TODO.md 참고 |
+| 네이버 서치어드바이저 등록 | ✅ 소유권 확인 완료 | 사이트맵 제출·수집 요청 등 후속 절차는 TODO.md 참고 |
 
 ---
 
@@ -253,7 +299,7 @@ momcal/
 
 완료된 기능의 이력만 기록합니다. **예정된 작업·후보 기능은 TODO.md "다음 후보"를 참고하세요.**
 
-### ✅ 완료 (Sprint 1~15)
+### ✅ 완료 (Sprint 1~17)
 
 | Sprint | 주요 기능 |
 |:---:|------|
@@ -272,4 +318,6 @@ momcal/
 | 13 | "어플로 추가" 문구 변경, "배우자와 함께 쓰기" 공유 링크, 광고 슬롯 컴포넌트(AdSense 연동 준비), 상단 네비게이션 2줄 구조, 대시보드 카드 폭 고정 |
 | 14 | 캘린더 예방접종 중복 표시 버그 수정, 체크리스트 항목별 상세 설명 펼치기(아코디언), SEO 메타/OG/sitemap.xml/robots.txt 적용, 수익화 전략 문서화 |
 | 15 | 게스트 모드 신규 추가 — 로그인 없이도 실제 데이터를 로컬(localStorage)에 저장해 바로 사용 가능, 로그인은 상단 "🔐 로그인" 칩으로 재배치(백업·기기 간 동기화 목적), 로그인 시 게스트 데이터 자동 계정 이전(신규 계정 한정) |
+| 16 | 로그인 없이 보는 공개 육아정보 콘텐츠(`guide/`) 신규 추가 — 임신·예방접종·이유식 체크리스트 137개 항목을 정적 HTML로 생성(SEO 목적), Google AdSense 심사 대비 개인정보처리방침·이용약관·문의 페이지 추가, sitemap.xml에 신규 URL 반영 |
+| 17 | 계정 영구 삭제(자체 탈퇴) 기능 추가 — Firestore 문서·Auth 계정 삭제, 확인 문구 입력 방식의 오조작 방지, 재인증 자동 처리(이메일·Google), 문의 페이지 실제 이메일 반영 |
 

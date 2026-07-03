@@ -105,6 +105,13 @@
     <div class="auth-loading" id="authLoading">처리 중...</div>
 
     <button class="btn-demo" onclick="startDemoMode()">🎬 예시 데이터로 둘러보기</button>
+
+    <div style="margin-top:18px;font-size:.68rem;color:var(--txl);display:flex;justify-content:center;gap:10px;flex-wrap:wrap">
+      <a href="./guide/index.html" style="color:var(--txl)">육아정보</a>
+      <a href="./privacy.html" style="color:var(--txl)">개인정보처리방침</a>
+      <a href="./terms.html" style="color:var(--txl)">이용약관</a>
+      <a href="./contact.html" style="color:var(--txl)">문의</a>
+    </div>
   </div>
 </div>
 
@@ -150,6 +157,12 @@
                  font-weight:800;color:#E53935"
           onmouseover="this.style.background='#FFF0F0'"
           onmouseout="this.style.background='none'">🚪 로그아웃</button>
+  <button onclick="toggleUserMenu(false);openDeleteAccountModal()"
+          style="width:100%;text-align:left;padding:8px 12px;border:none;background:none;
+                 border-radius:10px;cursor:pointer;font-family:inherit;font-size:.72rem;
+                 font-weight:700;color:var(--txl)"
+          onmouseover="this.style.background='#F5F0F6';this.style.color='#C62828'"
+          onmouseout="this.style.background='none';this.style.color='var(--txl)'">계정 영구 삭제</button>
 </div>
 
 <!-- 저장 알림 배지 -->
@@ -355,6 +368,16 @@
 
   <div id="adSlotGrowth" class="ad-slot-wrap" style="margin-top:18px"></div>
 </div>
+
+<!-- 하단 푸터 — 육아정보·정책 페이지 링크 (Sprint 16) -->
+<footer style="max-width:960px;margin:0 auto;padding:8px 16px 32px;text-align:center;
+               font-size:.72rem;color:var(--txl);display:flex;flex-wrap:wrap;
+               justify-content:center;gap:10px 16px">
+  <a href="./guide/index.html" style="color:var(--txl)">💕 육아정보</a>
+  <a href="./privacy.html" style="color:var(--txl)">🔒 개인정보처리방침</a>
+  <a href="./terms.html" style="color:var(--txl)">📄 이용약관</a>
+  <a href="./contact.html" style="color:var(--txl)">✉️ 문의</a>
+</footer>
 
 <!-- ════════════════════════════════════
      MODAL

@@ -23,6 +23,8 @@ import './growth.js';
 import './demoMode.js';
 import './checklistCalendarLink.js';
 import './pwaInstall.js';
+import './familyShare.js';
+import './accountDelete.js';
 
 /* ── 초기 로드 여부 플래그 ── */
 let _firstLoad = true;
