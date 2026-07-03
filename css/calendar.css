@@ -43,7 +43,7 @@
 .cal-body      { display: grid; grid-template-columns: repeat(7,1fr); }
 
 .cal-cell {
-  min-height: 80px; border: 1px solid #F5EEF8;
+  min-height: 96px; border: 1px solid #F5EEF8;
   padding: 6px 4px; cursor: pointer;
   transition: background .14s; position: relative;
   overflow: hidden; /* Sprint 9: 긴 텍스트·잔여 요소가 옆 셀로 삐져나오지 않도록 */
@@ -60,14 +60,17 @@
 }
 
 /* ── EVENT PILLS ── */
-/* Sprint 21: 셀당 이모지 아이콘 없이 대표 1건만 텍스트 필로 보여주고
-   (배경색은 JS에서 카테고리별 색상을 인라인 style로 지정), 나머지는 .ev-dots로 표시 */
+/* Sprint 22: 네이티브 캘린더 앱처럼 실제 글자가 보이도록 개선.
+   Sprint 21에서 중복 아이콘은 없앴지만, 좁은 셀 폭에서 한 줄 말줄임(ellipsis)만 쓰다 보니
+   "2차 접종 (5종)" 같은 자동 생성 제목은 여전히 "2차..."처럼 한두 글자만 보이고 잘렸음
+   (배경색은 JS에서 카테고리별 색상을 인라인 style로 지정) */
 .ev-pill {
-  border-radius: 6px; padding: 3px 6px;
-  font-size: .62rem; font-weight: 800;
-  margin-bottom: 2px; white-space: nowrap;
-  overflow: hidden; text-overflow: ellipsis;
-  max-width: 100%; box-sizing: border-box; /* Sprint 9: 셀 폭을 절대 넘지 않도록 */
+  border-radius: 6px; padding: 2px 5px;
+  font-size: .58rem; font-weight: 700; line-height: 1.25;
+  margin-bottom: 2px;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+  overflow: hidden;
+  max-width: 100%; box-sizing: border-box;
 }
 .ep-req    { background: linear-gradient(90deg, #F06292, #E91E63); color: #fff; }
 .ep-rec    { background: linear-gradient(90deg, #4DB6AC, #00897B); color: #fff; }
@@ -140,7 +143,7 @@
 
 /* ── RESPONSIVE ── */
 @media (max-width: 640px) {
-  .cal-cell { min-height: 52px; }
+  .cal-cell { min-height: 76px; }
 }
 
 /* ══════════════════════════════════════
