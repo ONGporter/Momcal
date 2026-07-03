@@ -50,6 +50,7 @@ momcal/
 │   ├── pregnancy.html         # 임신 주차별 체크리스트 상세 (정적 HTML, JS 불필요)
 │   ├── parenting.html         # 월령별 예방접종·건강검진 상세
 │   ├── food.html               # 이유식 단계별 가이드
+│   ├── government-support.html # 정부지원금 시기별 가이드 (Sprint 18)
 │   └── guide.css               # 공개 페이지 전용 스타일 (앱 css와 독립)
 ├── scripts/
 │   └── build-guide.mjs        # data/checklist-data.js → guide/*.html 정적 생성 스크립트 (Sprint 16)
@@ -183,9 +184,9 @@ momcal/
 
 ## 공개 콘텐츠 페이지 (SEO) — Sprint 16
 
-`guide/` 아래 3개 페이지(`pregnancy.html`, `parenting.html`, `food.html`)와 허브(`guide/index.html`)는 로그인·JS 실행 없이도 검색엔진이 텍스트를 그대로 읽을 수 있는 **순수 정적 HTML**입니다. 앱 본체(SPA)와는 완전히 분리되어 있습니다 — 같은 저장소·같은 배포에 포함되지만, Firebase나 앱의 JS 모듈을 전혀 로드하지 않습니다.
+`guide/` 아래 4개 페이지(`pregnancy.html`, `parenting.html`, `food.html`, `government-support.html`)와 허브(`guide/index.html`)는 로그인·JS 실행 없이도 검색엔진이 텍스트를 그대로 읽을 수 있는 **순수 정적 HTML**입니다. 앱 본체(SPA)와는 완전히 분리되어 있습니다 — 같은 저장소·같은 배포에 포함되지만, Firebase나 앱의 JS 모듈을 전혀 로드하지 않습니다.
 
-- **콘텐츠 출처**: `data/checklist-data.js`의 체크리스트 항목(제목·상세설명 `dd`)을 그대로 사용 — 앱 체크리스트와 내용이 어긋나지 않도록 직접 손으로 쓰지 않고 스크립트로 생성함
+- **콘텐츠 출처**: `data/checklist-data.js`(임신/육아/이유식 체크리스트 항목)와 `data/government-support.js`(정부지원 제도 일정)를 그대로 사용 — 앱 데이터와 내용이 어긋나지 않도록 직접 손으로 쓰지 않고 스크립트로 생성함
 - **생성 방법**: `node scripts/build-guide.mjs`를 저장소 루트에서 실행하면 `data/checklist-data.js`를 읽어 `guide/*.html`을 다시 만듦
 - **⚠️ 체크리스트 내용을 수정했다면 반드시 이 스크립트를 다시 실행**해서 가이드 페이지도 함께 갱신해야 함 (자동으로 동기화되지 않음 — 정적 파일이기 때문)
 - **스타일**: `guide/guide.css` 하나로 `guide/` 페이지와 `privacy.html`/`terms.html`/`contact.html`이 공통으로 사용. UI_GUIDELINE.md의 브랜드 컬러·폰트를 따르지만 앱 전용 CSS(`css/main.css` 등)와는 독립적 (앱에 불필요한 스타일을 끌어오지 않기 위함)
@@ -275,7 +276,7 @@ momcal/
 - `js/adSlot.js` — 홈 대시보드·체크리스트·성장 페이지 하단에 광고 슬롯 컴포넌트 배치. 현재는 AdSense 미연동 상태(`AD_ENABLED=false`)라 육아 팁으로 대체 표시되며, 심사 통과 후 값만 채우면 바로 전환됨 (Sprint 13)
 
 ### 조회수·유입 확대를 위해 고려할 점
-- **로그인 장벽 (Sprint 15에서 완화, Sprint 16에서 실질적 콘텐츠 확보)**: 게스트 모드로 가입 장벽은 낮아졌고, `guide/` 공개 콘텐츠 페이지로 검색엔진이 실제로 색인할 수 있는 텍스트 콘텐츠(임신·예방접종·이유식 상세 정보, 총 137개 항목)가 생김. 이전엔 "SPA라 색인할 페이지가 사실상 1개뿐"이었는데, 이제 `guide/` 하위 4개 페이지가 추가되어 "DTaP 1차 예방접종", "이유식 쌀미음" 같은 구체적인 키워드로도 검색엔진에 걸릴 가능성이 생김
+- **로그인 장벽 (Sprint 15에서 완화, Sprint 16·18에서 실질적 콘텐츠 확보)**: 게스트 모드로 가입 장벽은 낮아졌고, `guide/` 공개 콘텐츠 페이지로 검색엔진이 실제로 색인할 수 있는 텍스트 콘텐츠(임신·예방접종·이유식·정부지원 상세 정보, 총 153개 항목)가 생김. 이전엔 "SPA라 색인할 페이지가 사실상 1개뿐"이었는데, 이제 `guide/` 하위 4개 페이지가 추가되어 "DTaP 1차 예방접종", "이유식 쌀미음", "부모급여 신청" 같은 구체적인 키워드로도 검색엔진에 걸릴 가능성이 생김
 - **SEO 기본기**: `robots.txt`, `sitemap.xml`(guide·정책 페이지 URL 포함), Open Graph/Twitter 메타 태그 적용 완료 — 상세 내용은 아래 "SEO" 절 참고
 - **콘텐츠 확장**: `guide/` 페이지는 `data/checklist-data.js`에서 스크립트로 생성되므로, 체크리스트에 항목을 추가할 때마다 `node scripts/build-guide.mjs`만 다시 실행하면 공개 콘텐츠도 함께 늘어남
 - **재방문율**: 광고 노출 총량은 결국 "얼마나 자주 여는 앱인가"에 달려 있음 — 알림(FCM), 매일 확인할 이유(오늘의 팁, 다가오는 일정)를 늘리는 기능이 광고 수익과도 직결됨
@@ -288,7 +289,7 @@ momcal/
 | sitemap.xml | ✅ 적용 | 현재는 SPA라 단일 URL만 포함 |
 | robots.txt | ✅ 적용 | 전체 허용 + sitemap 위치 안내 |
 | Open Graph / Twitter Card | ✅ 적용 | 카카오톡·페이스북·트위터 공유 시 미리보기 이미지(`icons/og-image.png`) 노출 |
-| 로그인 없이 보는 공개 콘텐츠 | ✅ 적용 (Sprint 16) | `guide/` — 임신·예방접종·이유식 상세 정보 137개 항목, 정적 HTML |
+| 로그인 없이 보는 공개 콘텐츠 | ✅ 적용 (Sprint 16, Sprint 18에서 정부지원 추가) | `guide/` — 임신·예방접종·이유식·정부지원 상세 정보 153개 항목, 정적 HTML |
 | AdSense 심사용 정책 페이지 | ✅ 적용 (Sprint 16) | `privacy.html`/`terms.html`/`contact.html` (Sprint 17에서 문의 이메일 반영) |
 | Google Search Console 등록 | ✅ 소유권 확인 완료 | 사이트맵 제출 등 후속 절차는 TODO.md 참고 |
 | 네이버 서치어드바이저 등록 | ✅ 소유권 확인 완료 | 사이트맵 제출·수집 요청 등 후속 절차는 TODO.md 참고 |
@@ -299,7 +300,7 @@ momcal/
 
 완료된 기능의 이력만 기록합니다. **예정된 작업·후보 기능은 TODO.md "다음 후보"를 참고하세요.**
 
-### ✅ 완료 (Sprint 1~17)
+### ✅ 완료 (Sprint 1~18)
 
 | Sprint | 주요 기능 |
 |:---:|------|
@@ -320,4 +321,4 @@ momcal/
 | 15 | 게스트 모드 신규 추가 — 로그인 없이도 실제 데이터를 로컬(localStorage)에 저장해 바로 사용 가능, 로그인은 상단 "🔐 로그인" 칩으로 재배치(백업·기기 간 동기화 목적), 로그인 시 게스트 데이터 자동 계정 이전(신규 계정 한정) |
 | 16 | 로그인 없이 보는 공개 육아정보 콘텐츠(`guide/`) 신규 추가 — 임신·예방접종·이유식 체크리스트 137개 항목을 정적 HTML로 생성(SEO 목적), Google AdSense 심사 대비 개인정보처리방침·이용약관·문의 페이지 추가, sitemap.xml에 신규 URL 반영 |
 | 17 | 계정 영구 삭제(자체 탈퇴) 기능 추가 — Firestore 문서·Auth 계정 삭제, 확인 문구 입력 방식의 오조작 방지, 재인증 자동 처리(이메일·Google), 문의 페이지 실제 이메일 반영 |
-
+| 18 | 육아정보 공개 페이지에 정부지원금 가이드(`guide/government-support.html`) 추가 — 국민행복카드·부모급여·아동수당 등 16개 항목, `data/government-support.js` 기반 자동 생성, sitemap.xml·허브 페이지·전체 내비게이션에 반영 |

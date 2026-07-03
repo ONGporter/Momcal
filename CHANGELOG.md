@@ -1,5 +1,23 @@
 # Changelog
 
+## [Sprint 18] 2026-07-03 — 육아정보에 정부지원금 가이드 추가
+
+### 1. 정부지원금 가이드 페이지 (`guide/government-support.html`)
+- `data/government-support.js`(임신 중/출산 직후/육아 중 시기별 정부지원 제도 데이터)를 기반으로 새 공개 콘텐츠 페이지 생성 — 국민행복카드, 부모급여, 아동수당, 첫만남이용권 등 16개 항목
+- 체크리스트 데이터(`t/d/dd/r` 구조)와 정부지원 데이터(`title/desc/importance/link/deadlineNote` 구조)의 형태가 달라, `scripts/build-guide.mjs`의 섹션 렌더러를 분리(`renderSection`/`renderGovSection`)해서 각각 처리하도록 확장
+- 각 항목에 신청 마감 안내(있는 경우)와 공식 기관 사이트 링크(새 탭, `rel="noopener nofollow"`)를 표시
+- 기존 3개 가이드 페이지(임신/예방접종·건강검진/이유식)와 허브 페이지의 하단 내비게이션·카드 그리드에 "🏛️ 정부지원금" 링크 추가 — 4개 공개 페이지가 서로 연결됨
+- `sitemap.xml`에 신규 URL 추가
+
+### 유지된 기능
+- Sprint 1~17 기존 기능 전부 변경 없음, Firebase 스키마 변경 없음 — 이번 추가분도 Sprint 16과 동일하게 순수 정적 페이지
+
+### ⚠️ 참고
+- 정부지원 페이지도 `data/government-support.js`가 바뀌면 `node scripts/build-guide.mjs`를 다시 실행해야 반영됨
+- 구조화 데이터(JSON-LD)는 이번에 추가하지 않음 — TODO.md 백로그에 후보로 남겨둠
+
+---
+
 ## [Sprint 17] 2026-07-03 — 계정 영구 삭제 기능 + 문의 이메일 반영
 
 ### 1. 계정 영구 삭제(자체 탈퇴) 기능

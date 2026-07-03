@@ -1,8 +1,10 @@
 /**
- * scripts/build-guide.mjs — Sprint 16
+ * scripts/build-guide.mjs — Sprint 16, Sprint 18에서 정부지원 페이지 추가
  *
- * data/checklist-data.js (앱의 체크리스트 데이터, dd 상세 설명 포함)를 그대로 읽어서
- * /guide/pregnancy.html, /guide/parenting.html, /guide/food.html 정적 페이지를 생성한다.
+ * data/checklist-data.js (앱의 체크리스트 데이터, dd 상세 설명 포함)와
+ * data/government-support.js (정부지원 제도 일정 데이터)를 그대로 읽어서
+ * /guide/pregnancy.html, /guide/parenting.html, /guide/food.html,
+ * /guide/government-support.html 정적 페이지를 생성한다.
  *
  * 왜 정적 생성인가?
  *  - 맘캘 본체는 Firebase 로그인 뒤에서 JS로 그려지는 SPA라 검색엔진이 색인할 실질적인
@@ -17,6 +19,7 @@
  */
 
 import { clData } from '../data/checklist-data.js';
+import { govSupportSchedule } from '../data/government-support.js';
 import { writeFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -25,6 +28,17 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT  = join(__dirname, '..');
 const GUIDE = join(ROOT, 'guide');
 const SITE  = 'https://momcal.vercel.app';
+
+/* 정부지원 데이터는 {preg, postpartum, parenting} 키의 배열이라 체크리스트와 형태가 달라
+   가이드 페이지용 카테고리 배열로 한 번 변환해준다. */
+const govCatLabels = {
+  preg:       '🤰 임신 중',
+  postpartum: '👶 출산 직후 (출생 후 며칠~몇 주 이내)',
+  parenting:  '🧒 육아 중',
+};
+const govCats = Object.entries(govSupportSchedule).map(([key, items]) => ({
+  key, label: govCatLabels[key] || key, items,
+}));
 
 /* ── 공통 head/header/footer ── */
 function head(title, desc, path) {
@@ -67,7 +81,7 @@ function ctaBanner(text) {
 </div>`;
 }
 
-/* ── 카테고리 섹션 HTML 생성 ── */
+/* ── 카테고리 섹션 HTML 생성 (체크리스트형: t/d/dd/r) ── */
 function renderSection(cat) {
   const items = cat.items.map(it => `
     <div class="g-item">
@@ -80,7 +94,27 @@ function renderSection(cat) {
   </section>`;
 }
 
-function page({ title, desc, path, heroTitle, heroDesc, intro, cats, ctaText, disclaimer }) {
+/* ── 카테고리 섹션 HTML 생성 (정부지원형: title/desc/importance/link/deadline) ── */
+function renderGovSection(cat) {
+  const items = cat.items.map(it => {
+    const deadline = it.deadlineNote
+      ? `<p style="margin-top:6px;font-size:.76rem;color:var(--pkd);font-weight:800">⏰ ${it.deadlineNote}</p>`
+      : '';
+    return `
+    <div class="g-item">
+      <h3>${it.title} ${it.importance === 'req' ? '<span class="req">필수</span>' : '<span class="opt">해당자</span>'}</h3>
+      <p>${it.desc}</p>
+      ${deadline}
+      <p style="margin-top:6px"><a href="${it.link}" target="_blank" rel="noopener nofollow">공식 사이트 바로가기 →</a></p>
+    </div>`;
+  }).join('');
+  return `<section class="g-section">
+    <h2>${cat.label}</h2>
+    ${items}
+  </section>`;
+}
+
+function page({ title, desc, path, heroTitle, heroDesc, intro, cats, ctaText, disclaimer, renderCat = renderSection }) {
   return `<!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -96,12 +130,13 @@ ${header()}
   <div class="g-breadcrumb"><a href="./index.html">육아정보</a> › ${heroTitle}</div>
   <div class="g-intro">${intro}</div>
   ${disclaimer ? `<div class="g-disclaimer">⚠️ ${disclaimer}</div>` : ''}
-  ${cats.map(renderSection).join('\n  ')}
+  ${cats.map(renderCat).join('\n  ')}
   ${ctaBanner(ctaText)}
   <div class="g-nav-links">
     <a href="./pregnancy.html">🤰 임신 체크리스트</a>
     <a href="./parenting.html">👶 월령별 예방접종·건강검진</a>
     <a href="./food.html">🥣 이유식 가이드</a>
+    <a href="./government-support.html">🏛️ 정부지원금</a>
   </div>
 </div>
 ${footer()}
@@ -149,7 +184,21 @@ const foodHtml = page({
   disclaimer: '이 페이지의 이유식·영양 정보는 일반적인 참고용 요약입니다. 아이마다 알레르기·소화 상태가 다르니, 새로운 재료를 시작할 때는 소아과 상담을 권장합니다.',
 });
 
-/* ── 4. 허브 페이지 ── */
+/* ── 4. 정부지원금 가이드 ── */
+const govHtml = page({
+  title: '임신·출산·육아 정부지원금 총정리 | 맘캘 육아정보',
+  desc: '국민행복카드, 부모급여, 아동수당, 첫만남이용권 등 임신부터 육아까지 받을 수 있는 정부지원 제도를 시기별로 정리했어요. 신청 마감 기한까지 한눈에 확인하세요.',
+  path: '/guide/government-support.html',
+  heroTitle: '🏛️ 정부지원금 가이드',
+  heroDesc: '임신 중부터 육아 중까지, 시기별로 받을 수 있는 지원 제도를 정리했어요',
+  intro: '정부지원 제도는 신청 기한을 놓치면 못 받는 경우가 많아 미리 알아두는 게 중요해요. 아래는 임신 중, 출산 직후, 육아 중 시기별로 정리한 정부지원 제도예요. 맘캘 앱에 등록하면 이 일정들이 자동으로 캘린더에 채워지고, 신청 마감을 놓치지 않도록 확인할 수 있어요.',
+  cats: govCats,
+  ctaText: '지원금 신청 마감, 놓치지 않게 캘린더로 관리해보세요',
+  disclaimer: '제도명·지원 대상·금액·마감 기한은 매년 바뀔 수 있습니다. 이 페이지는 신청 시기를 놓치지 않기 위한 참고용 안내이며, 정확한 자격 요건과 금액은 반드시 링크된 기관 홈페이지 또는 주민센터에서 다시 확인해주세요.',
+  renderCat: renderGovSection,
+});
+
+/* ── 5. 허브 페이지 ── */
 function countItems(cats) { return cats.reduce((sum, c) => sum + c.items.length, 0); }
 
 const hubHtml = `<!DOCTYPE html>
@@ -188,6 +237,11 @@ ${header()}
       <h2>이유식 단계별 가이드</h2>
       <p>초기~유아식 재료·조리법 (${countItems(clData.food)}개 항목)</p>
     </a>
+    <a class="g-cat-card" href="./government-support.html">
+      <div class="ico">🏛️</div>
+      <h2>정부지원금 가이드</h2>
+      <p>임신~육아 시기별 지원 제도 (${countItems(govCats)}개 항목)</p>
+    </a>
   </div>
   ${ctaBanner('이 모든 정보, 우리 아이 일정에 맞춰 자동으로 관리해보세요')}
 </div>
@@ -200,10 +254,12 @@ ${footer()}
 writeFileSync(join(GUIDE, 'pregnancy.html'), pregHtml);
 writeFileSync(join(GUIDE, 'parenting.html'), parentingHtml);
 writeFileSync(join(GUIDE, 'food.html'), foodHtml);
+writeFileSync(join(GUIDE, 'government-support.html'), govHtml);
 writeFileSync(join(GUIDE, 'index.html'), hubHtml);
 
 console.log('✅ guide 페이지 생성 완료');
 console.log('  - guide/index.html');
-console.log('  - guide/pregnancy.html  (', countItems(clData.preg), '개 항목)');
-console.log('  - guide/parenting.html (', countItems(clData.born), '개 항목)');
-console.log('  - guide/food.html      (', countItems(clData.food), '개 항목)');
+console.log('  - guide/pregnancy.html          (', countItems(clData.preg), '개 항목)');
+console.log('  - guide/parenting.html         (', countItems(clData.born), '개 항목)');
+console.log('  - guide/food.html               (', countItems(clData.food), '개 항목)');
+console.log('  - guide/government-support.html (', countItems(govCats), '개 항목)');
