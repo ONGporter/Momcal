@@ -1,7 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
-/* Sprint 27: 윤고딕 요청 — 윤고딕은 상업용 유료 폰트라 Google Fonts 같은 무료 CDN으로 가져올 수 없고,
-   라이선스 파일을 직접 구매·호스팅해야 해서 이 환경에서는 적용이 불가능함.
-   요청하신 대로 Sprint 22(Fredoka)·Sprint 26(Jua)의 폰트 실험을 되돌리고 원래 Nunito로 복원함. */
+/* Sprint 28: "맘캘" 로고 글자에만 귀여운 한글 폰트 Jua 적용 (본문은 그대로 Nunito) —
+   Sprint 26에서 앱 전체에 적용했다가 가독성 문제로 Sprint 27에서 되돌렸던 것을,
+   이번엔 로고 워드마크 자리(.logo/.auth-logo/.g-logo)에만 좁혀서 다시 적용함 */
+@import url('https://fonts.googleapis.com/css2?family=Jua&display=swap');
 
 /* ── RESET & ROOT ── */
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -50,6 +51,7 @@ body {
 }
 
 .logo {
+  font-family: 'Jua', 'Nunito', 'Apple SD Gothic Neo', sans-serif;
   font-size: 1.22rem;
   font-weight: 700;
   background: linear-gradient(135deg, #F06292, #9C27B0);
@@ -139,24 +141,25 @@ body {
 }
 
 /* ── HOME ── */
+/* Sprint 28: 배너가 너무 크다는 피드백 반영 — 패딩·글자 크기를 전체적으로 축소 */
 .home-hero {
   background: linear-gradient(135deg, #F48FB1 0%, #CE93D8 50%, #90CAF9 100%);
-  border-radius: 26px;
-  padding: 34px 28px;
+  border-radius: 20px;
+  padding: 18px 22px;
   text-align: center;
-  margin-bottom: 22px;
+  margin-bottom: 18px;
   position: relative;
   overflow: hidden;
 }
 .home-hero::before {
   content: ''; position: absolute;
-  width: 220px; height: 220px;
+  width: 160px; height: 160px;
   background: radial-gradient(circle, rgba(255,255,255,.18), transparent);
-  border-radius: 50%; top: -70px; right: -50px;
+  border-radius: 50%; top: -55px; right: -40px;
 }
-.home-hero h1 { font-size: 1.55rem; font-weight: 900; color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,.12); margin-bottom: 6px; }
-.home-hero p  { font-size: .84rem; color: rgba(255,255,255,.85); }
-.hero-emoji   { font-size: 2.4rem; margin-bottom: 10px; display: block; }
+.home-hero h1 { font-size: 1.12rem; font-weight: 900; color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,.12); margin-bottom: 3px; }
+.home-hero p  { font-size: .76rem; color: rgba(255,255,255,.85); }
+.hero-emoji   { font-size: 1.6rem; margin-bottom: 4px; display: block; }
 
 /* ── PROFILE STRIP ── */
 .profile-strip {
@@ -229,7 +232,7 @@ body {
 .dash-tip { grid-column: 1 / -1; }
 .dash-empty { grid-column: 1 / -1; flex-direction: column; align-items: center; text-align: center; gap: 6px; }
 
-/* .dash-grid는 base 스타일에서 이미 반응형 2열 grid(minmax(0,1fr))로 처리됨 — 기종별 별도 미디어쿼리 불필요 */
+/* Sprint 28: 모바일(640px 이하)에서는 1열로 바뀜 — 아래 반응형(RESPONSIVE) 섹션 참고 */
 
 /* ── PWA 설치 링크 (Sprint 12) ── */
 .install-link {
@@ -340,6 +343,13 @@ body {
 /* ── RESPONSIVE ── */
 @media (max-width: 640px) {
   .qm-grid         { grid-template-columns: 1fr 1fr; }
-  .home-hero h1    { font-size: 1.28rem; }
+  .home-hero       { padding: 14px 18px; }
+  .home-hero h1    { font-size: .98rem; }
+  .home-hero p     { font-size: .7rem; }
+  .hero-emoji      { font-size: 1.35rem; }
   .fg2             { grid-template-columns: 1fr; }
+
+  /* Sprint 28: 모바일에서는 대시보드 카드 2열이 좁아서 글자가 잘려 보인다는 피드백 —
+     1열로 쌓아서 카드마다 폭을 넉넉하게 확보 */
+  .dash-grid       { grid-template-columns: 1fr; }
 }

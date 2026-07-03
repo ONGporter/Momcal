@@ -230,7 +230,7 @@ function renderContextBanner(child) {
     const display   = ageMonths < 3 ? `${ageWeeks}주` : `${ageMonths}개월`;
     el.innerHTML = `
       👶 현재 <strong>${display}</strong>
-      <span style="color:var(--txl);font-weight:700;margin-left:auto;font-size:.76rem">${child.name}이(가) 쑥쑥 크는 중 💕</span>`;
+      <span style="color:var(--txl);font-weight:700;margin-left:auto;font-size:.76rem">${child.name}이(가) 쑥쑥 크는 중 🌱</span>`;
 
   } else {
     el.innerHTML = '';

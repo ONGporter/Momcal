@@ -72,7 +72,7 @@ background: linear-gradient(135deg, #F06292, #9C27B0);
 font-family: 'Nunito', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
 ```
 
-앱 전체의 기본 폰트는 **Nunito**입니다. (Sprint 22에서 로고에 Fredoka, Sprint 26에서 전체에 Jua를 시도했으나, 각각 한글 미지원·가독성 문제로 Sprint 27에서 다시 Nunito로 원복됨 — 아래 참고)
+앱 전체의 기본 폰트는 **Nunito**입니다.
 
 | 용도 | size | weight |
 |------|------|--------|
@@ -83,11 +83,23 @@ font-family: 'Nunito', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
 | 배지/태그 | 0.58~0.72rem | 800 |
 | 섹션 라벨 | 0.82rem | 900, uppercase |
 
-### 참고 — 폰트 실험 이력 (Sprint 22 → 26 → 27)
-- Sprint 22: "맘캘" 로고에만 Fredoka 적용 시도 → Fredoka는 한글 미지원 라틴 전용 폰트라 한글 텍스트에는 실제로 적용되지 않았음(무효)
-- Sprint 26: 앱 전체를 한글 지원 귀여운 폰트 Jua로 전환 → 사용해보니 여전히 원하는 느낌이 아니었음
-- Sprint 27: 윤고딕 요청 → 상업용 유료 폰트라 무료 CDN으로 가져올 수 없어 적용 불가. 요청에 따라 Nunito로 원복
-- 무료 CDN(Google Fonts)에서 쓸 수 있는 폰트로 다시 시도하고 싶다면 다음에 새 폰트명을 알려주세요. 유료 폰트(윤고딕 등)를 쓰려면 라이선스 구매 후 폰트 파일(.woff2 등)을 직접 전달해주셔야 프로젝트에 넣어드릴 수 있습니다.
+### 로고 워드마크 전용 폰트 (Sprint 28)
+
+"맘캘" 글자가 로고로 쓰이는 자리(topbar `.logo`, 로그인 화면 `.auth-logo`, 육아정보·정책 페이지 `.g-logo`)에만 예외적으로 **Jua**(Google Fonts, 귀엽고 둥근 한글 폰트)를 사용합니다.
+
+```css
+font-family: 'Jua', 'Nunito', 'Apple SD Gothic Neo', sans-serif;
+```
+
+- 새 로고/워드마크 자리를 추가할 때만 이 폰트를 적용하고, 본문·버튼·라벨 등 일반 텍스트에는 사용하지 않습니다 (본문까지 적용했다가 가독성 문제로 되돌린 이력 있음 — Sprint 26→27 참고).
+- Jua는 굵기가 하나(400)뿐이라 `font-weight` 지정이 실제로 다른 두께로 나타나지 않을 수 있습니다.
+
+### 참고 — 폰트 실험 이력 (Sprint 22 → 26 → 27 → 28)
+- Sprint 22: 로고에 Fredoka 시도 → 한글 미지원이라 실제로는 적용 안 됨(무효)
+- Sprint 26: 앱 전체를 Jua로 전환 → 본문 가독성 문제로 불만
+- Sprint 27: 윤고딕 요청(상업용 폰트라 무료 CDN 불가) → Nunito로 전체 원복
+- Sprint 28: "로고 글자만" 요청 반영 → Jua를 로고 워드마크에만 좁혀서 재적용(현재 상태)
+- 윤고딕처럼 유료 폰트를 쓰려면 라이선스 구매 후 폰트 파일(.woff2 등)을 직접 전달해주셔야 프로젝트에 넣을 수 있습니다.
 
 ---
 

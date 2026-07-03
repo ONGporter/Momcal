@@ -193,7 +193,10 @@
       if (countEl) countEl.textContent = q ? (totalShown + '개 항목 검색됨') : '';
     }
   </script>
-  <section class="g-section">
+  <div class="g-cat-tabs">
+    <a href="#preg" class="g-cat-tab">🤰 임신 중</a><a href="#postpartum" class="g-cat-tab">👶 출산 직후 (출생 후 며칠~몇 주 이내)</a><a href="#parenting" class="g-cat-tab">🧒 육아 중</a>
+  </div>
+  <section class="g-section" id="preg">
     <h2>🤰 임신 중</h2>
     
     <div class="g-item" id="infertility">
@@ -233,7 +236,7 @@
       <p style="margin-top:6px"><a href="https://www.gov.kr" target="_blank" rel="noopener nofollow">공식 사이트 바로가기 →</a></p>
     </div>
   </section>
-  <section class="g-section">
+  <section class="g-section" id="postpartum">
     <h2>👶 출산 직후 (출생 후 며칠~몇 주 이내)</h2>
     
     <div class="g-item" id="birth-report">
@@ -273,7 +276,7 @@
       <p style="margin-top:6px"><a href="https://nip.kdca.go.kr" target="_blank" rel="noopener nofollow">공식 사이트 바로가기 →</a></p>
     </div>
   </section>
-  <section class="g-section">
+  <section class="g-section" id="parenting">
     <h2>🧒 육아 중</h2>
     
     <div class="g-item" id="idolbom-apply">

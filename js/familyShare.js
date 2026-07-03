@@ -16,7 +16,7 @@ import { showModal } from './modal.js';
 const APP_URL = 'https://momcal.vercel.app';
 
 function shareMessage() {
-  return `맘캘로 우리 아이 육아 일정을 같이 관리해요 💕\n제 계정으로 로그인하면 같은 캘린더·체크리스트를 실시간으로 함께 볼 수 있어요!\n${APP_URL}`;
+  return `맘캘로 우리 아이 육아 일정을 같이 관리해요 👨‍👩‍👧\n제 계정으로 로그인하면 같은 캘린더·체크리스트를 실시간으로 함께 볼 수 있어요!\n${APP_URL}`;
 }
 
 /** 홈 탭 "배우자와 함께 쓰기" 링크 렌더 */
@@ -41,7 +41,7 @@ async function shareWithFamily() {
 
   if (navigator.share) {
     try {
-      await navigator.share({ title: '맘캘 MomCal 💕', text, url: APP_URL });
+      await navigator.share({ title: '맘캘 MomCal 👨‍👩‍👧', text, url: APP_URL });
     } catch (e) {
       // 사용자가 공유 시트를 취소한 경우 등 — 별도 처리 불필요
     }
@@ -53,7 +53,7 @@ async function shareWithFamily() {
     showModal('👨‍👩‍👧 배우자와 함께 쓰기', `
       <p style="font-size:.86rem;font-weight:700;color:var(--tx);line-height:1.7">
         공유 문구가 클립보드에 복사됐어요!<br>
-        카카오톡·문자 등에 붙여넣어 배우자에게 보내주세요 💕
+        카카오톡·문자 등에 붙여넣어 배우자에게 보내주세요 👨‍👩‍👧
       </p>
       <button class="btn bpk" style="width:100%;margin-top:16px" onclick="cm()">확인했어요</button>
     `);

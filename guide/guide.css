@@ -6,7 +6,8 @@
  * 색상·타이포는 UI_GUIDELINE.md의 브랜드 톤(파스텔 핑크/민트, Nunito)을 그대로 따름.
  */
 
-/* Sprint 27: 윤고딕은 상업용 폰트라 CDN 임포트 불가 — Jua/Fredoka 실험을 되돌리고 Nunito로 복원 */
+/* Sprint 28: "맘캘" 로고 글자에만 Jua 적용 (본문은 Nunito 유지) */
+@import url('https://fonts.googleapis.com/css2?family=Jua&display=swap');
 
 :root {
   --pk:  #F06292;
@@ -26,6 +27,7 @@
 }
 
 * { box-sizing: border-box; }
+html { scroll-behavior: smooth; } /* Sprint 28: 카테고리 탭·검색 결과 클릭 시 부드럽게 이동 */
 
 body {
   margin: 0;
@@ -48,6 +50,7 @@ a:hover { text-decoration: underline; }
   flex-wrap: wrap; gap: 10px;
 }
 .g-logo {
+  font-family: 'Jua', 'Nunito', 'Apple SD Gothic Neo', sans-serif;
   font-size: 1.22rem; font-weight: 700; letter-spacing: -.3px;
   background: linear-gradient(135deg, #F06292, #9C27B0);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
@@ -103,11 +106,27 @@ a:hover { text-decoration: underline; }
 .g-section {
   background: var(--card); border-radius: var(--radius); box-shadow: var(--card-shadow);
   padding: 22px; margin-bottom: 18px;
+  scroll-margin-top: 76px; /* Sprint 28: 탭에서 점프했을 때 sticky 헤더에 안 가리도록 */
 }
 .g-section h2 {
   font-size: 1rem; font-weight: 900; color: var(--pkd); margin: 0 0 16px;
   padding-bottom: 10px; border-bottom: 2px solid var(--pkl);
 }
+
+/* ── Sprint 28: 카테고리 탭 바 — 계속 스크롤 안 해도 원하는 구간으로 바로 이동 ── */
+.g-cat-tabs {
+  display: flex; gap: 7px; overflow-x: auto; scrollbar-width: none;
+  margin-bottom: 18px; padding-bottom: 2px;
+}
+.g-cat-tabs::-webkit-scrollbar { display: none; }
+.g-cat-tab {
+  flex-shrink: 0; white-space: nowrap;
+  padding: 8px 14px; border-radius: 40px;
+  background: var(--card); border: 1.5px solid #EEE0F0;
+  font-size: .78rem; font-weight: 800; color: var(--tx);
+  box-shadow: var(--card-shadow);
+}
+.g-cat-tab:hover { border-color: var(--pk); color: var(--pkd); text-decoration: none; }
 
 .g-item { padding: 14px 0; border-bottom: 1px solid #F3EAF2; scroll-margin-top: 76px; }
 .g-item:last-child { border-bottom: none; padding-bottom: 0; }

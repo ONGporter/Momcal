@@ -225,7 +225,7 @@ export function regChild() {
   debounceSave();
   showModal('🎉 등록 완료!', `
     <p style="line-height:2;font-size:.9rem">
-      <b>${name}</b> 등록 완료! 💕<br>
+      <b>${name}</b> 등록 완료! 🎉<br>
       캘린더에 일정이 자동으로 채워졌어요!<br>
       <span style="font-size:.78rem;color:var(--txl)">Firebase에 자동 저장돼요 💾</span>
     </p><br>

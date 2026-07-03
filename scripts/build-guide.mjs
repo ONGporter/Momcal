@@ -163,7 +163,7 @@ function renderSection(cat) {
       <h3>${it.t} ${it.r ? '<span class="req">필수</span>' : '<span class="opt">선택</span>'}</h3>
       <p>${it.dd || it.d || ''}</p>
     </div>`).join('');
-  return `<section class="g-section">
+  return `<section class="g-section" id="${cat.key}">
     <h2>${cat.label}</h2>
     ${items}
   </section>`;
@@ -183,10 +183,24 @@ function renderGovSection(cat) {
       <p style="margin-top:6px"><a href="${it.link}" target="_blank" rel="noopener nofollow">공식 사이트 바로가기 →</a></p>
     </div>`;
   }).join('');
-  return `<section class="g-section">
+  return `<section class="g-section" id="${cat.key}">
     <h2>${cat.label}</h2>
     ${items}
   </section>`;
+}
+
+/**
+ * 카테고리 탭 바 (Sprint 28)
+ * - 계속 아래로 스크롤해야만 원하는 구간(주차·개월수 등)을 볼 수 있었던 불편함을 줄이기 위해,
+ *   페이지 상단에 각 카테고리로 바로 이동하는 탭(고정 앵커 링크)을 추가함
+ * - 순수 <a href="#id"> 앵커라 JS 없이도 동작(진행성 향상) — 스크롤은 guide.css의
+ *   `html { scroll-behavior: smooth }` 로 부드럽게 이동, 헤더에 가리지 않도록
+ *   `.g-section`에 `scroll-margin-top`을 함께 지정해둠
+ */
+function categoryTabBar(cats) {
+  return `<div class="g-cat-tabs">
+    ${cats.map(cat => `<a href="#${cat.key}" class="g-cat-tab">${cat.label}</a>`).join('')}
+  </div>`;
 }
 
 /**
@@ -241,6 +255,7 @@ ${header()}
   <div class="g-intro">${intro}</div>
   ${disclaimer ? `<div class="g-disclaimer">⚠️ ${disclaimer}</div>` : ''}
   ${pageSearchBox()}
+  ${categoryTabBar(cats)}
   ${cats.map(renderCat).join('\n  ')}
   ${ctaBanner(ctaText)}
   <div class="g-nav-links">
@@ -381,7 +396,7 @@ ${head(
 <body>
 ${header()}
 <div class="g-hero">
-  <h1>💕 맘캘 육아정보</h1>
+  <h1>📖 맘캘 육아정보</h1>
   <p>임신부터 육아까지, 꼭 필요한 정보만 모았어요. 로그인 없이 누구나 볼 수 있어요.</p>
 </div>
 <div class="g-wrap">

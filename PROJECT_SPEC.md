@@ -26,7 +26,7 @@
 - **Frontend**: Vanilla JS (ES6 Module), HTML5, CSS3
 - **Backend**: Firebase Auth + Cloud Firestore
 - **배포**: GitHub Push → Vercel 자동 배포
-- **폰트**: Nunito (Google Fonts CDN) — Sprint 22(Fredoka)·Sprint 26(Jua) 실험을 거쳐 Sprint 27에서 원복됨
+- **폰트**: 본문은 Nunito, "맘캘" 로고 워드마크는 Jua (Google Fonts CDN, Sprint 28 — 여러 스프린트에 걸친 폰트 실험 끝에 로고에만 좁혀 적용하는 것으로 정착)
 - **아이콘**: 이모지 전용 (외부 아이콘 라이브러리 없음)
 - **차트**: Chart.js (CDN, jsDelivr 폴백)
 - **PWA**: manifest.json + sw.js (홈 화면 설치·오프라인 앱 셸 캐싱)
@@ -338,3 +338,4 @@ momcal/
 | 25 | 모바일 캘린더 필 글자 크기 축소(`.58rem`→`.5rem`, 모바일 전용) — 기존 640px 반응형 브레이크포인트에 규칙 추가, PC는 영향 없음 |
 | 26 | 앱 전체 폰트를 Fredoka(한글 미지원으로 실제 미적용 상태였음)→Jua(한글 지원 귀여운 폰트)로 교체, 캘린더 필을 배경 박스 방식에서 네이티브 캘린더 스타일의 색상 텍스트 줄 방식으로 전면 개편(`renderPrimaryPill`/`renderEvDots` → `renderCellEvents`/`renderEventLine`) |
 | 27 | PC 캘린더 글자 크기 확대(`.58rem`→`.66rem`, 모바일은 유지), 캘린더 일정을 "형광펜" 스타일(옅은 배경+진한 글자, 최소 여백)로 재개편, 폰트를 Jua/Fredoka 실험 이전의 Nunito로 원복(윤고딕은 상업용 폰트라 무료 CDN 적용 불가) |
+| 28 | 육아정보 4개 페이지에 카테고리 탭 추가(스크롤 없이 원하는 구간으로 바로 이동), 홈 히어로 배너 축소·모바일 대시보드 1열 변경, "맘캘" 로고 폰트(Jua)를 로고 워드마크로만 범위 좁혀 재적용 + 정책 페이지(privacy/terms/contact) 로고 이미지 누락 발견해 반영, 장식용 이모지(💕✨🎀 등) 중 "AI스럽다"는 피드백 받은 자리들을 맥락에 맞는 이모지로 교체 |
