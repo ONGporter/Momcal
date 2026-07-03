@@ -9,10 +9,9 @@
  * Firebase 등 외부 도메인 요청(인증·데이터 동기화)은 건드리지 않고 그대로 통과시킵니다.
  */
 
-// Sprint 24: 아이콘·로고·폰트(css/main.css) 등 정적 자산이 여러 스프린트에 걸쳐 바뀌었는데
-// CACHE_NAME이 그대로라 기존 설치 사용자에게는 캐시된 예전 파일(특히 아이콘)이 계속 보일 수 있었음.
-// 버전을 올리면 activate 단계에서 이전 캐시가 통째로 삭제되고 최신 파일로 다시 채워짐.
-const CACHE_NAME = 'momcal-shell-v2';
+// Sprint 25: calendar.css(모바일 필 글자 크기)가 다시 바뀌어서 캐시 버전을 한 번 더 올림
+// (Sprint 24에서 정적 파일 변경 시 버전을 함께 올리기로 한 원칙을 그대로 적용)
+const CACHE_NAME = 'momcal-shell-v3';
 
 const APP_SHELL = [
   './',

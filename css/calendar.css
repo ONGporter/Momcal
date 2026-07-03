@@ -144,6 +144,16 @@
 /* ── RESPONSIVE ── */
 @media (max-width: 640px) {
   .cal-cell { min-height: 76px; }
+
+  /* Sprint 25: 모바일 화면은 PC보다 셀 폭이 훨씬 좁아서 같은 글자 크기라도
+     한 줄에 들어가는 글자 수가 적음 — 모바일에서만 필 글자를 한 단계 더 줄여서
+     "2차 접종 (5종)" 같은 메모/제목이 잘리지 않고 더 많이 보이도록 함 */
+  .ev-pill {
+    font-size: .5rem;
+    padding: 2px 4px;
+    line-height: 1.2;
+  }
+  .ev-dot { width: 6px; height: 6px; }
 }
 
 /* ══════════════════════════════════════
