@@ -9,9 +9,8 @@
  * Firebase 등 외부 도메인 요청(인증·데이터 동기화)은 건드리지 않고 그대로 통과시킵니다.
  */
 
-// Sprint 26: 전체 폰트(Jua)와 캘린더 필 스타일이 다시 바뀌어서 캐시 버전을 한 번 더 올림
-// (Sprint 24에서 정적 파일 변경 시 버전을 함께 올리기로 한 원칙을 계속 적용)
-const CACHE_NAME = 'momcal-shell-v4';
+// Sprint 27: 폰트 원복(Nunito) + 캘린더 형광펜 스타일로 CSS가 다시 바뀌어서 캐시 버전을 올림
+const CACHE_NAME = 'momcal-shell-v5';
 
 const APP_SHELL = [
   './',

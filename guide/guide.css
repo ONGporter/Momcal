@@ -6,7 +6,7 @@
  * 색상·타이포는 UI_GUIDELINE.md의 브랜드 톤(파스텔 핑크/민트, Nunito)을 그대로 따름.
  */
 
-@import url('https://fonts.googleapis.com/css2?family=Jua&display=swap');
+/* Sprint 27: 윤고딕은 상업용 폰트라 CDN 임포트 불가 — Jua/Fredoka 실험을 되돌리고 Nunito로 복원 */
 
 :root {
   --pk:  #F06292;
@@ -29,7 +29,7 @@
 
 body {
   margin: 0;
-  font-family: 'Jua', 'Nunito', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+  font-family: 'Nunito', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
   background: var(--bg);
   color: var(--tx);
   line-height: 1.7;

@@ -1,9 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
-/* Sprint 26: 앱 전체 폰트를 귀엽고 동글동글한 한글 폰트로 변경 — 본문·제목 전부 Jua를 우선 적용하고,
-   숫자·영문이나 Jua에 없는 글자는 Nunito로 자연스럽게 대체됨.
-   (Sprint 22의 Fredoka는 한글을 지원하지 않는 라틴 전용 폰트라 "맘캘" 워드마크에는
-   실제로 적용되지 않고 있었음 — 이번에 Jua로 통일하면서 워드마크에도 실제로 효과가 나타남) */
-@import url('https://fonts.googleapis.com/css2?family=Jua&display=swap');
+/* Sprint 27: 윤고딕 요청 — 윤고딕은 상업용 유료 폰트라 Google Fonts 같은 무료 CDN으로 가져올 수 없고,
+   라이선스 파일을 직접 구매·호스팅해야 해서 이 환경에서는 적용이 불가능함.
+   요청하신 대로 Sprint 22(Fredoka)·Sprint 26(Jua)의 폰트 실험을 되돌리고 원래 Nunito로 복원함. */
 
 /* ── RESET & ROOT ── */
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -23,7 +21,7 @@
 }
 
 body {
-  font-family: 'Jua', 'Nunito', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+  font-family: 'Nunito', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
   background: var(--bg);
   color: var(--tx);
   min-height: 100vh;

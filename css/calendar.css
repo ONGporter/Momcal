@@ -43,7 +43,7 @@
 .cal-body      { display: grid; grid-template-columns: repeat(7,1fr); }
 
 .cal-cell {
-  min-height: 96px; border: 1px solid #F5EEF8;
+  min-height: 104px; border: 1px solid #F5EEF8;
   padding: 6px 4px; cursor: pointer;
   transition: background .14s; position: relative;
   overflow: hidden; /* Sprint 9: 긴 텍스트·잔여 요소가 옆 셀로 삐져나오지 않도록 */
@@ -59,16 +59,17 @@
   font-size: .72rem; font-weight: 800; margin-bottom: 3px;
 }
 
-/* ── EVENT LINES (Sprint 26) ── */
-/* 네이티브 캘린더 앱(삼성 캘린더 등)처럼 배경색 박스 없이 "색상 글자"로만 구분.
-   Sprint 21~23은 배경 필 안에서 아이콘 제거·2줄 줄바꿈으로 글자 잘림을 줄여보려 했지만,
-   배경 박스의 안쪽 여백 자체가 좁은 셀에서 글자 공간을 계속 잡아먹는 게 근본 원인이었음.
-   박스를 없애고 나니 훨씬 많은 글자가 그대로 보임 (색상은 JS에서 인라인 style로 지정) */
-.ev-lines { display: flex; flex-direction: column; gap: 1px; margin-top: 1px; }
+/* ── EVENT LINES (Sprint 26, 형광펜 스타일로 개편 Sprint 27) ── */
+/* Sprint 26에서 배경을 아예 없앴더니 예쁘지 않다는 피드백 — 대신 형광펜으로 칠한 것처럼
+   글자 뒤에 옅은 색 배경을 살짝만 깔아서, 박스 여백 때문에 공간이 줄어드는 문제 없이도
+   예쁜 배경색 느낌을 살림 (좌우 여백을 필 방식보다 훨씬 좁게 줘서 글자 공간은 그대로 확보).
+   배경·글자색은 JS에서 인라인 style로 지정(연한 배경 + 진한 글자, 뱃지와 같은 톤 규칙) */
+.ev-lines { display: flex; flex-direction: column; gap: 2px; margin-top: 2px; }
 .ev-line {
-  font-size: .58rem; font-weight: 800; line-height: 1.35;
+  font-size: .66rem; font-weight: 800; line-height: 1.4;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  max-width: 100%;
+  max-width: 100%; box-sizing: border-box;
+  padding: 0 3px; border-radius: 4px;
 }
 .ev-more {
   font-size: .5rem; font-weight: 700; color: var(--txl); margin-top: 1px;
@@ -131,10 +132,9 @@
 @media (max-width: 640px) {
   .cal-cell { min-height: 76px; }
 
-  /* Sprint 25: 모바일 화면은 PC보다 셀 폭이 훨씬 좁아서 같은 글자 크기라도
-     한 줄에 들어가는 글자 수가 적음 — 모바일에서만 이벤트 글자를 한 단계 더 줄여서
-     "2차 접종 (5종)" 같은 메모/제목이 잘리지 않고 더 많이 보이도록 함 */
-  .ev-line { font-size: .5rem; }
+  /* Sprint 25: 모바일은 PC보다 셀 폭이 훨씬 좁아서 같은 글자 크기라도 한 줄에 들어가는
+     글자 수가 적음 — 모바일 글자 크기는 그대로 유지(Sprint 27: PC만 확대, 모바일은 그대로) */
+  .ev-line { font-size: .5rem; padding: 0 2px; }
 }
 
 /* ══════════════════════════════════════

@@ -26,7 +26,7 @@
 - **Frontend**: Vanilla JS (ES6 Module), HTML5, CSS3
 - **Backend**: Firebase Auth + Cloud Firestore
 - **배포**: GitHub Push → Vercel 자동 배포
-- **폰트**: Jua (Google Fonts CDN, Sprint 26부터 앱 전체 기본 폰트) — Jua가 못 그리는 글자(숫자·영문 일부)는 Nunito로 자동 대체
+- **폰트**: Nunito (Google Fonts CDN) — Sprint 22(Fredoka)·Sprint 26(Jua) 실험을 거쳐 Sprint 27에서 원복됨
 - **아이콘**: 이모지 전용 (외부 아이콘 라이브러리 없음)
 - **차트**: Chart.js (CDN, jsDelivr 폴백)
 - **PWA**: manifest.json + sw.js (홈 화면 설치·오프라인 앱 셸 캐싱)
@@ -337,3 +337,4 @@ momcal/
 | 24 | "맘캘 💕" 로고의 하트 이모지를 실제 마스코트 이미지(`icons/logo-mark.png`)로 교체(topbar·로그인 화면·육아정보 페이지 5곳), 서비스 워커 캐시 버전 갱신(`momcal-shell-v1`→`v2`)으로 최근 스프린트들의 아이콘·폰트 변경사항이 기존 사용자에게도 확실히 반영되도록 함 |
 | 25 | 모바일 캘린더 필 글자 크기 축소(`.58rem`→`.5rem`, 모바일 전용) — 기존 640px 반응형 브레이크포인트에 규칙 추가, PC는 영향 없음 |
 | 26 | 앱 전체 폰트를 Fredoka(한글 미지원으로 실제 미적용 상태였음)→Jua(한글 지원 귀여운 폰트)로 교체, 캘린더 필을 배경 박스 방식에서 네이티브 캘린더 스타일의 색상 텍스트 줄 방식으로 전면 개편(`renderPrimaryPill`/`renderEvDots` → `renderCellEvents`/`renderEventLine`) |
+| 27 | PC 캘린더 글자 크기 확대(`.58rem`→`.66rem`, 모바일은 유지), 캘린더 일정을 "형광펜" 스타일(옅은 배경+진한 글자, 최소 여백)로 재개편, 폰트를 Jua/Fredoka 실험 이전의 Nunito로 원복(윤고딕은 상업용 폰트라 무료 CDN 적용 불가) |

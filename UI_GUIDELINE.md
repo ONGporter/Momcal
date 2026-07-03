@@ -69,10 +69,10 @@ background: linear-gradient(135deg, #F06292, #9C27B0);
 ## 타이포그래피
 
 ```css
-font-family: 'Jua', 'Nunito', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+font-family: 'Nunito', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
 ```
 
-앱 전체(본문·제목·버튼·로고 전부)에 귀엽고 동글동글한 한글 폰트 **Jua**를 우선 적용합니다 (Sprint 26). 숫자·영문처럼 Jua가 못 그리는 글자나 로딩 실패 시에는 자동으로 Nunito로 대체됩니다.
+앱 전체의 기본 폰트는 **Nunito**입니다. (Sprint 22에서 로고에 Fredoka, Sprint 26에서 전체에 Jua를 시도했으나, 각각 한글 미지원·가독성 문제로 Sprint 27에서 다시 Nunito로 원복됨 — 아래 참고)
 
 | 용도 | size | weight |
 |------|------|--------|
@@ -83,7 +83,11 @@ font-family: 'Jua', 'Nunito', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
 | 배지/태그 | 0.58~0.72rem | 800 |
 | 섹션 라벨 | 0.82rem | 900, uppercase |
 
-⚠️ **Jua는 굵기가 하나(400)뿐인 폰트**라, 위 표의 weight 값(700/800/900)을 지정해도 실제로 더 굵어지지 않고 브라우저가 자동으로 흉내 낸(faux bold) 정도로만 보일 수 있습니다. 그래도 폰트 자체가 이미 두툼하고 동글동글해서 무게감 차이가 크게 아쉽지 않지만, 위계가 중요한 곳(페이지 제목 vs 본문)은 weight보다 font-size 차이로 구분하는 걸 우선 고려하세요.
+### 참고 — 폰트 실험 이력 (Sprint 22 → 26 → 27)
+- Sprint 22: "맘캘" 로고에만 Fredoka 적용 시도 → Fredoka는 한글 미지원 라틴 전용 폰트라 한글 텍스트에는 실제로 적용되지 않았음(무효)
+- Sprint 26: 앱 전체를 한글 지원 귀여운 폰트 Jua로 전환 → 사용해보니 여전히 원하는 느낌이 아니었음
+- Sprint 27: 윤고딕 요청 → 상업용 유료 폰트라 무료 CDN으로 가져올 수 없어 적용 불가. 요청에 따라 Nunito로 원복
+- 무료 CDN(Google Fonts)에서 쓸 수 있는 폰트로 다시 시도하고 싶다면 다음에 새 폰트명을 알려주세요. 유료 폰트(윤고딕 등)를 쓰려면 라이선스 구매 후 폰트 파일(.woff2 등)을 직접 전달해주셔야 프로젝트에 넣어드릴 수 있습니다.
 
 ---
 

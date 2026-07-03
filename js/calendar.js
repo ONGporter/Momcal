@@ -749,10 +749,11 @@ function esc(str) {
 function renderEventLine(e) {
   const urgent = isGovDeadlineSoon(e);
   const color  = urgent ? '#C62828' : getEvColor(getEvCategory(e));
+  const bg     = color + '2B'; // 형광펜 느낌의 옅은 배경 (~17% 불투명도) — 뱃지와 같은 "연한 배경 + 진한 글자" 톤
   const label  = stripLeadingEmoji(e.title);
   const safe   = esc(label);
   const doneCss = e.done ? 'text-decoration:line-through;opacity:.55;' : '';
-  const style  = `color:${color};${doneCss}`;
+  const style  = `background:${bg};color:${color};${doneCss}`;
 
   if (e._isVaxGroup) {
     const groupIndices = `[${e._groupItems.map(item => item._idx).join(',')}]`;
@@ -828,11 +829,12 @@ function renderWeekView() {
             if (!primary) return '';
             const urgent  = isGovDeadlineSoon(primary);
             const color   = urgent ? '#C62828' : getEvColor(getEvCategory(primary));
+            const bg      = color + '2B';
             const label   = stripLeadingEmoji(primary.title);
             const clickAttr = primary._isVaxGroup ? '' : `onclick="event.stopPropagation();openEvModal(${primary._idx})"`;
             const doneCss = primary.done ? 'text-decoration:line-through;opacity:.55;' : '';
             const extra = de.length > 1 ? `<div style="font-size:.5rem;color:var(--txl)">+${de.length - 1}</div>` : '';
-            return `<div class="ev-line" style="font-size:.6rem;color:${color};${doneCss}" ${clickAttr}>${label}</div>${extra}`;
+            return `<div class="ev-line" style="font-size:.66rem;background:${bg};color:${color};${doneCss}" ${clickAttr}>${label}</div>${extra}`;
           })()}
           ${(S.dayStickers[ds] || []).slice(0, 1).map(s => `<span style="font-size:.78rem">${s}</span>`).join('')}
         </div>`;
