@@ -60,9 +60,11 @@
 }
 
 /* ── EVENT PILLS ── */
+/* Sprint 21: 셀당 이모지 아이콘 없이 대표 1건만 텍스트 필로 보여주고
+   (배경색은 JS에서 카테고리별 색상을 인라인 style로 지정), 나머지는 .ev-dots로 표시 */
 .ev-pill {
-  border-radius: 5px; padding: 2px 4px;
-  font-size: .57rem; font-weight: 700;
+  border-radius: 6px; padding: 3px 6px;
+  font-size: .62rem; font-weight: 800;
   margin-bottom: 2px; white-space: nowrap;
   overflow: hidden; text-overflow: ellipsis;
   max-width: 100%; box-sizing: border-box; /* Sprint 9: 셀 폭을 절대 넘지 않도록 */
@@ -73,6 +75,15 @@
 .ep-gov    { background: linear-gradient(90deg, #66BB6A, #2E7D32); color: #fff; }
 .ep-diary  { background: linear-gradient(90deg, #FFD54F, #FFA000); color: #fff; }
 .ep-custom { background: linear-gradient(90deg, #64B5F6, #1976D2); color: #fff; }
+
+/* ── 대표 필 외 나머지 이벤트 — 색상 점 (Sprint 21) ── */
+.ev-dots { display: flex; align-items: center; gap: 3px; flex-wrap: wrap; margin-top: 2px; }
+.ev-dot {
+  width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+}
+.ev-dot-done { opacity: .35; }
+.ev-dot-urgent { box-shadow: 0 0 0 1.5px #C62828; }
+.ev-dot-more { font-size: .5rem; color: var(--txl); font-weight: 800; line-height: 7px; }
 
 /* ── STICKERS ON CALENDAR ── */
 /* Bug #7 fix: stickers display in a small row, max 4, with +N overflow */
@@ -152,6 +163,15 @@
   color: var(--txl);
 }
 
+/* ── Sprint 20: 정부지원 마감 임박 강조 ── */
+.ev-pill.ev-urgent {
+  border: 1.5px solid #C62828;
+  box-shadow: 0 0 0 1px rgba(198,40,40,.25);
+}
+.dp-ev.dp-ev-urgent {
+  border: 2px solid #C62828;
+}
+
 /* ── 드래그 타겟 강조 ── */
 .cal-cell.drag-over {
   background: var(--pkl) !important;
@@ -192,3 +212,28 @@
   border-color: var(--pk);
   color: var(--pk);
 }
+
+/* ── Sprint 21: 캘린더 하단 색상 범례 (탭하면 색상 변경) ── */
+.cal-legend {
+  display: flex; flex-wrap: wrap; gap: 8px 14px;
+  margin-top: 14px; padding: 14px 16px;
+  background: var(--card); border-radius: var(--radius); box-shadow: var(--card-shadow);
+}
+.legend-item {
+  display: flex; align-items: center; gap: 6px;
+  cursor: pointer; position: relative;
+  font-size: .74rem; font-weight: 800; color: var(--tx);
+  padding: 3px 4px; border-radius: 8px; transition: background .2s;
+}
+.legend-item:hover { background: var(--pkl); }
+.legend-dot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
+.legend-label { white-space: nowrap; }
+.legend-color-input {
+  position: absolute; width: 11px; height: 11px; left: 0; top: 3px;
+  opacity: 0; cursor: pointer; border: none; padding: 0;
+}
+.legend-reset {
+  font-size: .68rem; color: var(--txl); margin-left: 2px;
+  padding: 0 2px; border-radius: 4px;
+}
+.legend-reset:hover { color: var(--pk); }

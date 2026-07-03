@@ -17,6 +17,7 @@ export function emptyState() {
     checks:      {},   // { 'childId_catKey': { itemId: true } }
     eventMods:   {},   // { 'eventKey': { actualDate, hospital, memo, done } }
     growthRecords: [], // [{ id, childId, date, height, weight, head }] — 성장 기록 (Sprint 4)
+    evColors:    {},   // { req, rec, food, vax, gov, custom } — 사용자 지정 일정 색상 (Sprint 21, 없으면 기본색)
     theme:       'rose',
     selC:        0,    // 현재 선택된 아이 인덱스
   };
@@ -71,6 +72,7 @@ export async function saveState() {
       checks:      S.checks,
       eventMods:   S.eventMods || {},
       growthRecords: S.growthRecords || [],
+      evColors:    S.evColors || {},
       theme:       S.theme,
       selC:        S.selC,
       updatedAt:   Date.now(),
@@ -126,6 +128,7 @@ export function applyData(data) {
   S.checks      = fresh.checks      || {};
   S.eventMods   = fresh.eventMods   || {};
   S.growthRecords = fresh.growthRecords || [];
+  S.evColors    = fresh.evColors    || {};
   S.theme       = fresh.theme       || 'rose';
   // selC 범위 보정
   S.selC = Math.max(0, Math.min(fresh.selC || 0, S.children.length - 1));

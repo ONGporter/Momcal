@@ -40,6 +40,27 @@ const govCats = Object.entries(govSupportSchedule).map(([key, items]) => ({
   key, label: govCatLabels[key] || key, items,
 }));
 
+/**
+ * 육아정보 4개 페이지 전체 항목을 하나의 검색 인덱스로 평탄화 (Sprint 21)
+ * 허브 페이지(guide/index.html)의 사이트 전체 검색에 쓰임 — 페이지 이동 없이
+ * 다른 카테고리 페이지의 항목도 찾아서 해당 페이지의 항목 위치(id)로 바로 연결한다.
+ */
+function buildSearchIndex() {
+  const idx = [];
+  const addCl = (cats, page) => cats.forEach(cat =>
+    cat.items.forEach(it => idx.push({
+      id: it.id, title: it.t, desc: it.dd || it.d || '', page, cat: cat.label,
+    })));
+  addCl(clData.preg, 'pregnancy.html');
+  addCl(clData.born, 'parenting.html');
+  addCl(clData.food, 'food.html');
+  govCats.forEach(cat => cat.items.forEach(it => idx.push({
+    id: it.key, title: it.title, desc: it.desc || '', page: 'government-support.html', cat: cat.label,
+  })));
+  return idx;
+}
+const searchIndex = buildSearchIndex();
+
 /* ── 공통 head/header/footer ── */
 function head(title, desc, path, jsonLd) {
   return `<meta charset="UTF-8">
@@ -87,28 +108,58 @@ function faqJsonLd(cats, questionFn, answerFn) {
 function header() {
   return `<header class="g-header">
   <a class="g-logo" href="./index.html">맘캘 💕</a>
-  <a class="g-cta" href="${SITE}/">📅 맘캘 앱 무료로 쓰기</a>
+  <a class="g-cta js-cta" href="${SITE}/">📅 맘캘 앱 무료로 쓰기</a>
 </header>`;
 }
 
 function footer() {
   return `<div class="g-footer">
   © 맘캘 MomCal · <a href="./index.html">육아정보</a> · <a href="../privacy.html">개인정보처리방침</a> · <a href="../terms.html">이용약관</a> · <a href="../contact.html">문의</a> · <a href="${SITE}/">앱 바로가기</a>
-</div>`;
+</div>
+${returningUserScript()}`;
+}
+
+/**
+ * 이미 맘캘을 쓰고 있는 사용자에게는 "무료로 시작하기" 문구가 어색해서,
+ * localStorage 흔적(게스트 데이터 또는 Firebase 로그인 세션)으로 기존 사용자를 감지해
+ * CTA 문구를 "앱으로 돌아가기"로 바꿔준다 (Sprint 21).
+ * - guide 페이지는 앱 본체와 같은 도메인(momcal.vercel.app)에서 서빙되므로 localStorage 공유됨
+ * - Firebase SDK를 이 정적 페이지에 새로 붙이지 않기 위해, 세션 존재 여부만 키 이름으로 판별
+ *   (Firebase Auth가 로컬 퍼시스턴스에 남기는 키는 항상 'firebase:authUser:'로 시작함)
+ */
+function returningUserScript() {
+  return `<script>
+(function(){
+  try {
+    var known = !!localStorage.getItem('momcal_guest_v1');
+    if (!known) {
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (k && k.indexOf('firebase:authUser:') === 0) { known = true; break; }
+      }
+    }
+    if (!known) return;
+    document.querySelectorAll('.js-cta').forEach(function(el){ el.textContent = '🏠 맘캘 앱으로 돌아가기'; });
+    document.querySelectorAll('.js-cta-banner-title').forEach(function(el){ el.textContent = '📅 이 정보, 맘캘 앱에서 이어보기'; });
+    document.querySelectorAll('.js-cta-banner-desc').forEach(function(el){ el.textContent = '이미 맘캘을 쓰고 계시네요! 앱으로 돌아가서 이어서 확인해보세요.'; });
+    document.querySelectorAll('.js-cta-banner-btn').forEach(function(el){ el.textContent = '앱으로 돌아가기 →'; });
+  } catch (e) {}
+})();
+</script>`;
 }
 
 function ctaBanner(text) {
   return `<div class="g-cta-banner">
-  <h2>📅 ${text}</h2>
-  <p>맘캘에 등록하면 오늘 날짜 기준으로 일정이 자동으로 정리돼요. 로그인 없이도 바로 써볼 수 있어요.</p>
-  <a href="${SITE}/">지금 무료로 시작하기 →</a>
+  <h2 class="js-cta-banner-title">📅 ${text}</h2>
+  <p class="js-cta-banner-desc">맘캘에 등록하면 오늘 날짜 기준으로 일정이 자동으로 정리돼요. 로그인 없이도 바로 써볼 수 있어요.</p>
+  <a class="js-cta-banner-btn" href="${SITE}/">지금 무료로 시작하기 →</a>
 </div>`;
 }
 
 /* ── 카테고리 섹션 HTML 생성 (체크리스트형: t/d/dd/r) ── */
 function renderSection(cat) {
   const items = cat.items.map(it => `
-    <div class="g-item">
+    <div class="g-item" id="${it.id}">
       <h3>${it.t} ${it.r ? '<span class="req">필수</span>' : '<span class="opt">선택</span>'}</h3>
       <p>${it.dd || it.d || ''}</p>
     </div>`).join('');
@@ -125,7 +176,7 @@ function renderGovSection(cat) {
       ? `<p style="margin-top:6px;font-size:.76rem;color:var(--pkd);font-weight:800">⏰ ${it.deadlineNote}</p>`
       : '';
     return `
-    <div class="g-item">
+    <div class="g-item" id="${it.key}">
       <h3>${it.title} ${it.importance === 'req' ? '<span class="req">필수</span>' : '<span class="opt">해당자</span>'}</h3>
       <p>${it.desc}</p>
       ${deadline}
@@ -136,6 +187,40 @@ function renderGovSection(cat) {
     <h2>${cat.label}</h2>
     ${items}
   </section>`;
+}
+
+/**
+ * 페이지 내 검색창 (Sprint 21)
+ * - 현재 페이지에 이미 렌더된 .g-item들을 텍스트로 즉석 필터링 (서버·네트워크 요청 없음)
+ * - 검색 결과가 0건인 섹션은 통째로 숨겨서 스크롤 낭비를 줄임
+ */
+function pageSearchBox() {
+  return `<div class="g-search">
+    <input type="search" id="pageSearch" class="g-search-input"
+           placeholder="🔍 이 페이지에서 검색 (예: 엽산, DTaP, 쌀미음)"
+           oninput="filterGuidePage(this.value)">
+    <div id="pageSearchCount" class="g-search-count"></div>
+  </div>
+  <script>
+    function filterGuidePage(q) {
+      q = q.trim().toLowerCase();
+      var sections = document.querySelectorAll('.g-section');
+      var totalShown = 0;
+      sections.forEach(function(sec) {
+        var items = sec.querySelectorAll('.g-item');
+        var shownInSec = 0;
+        items.forEach(function(it) {
+          var match = !q || it.textContent.toLowerCase().indexOf(q) !== -1;
+          it.style.display = match ? '' : 'none';
+          if (match) shownInSec++;
+        });
+        sec.style.display = shownInSec > 0 ? '' : 'none';
+        totalShown += shownInSec;
+      });
+      var countEl = document.getElementById('pageSearchCount');
+      if (countEl) countEl.textContent = q ? (totalShown + '개 항목 검색됨') : '';
+    }
+  </script>`;
 }
 
 function page({ title, desc, path, heroTitle, heroDesc, intro, cats, ctaText, disclaimer, renderCat = renderSection, questionFn, answerFn }) {
@@ -155,6 +240,7 @@ ${header()}
   <div class="g-breadcrumb"><a href="./index.html">육아정보</a> › ${heroTitle}</div>
   <div class="g-intro">${intro}</div>
   ${disclaimer ? `<div class="g-disclaimer">⚠️ ${disclaimer}</div>` : ''}
+  ${pageSearchBox()}
   ${cats.map(renderCat).join('\n  ')}
   ${ctaBanner(ctaText)}
   <div class="g-nav-links">
@@ -231,6 +317,55 @@ const govHtml = page({
   answerFn:   (it) => it.desc + (it.deadlineNote ? ` (${it.deadlineNote})` : ''),
 });
 
+/**
+ * 허브 페이지 전체 검색창 (Sprint 21)
+ * - buildSearchIndex()로 만든 153개 항목 인덱스를 페이지에 JSON으로 심어두고,
+ *   입력할 때마다 제목·설명에 텍스트가 포함되는 항목을 찾아 해당 페이지의 항목 위치(#id)로 링크한다
+ * - 별도 서버·API 호출 없이 정적 페이지 안에서만 동작 (fetch 불필요 → file:// 미리보기에서도 동작)
+ */
+function hubSearchBox() {
+  return `<div class="g-search g-search-hub">
+    <input type="search" id="hubSearch" class="g-search-input"
+           placeholder="🔍 궁금한 것을 검색해보세요 (예: 엽산, DTaP, 부모급여)"
+           oninput="filterHubSearch(this.value)">
+    <div id="hubSearchResults" class="g-search-results"></div>
+  </div>
+  <script id="guideSearchIndex" type="application/json">${JSON.stringify(searchIndex)}</script>
+  <script>
+    (function() {
+      var indexData = [];
+      try {
+        var raw = document.getElementById('guideSearchIndex');
+        indexData = raw ? JSON.parse(raw.textContent) : [];
+      } catch (e) {}
+
+      function escapeHtml(s) {
+        return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      }
+
+      window.filterHubSearch = function(q) {
+        var box = document.getElementById('hubSearchResults');
+        q = q.trim().toLowerCase();
+        if (!q) { box.className = 'g-search-results'; box.innerHTML = ''; return; }
+        var matched = indexData.filter(function(it) {
+          return (it.title + ' ' + it.desc).toLowerCase().indexOf(q) !== -1;
+        }).slice(0, 20);
+        box.className = 'g-search-results show';
+        if (!matched.length) {
+          box.innerHTML = '<div class="g-search-empty">검색 결과가 없어요 🔍</div>';
+          return;
+        }
+        box.innerHTML = matched.map(function(it) {
+          return '<a class="g-search-item" href="./' + it.page + '#' + it.id + '">' +
+            '<span class="g-search-item-title">' + escapeHtml(it.title) + '</span>' +
+            '<span class="g-search-item-cat">' + escapeHtml(it.cat) + '</span>' +
+            '</a>';
+        }).join('');
+      };
+    })();
+  </script>`;
+}
+
 /* ── 5. 허브 페이지 ── */
 function countItems(cats) { return cats.reduce((sum, c) => sum + c.items.length, 0); }
 
@@ -254,6 +389,7 @@ ${header()}
     맘캘은 임신·출산·육아 일정을 관리하는 앱이에요. 이 페이지들은 맘캘 앱의 체크리스트에 담긴
     정보를 로그인 없이도 누구나 볼 수 있도록 정리한 육아 정보 모음입니다.
   </div>
+  ${hubSearchBox()}
   <div class="g-card-grid">
     <a class="g-cat-card" href="./pregnancy.html">
       <div class="ico">🤰</div>

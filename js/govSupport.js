@@ -8,7 +8,8 @@
  */
 
 import { S }                      from './state.js';
-import { getAllEvs, openEvModal } from './calendar.js';
+import { getAllEvs, openEvModal, isGovDeadlineSoon } from './calendar.js';
+import { daysUntil, stripLeadingEmoji } from './utils.js';
 
 /** 체크리스트 페이지 내 정부지원 탭 렌더링 */
 export function renderGovChecklistTab(child) {
@@ -47,19 +48,22 @@ export function renderGovChecklistTab(child) {
     </div>
     ${items.map(e => {
       const status = e.govStatus || 'none';
-      const icon   = status === 'paid' ? '✅' : status === 'applied' ? '🔵' : '🟢';
+      const urgent = isGovDeadlineSoon(e);
+      const icon   = urgent ? '⏰' : status === 'paid' ? '✅' : status === 'applied' ? '🔵' : '🟢';
       const label  = status === 'paid' ? '지급 완료' : status === 'applied' ? '신청 완료' : '신청 전';
-      const cleanTitle = e.title.replace(/^🟢\s*/, '');
+      const cleanTitle = stripLeadingEmoji(e.title);
       const impBadge = e.imp === 'req'
         ? '<span class="badge-r">필수</span>'
         : '<span class="badge-o">해당자</span>';
       const deadline = e.deadlineDate || e.deadlineNote;
+      const dLeft = urgent ? daysUntil(e.deadlineDate) : null;
+      const urgentText = dLeft === null ? '' : dLeft < 0 ? ' (마감 지남)' : dLeft === 0 ? ' (오늘 마감)' : ` (D-${dLeft})`;
       return `
-        <div class="gov-cl-item" onclick="openEvModal(${e._idx})">
+        <div class="gov-cl-item${urgent ? ' gov-cl-urgent' : ''}" onclick="openEvModal(${e._idx})">
           <div class="gov-cl-icon">${icon}</div>
           <div style="flex:1;min-width:0">
-            <div class="gov-cl-title">${cleanTitle} ${impBadge}</div>
-            <div class="gov-cl-desc">${e.date} 권장${deadline ? ` · ⏰ 마감 ${deadline}` : ''}</div>
+            <div class="gov-cl-title">${cleanTitle} ${impBadge}${urgent ? ' <span class="badge-r">⏰ 마감임박</span>' : ''}</div>
+            <div class="gov-cl-desc"${urgent ? ' style="color:#C62828;font-weight:800"' : ''}>${e.date} 권장${deadline ? ` · ⏰ 마감 ${deadline}${urgentText}` : ''}</div>
           </div>
           <span class="gov-cl-status status-${status}">${label}</span>
         </div>`;

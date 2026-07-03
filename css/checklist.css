@@ -198,3 +198,10 @@
 .gov-cl-status.status-none    { background: #E8F5E9; color: #2E7D32; }
 .gov-cl-status.status-applied { background: #E3F2FD; color: #1565C0; }
 .gov-cl-status.status-paid    { background: #C8E6C9; color: #1B5E20; }
+
+/* ── Sprint 20: 정부지원 마감 임박 강조 ── */
+.gov-cl-item.gov-cl-urgent {
+  border-color: #C62828;
+  background: #FFF3F3;
+}
+.gov-cl-item.gov-cl-urgent:hover { border-color: #C62828; background: #FFEAEA; }

@@ -10,13 +10,102 @@
  */
 
 import { S, debounceSave } from './state.js';
-import { today }           from './utils.js';
+import { today, daysUntil, stripLeadingEmoji } from './utils.js';
 import { showModal, cm }   from './modal.js';
 import { vaxSched }        from '../data/vaccines.js';
 import { pregEvMap }       from '../data/pregnancy.js';
 import { checkEvs, foodEvs } from '../data/milestones.js';
 import { recalcVaccineSeries } from './vaccineSeries.js';
 import { govSupportSchedule } from '../data/government-support.js';
+
+/**
+ * 정부지원 항목 마감 임박 여부 (Sprint 20)
+ * - 정확한 마감일(deadlineDate)이 있는 항목만 대상 (deadlineNote만 있는 항목은 정확한 날짜 계산 불가)
+ * - 이미 신청/지급 완료 처리된 항목은 더 이상 임박 표시 안 함
+ * - 마감까지 7일 이하로 남았거나 이미 지난 경우 true
+ */
+export function isGovDeadlineSoon(e) {
+  if (e.type !== 'gov' || !e.deadlineDate) return false;
+  if (e.govStatus === 'applied' || e.govStatus === 'paid') return false;
+  const d = daysUntil(e.deadlineDate);
+  return d !== null && d <= 7;
+}
+
+/* ══════════════════════════════════════
+ *  일정 색상 시스템 (Sprint 21)
+ * ══════════════════════════════════════
+ * 캘린더 필에서 이모지 아이콘을 없애고, 대신 타입별 색상으로 구분한다.
+ * - 이유식(food)은 데이터상 req/rec 타입을 그대로 쓰지만(cat:'food'만 붙음),
+ *   색상 구분에서는 별도 카테고리로 취급해 "🔴이유식"처럼 눈에 띄게 함
+ * - 사용자가 색상을 직접 바꾸면 S.evColors에 저장되고(Firebase/localStorage 공통),
+ *   지정하지 않은 카테고리는 DEFAULT_EV_COLORS를 그대로 사용
+ */
+export const DEFAULT_EV_COLORS = {
+  req:    '#F06292', // 필수
+  rec:    '#26A69A', // 추천
+  food:   '#E53935', // 이유식
+  vax:    '#9575CD', // 접종
+  gov:    '#43A047', // 정부지원
+  custom: '#64B5F6', // 내 일정
+};
+
+export const EV_CATEGORY_LABELS = {
+  req: '필수', rec: '추천', food: '이유식', vax: '접종', gov: '정부지원', custom: '내 일정',
+};
+
+export const EV_CATEGORY_ORDER = ['req', 'rec', 'food', 'vax', 'gov', 'custom'];
+
+/** 이벤트 → 색상 카테고리 (이유식은 type과 무관하게 별도 카테고리) */
+export function getEvCategory(e) {
+  return e.cat === 'food' ? 'food' : e.type;
+}
+
+/** 카테고리 → 실제 표시 색상 (사용자 지정 > 기본값) */
+export function getEvColor(cat) {
+  return (S.evColors && S.evColors[cat]) || DEFAULT_EV_COLORS[cat] || '#9E9E9E';
+}
+
+/** 사용자가 특정 카테고리 색상을 직접 지정 */
+export function setEvColor(cat, color) {
+  if (!S.evColors) S.evColors = {};
+  S.evColors[cat] = color;
+  renderCal(); // renderCal() 내부에서 renderCalLegend()도 함께 호출됨
+  if (document.getElementById('pg-checklist')?.classList.contains('on')) {
+    window.renderGovChecklistTab?.(S.children?.[S.selC]);
+  }
+  debounceSave();
+}
+
+/** 특정 카테고리 색상을 기본값으로 되돌림 */
+export function resetEvColor(cat) {
+  if (S.evColors) delete S.evColors[cat];
+  renderCal();
+  if (document.getElementById('pg-checklist')?.classList.contains('on')) {
+    window.renderGovChecklistTab?.(S.children?.[S.selC]);
+  }
+  debounceSave();
+}
+
+/** 캘린더 하단 색상 범례 렌더 — 각 항목을 탭하면 색상을 직접 고를 수 있음 */
+export function renderCalLegend() {
+  const el = document.getElementById('calLegend');
+  if (!el) return;
+  el.innerHTML = EV_CATEGORY_ORDER.map(cat => {
+    const color = getEvColor(cat);
+    const label = EV_CATEGORY_LABELS[cat];
+    const isCustomColor = !!(S.evColors && S.evColors[cat]);
+    return `
+      <label class="legend-item" title="탭해서 ${label} 색상 바꾸기">
+        <input type="color" class="legend-color-input" value="${color}"
+               onchange="setEvColor('${cat}', this.value)">
+        <span class="legend-dot" style="background:${color}"></span>
+        <span class="legend-label">${label}</span>
+        ${isCustomColor ? `<span class="legend-reset" title="기본색으로" onclick="event.preventDefault();resetEvColor('${cat}')">↺</span>` : ''}
+      </label>`;
+  }).join('');
+}
+window.setEvColor   = setEvColor;
+window.resetEvColor = resetEvColor;
 
 /* ══════════════════════════════════════
  *  테마
@@ -181,17 +270,22 @@ export function openEvModal(idx) {
     { val: 'paid',    label: '지급 완료' },
   ];
 
-  showModal(ev.title, `
+  showModal(stripLeadingEmoji(ev.title), `
     <div style="font-size:.72rem;font-weight:800;color:var(--txl);margin:-4px 0 14px">
       ${typeLabel}${isGov && ev.imp ? (ev.imp === 'req' ? '<span class="badge-r">필수</span>' : '<span class="badge-o">해당자</span>') : ''}
     </div>
 
-    ${isGov ? `
-      <div style="background:#F8F4FA;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:.78rem;color:var(--tx);line-height:1.6">
+    ${isGov ? (() => {
+      const urgent = isGovDeadlineSoon(ev);
+      const dLeft  = urgent ? daysUntil(ev.deadlineDate) : null;
+      const urgentText = dLeft === null ? '' : dLeft < 0 ? ' (마감 지남)' : dLeft === 0 ? ' (오늘 마감)' : ` (D-${dLeft})`;
+      return `
+      <div style="background:${urgent ? '#FFF3F3' : '#F8F4FA'};border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:.78rem;color:var(--tx);line-height:1.6;${urgent ? 'border:1.5px solid #C62828' : ''}">
         ${ev.desc ? `<div>${ev.desc}</div>` : ''}
-        ${(ev.deadlineDate || ev.deadlineNote) ? `<div style="color:#C62828;font-weight:800;margin-top:6px">⏰ 마감: ${ev.deadlineDate || ev.deadlineNote}</div>` : ''}
+        ${(ev.deadlineDate || ev.deadlineNote) ? `<div style="color:#C62828;font-weight:800;margin-top:6px">⏰ 마감: ${ev.deadlineDate || ev.deadlineNote}${urgentText}</div>` : ''}
         ${ev.link ? `<a href="${ev.link}" target="_blank" rel="noopener" style="display:inline-block;margin-top:6px;color:var(--bl);font-weight:800;text-decoration:underline">🔗 관련 기관 바로가기</a>` : ''}
-      </div>` : ''}
+      </div>`;
+    })() : ''}
 
     ${ev.auto ? `
       <div class="fg">
@@ -317,7 +411,7 @@ function showRecalcNotice(changed) {
         <div style="display:flex;justify-content:space-between;align-items:center;
                     padding:9px 13px;background:var(--pul);border-radius:11px;
                     font-size:.8rem;font-weight:800;color:#4A148C">
-          <span>💉 ${c.title}</span><span>📅 ${c.newDate}</span>
+          <span>💉 ${stripLeadingEmoji(c.title)}</span><span>📅 ${c.newDate}</span>
         </div>`).join('')}
     </div>
     <button class="btn bpk" onclick="cm()">확인</button>
@@ -384,7 +478,7 @@ export function onTouchStart(evt, idx) {
     const touch = evt.touches[0];
     const label = Array.isArray(idx)
       ? `💉 예방접종 ${idx.length}건`
-      : '📌 ' + (_cachedEvs[idx]?.title?.slice(0, 10) || '이동 중');
+      : '📌 ' + (stripLeadingEmoji(_cachedEvs[idx]?.title || '').slice(0, 10) || '이동 중');
     _ghostEl = document.createElement('div');
     _ghostEl.className   = 'drag-ghost';
     _ghostEl.textContent = label;
@@ -492,6 +586,7 @@ export function renderCal() {
   }
   document.getElementById('calTitle').textContent = `${S.calY}년 ${S.calM + 1}월`;
   S.calView === 'month' ? renderMonthView() : renderWeekView();
+  renderCalLegend();
 }
 
 /* ── 월간 뷰 ── */
@@ -564,8 +659,8 @@ function groupVaxEvents(dayEvs) {
   const doseSuffixes = vaxEvs.map(e => (e.title.match(/(\d+차)$/) || [])[1]);
   const allSameDose  = doseSuffixes.every(s => s && s === doseSuffixes[0]);
   const groupTitle   = allSameDose
-    ? `💉 ${doseSuffixes[0]} 접종 (${vaxEvs.length}종)`
-    : `💉 예방접종 (${vaxEvs.length}건)`;
+    ? `${doseSuffixes[0]} 접종 (${vaxEvs.length}종)`
+    : `예방접종 (${vaxEvs.length}건)`;
   const allDone = vaxEvs.every(e => e.done);
 
   const groupEv = {
@@ -604,44 +699,7 @@ function cellHTML(ds, d, other, evs, td, th) {
        </div>`
     : '';
 
-  const pillsHtml = de.slice(0, 2).map(e => {
-    const icon = e.done ? '✅'
-      : e.type === 'gov' ? (e.govStatus === 'applied' ? '🔵' : '🟢')
-      : e.type === 'req' ? '★' : e.type === 'rec' ? '✓' : e.type === 'vax' ? '💉' : '📌';
-    const safTitle = e.title.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-
-    // Sprint 11 버그 수정: 묶음 필도 꾹 눌러(길게 누르기) 통째로 이동 가능하도록 드래그/터치 활성화
-    // (탭은 여전히 셀 클릭으로 버블링되어 day panel에서 개별 항목을 펼쳐볼 수 있음)
-    if (e._isVaxGroup) {
-      const groupIndices = `[${e._groupItems.map(item => item._idx).join(',')}]`;
-      return `
-        <div class="ev-pill ep-vax${e.done ? ' ev-done' : ''}"
-             draggable="true"
-             ondragstart="onDragStart(event,${groupIndices})"
-             ondragend="onDragEnd(event)"
-             ontouchstart="onTouchStart(event,${groupIndices})"
-             ontouchmove="onTouchMove(event)"
-             ontouchend="onTouchEnd(event)"
-             ontouchcancel="onTouchCancel(event)"
-             title="${safTitle} — 탭하면 자세히, 꾹 눌러 이동">
-          ${icon}${e.title.slice(0, 7)}
-        </div>`;
-    }
-
-    return `
-      <div class="ev-pill ep-${e.type}${e.done ? ' ev-done' : ''}"
-           draggable="true"
-           ondragstart="onDragStart(event,${e._idx})"
-           ondragend="onDragEnd(event)"
-           ontouchstart="onTouchStart(event,${e._idx})"
-           ontouchmove="onTouchMove(event)"
-           ontouchend="onTouchEnd(event)"
-           ontouchcancel="onTouchCancel(event)"
-           onclick="event.stopPropagation();openEvModal(${e._idx})"
-           title="${safTitle}">
-        ${icon}${e.title.slice(0, 5)}
-      </div>`;
-  }).join('');
+  const evsHtml = renderCellEvents(de);
 
   return `
     <div class="cal-cell${other ? ' other-month' : ''}${ds === td ? ' today' : ''}${isSel ? ' selected' : ''}"
@@ -652,12 +710,93 @@ function cellHTML(ds, d, other, evs, td, th) {
          ondrop="onDrop(event,'${ds}')"
          style="${isSel ? `background:${th.cell};border:1.5px solid var(--pk)` : ''}">
       <div class="day-num" style="${ds === td ? `background:${th.today};color:#fff;border-radius:50%` : ''}">${d}</div>
-      ${pillsHtml}
-      ${de.length > 2
-        ? `<div style="font-size:.52rem;color:var(--txl);text-align:center">+${de.length - 2}</div>`
-        : ''}
+      ${evsHtml}
       ${stickerHtml}
     </div>`;
+}
+
+/**
+ * 하루치 이벤트 표시 (Sprint 21)
+ * - 이모지 아이콘 대신 색상으로만 구분 (⚠️ 예전엔 타입 아이콘 + 제목의 자체 이모지가 겹쳐
+ *   "🟢🟢 …" 처럼 두 번 표시되고, 그만큼 글자가 잘려 모바일 앱에서 "…"만 보이는 원인이었음)
+ * - 가장 중요한 1건만 색상 필 + 텍스트로 보여주고, 나머지는 타입별 색상 점(dot)으로 표시
+ */
+function renderCellEvents(de) {
+  if (!de.length) return '';
+  const sorted  = [...de].sort((a, b) => evPriority(a) - evPriority(b));
+  const primary = sorted[0];
+  const rest    = sorted.slice(1);
+  return renderPrimaryPill(primary) + (rest.length ? renderEvDots(rest) : '');
+}
+
+/** 대표로 보여줄 1건을 고르는 우선순위 (숫자가 작을수록 우선) */
+function evPriority(e) {
+  if (isGovDeadlineSoon(e)) return 0;
+  const order = { vax: 1, req: 2, gov: 3, food: 4, rec: 5, custom: 6 };
+  return order[getEvCategory(e)] ?? 9;
+}
+
+function esc(str) {
+  return String(str).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+/** 대표 이벤트 1건 — 색상 배경 + 텍스트 필 (아이콘 없음) */
+function renderPrimaryPill(e) {
+  const color   = getEvColor(getEvCategory(e));
+  const urgent  = isGovDeadlineSoon(e);
+  const label   = stripLeadingEmoji(e.title);
+  const safe    = esc(label);
+  const doneCss = e.done ? 'opacity:.65;text-decoration:line-through;filter:grayscale(35%);' : '';
+  const urgentCss = urgent ? 'box-shadow:0 0 0 1.5px #C62828;' : '';
+  const style   = `background:${color};color:#fff;${doneCss}${urgentCss}`;
+
+  if (e._isVaxGroup) {
+    const groupIndices = `[${e._groupItems.map(item => item._idx).join(',')}]`;
+    return `
+      <div class="ev-pill"
+           style="${style}"
+           draggable="true"
+           ondragstart="onDragStart(event,${groupIndices})"
+           ondragend="onDragEnd(event)"
+           ontouchstart="onTouchStart(event,${groupIndices})"
+           ontouchmove="onTouchMove(event)"
+           ontouchend="onTouchEnd(event)"
+           ontouchcancel="onTouchCancel(event)"
+           title="${safe} — 탭하면 자세히, 꾹 눌러 이동">
+        ${e.done ? '✅ ' : ''}${label}
+      </div>`;
+  }
+
+  return `
+    <div class="ev-pill"
+         style="${style}"
+         draggable="true"
+         ondragstart="onDragStart(event,${e._idx})"
+         ondragend="onDragEnd(event)"
+         ontouchstart="onTouchStart(event,${e._idx})"
+         ontouchmove="onTouchMove(event)"
+         ontouchend="onTouchEnd(event)"
+         ontouchcancel="onTouchCancel(event)"
+         onclick="event.stopPropagation();openEvModal(${e._idx})"
+         title="${safe}${urgent ? ' — ⏰ 마감 임박' : ''}">
+      ${e.done ? '✅ ' : ''}${label}
+    </div>`;
+}
+
+/** 대표 이벤트 외 나머지 — 색상 점으로만 표시 (탭하면 날짜 셀 전체가 선택되어 day panel에서 전부 확인 가능) */
+function renderEvDots(rest) {
+  const MAX = 4;
+  const shown    = rest.slice(0, MAX);
+  const overflow = rest.length - shown.length;
+  const dots = shown.map(e => {
+    const color  = getEvColor(getEvCategory(e));
+    const urgent = isGovDeadlineSoon(e);
+    const label  = stripLeadingEmoji(e.title);
+    return `<span class="ev-dot${e.done ? ' ev-dot-done' : ''}${urgent ? ' ev-dot-urgent' : ''}"
+                  style="background:${color}" title="${esc(label)}"></span>`;
+  }).join('');
+  const moreHtml = overflow > 0 ? `<span class="ev-dot-more">+${overflow}</span>` : '';
+  return `<div class="ev-dots">${dots}${moreHtml}</div>`;
 }
 
 /* ── 주간 뷰 ── */
@@ -699,13 +838,19 @@ function renderWeekView() {
                     padding:3px;cursor:pointer;background:${isTd ? th.cell : 'var(--wh)'};transition:background .14s"
              onmouseover="this.style.background='var(--pkl)'"
              onmouseout="this.style.background='${isTd ? th.cell : 'var(--wh)'}'">
-          ${de.slice(0, 1).map(e => {
-            const icon = e.done ? '✅'
-              : e.type === 'gov' ? (e.govStatus === 'applied' ? '🔵' : '🟢')
-              : e.type === 'req' ? '★' : e.type === 'rec' ? '✓' : e.type === 'vax' ? '💉' : '📌';
-            const clickAttr = e._isVaxGroup ? '' : `onclick="event.stopPropagation();openEvModal(${e._idx})"`;
-            return `<div class="ev-pill ep-${e.type}${e.done ? ' ev-done' : ''}" style="font-size:.53rem" ${clickAttr}>${icon}${e.title.slice(0, 5)}</div>`;
-          }).join('')}
+          ${(() => {
+            const sorted  = [...de].sort((a, b) => evPriority(a) - evPriority(b));
+            const primary = sorted[0];
+            if (!primary) return '';
+            const color   = getEvColor(getEvCategory(primary));
+            const urgent  = isGovDeadlineSoon(primary);
+            const label   = stripLeadingEmoji(primary.title);
+            const clickAttr = primary._isVaxGroup ? '' : `onclick="event.stopPropagation();openEvModal(${primary._idx})"`;
+            const doneCss = primary.done ? 'opacity:.65;text-decoration:line-through;' : '';
+            const urgentCss = urgent ? 'box-shadow:0 0 0 1.5px #C62828;' : '';
+            const extra = de.length > 1 ? `<div style="font-size:.5rem;color:var(--txl)">+${de.length - 1}</div>` : '';
+            return `<div class="ev-pill" style="font-size:.53rem;background:${color};color:#fff;${doneCss}${urgentCss}" ${clickAttr}>${primary.done ? '✅ ' : ''}${label}</div>${extra}`;
+          })()}
           ${(S.dayStickers[ds] || []).slice(0, 1).map(s => `<span style="font-size:.78rem">${s}</span>`).join('')}
         </div>`;
     });
@@ -747,15 +892,15 @@ export function showDayPanel(ds) {
 
       ${evs.length
         ? evs.map(e => {
-            const bg  = e.type === 'req' ? '#FFF0F5' : e.type === 'rec' ? '#E0F2F1' : e.type === 'vax' ? '#EDE7F6' : e.type === 'gov' ? '#E8F5E9' : '#E3F2FD';
-            const bc  = e.type === 'req' ? '#F06292' : e.type === 'rec' ? '#4DB6AC' : e.type === 'vax' ? '#9575CD' : e.type === 'gov' ? '#43A047' : '#64B5F6';
+            const bc  = getEvColor(getEvCategory(e));
+            const bg  = bc + '1A'; // 배경은 포인트 색의 옅은 톤(약 10% 불투명도)
 
             // Sprint 10: 예방접종 그룹 카드 — 회차별 개별 항목을 리스트로 펼쳐 보여줌
             if (e._isVaxGroup) {
               return `
                 <div class="dp-ev" style="background:${bg};flex-direction:column;align-items:stretch">
                   <div class="dp-ev-title" style="margin-bottom:8px">
-                    ${e.title}
+                    ${stripLeadingEmoji(e.title)}
                     ${e.done ? '<span style="color:var(--mn);margin-left:5px">✅ 모두 완료</span>' : ''}
                   </div>
                   <div style="display:flex;flex-direction:column;gap:6px">
@@ -763,7 +908,7 @@ export function showDayPanel(ds) {
                       <div style="display:flex;justify-content:space-between;align-items:center;
                                   background:rgba(255,255,255,.6);border-radius:9px;padding:6px 10px">
                         <span style="font-size:.78rem;font-weight:700;color:var(--tx)">
-                          ${item.done ? '✅' : '⬜'} ${item.title.replace(/^💉\s*/, '')}
+                          ${item.done ? '✅' : '⬜'} ${stripLeadingEmoji(item.title)}
                           ${item.recalculated ? '<span style="color:#7B1FA2;font-size:.65rem;margin-left:4px">🔄조정됨</span>' : ''}
                         </span>
                         <button onclick="openEvModal(${item._idx})"
@@ -777,14 +922,18 @@ export function showDayPanel(ds) {
 
             const govLbl = e.govStatus === 'paid' ? '✅지급완료' : e.govStatus === 'applied' ? '🔵신청완료' : '🟢정부지원';
             const lbl = e.type === 'req' ? '★필수'  : e.type === 'rec' ? '추천'    : e.type === 'vax' ? '접종'    : e.type === 'gov' ? govLbl : '내일정';
+            const urgent = isGovDeadlineSoon(e);
+            const dLeft = urgent ? daysUntil(e.deadlineDate) : null;
+            const urgentText = dLeft === null ? '' : dLeft < 0 ? '(마감 지남)' : dLeft === 0 ? '(오늘 마감)' : `(D-${dLeft})`;
             return `
-              <div class="dp-ev${e.done ? ' dp-done' : ''}" style="background:${bg}">
+              <div class="dp-ev${e.done ? ' dp-done' : ''}${urgent ? ' dp-ev-urgent' : ''}" style="background:${bg}">
                 <div class="dp-ev-main">
                   <div class="dp-ev-title">
-                    ${e.title}
+                    ${stripLeadingEmoji(e.title)}
                     ${e.done ? '<span style="color:var(--mn);margin-left:5px">✅</span>' : ''}
                     ${e.type === 'gov' && e.imp === 'req' ? '<span class="badge-r" style="margin-left:5px">필수</span>' : ''}
                     ${e.type === 'gov' && e.imp === 'rec' ? '<span class="badge-o" style="margin-left:5px">해당자</span>' : ''}
+                    ${urgent ? `<span class="badge-r" style="margin-left:5px">⏰ 마감임박</span>` : ''}
                   </div>
                   ${e.hospital ? `<div class="dp-ev-note">🏥 ${e.hospital}</div>` : ''}
                   ${e.note     ? `<div class="dp-ev-note">📝 ${e.note}</div>`     : ''}
@@ -795,7 +944,7 @@ export function showDayPanel(ds) {
                   ${e.type === 'gov' && e.desc
                     ? `<div class="dp-ev-note" style="margin-top:4px">${e.desc}</div>` : ''}
                   ${e.type === 'gov' && (e.deadlineDate || e.deadlineNote)
-                    ? `<div class="dp-ev-note" style="color:#C62828">⏰ 마감: ${e.deadlineDate || e.deadlineNote}</div>` : ''}
+                    ? `<div class="dp-ev-note" style="color:#C62828;font-weight:${urgent ? 800 : 400}">⏰ 마감: ${e.deadlineDate || e.deadlineNote} ${urgentText}</div>` : ''}
                   ${e.type === 'gov' && e.link
                     ? `<a href="${e.link}" target="_blank" rel="noopener" style="font-size:.72rem;color:var(--bl);font-weight:800;text-decoration:underline">🔗 관련 기관 바로가기</a>` : ''}
                 </div>

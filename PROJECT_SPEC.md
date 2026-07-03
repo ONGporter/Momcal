@@ -156,6 +156,7 @@ momcal/
   "growthRecords": [
     { "id": 1234567890, "childId": 1234567890, "date": "2024-07-01", "height": 65, "weight": 7, "head": 42 }
   ],
+  "evColors": { "food": "#E53935", "vax": "#9575CD" },
   "theme": "rose",
   "selC": 0,
   "updatedAt": 1234567890
@@ -192,6 +193,9 @@ momcal/
 - **스타일**: `guide/guide.css` 하나로 `guide/` 페이지와 `privacy.html`/`terms.html`/`contact.html`이 공통으로 사용. UI_GUIDELINE.md의 브랜드 컬러·폰트를 따르지만 앱 전용 CSS(`css/main.css` 등)와는 독립적 (앱에 불필요한 스타일을 끌어오지 않기 위함)
 - **앱과의 연결**: 앱 하단 푸터·로그인 화면에 육아정보/정책 페이지 링크가 있고, 가이드 페이지에는 "맘캘 앱 무료로 쓰기" CTA가 곳곳에 있어 콘텐츠 → 앱 유입 동선을 만듦
 - **구조화 데이터(JSON-LD, Sprint 19)**: 4개 콘텐츠 페이지(`pregnancy`/`parenting`/`food`/`government-support`)에는 각 항목을 질문·답변 쌍으로 변환한 `FAQPage` 스키마가 `<head>`에 삽입되어 있음 (`scripts/build-guide.mjs`의 `faqJsonLd()`가 생성). ⚠️ 구글이 2023년부터 FAQ 리치 스니펫 노출을 정부·의료기관 등 공신력 있는 사이트로 제한해서, 일반 사이트인 맘캘에는 검색결과의 시각적 리치 스니펫은 잘 안 뜰 가능성이 높음 — 다만 AI 개요·생성형 검색이 콘텐츠를 인용할 때 구조를 더 명확히 인식하는 데 도움이 될 수 있어 추가함 (GEO 목적)
+- **검색 기능 (Sprint 21)**: 허브 페이지(`guide/index.html`)에는 4개 페이지 153개 항목 전체를 대상으로 하는 사이트 전체 검색창이 있음 — 빌드 시점에 `buildSearchIndex()`가 만든 JSON을 페이지에 심어두고, 입력 시 클라이언트에서만 필터링(서버 호출 없음). 각 카테고리 페이지에는 그 페이지 안에서만 즉석 필터링하는 검색창이 별도로 있음. 항목마다 `id` 속성(체크리스트는 `it.id`, 정부지원은 `it.key`)이 있어 검색 결과에서 `#앵커`로 바로 이동 가능
+- **기존 사용자 CTA 전환 (Sprint 21)**: 정적 페이지라 로그인 여부를 서버에서 알 수 없지만, 앱과 같은 도메인이라 `localStorage`를 공유하는 점을 이용해 게스트 데이터(`momcal_guest_v1`) 또는 Firebase 로그인 세션(`firebase:authUser:` 접두 키) 흔적으로 기존 사용자를 감지함 — 감지되면 "무료로 시작하기" 문구가 "앱으로 돌아가기"로 자동 전환됨 (`returningUserScript()`)
+- **⚠️ 검증 도구 선택 주의**: Google "리치 검색결과 테스트"(search.google.com/test/rich-results)는 일반 사이트의 FAQPage를 아예 검사 대상에서 제외하는 것으로 보여, 코드가 정상이어도 "감지된 항목 없음"이 뜸 (배포 문제·문법 오류가 아님, 실사용 확인됨). JSON-LD가 실제로 유효한지 확인하려면 구글 도구 대신 **schema.org 공식 검증 도구**(validator.schema.org)를 사용할 것
 
 ### 정책 페이지 (Google AdSense 심사 준비)
 
@@ -228,6 +232,7 @@ momcal/
 | `checks` | Object | ✅ | 체크리스트 완료 상태 |
 | `eventMods` | Object | ✅ | 자동 일정의 실제일·완료·메모 등 수정 사항 (Sprint 2) |
 | `growthRecords` | Array | ✅ | 성장 기록 목록 (Sprint 4) |
+| `evColors` | Object | ✅ | 사용자 지정 일정 색상 `{req, rec, food, vax, gov, custom}` — 없으면 기본색 사용 (Sprint 21) |
 | `theme` | String | ✅ | 캘린더 테마 (rose/mint/sunny/lavender/peach) |
 | `selC` | Number | ✅ | 현재 선택된 아이 인덱스 |
 | `calY`, `calM` | Number | ❌ (UI 전용) | 캘린더 표시 연·월 |
@@ -324,3 +329,5 @@ momcal/
 | 17 | 계정 영구 삭제(자체 탈퇴) 기능 추가 — Firestore 문서·Auth 계정 삭제, 확인 문구 입력 방식의 오조작 방지, 재인증 자동 처리(이메일·Google), 문의 페이지 실제 이메일 반영 |
 | 18 | 육아정보 공개 페이지에 정부지원금 가이드(`guide/government-support.html`) 추가 — 국민행복카드·부모급여·아동수당 등 16개 항목, `data/government-support.js` 기반 자동 생성, sitemap.xml·허브 페이지·전체 내비게이션에 반영 |
 | 19 | 육아정보 4개 콘텐츠 페이지에 FAQPage 구조화 데이터(JSON-LD) 추가 — 항목별 질문·답변 형태로 변환해 검색엔진·생성형 AI 검색이 콘텐츠를 더 명확히 인식하도록 함 |
+| 20 | 정부지원 마감 임박 강조 — 정확한 마감일 계산이 가능한 4개 항목(출생신고·부모급여·아동수당·양육수당)이 마감 7일 이내로 남으면 캘린더·데이 패널·일정 수정 모달·체크리스트 정부지원 탭에 빨간 테두리·⏰ 표시로 강조. `js/utils.js`에 `daysUntil()`, `js/calendar.js`에 `isGovDeadlineSoon()` 추가 |
+| 21 | 캘린더 필 이모지 아이콘 제거(중복 표시·모바일 "..." 잘림 버그 수정) → 색상 기반 표시로 전환, 카테고리별(필수/추천/이유식/접종/정부지원/내일정) 색상 사용자 지정 기능(`S.evColors`) 추가, 육아정보 페이지에 기존 사용자 감지 시 CTA 문구 자동 전환, 육아정보 허브 페이지 전체 검색 + 카테고리별 페이지 내 검색 기능 추가 |
