@@ -1,4 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
+/* Sprint 22: "맘캘" 브랜드 워드마크 전용 폰트 — 본문은 그대로 Nunito, 로고 텍스트에만 적용 */
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap');
 
 /* ── RESET & ROOT ── */
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -47,13 +49,14 @@ body {
 }
 
 .logo {
-  font-size: 1.15rem;
-  font-weight: 900;
+  font-family: 'Fredoka', 'Nunito', 'Apple SD Gothic Neo', sans-serif;
+  font-size: 1.22rem;
+  font-weight: 700;
   background: linear-gradient(135deg, #F06292, #9C27B0);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  letter-spacing: -.5px;
+  letter-spacing: -.3px;
   flex-shrink: 0;
 }
 

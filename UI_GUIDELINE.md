@@ -81,6 +81,17 @@ font-family: 'Nunito', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
 | 배지/태그 | 0.58~0.72rem | 800 |
 | 섹션 라벨 | 0.82rem | 900, uppercase |
 
+### 브랜드 워드마크 전용 폰트 (Sprint 22)
+
+"맘캘" 글자가 로고로 쓰이는 자리(상단 topbar `.logo`, 로그인 화면 `.auth-logo`, 육아정보 페이지 `.g-logo`)만 예외적으로 **Fredoka**(Google Fonts, 귀엽고 둥근 느낌)를 사용합니다. 그 외 본문·버튼·라벨 등 나머지 UI 전체는 기존처럼 Nunito를 그대로 유지합니다.
+
+```css
+font-family: 'Fredoka', 'Nunito', 'Apple SD Gothic Neo', sans-serif;
+```
+
+- 새로운 로고/워드마크 자리를 추가할 때만 이 폰트를 적용하고, 일반 텍스트에는 사용하지 않습니다.
+- Fredoka는 가변 폰트라 굵기가 최대 700까지만 지원돼요 — 로고에 900을 쓰지 말고 700을 최댓값으로 사용하세요.
+
 ---
 
 ## 컴포넌트 규칙

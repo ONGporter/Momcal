@@ -26,7 +26,8 @@
 .auth-close:hover { background: var(--pkl); color: var(--pkd); }
 
 .auth-logo {
-  font-size: 1.7rem; font-weight: 900; margin-bottom: 4px;
+  font-family: 'Fredoka', 'Nunito', 'Apple SD Gothic Neo', sans-serif;
+  font-size: 1.85rem; font-weight: 700; margin-bottom: 4px;
   background: linear-gradient(135deg, #F06292, #9C27B0);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
 }
