@@ -27,10 +27,10 @@ import { dirname, join } from 'path';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT  = join(__dirname, '..');
 const GUIDE = join(ROOT, 'guide');
-const SITE  = 'https://momcal.vercel.app';
+const SITE  = 'https://momcal.app';
 /* v0.0.2: 앱 본체(index.html 최하단)와 반드시 같은 값으로 유지 — 버전을 올릴 땐 이 값과
    index.html의 .site-footer-version 텍스트를 함께 수정해야 함 (PROJECT_SPEC.md 버전 관리 정책 참고) */
-const APP_VERSION = 'v0.0.8';
+const APP_VERSION = 'v0.0.9';
 
 /* 정부지원 데이터는 {preg, postpartum, parenting} 키의 배열이라 체크리스트와 형태가 달라
    가이드 페이지용 카테고리 배열로 한 번 변환해준다. */
@@ -145,7 +145,7 @@ ${returningUserScript()}`;
  * 이미 맘캘을 쓰고 있는 사용자에게는 "무료로 시작하기" 문구가 어색해서,
  * localStorage 흔적(게스트 데이터 또는 Firebase 로그인 세션)으로 기존 사용자를 감지해
  * CTA 문구를 "앱으로 돌아가기"로 바꿔준다 (Sprint 21).
- * - guide 페이지는 앱 본체와 같은 도메인(momcal.vercel.app)에서 서빙되므로 localStorage 공유됨
+ * - guide 페이지는 앱 본체와 같은 도메인(momcal.app)에서 서빙되므로 localStorage 공유됨
  * - Firebase SDK를 이 정적 페이지에 새로 붙이지 않기 위해, 세션 존재 여부만 키 이름으로 판별
  *   (Firebase Auth가 로컬 퍼시스턴스에 남기는 키는 항상 'firebase:authUser:'로 시작함)
  */

@@ -13,7 +13,7 @@
 
 import { showModal } from './modal.js';
 
-const APP_URL = 'https://momcal.vercel.app';
+const APP_URL = 'https://momcal.app';
 
 function shareMessage() {
   return `맘캘로 우리 아이 육아 일정을 같이 관리해요 👨‍👩‍👧\n제 계정으로 로그인하면 같은 캘린더·체크리스트를 실시간으로 함께 볼 수 있어요!\n${APP_URL}`;

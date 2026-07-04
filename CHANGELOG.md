@@ -1,5 +1,46 @@
 # Changelog
 
+## [v0.0.9] 2026-07-05 — 다크 모드 추가 보정, 체크리스트 대시보드 카드 개선, 배지 이중 깜빡임 버그 수정, momcal.app 도메인 연결
+
+### 1. 다크 모드 잔여 미적용 요소 추가 보정
+- 캡처로 짚어주신 부분 포함, 아직 하드코딩된 밝은 배경으로 남아있던 요소들을 찾아 전부 다크 대응:
+  - 홈 화면 가족 프로필 카드 — 선택된 카드(`.pcard.sel`)와 "등록하기" 카드(`.add-pcard`)가 밝은 핑크빛 그라디언트로 남아있던 것
+  - 체크리스트 탭 버튼(육아체크/이유식/정부지원, `.cl-tab-btn` 미선택 상태)
+  - 체크리스트 "현재 N개월/N주차" 컨텍스트 배너(`.cl-context-banner`)
+  - 체크리스트 배지 3종 — 사이드바 티어 배지(`.cl-sb-perfect`/`.cl-sb-master`/`.cl-sb-legend`)와 메인 영역 달성 배지(`.cl-badge-perfect`/`-master`/`-legend`), 필수 미완료 상태 배지(`.cl-status-low`)
+  - 정부지원 체크리스트 상태 배지(`.gov-cl-status` — 신청 전/신청함/지급됨)
+  - 성장그래프 안내 문구 박스(`.growth-disclaimer`), 기록 없을 때 빈 상태 카드(`.growth-pct-empty`)
+  - 저장 완료 배지(`.save-badge`), 로그인 화면 닫기 버튼(`.auth-close`)
+- 관련 코드: `css/main.css`(다크 모드 블록에 추가), `UI_GUIDELINE.md`(다크 모드 섹션에 이력 반영)
+- ⚠️ v0.0.5·v0.0.8에 이어 이번이 세 번째 보정 — 색상이 CSS 변수 대신 하드코딩된 곳이 워낙 많아서(도입 초기부터 쌓인 관성) 매번 새로 발견되는 중. 새 컴포넌트를 만들 땐 반드시 CSS 변수(`--bg`/`--card`/`--tx`/`--txl` 등)를 쓰는 것을 원칙으로 삼을 것
+
+### 2. 홈 대시보드 "체크리스트" 카드에 강조색 문구 추가
+- 다른 대시보드 카드들(은유 오늘·다음 일정·성장 기록·최근 접종)은 모두 진행 상태를 알려주는 강조색(핑크) 서브 문구가 있었는데, 체크리스트 카드만 비어있던 것을 통일
+- 배지를 이미 획득했으면 배지 현황을 보여주고("🏅 Perfect 달성 · 다음 "..."" 형태로 다음 티어까지 안내), 아직 필수 항목이 남았으면 다음에 체크하면 좋을 항목을 이름으로 추천
+  - 필수 미완료: `다음 "{항목명}" 체크해보세요`
+  - Perfect/Master (선택 항목 남음): `🏅/👑 {티어} 달성 · 다음 "{선택 항목명}"`
+  - Legend (전부 완료): `🌈 Legend 배지 달성!`
+- 관련 코드: `js/checklist.js`(`getTodayCategoryInfo`에 `tier`·`nextItem` 계산 추가), `js/ui.js`(`dashChecklistCard`), `css/main.css`(`.dash-sub`에 말줄임 안전장치 추가)
+
+### 3. 체크리스트 배지 이중 깜빡임 버그 수정 (재발 버그)
+- **증상**: 체크해서 필수 100%(배지)를 달성하면, 배지가 체크 직후 1번 + 그로부터 약 0.6초 뒤 한 번 더, 총 2번 깜빡였음
+- **원인 재조사 결과**: 예전(Sprint 7)에 고쳤던 건 `tgCk()` 안에서 같은 클릭에 `renderClMain()`이 중복 호출되던 문제였는데, 이후 다른 기기/탭과의 실시간 동기화를 위해 `js/app.js`가 Firestore `onSnapshot`이 발생할 때마다 `renderClSidebar()`를 다시 호출하도록 바뀌면서 **새로운 경로로 같은 증상이 재발**함
+  - 체크박스 클릭 → 즉시 화면 1회 렌더링(정상)
+  - 약 600ms 뒤 `debounceSave()`가 실제로 Firestore에 저장 → 이때 Firestore가 "내가 방금 쓴 내용"을 로컬 캐시로 낙관적으로 되돌려주며 `onSnapshot`을 한 번 더 발생시킴 → `app.js`가 이걸 "데이터가 바뀌었다"고 판단해서 사이드바를 또 그림 → 배지 애니메이션 재생 2회
+- **수정**: Firestore가 넘겨주는 `snap.metadata.hasPendingWrites` 값으로 "내 기기가 방금 쓴 내용의 로컬 에코"인지 "실제로 다른 기기/탭에서 바뀐 내용"인지 구분해서, 에코인 경우엔 재렌더링을 생략하도록 함(다른 기기에서 실제로 바뀐 경우엔 그대로 동기화되어 반영됨 — 멀티 기기 실시간 동기화 기능 자체는 그대로 유지)
+- 관련 코드: `js/state.js`(`subscribeToUserData`), `js/app.js`(`onDataLoaded`)
+
+### 4. momcal.app 도메인 연결
+- 옹짐꾼님이 `momcal.app` 도메인을 구입해 Vercel에 연결 완료 — 코드 내 도메인 참조를 전부 갱신
+- SEO 메타 태그(canonical, Open Graph, Twitter Card), `sitemap.xml`, `robots.txt`, 정책 페이지(`privacy.html`/`terms.html`/`contact.html`), 육아정보 페이지(`guide/`, `scripts/build-guide.mjs` 재빌드 반영), 배우자 공유 링크(`js/familyShare.js`)까지 `https://momcal.vercel.app` → `https://momcal.app`로 교체
+- ⚠️ **콘솔 쪽 후속 조치는 코드로 처리할 수 없어 옹짐꾼님이 직접 해주셔야 함** — Firebase Auth 승인된 도메인 추가, Google OAuth 승인된 자바스크립트 원본 추가, Google Search Console·네이버 서치어드바이저에 새 도메인 재등록. 자세한 목록은 `TODO.md`의 "도메인 연결 후속 조치" 참고
+- 관련 코드: `index.html`, `sitemap.xml`, `robots.txt`, `privacy.html`, `terms.html`, `contact.html`, `js/familyShare.js`, `scripts/build-guide.mjs`(+재빌드), `PROJECT_SPEC.md`
+
+### 유지된 기능
+- 기존 기능·Firebase 스키마 변경 없음 — 스타일 보정, 대시보드 카드 문구 추가, 실시간 동기화 렌더링 조건 수정, 도메인 참조 변경뿐
+
+---
+
 ## [v0.0.8] 2026-07-04 — 다크 모드 대폭 보정+육아정보 페이지 다크 모드 지원, 글자 크기 5단계, 대시보드 레이아웃 변경
 
 ### 1. 다크 모드 잔여 흰색 배경 대폭 보정

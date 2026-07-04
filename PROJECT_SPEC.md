@@ -16,7 +16,7 @@
 | 타겟 | 임산부, 0~5세 자녀를 둔 부모 |
 | 철학 | **부모가 매일 여는 앱. 복잡한 기능보다 사용성 우선** |
 | 레포 | https://github.com/ONGporter/Momcal |
-| 배포 URL | https://momcal.vercel.app |
+| 배포 URL | https://momcal.app (커스텀 도메인, Vercel 연결 완료 · https://momcal.vercel.app 로도 계속 접속 가능) |
 | 수익 모델 | 추후 광고 기반 (자세한 내용은 "수익화 & 트래픽 전략" 섹션 참고) |
 | 버전 | v0.0.1부터 시작 (Sprint 29). 화면 최하단에 표시됨 — 앱 본체(`index.html`)와 육아정보 페이지(`guide/*.html`) 양쪽 모두 표시(v0.0.2부터) |
 

@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://momcal.vercel.app/sitemap.xml
+Sitemap: https://momcal.app/sitemap.xml

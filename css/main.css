@@ -282,7 +282,7 @@ h1, h2, h3, .sec {
 .dash-body   { min-width: 0; flex: 1; }
 .dash-label  { font-size: .68rem; font-weight: 800; color: var(--txl); margin-bottom: 3px; text-transform: uppercase; letter-spacing: .03em; }
 .dash-value  { font-size: .87rem; font-weight: 900; color: var(--tx); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.dash-sub    { font-size: .68rem; color: var(--pk); font-weight: 700; margin-top: 2px; }
+.dash-sub    { font-size: .68rem; color: var(--pk); font-weight: 700; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .dash-tip .dash-value,
 .dash-tip-text { font-size: .78rem; font-weight: 700; color: var(--tx); white-space: normal; line-height: 1.4; }
 .dash-tip { grid-column: 1 / -1; }
@@ -560,3 +560,41 @@ html[data-theme="dark"] .progress-bar { background: #2A2733; }
 html[data-theme="dark"] .cl-sb-pct.cl-sb-low { background: #2A2733; color: var(--txl); }
 html[data-theme="dark"] .sp-tab { background: #2A2733; color: var(--txl); }
 html[data-theme="dark"] .cal-nav-btn { border-color: rgba(255,255,255,.1); }
+
+/* v0.0.9: "다크모드 아직 적용 안된 부분" 추가 신고 — 전수 재조사해서 찾은 나머지 하드코딩된
+   밝은 배경 요소들을 마저 어둡게. 대부분 v0.0.8에서 훑었지만 놓친 곳들:
+   가족 프로필 카드(선택됨/등록하기), 체크리스트 탭 버튼(미선택), 체크리스트 컨텍스트 배너,
+   체크리스트 배지 3종(사이드바/메인), 정부지원 상태 배지, 성장그래프 안내문구·빈 상태 카드,
+   저장 완료 배지 */
+html[data-theme="dark"] .pcard.sel { background: linear-gradient(135deg, #3A2430, #2A2438); }
+html[data-theme="dark"] .add-pcard {
+  background: linear-gradient(135deg, #2A2430, #251F2C);
+  border-color: #4A3644;
+}
+html[data-theme="dark"] .cl-tab-btn { background: #2A2733; color: var(--txl); }
+html[data-theme="dark"] .cl-context-banner {
+  background: linear-gradient(135deg, #3A2430, #2A2438);
+  border-color: #4A3644;
+}
+/* 체크리스트 사이드바 티어 배지(필수 100%/선택 일부/전부 완료) */
+html[data-theme="dark"] .cl-sb-perfect { background: var(--yll) !important; color: #FFD54F !important; border-color: #5A4A20; }
+html[data-theme="dark"] .cl-sb-master  { background: var(--pul) !important; color: #CE93D8 !important; }
+html[data-theme="dark"] .cl-sb-legend  { background: linear-gradient(135deg, var(--pkl), var(--pul), var(--bll)) !important; color: var(--pk) !important; }
+/* 체크리스트 메인 영역 달성 배지(Perfect/Master/Legend) */
+html[data-theme="dark"] .cl-badge-perfect { background: linear-gradient(135deg, var(--yll), #3A2E14); color: #FFD54F; border-color: #5A4A20; }
+html[data-theme="dark"] .cl-badge-master  { background: linear-gradient(135deg, var(--pul), #322A44); color: #CE93D8; border-color: #4A3A5E; }
+html[data-theme="dark"] .cl-badge-legend  { background: linear-gradient(135deg, var(--pkl), var(--pul), var(--bll)); color: var(--pk); }
+html[data-theme="dark"] .cl-status-low { color: var(--txl); background: #2A2733; }
+/* 정부지원 체크리스트 상태 배지(신청 전/신청함/지급됨) */
+html[data-theme="dark"] .gov-cl-status.status-none    { background: #1E332F; color: #4DB6AC; }
+html[data-theme="dark"] .gov-cl-status.status-applied { background: #1B2A38; color: #64B5F6; }
+html[data-theme="dark"] .gov-cl-status.status-paid    { background: #1E3324; color: #66BB6A; }
+/* 성장그래프 — 안내 문구 박스 · 기록 없을 때 빈 상태 카드 */
+html[data-theme="dark"] .growth-disclaimer { background: #241F2C; }
+html[data-theme="dark"] .growth-pct-empty {
+  background: linear-gradient(135deg, #2A2430, #251F2C);
+  border-color: #4A3644;
+}
+/* 저장 완료 배지 · 로그인 화면 닫기 버튼 */
+html[data-theme="dark"] .save-badge { background: #1E3324; color: #66BB6A; }
+html[data-theme="dark"] .auth-close { background: #2A2733; }

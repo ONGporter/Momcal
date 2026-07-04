@@ -101,12 +101,26 @@ export function flashSave() {
 /* ── Firebase 실시간 구독 ── */
 let _firestoreUnsub = null;
 
-/** 로그인 후 Firestore 실시간 구독 시작 */
+/**
+ * 로그인 후 Firestore 실시간 구독 시작
+ *
+ * v0.0.9 버그 수정 — 체크리스트 배지가 두 번 깜빡이던 버그 재발 원인:
+ * debounceSave()로 setDoc()을 호출하면(=우리 기기 자신의 저장), Firestore가 서버 응답 전에
+ * 로컬 캐시로 먼저 onSnapshot을 "낙관적으로" 한 번 더 쏴준다(snap.metadata.hasPendingWrites
+ * === true). 체크 클릭 시 이미 tgCk()가 화면을 1회 그렸는데, 약 600ms 뒤 debounceSave()
+ * 저장이 실행되며 "내가 방금 쓴 내용"이 onSnapshot으로 그대로 되돌아와 app.js가 또 한 번
+ * 사이드바/메인을 다시 그렸음 — 그래서 배지 애니메이션이 두 번 재생됨.
+ * (이전 Sprint 7에서 고친 건 tgCk() 내부에서 같은 클릭에 renderClMain()이 중복 호출되던
+ * 것이었고, 이후 다른 기기와의 실시간 동기화를 위해 app.js가 onSnapshot마다
+ * renderClSidebar()를 다시 호출하는 코드가 추가되면서 이 새로운 경로로 버그가 재발함)
+ * 해결: snap.metadata.hasPendingWrites를 onData의 두 번째 인자로 함께 넘겨서 "내 기기가
+ * 방금 쓴 내용의 로컬 에코"인지 "실제로 다른 기기/탭에서 바뀐 내용"인지 구분함(app.js에서 사용).
+ */
 export function subscribeToUserData(onData) {
   if (_firestoreUnsub) { _firestoreUnsub(); _firestoreUnsub = null; }
   _firestoreUnsub = onSnapshot(
     userDocRef(),
-    (snap) => onData(snap.exists() ? snap.data() : null),
+    (snap) => onData(snap.exists() ? snap.data() : null, snap.metadata.hasPendingWrites),
     (err)  => console.error('구독 오류', err),
   );
 }

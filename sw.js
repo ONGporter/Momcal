@@ -10,7 +10,7 @@
  */
 
 // v0.0.8: 다크모드 대폭 보정+육아정보 페이지 다크모드 지원, 글자크기 5단계, 대시보드 레이아웃 변경 — 캐시 버전 상향
-const CACHE_NAME = 'momcal-shell-v14';
+const CACHE_NAME = 'momcal-shell-v15';
 
 const APP_SHELL = [
   './',

@@ -46,7 +46,7 @@ function syncThemeUI() {
  * (기존 계정으로 로그인한 경우엔 클라우드 데이터를 그대로 쓰고 게스트 데이터는 건드리지 않음).
  * @param {Object|null} data
  */
-function onDataLoaded(data) {
+function onDataLoaded(data, hasPendingWrites) {
   if (!data && hasGuestData()) {
     applyData(getGuestData());
     S.isGuestMode = false;
@@ -76,8 +76,13 @@ function onDataLoaded(data) {
     if (_firstLoad) {
       // 초기 로드: 자동 카테고리 선택 포함 전체 렌더
       renderChecklist();
-    } else {
+    } else if (!hasPendingWrites) {
       // onSnapshot 재발동: 사이드바 % 만 업데이트 (카테고리 선택 유지)
+      // v0.0.9 버그 수정: hasPendingWrites === true는 "내 기기가 방금 debounceSave()로 쓴
+      // 내용"이 로컬 캐시에서 그대로 되돌아온 에코일 뿐이라, 이미 tgCk()가 즉시 화면을
+      // 갱신했으므로 여기서 또 그리면 배지 애니메이션이 중복 재생됨(체크 직후 1회 +
+      // 저장 완료 시점(~600ms 후) 1회 = 총 2회 깜빡임). 실제로 다른 기기/탭에서 데이터가
+      // 바뀐 경우(hasPendingWrites === false, 서버 확정 변경)에만 다시 그려 동기화한다.
       renderClSidebar();
     }
   }

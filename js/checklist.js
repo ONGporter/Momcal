@@ -200,8 +200,21 @@ export function getTodayCategoryInfo(child) {
   const key = `${child.id}_${cat.key}`;
   const checks = S.checks[key] || {};
   const { reqDone, reqTotal, optDone, optTotal } = calcScore(cat, checks);
+
+  // v0.0.9: 홈 대시보드 카드용 — 배지 티어 + 다음 추천 항목
+  // (다른 대시보드 카드들처럼 강조색 서브 텍스트를 보여주기 위함)
+  const tier = getTier(reqDone, reqTotal, optDone, optTotal);
+  let nextItem = null;
+  if (tier === null) {
+    // 필수 미완료 → 다음 미완료 필수 항목을 추천 (배지를 얻으려면 이것부터)
+    nextItem = cat.items.find(it => it.r && !checks[it.id]) || null;
+  } else if (tier === 'perfect' || tier === 'master') {
+    // 필수는 이미 완료 → 다음 미완료 선택 항목을 추천 (다음 티어로)
+    nextItem = cat.items.find(it => !it.r && !checks[it.id]) || null;
+  }
+
   return {
-    cat, reqDone, reqTotal, optDone, optTotal,
+    cat, reqDone, reqTotal, optDone, optTotal, tier, nextItem,
     doneTotal:  reqDone + optDone,
     itemsTotal: cat.items.length,
   };
