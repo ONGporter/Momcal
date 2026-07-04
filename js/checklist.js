@@ -24,6 +24,7 @@
  */
 
 import { S, debounceSave } from './state.js';
+import { today }           from './utils.js';
 import { clData }          from '../data/checklist-data.js';
 import { renderGovChecklistTab } from './govSupport.js';
 import { syncChecklistToCalendar } from './checklistCalendarLink.js';
@@ -143,7 +144,7 @@ function autoSelectCat(child) {
 
   } else if (child.stage === 'born' && S.clTab === 0 && child.birth) {
     const ageMonths = Math.floor(
-      (Date.now() - new Date(child.birth).getTime()) / (30.44 * 24 * 60 * 60 * 1000)
+      (new Date(today()).getTime() - new Date(child.birth).getTime()) / (30.44 * 24 * 60 * 60 * 1000)
     );
     // 월령 → 카테고리 인덱스 매핑
     // m0=0개월, m2=2개월, m4=4개월, m6=6개월, m9=9개월, m12=12개월, m18=18개월, m24=24개월, m36=36개월
@@ -186,7 +187,7 @@ export function getTodayCategoryInfo(child) {
     if (found >= 0) idx = found;
   } else if (child.stage === 'born' && child.birth) {
     const ageMonths = Math.floor(
-      (Date.now() - new Date(child.birth).getTime()) / (30.44 * 24 * 60 * 60 * 1000)
+      (new Date(today()).getTime() - new Date(child.birth).getTime()) / (30.44 * 24 * 60 * 60 * 1000)
     );
     const milestones = [0, 2, 4, 6, 9, 12, 18, 24, 36];
     for (let i = 0; i < milestones.length; i++) {
@@ -224,7 +225,7 @@ function renderContextBanner(child) {
       <span style="color:var(--txl);font-weight:700;margin-left:auto;font-size:.76rem">출산까지 약 ${weeksLeft}주</span>`;
 
   } else if (child.stage === 'born' && S.clTab === 0 && child.birth) {
-    const ageMs     = Date.now() - new Date(child.birth).getTime();
+    const ageMs     = new Date(today()).getTime() - new Date(child.birth).getTime();
     const ageMonths = Math.floor(ageMs / (30.44 * 24 * 60 * 60 * 1000));
     const ageWeeks  = Math.floor(ageMs  / (7 * 24 * 60 * 60 * 1000));
     const display   = ageMonths < 3 ? `${ageWeeks}주` : `${ageMonths}개월`;
@@ -253,6 +254,34 @@ export function getCats() {
   if (tab === 1) return clData.food;
   return []; // tab 2 = 🟢 정부지원
 }
+
+/**
+ * 체크리스트 사이드바 하단 — 육아정보 검색 (Sprint 29)
+ * 체크리스트 항목의 짧은 설명만으론 부족할 때, 육아정보 페이지(guide/)의
+ * 자세한 설명을 검색해서 바로 찾아볼 수 있도록 새 탭으로 연결함
+ */
+function guideSearchBoxHtml() {
+  return `
+    <div style="margin-top:14px;padding:12px;background:var(--pkl);border-radius:14px">
+      <div style="font-size:.68rem;font-weight:800;color:var(--pkd);margin-bottom:6px">📖 육아정보 더 알아보기</div>
+      <div style="display:flex;gap:6px">
+        <input type="text" id="clGuideSearchInput" placeholder="예: 엽산, DTaP, 쌀미음"
+               style="flex:1;min-width:0;padding:7px 10px;border:1.5px solid #F0D8E4;border-radius:9px;font-size:.74rem;font-family:inherit"
+               onkeydown="if(event.key==='Enter')openGuideSearch()">
+        <button onclick="openGuideSearch()"
+                style="background:var(--pk);color:#fff;border:none;border-radius:9px;padding:0 12px;font-size:.74rem;font-weight:800;cursor:pointer;font-family:inherit">검색</button>
+      </div>
+    </div>`;
+}
+
+/** 육아정보 허브 페이지에 검색어를 담아 새 탭으로 이동 */
+function openGuideSearch() {
+  const input = document.getElementById('clGuideSearchInput');
+  const q = input ? input.value.trim() : '';
+  if (!q) return;
+  window.open('./guide/index.html?q=' + encodeURIComponent(q), '_blank');
+}
+window.openGuideSearch = openGuideSearch;
 
 /* ────────────────────────────────────
  *  사이드바 렌더
@@ -299,7 +328,7 @@ export function renderClSidebar() {
               <span>${cat.label}</span>
               ${pctHtml}
             </div>`;
-  }).join('');
+  }).join('') + guideSearchBoxHtml();
 
   renderClMain();
 }

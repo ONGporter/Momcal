@@ -10,6 +10,7 @@
 import { S }                      from './state.js';
 import { getAllEvs, openEvModal, isGovDeadlineSoon } from './calendar.js';
 import { daysUntil, stripLeadingEmoji } from './utils.js';
+import { GOV_INFO_BASIS }         from '../data/government-support.js';
 
 /** 체크리스트 페이지 내 정부지원 탭 렌더링 */
 export function renderGovChecklistTab(child) {
@@ -21,7 +22,19 @@ export function renderGovChecklistTab(child) {
     <div class="cl-sb-hd">🟢 정부지원</div>
     <div style="padding:14px 15px;font-size:.73rem;color:var(--txl);line-height:1.7">
       임신·출산·육아 단계별 정부지원 제도를<br>놓치지 않도록 도와드려요.<br><br>
-      항목을 탭하면 신청 상태를 바꿀 수 있어요.
+      항목을 탭하면 신청 상태를 바꿀 수 있어요.<br><br>
+      <span style="color:var(--pkd);font-weight:800">📅 ${GOV_INFO_BASIS}</span><br>
+      제도는 매년 바뀔 수 있으니, 정확한 금액·자격은<br>공식 사이트에서 다시 확인해주세요.
+    </div>
+    <div style="margin:0 15px 14px;padding:12px;background:var(--pkl);border-radius:14px">
+      <div style="font-size:.68rem;font-weight:800;color:var(--pkd);margin-bottom:6px">📖 육아정보 더 알아보기</div>
+      <div style="display:flex;gap:6px">
+        <input type="text" id="clGuideSearchInput" placeholder="예: 부모급여, 국민행복카드"
+               style="flex:1;min-width:0;padding:7px 10px;border:1.5px solid #F0D8E4;border-radius:9px;font-size:.74rem;font-family:inherit"
+               onkeydown="if(event.key==='Enter')openGuideSearch()">
+        <button onclick="openGuideSearch()"
+                style="background:var(--pk);color:#fff;border:none;border-radius:9px;padding:0 12px;font-size:.74rem;font-weight:800;cursor:pointer;font-family:inherit">검색</button>
+      </div>
     </div>`;
 
   if (!child) {

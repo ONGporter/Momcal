@@ -69,37 +69,42 @@ background: linear-gradient(135deg, #F06292, #9C27B0);
 ## 타이포그래피
 
 ```css
-font-family: 'Nunito', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+/* 제목 · "맘캘" 로고 */
+font-family: 'Paperlogy', 'Pretendard', sans-serif;
+font-weight: 700; /* Bold */
+
+/* 본문 */
+font-family: 'Pretendard', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+font-weight: 400; /* Regular */
+
+/* 버튼 */
+font-family: 'Pretendard', ...; /* body에서 상속 */
+font-weight: 600; /* SemiBold */
 ```
 
-앱 전체의 기본 폰트는 **Nunito**입니다.
+- **제목 + "맘캘" 로고**: Paperlogy Bold — `h1`, `h2`, `h3`, `.sec`(섹션 라벨), `.logo`/`.auth-logo`/`.g-logo`에 적용됨
+- **본문**: Pretendard Regular — `body`에 기본 적용, 대부분의 텍스트가 상속받음
+- **버튼**: Pretendard SemiBold — `.btn`/`.st-btn`/`.g-btn`/`.np`(nav pill) 등 공용 버튼 클래스에 적용됨
+- 둘 다 무료 상업용 폰트(SIL OFL)이며 jsDelivr CDN으로 로드함(`@import`) — Google Fonts에는 없는 폰트라 별도 CDN 사용
+- ⚠️ 앱 전체의 모든 개별 요소(수백 곳의 인라인 스타일 font-weight)를 다 SemiBold로 통일하지는 않았음 — 새로 만드는 버튼/제목류는 위 규칙을 따르고, 기존에 이미 있던 요소 중 안 바뀐 곳이 있으면 개별적으로 알려주면 조정 가능
 
 | 용도 | size | weight |
 |------|------|--------|
-| 페이지 제목 | 1.1~1.55rem | 900 |
+| 페이지 제목 | 1.1~1.55rem | 700 (Paperlogy) |
 | 카드 제목 | 0.9~0.97rem | 900 |
-| 본문 | 0.84~0.88rem | 700 |
+| 본문 | 0.84~0.88rem | 400 (Pretendard Regular) |
 | 보조 텍스트 | 0.71~0.78rem | 700 |
 | 배지/태그 | 0.58~0.72rem | 800 |
-| 섹션 라벨 | 0.82rem | 900, uppercase |
+| 섹션 라벨 | 0.82rem | 700 (Paperlogy), uppercase |
+| 버튼 | - | 600 (Pretendard SemiBold) |
 
-### 로고 워드마크 전용 폰트 (Sprint 28)
-
-"맘캘" 글자가 로고로 쓰이는 자리(topbar `.logo`, 로그인 화면 `.auth-logo`, 육아정보·정책 페이지 `.g-logo`)에만 예외적으로 **Jua**(Google Fonts, 귀엽고 둥근 한글 폰트)를 사용합니다.
-
-```css
-font-family: 'Jua', 'Nunito', 'Apple SD Gothic Neo', sans-serif;
-```
-
-- 새 로고/워드마크 자리를 추가할 때만 이 폰트를 적용하고, 본문·버튼·라벨 등 일반 텍스트에는 사용하지 않습니다 (본문까지 적용했다가 가독성 문제로 되돌린 이력 있음 — Sprint 26→27 참고).
-- Jua는 굵기가 하나(400)뿐이라 `font-weight` 지정이 실제로 다른 두께로 나타나지 않을 수 있습니다.
-
-### 참고 — 폰트 실험 이력 (Sprint 22 → 26 → 27 → 28)
+### 참고 — 폰트 실험 이력
 - Sprint 22: 로고에 Fredoka 시도 → 한글 미지원이라 실제로는 적용 안 됨(무효)
 - Sprint 26: 앱 전체를 Jua로 전환 → 본문 가독성 문제로 불만
 - Sprint 27: 윤고딕 요청(상업용 폰트라 무료 CDN 불가) → Nunito로 전체 원복
-- Sprint 28: "로고 글자만" 요청 반영 → Jua를 로고 워드마크에만 좁혀서 재적용(현재 상태)
-- 윤고딕처럼 유료 폰트를 쓰려면 라이선스 구매 후 폰트 파일(.woff2 등)을 직접 전달해주셔야 프로젝트에 넣을 수 있습니다.
+- Sprint 28: 로고에만 Jua 재적용
+- **Sprint 29(현재)**: 제목·로고는 Paperlogy Bold, 본문은 Pretendard Regular, 버튼은 Pretendard SemiBold로 정착
+- 윤고딕처럼 무료 CDN에 없는 유료 폰트를 쓰려면 라이선스 구매 후 폰트 파일(.woff2 등)을 직접 전달해주셔야 프로젝트에 넣을 수 있습니다.
 
 ---
 

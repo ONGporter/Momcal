@@ -18,6 +18,16 @@
 | 레포 | https://github.com/ONGporter/Momcal |
 | 배포 URL | https://momcal.vercel.app |
 | 수익 모델 | 추후 광고 기반 (자세한 내용은 "수익화 & 트래픽 전략" 섹션 참고) |
+| 버전 | v0.0.1부터 시작 (Sprint 29) — 화면 최하단에 표시됨 |
+
+---
+
+## 버전 관리 정책 (Sprint 29)
+
+- 형식: `0.0.1` (major.minor.patch 비슷한 구조지만 정확한 semver는 아님)
+- **끝자리**: 버그 수정처럼 작은 변경마다 Claude가 자율적으로 올림 (예: 0.0.1 → 0.0.2)
+- **가운데 자리**: 기능 단위 업데이트 등 의미 있는 변경 시점 — **사용자가 지정하는 시점에만** 올림 (Claude가 임의로 올리지 않음)
+- 버전 문자열은 `index.html` 최하단(`<footer>` 다음 줄)에 하드코딩되어 있음 — 버전을 올릴 땐 이 값만 수정하면 됨
 
 ---
 
@@ -26,7 +36,7 @@
 - **Frontend**: Vanilla JS (ES6 Module), HTML5, CSS3
 - **Backend**: Firebase Auth + Cloud Firestore
 - **배포**: GitHub Push → Vercel 자동 배포
-- **폰트**: 본문은 Nunito, "맘캘" 로고 워드마크는 Jua (Google Fonts CDN, Sprint 28 — 여러 스프린트에 걸친 폰트 실험 끝에 로고에만 좁혀 적용하는 것으로 정착)
+- **폰트**: 제목·"맘캘" 로고는 Paperlogy Bold, 본문은 Pretendard Regular, 버튼은 Pretendard SemiBold (둘 다 무료 상업용 폰트, jsDelivr CDN — Sprint 29에서 여러 폰트 실험 끝에 정착)
 - **아이콘**: 이모지 전용 (외부 아이콘 라이브러리 없음)
 - **차트**: Chart.js (CDN, jsDelivr 폴백)
 - **PWA**: manifest.json + sw.js (홈 화면 설치·오프라인 앱 셸 캐싱)
@@ -78,15 +88,16 @@ momcal/
 │   ├── vaccineSeries.js      # 예방접종 실접종일 기준 이후 회차 자동 재계산
 │   ├── govSupport.js         # 정부지원 체크리스트 탭
 │   ├── growth.js              # 성장 기록 CRUD
-│   ├── growthChart.js        # 성장그래프 페이지(Chart.js)
+│   ├── growthChart.js        # 성장그래프 페이지(Chart.js), 성장 예측(Sprint 29)
 │   ├── pwaInstall.js         # "어플로 추가" 링크 (설치 프롬프트/iOS 안내)
 │   ├── familyShare.js        # "배우자와 함께 쓰기" 공유 링크
+│   ├── notifications.js      # 알림 기능 1차 버전(로컬 알림) — Sprint 29, FCM 백엔드 연동은 TODO 참고
 │   ├── guestMode.js          # 게스트 모드 — 로그인 없이 로컬(localStorage)에 실제 데이터 저장 (Sprint 15)
 │   ├── accountDelete.js      # 계정 영구 삭제(자체 탈퇴) — Firestore 문서 + Auth 계정 삭제 (Sprint 17)
 │   ├── adSlot.js              # 광고 슬롯 컴포넌트 (AdSense 연동 준비)
 │   ├── demoMode.js            # 예시 데이터로 둘러보기 (샘플 데이터, 저장 안 함 — 게스트 모드와는 별개)
 │   ├── modal.js               # showModal(), cm()
-│   └── utils.js                # today(), ageFmt() 등 유틸
+│   └── utils.js                # today()(KST 기준, Sprint 29), ageD(), ageFmt() 등 유틸
 └── data/
     ├── vaccines.js            # 예방접종 스케줄 (월령별 백신 목록 — 캘린더 자동일정의 단일 진실 공급원)
     ├── vaccine-series.js      # 예방접종 회차별 최소 접종 간격 (자동 재계산용)
@@ -339,3 +350,4 @@ momcal/
 | 26 | 앱 전체 폰트를 Fredoka(한글 미지원으로 실제 미적용 상태였음)→Jua(한글 지원 귀여운 폰트)로 교체, 캘린더 필을 배경 박스 방식에서 네이티브 캘린더 스타일의 색상 텍스트 줄 방식으로 전면 개편(`renderPrimaryPill`/`renderEvDots` → `renderCellEvents`/`renderEventLine`) |
 | 27 | PC 캘린더 글자 크기 확대(`.58rem`→`.66rem`, 모바일은 유지), 캘린더 일정을 "형광펜" 스타일(옅은 배경+진한 글자, 최소 여백)로 재개편, 폰트를 Jua/Fredoka 실험 이전의 Nunito로 원복(윤고딕은 상업용 폰트라 무료 CDN 적용 불가) |
 | 28 | 육아정보 4개 페이지에 카테고리 탭 추가(스크롤 없이 원하는 구간으로 바로 이동), 홈 히어로 배너 축소·모바일 대시보드 1열 변경, "맘캘" 로고 폰트(Jua)를 로고 워드마크로만 범위 좁혀 재적용 + 정책 페이지(privacy/terms/contact) 로고 이미지 누락 발견해 반영, 장식용 이모지(💕✨🎀 등) 중 "AI스럽다"는 피드백 받은 자리들을 맥락에 맞는 이모지로 교체 |
+| 29 | 폰트 전면 교체(Paperlogy 제목/로고 + Pretendard 본문/버튼), **캘린더 타임존 버그 수정**(자정~오전9시 하루 전 날짜 표시되던 문제, `today()`가 UTC 대신 KST 기준으로 계산하도록 수정), 생후 일수 계산을 태어난 날=1일로 변경, 육아정보 페이지 UX 개선(탭 드래그스크롤·페이지 이동 탭 상단화·맨위로가기 버튼), 정부지원 정보에 기준 시점 표시, 체크리스트→육아정보 검색 연결, 홈 화면 이모지 정리+버전 표시(v0.0.1)+로고 클릭 시 홈이동, 성장 예측 기능 신규, 알림 기능 1차 버전(로컬 알림, FCM 백엔드 연동은 TODO) |

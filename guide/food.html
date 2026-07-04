@@ -277,6 +277,9 @@
 </div>
 <div class="g-wrap">
   <div class="g-breadcrumb"><a href="./index.html">육아정보</a> › 🥣 이유식 단계별 시작 가이드</div>
+  <div class="g-page-nav" id="pageNav">
+    <a href="./pregnancy.html" class="g-page-nav-tab">🤰 임신 체크리스트</a><a href="./parenting.html" class="g-page-nav-tab">👶 예방접종·건강검진</a><a href="./food.html" class="g-page-nav-tab on">🥣 이유식 가이드</a><a href="./government-support.html" class="g-page-nav-tab">🏛️ 정부지원금</a>
+  </div>
   <div class="g-intro">이유식은 언제 시작해야 할지, 어떤 재료부터 줘야 할지 막막하기 쉬워요. 아래는 생후 6개월 초기 이유식부터 24개월 유아식까지, 단계별로 정리한 가이드예요. 재료마다 어떤 효과가 있는지, 알레르기는 어떻게 확인해야 하는지도 함께 적어뒀어요.</div>
   <div class="g-disclaimer">⚠️ 이 페이지의 이유식·영양 정보는 일반적인 참고용 요약입니다. 아이마다 알레르기·소화 상태가 다르니, 새로운 재료를 시작할 때는 소아과 상담을 권장합니다.</div>
   <div class="g-search">
@@ -305,9 +308,42 @@
       if (countEl) countEl.textContent = q ? (totalShown + '개 항목 검색됨') : '';
     }
   </script>
-  <div class="g-cat-tabs">
+  <div class="g-cat-tabs" id="catTabs">
     <a href="#f6" class="g-cat-tab">🥣 6개월 (초기 1단계)</a><a href="#f8" class="g-cat-tab">🍲 8개월 (초기 2단계)</a><a href="#f10" class="g-cat-tab">🍱 10개월 (중기)</a><a href="#f12" class="g-cat-tab">🍚 12개월 (완료기)</a><a href="#f24" class="g-cat-tab">🥘 24개월 (유아식)</a>
   </div>
+  <script>
+    (function() {
+      function enableDragScroll(el) {
+        if (!el) return;
+        var isDown = false, startX = 0, scrollLeft = 0, moved = false;
+        el.addEventListener('mousedown', function(e) {
+          isDown = true; moved = false; el.classList.add('dragging');
+          startX = e.pageX - el.offsetLeft; scrollLeft = el.scrollLeft;
+        });
+        window.addEventListener('mouseup', function() { isDown = false; el.classList.remove('dragging'); });
+        el.addEventListener('mouseleave', function() { isDown = false; el.classList.remove('dragging'); });
+        el.addEventListener('mousemove', function(e) {
+          if (!isDown) return;
+          e.preventDefault();
+          var x = e.pageX - el.offsetLeft;
+          var walk = (x - startX);
+          if (Math.abs(walk) > 4) moved = true;
+          el.scrollLeft = scrollLeft - walk;
+        });
+        // 드래그로 이동했으면 클릭(앵커 이동)이 발동하지 않도록 방지
+        el.addEventListener('click', function(e) { if (moved) { e.preventDefault(); moved = false; } }, true);
+        // 세로 휠 스크롤을 가로 스크롤로 변환 (마우스 사용자용)
+        el.addEventListener('wheel', function(e) {
+          if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+            el.scrollLeft += e.deltaY;
+            e.preventDefault();
+          }
+        }, { passive: false });
+      }
+      enableDragScroll(document.getElementById('catTabs'));
+      enableDragScroll(document.getElementById('pageNav'));
+    })();
+  </script>
   <section class="g-section" id="f6">
     <h2>🥣 6개월 (초기 1단계)</h2>
     
@@ -453,16 +489,11 @@
   <p class="js-cta-banner-desc">맘캘에 등록하면 오늘 날짜 기준으로 일정이 자동으로 정리돼요. 로그인 없이도 바로 써볼 수 있어요.</p>
   <a class="js-cta-banner-btn" href="https://momcal.vercel.app/">지금 무료로 시작하기 →</a>
 </div>
-  <div class="g-nav-links">
-    <a href="./pregnancy.html">🤰 임신 체크리스트</a>
-    <a href="./parenting.html">👶 월령별 예방접종·건강검진</a>
-    <a href="./food.html">🥣 이유식 가이드</a>
-    <a href="./government-support.html">🏛️ 정부지원금</a>
-  </div>
 </div>
 <div class="g-footer">
   © 맘캘 MomCal · <a href="./index.html">육아정보</a> · <a href="../privacy.html">개인정보처리방침</a> · <a href="../terms.html">이용약관</a> · <a href="../contact.html">문의</a> · <a href="https://momcal.vercel.app/">앱 바로가기</a>
 </div>
+<a href="#" class="g-top-btn" aria-label="맨 위로">↑</a>
 <script>
 (function(){
   try {

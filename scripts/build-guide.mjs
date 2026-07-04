@@ -19,7 +19,7 @@
  */
 
 import { clData } from '../data/checklist-data.js';
-import { govSupportSchedule } from '../data/government-support.js';
+import { govSupportSchedule, GOV_INFO_BASIS } from '../data/government-support.js';
 import { writeFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -116,6 +116,7 @@ function footer() {
   return `<div class="g-footer">
   © 맘캘 MomCal · <a href="./index.html">육아정보</a> · <a href="../privacy.html">개인정보처리방침</a> · <a href="../terms.html">이용약관</a> · <a href="../contact.html">문의</a> · <a href="${SITE}/">앱 바로가기</a>
 </div>
+<a href="#" class="g-top-btn" aria-label="맨 위로">↑</a>
 ${returningUserScript()}`;
 }
 
@@ -198,9 +199,42 @@ function renderGovSection(cat) {
  *   `.g-section`에 `scroll-margin-top`을 함께 지정해둠
  */
 function categoryTabBar(cats) {
-  return `<div class="g-cat-tabs">
+  return `<div class="g-cat-tabs" id="catTabs">
     ${cats.map(cat => `<a href="#${cat.key}" class="g-cat-tab">${cat.label}</a>`).join('')}
-  </div>`;
+  </div>
+  <script>
+    (function() {
+      function enableDragScroll(el) {
+        if (!el) return;
+        var isDown = false, startX = 0, scrollLeft = 0, moved = false;
+        el.addEventListener('mousedown', function(e) {
+          isDown = true; moved = false; el.classList.add('dragging');
+          startX = e.pageX - el.offsetLeft; scrollLeft = el.scrollLeft;
+        });
+        window.addEventListener('mouseup', function() { isDown = false; el.classList.remove('dragging'); });
+        el.addEventListener('mouseleave', function() { isDown = false; el.classList.remove('dragging'); });
+        el.addEventListener('mousemove', function(e) {
+          if (!isDown) return;
+          e.preventDefault();
+          var x = e.pageX - el.offsetLeft;
+          var walk = (x - startX);
+          if (Math.abs(walk) > 4) moved = true;
+          el.scrollLeft = scrollLeft - walk;
+        });
+        // 드래그로 이동했으면 클릭(앵커 이동)이 발동하지 않도록 방지
+        el.addEventListener('click', function(e) { if (moved) { e.preventDefault(); moved = false; } }, true);
+        // 세로 휠 스크롤을 가로 스크롤로 변환 (마우스 사용자용)
+        el.addEventListener('wheel', function(e) {
+          if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+            el.scrollLeft += e.deltaY;
+            e.preventDefault();
+          }
+        }, { passive: false });
+      }
+      enableDragScroll(document.getElementById('catTabs'));
+      enableDragScroll(document.getElementById('pageNav'));
+    })();
+  </script>`;
 }
 
 /**
@@ -237,6 +271,23 @@ function pageSearchBox() {
   </script>`;
 }
 
+/**
+ * 다른 육아정보 페이지로 이동하는 탭 (Sprint 29)
+ * - 예전엔 페이지 맨 아래에만 있어서 다른 정보(예: 예방접종→이유식)를 보려면
+ *   끝까지 스크롤해야 했음 — 상단으로 옮겨서 바로 전환할 수 있게 함
+ */
+function pageNavLinks(activePath) {
+  const pages = [
+    { href: './pregnancy.html',           label: '🤰 임신 체크리스트' },
+    { href: './parenting.html',           label: '👶 예방접종·건강검진' },
+    { href: './food.html',                label: '🥣 이유식 가이드' },
+    { href: './government-support.html',  label: '🏛️ 정부지원금' },
+  ];
+  return `<div class="g-page-nav" id="pageNav">
+    ${pages.map(p => `<a href="${p.href}" class="g-page-nav-tab${p.href === activePath ? ' on' : ''}">${p.label}</a>`).join('')}
+  </div>`;
+}
+
 function page({ title, desc, path, heroTitle, heroDesc, intro, cats, ctaText, disclaimer, renderCat = renderSection, questionFn, answerFn }) {
   const jsonLd = (questionFn && answerFn) ? faqJsonLd(cats, questionFn, answerFn) : '';
   return `<!DOCTYPE html>
@@ -252,18 +303,13 @@ ${header()}
 </div>
 <div class="g-wrap">
   <div class="g-breadcrumb"><a href="./index.html">육아정보</a> › ${heroTitle}</div>
+  ${pageNavLinks('./' + path.split('/').pop())}
   <div class="g-intro">${intro}</div>
   ${disclaimer ? `<div class="g-disclaimer">⚠️ ${disclaimer}</div>` : ''}
   ${pageSearchBox()}
   ${categoryTabBar(cats)}
   ${cats.map(renderCat).join('\n  ')}
   ${ctaBanner(ctaText)}
-  <div class="g-nav-links">
-    <a href="./pregnancy.html">🤰 임신 체크리스트</a>
-    <a href="./parenting.html">👶 월령별 예방접종·건강검진</a>
-    <a href="./food.html">🥣 이유식 가이드</a>
-    <a href="./government-support.html">🏛️ 정부지원금</a>
-  </div>
 </div>
 ${footer()}
 </body>
@@ -323,7 +369,7 @@ const govHtml = page({
   path: '/guide/government-support.html',
   heroTitle: '🏛️ 정부지원금 가이드',
   heroDesc: '임신 중부터 육아 중까지, 시기별로 받을 수 있는 지원 제도를 정리했어요',
-  intro: '정부지원 제도는 신청 기한을 놓치면 못 받는 경우가 많아 미리 알아두는 게 중요해요. 아래는 임신 중, 출산 직후, 육아 중 시기별로 정리한 정부지원 제도예요. 맘캘 앱에 등록하면 이 일정들이 자동으로 캘린더에 채워지고, 신청 마감을 놓치지 않도록 확인할 수 있어요.',
+  intro: `<strong style="color:var(--pkd)">📅 ${GOV_INFO_BASIS}으로 정리된 정보입니다.</strong> 정부지원 제도는 신청 기한을 놓치면 못 받는 경우가 많아 미리 알아두는 게 중요해요. 아래는 임신 중, 출산 직후, 육아 중 시기별로 정리한 정부지원 제도예요. 맘캘 앱에 등록하면 이 일정들이 자동으로 캘린더에 채워지고, 신청 마감을 놓치지 않도록 확인할 수 있어요.`,
   cats: govCats,
   ctaText: '지원금 신청 마감, 놓치지 않게 캘린더로 관리해보세요',
   disclaimer: '제도명·지원 대상·금액·마감 기한은 매년 바뀔 수 있습니다. 이 페이지는 신청 시기를 놓치지 않기 위한 참고용 안내이며, 정확한 자격 요건과 금액은 반드시 링크된 기관 홈페이지 또는 주민센터에서 다시 확인해주세요.',
@@ -377,6 +423,19 @@ function hubSearchBox() {
             '</a>';
         }).join('');
       };
+
+      // Sprint 29: 체크리스트 페이지에서 "?q=검색어"를 달고 넘어온 경우 자동으로 검색 실행
+      try {
+        var params = new URLSearchParams(window.location.search);
+        var q = params.get('q');
+        if (q) {
+          var input = document.getElementById('hubSearch');
+          if (input) {
+            input.value = q;
+            window.filterHubSearch(q);
+          }
+        }
+      } catch (e) {}
     })();
   </script>`;
 }

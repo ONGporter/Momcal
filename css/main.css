@@ -1,8 +1,8 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
-/* Sprint 28: "맘캘" 로고 글자에만 귀여운 한글 폰트 Jua 적용 (본문은 그대로 Nunito) —
-   Sprint 26에서 앱 전체에 적용했다가 가독성 문제로 Sprint 27에서 되돌렸던 것을,
-   이번엔 로고 워드마크 자리(.logo/.auth-logo/.g-logo)에만 좁혀서 다시 적용함 */
-@import url('https://fonts.googleapis.com/css2?family=Jua&display=swap');
+/* Sprint 29: 폰트 전면 교체 — 제목·"맘캘" 로고는 Paperlogy Bold, 본문은 Pretendard Regular,
+   버튼은 Pretendard SemiBold. 둘 다 상업적 이용 가능한 무료 폰트(SIL OFL)라 CDN으로 바로 사용 가능.
+   (이전 스프린트의 Nunito/Jua/Fredoka 실험은 전부 이 폰트로 대체됨) */
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
+@import url('https://cdn.jsdelivr.net/gh/fonts-archive/Paperlogy/subsets/Paperlogy-dynamic-subset.css');
 
 /* ── RESET & ROOT ── */
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -22,10 +22,22 @@
 }
 
 body {
-  font-family: 'Nunito', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+  font-family: 'Pretendard', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+  font-weight: 400;
   background: var(--bg);
   color: var(--tx);
   min-height: 100vh;
+}
+
+/* Sprint 29: 제목 계열은 Paperlogy Bold — 진짜 헤딩 태그와 섹션 라벨(.sec)에 적용 */
+h1, h2, h3, .sec {
+  font-family: 'Paperlogy', 'Pretendard', sans-serif;
+  font-weight: 700;
+}
+
+/* Sprint 29: 버튼은 Pretendard SemiBold (font-family는 body에서 상속) */
+.btn, .st-btn, .g-btn, .np {
+  font-weight: 600;
 }
 
 /* ── TOPBAR (Sprint 13: 2줄 구조 — 로고/유저 줄 + 탭 줄) ── */
@@ -51,7 +63,7 @@ body {
 }
 
 .logo {
-  font-family: 'Jua', 'Nunito', 'Apple SD Gothic Neo', sans-serif;
+  font-family: 'Paperlogy', 'Pretendard', sans-serif;
   font-size: 1.22rem;
   font-weight: 700;
   background: linear-gradient(135deg, #F06292, #9C27B0);
@@ -61,11 +73,12 @@ body {
   letter-spacing: -.3px;
   flex-shrink: 0;
 }
-/* Sprint 24: 로고 옆 하트 이모지(💕) 대신 실제 마스코트 캐릭터 이미지 사용 */
+/* Sprint 24: 로고 옆 하트 이모지(💕) 대신 실제 마스코트 캐릭터 이미지 사용
+   Sprint 29: 캐릭터가 너무 작다는 피드백 — 약 1.4배 확대(1.35em → 1.9em) */
 .brand-mark {
-  height: 1.35em;
+  height: 1.9em;
   width: auto;
-  vertical-align: -.32em;
+  vertical-align: -.5em;
   margin-left: 2px;
 }
 

@@ -9,8 +9,9 @@
  * Firebase 등 외부 도메인 요청(인증·데이터 동기화)은 건드리지 않고 그대로 통과시킵니다.
  */
 
-// Sprint 28: 로고 폰트(Jua) 재적용 + 홈 화면 스타일 변경으로 CSS가 다시 바뀌어서 캐시 버전을 올림
-const CACHE_NAME = 'momcal-shell-v6';
+// Sprint 29: 폰트 전면 교체(Paperlogy/Pretendard), 캘린더 타임존 버그 수정, 알림 기능 추가 등
+// 다수 파일이 바뀌어서 캐시 버전을 올림
+const CACHE_NAME = 'momcal-shell-v7';
 
 const APP_SHELL = [
   './',
@@ -33,6 +34,7 @@ const APP_SHELL = [
   './js/growth.js',
   './js/growthChart.js',
   './js/modal.js',
+  './js/notifications.js',
   './js/state.js',
   './js/ui.js',
   './js/utils.js',
@@ -92,6 +94,42 @@ self.addEventListener('fetch', (event) => {
         .catch(() => cached); // 오프라인이면 캐시로 대체
 
       return cached || fetchPromise;
+    })
+  );
+});
+
+/**
+ * Sprint 29: 향후 FCM(Firebase Cloud Messaging) 진짜 푸시를 붙일 때 쓸 기본 뼈대.
+ * ⚠️ 지금은 아무도 이 서비스워커로 실제 push 메시지를 "보내주는" 서버가 없어서
+ * 이 핸들러가 호출될 일이 없음 — Firebase 콘솔에서 Cloud Messaging을 설정하고
+ * 서버(Cloud Functions 등)에서 실제로 push를 보내기 시작하면 그때부터 동작함.
+ * 지금 알림은 js/notifications.js가 앱이 열려 있을 때 브라우저 Notification API로
+ * 직접 띄우는 방식(로컬 알림)이며, 이 핸들러와는 별개로 이미 동작함.
+ */
+self.addEventListener('push', (event) => {
+  if (!event.data) return;
+  let payload = {};
+  try { payload = event.data.json(); } catch (e) { payload = { title: '맘캘 MomCal', body: event.data.text() }; }
+
+  event.waitUntil(
+    self.registration.showNotification(payload.title || '맘캘 MomCal', {
+      body: payload.body || '',
+      icon: './icons/icon-192.png',
+      badge: './icons/icon-192.png',
+      data: payload.data || {},
+    })
+  );
+});
+
+/** 알림을 탭하면 앱 창을 포커스하거나 새로 열어줌 */
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if ('focus' in client) return client.focus();
+      }
+      if (self.clients.openWindow) return self.clients.openWindow('./');
     })
   );
 });

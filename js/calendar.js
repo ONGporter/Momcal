@@ -810,7 +810,7 @@ function renderWeekView() {
   [0, 6, 8, 10, 12, 14, 16, 18, 20, 22].forEach(h => {
     html += `<div style="font-size:.62rem;color:var(--txl);font-weight:700;padding:8px 4px;text-align:right;border-bottom:1px solid #F5EEF8">${h}시</div>`;
     weekDays.forEach(d => {
-      const ds   = d.toISOString().split('T')[0];
+      const ds   = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       const de   = groupVaxEvents(applyCalFilter(evs.filter(e => e.date === ds)));
       const isTd = ds === td;
       html += `

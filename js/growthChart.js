@@ -131,6 +131,7 @@ export function renderGrowthPage() {
     document.getElementById('growthSummaryGrid').innerHTML = '';
     document.getElementById('growthChartWrap').style.display = 'none';
     document.getElementById('growthRecordList').innerHTML = '';
+    document.getElementById('growthPredictionCard').innerHTML = '';
     return;
   }
 
@@ -139,6 +140,7 @@ export function renderGrowthPage() {
     document.getElementById('growthSummaryGrid').innerHTML = '';
     document.getElementById('growthChartWrap').style.display = 'none';
     document.getElementById('growthRecordList').innerHTML = '';
+    document.getElementById('growthPredictionCard').innerHTML = '';
     return;
   }
 
@@ -149,6 +151,7 @@ export function renderGrowthPage() {
   renderMetricToggle();
   renderChart(child, S.growthMetric || 'height');
   renderRecordList(child);
+  renderPrediction(child);
 }
 
 /** 아이 변경 시 (select onchange) */
@@ -208,7 +211,58 @@ function renderSummary(child) {
   }).join('') + genderNote;
 }
 
-/* ── Chart.js 라인 차트 ── */
+/* ── Sprint 29: 성장 예측 (참고용) ── */
+/**
+ * 최근 2개 기록의 변화량(하루당 증가율)을 그대로 미래로 연장해서 예측치를 계산.
+ * ⚠️ 아주 단순한 선형 추정이라 실제 성장 곡선(영유아기엔 증가폭이 점점 완만해짐)과는
+ * 다를 수 있음 — 그래서 "참고용" 문구를 항상 함께 표시하고, 1개월 앞까지만 보여줌
+ * (기간이 길어질수록 선형 추정의 오차가 커지기 때문)
+ */
+function predictGrowth(childId, metric) {
+  const records = getGrowthRecords(childId).filter(r => r[metric] != null);
+  if (records.length < 2) return null;
+  const [latest, prev] = records; // getGrowthRecords는 최신순 정렬
+  const daysDiff = (new Date(latest.date) - new Date(prev.date)) / 86400000;
+  if (daysDiff < 3) return null; // 너무 가까운 기록 2개로는 추세가 불안정해서 제외
+
+  const rate = (latest[metric] - prev[metric]) / daysDiff; // 하루당 변화량
+  const predicted = latest[metric] + rate * 30.44; // 1개월(30.44일) 후 예측
+  return { predicted: Math.round(predicted * 10) / 10, current: latest[metric], rate };
+}
+
+function renderPrediction(child) {
+  const el = document.getElementById('growthPredictionCard');
+  if (!el) return;
+
+  const rows = ['height', 'weight', 'head']
+    .map(metric => ({ metric, pred: predictGrowth(child.id, metric) }))
+    .filter(r => r.pred);
+
+  if (!rows.length) {
+    el.innerHTML = ''; // 기록이 2개 미만이거나 간격이 너무 짧으면 예측 카드 자체를 숨김
+    return;
+  }
+
+  el.innerHTML = `
+    <div class="growth-predict-card">
+      <div class="growth-predict-title">🔮 한 달 뒤 예상 (참고용)</div>
+      <div class="growth-predict-rows">
+        ${rows.map(({ metric, pred }) => {
+          const { label, unit, icon } = growthMetricLabel[metric];
+          const diff = Math.round((pred.predicted - pred.current) * 10) / 10;
+          const diffTxt = diff >= 0 ? `+${diff}` : `${diff}`;
+          return `
+            <div class="growth-predict-row">
+              <span>${icon} ${label}</span>
+              <span class="growth-predict-value">${pred.predicted}${unit} <small>(${diffTxt}${unit})</small></span>
+            </div>`;
+        }).join('')}
+      </div>
+      <div class="growth-disclaimer" style="margin-top:8px">📌 최근 두 기록의 증가 추세를 그대로 연장한 단순 추정치예요. 아이 성장은 시기마다 속도가 달라질 수 있어 실제와 다를 수 있으니, 참고용으로만 봐주세요. 의학적 진단이 아닙니다.</div>
+    </div>`;
+}
+
+
 let _chartLoadRetries = 0;
 
 function renderChart(child, metric) {

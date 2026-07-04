@@ -6,8 +6,9 @@
  * 색상·타이포는 UI_GUIDELINE.md의 브랜드 톤(파스텔 핑크/민트, Nunito)을 그대로 따름.
  */
 
-/* Sprint 28: "맘캘" 로고 글자에만 Jua 적용 (본문은 Nunito 유지) */
-@import url('https://fonts.googleapis.com/css2?family=Jua&display=swap');
+/* Sprint 29: 앱 본체와 동일하게 Pretendard(본문)+Paperlogy(제목/로고)로 교체 */
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
+@import url('https://cdn.jsdelivr.net/gh/fonts-archive/Paperlogy/subsets/Paperlogy-dynamic-subset.css');
 
 :root {
   --pk:  #F06292;
@@ -31,10 +32,16 @@ html { scroll-behavior: smooth; } /* Sprint 28: 카테고리 탭·검색 결과 
 
 body {
   margin: 0;
-  font-family: 'Nunito', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+  font-family: 'Pretendard', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
   background: var(--bg);
   color: var(--tx);
   line-height: 1.7;
+}
+
+/* Sprint 29: 제목 계열(h1~h3)과 로고는 Paperlogy Bold */
+h1, h2, h3, .g-logo {
+  font-family: 'Paperlogy', 'Pretendard', sans-serif;
+  font-weight: 700;
 }
 
 a { color: var(--pkd); text-decoration: none; }
@@ -50,7 +57,6 @@ a:hover { text-decoration: underline; }
   flex-wrap: wrap; gap: 10px;
 }
 .g-logo {
-  font-family: 'Jua', 'Nunito', 'Apple SD Gothic Neo', sans-serif;
   font-size: 1.22rem; font-weight: 700; letter-spacing: -.3px;
   background: linear-gradient(135deg, #F06292, #9C27B0);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
@@ -64,7 +70,7 @@ a:hover { text-decoration: underline; }
 }
 .g-cta {
   background: linear-gradient(135deg, #F06292, #9C27B0);
-  color: #fff; font-weight: 800; font-size: .82rem;
+  color: #fff; font-weight: 600; font-size: .82rem;
   padding: 9px 16px; border-radius: 40px;
   box-shadow: 0 4px 14px rgba(200,80,180,.28);
 }
@@ -114,19 +120,52 @@ a:hover { text-decoration: underline; }
 }
 
 /* ── Sprint 28: 카테고리 탭 바 — 계속 스크롤 안 해도 원하는 구간으로 바로 이동 ── */
+/* Sprint 29: 항목이 많아 옆으로 넘칠 때 마우스로 잡아끌거나(드래그) 휠로도 넘길 수 있게 함 */
 .g-cat-tabs {
   display: flex; gap: 7px; overflow-x: auto; scrollbar-width: none;
   margin-bottom: 18px; padding-bottom: 2px;
+  cursor: grab;
 }
+.g-cat-tabs.dragging { cursor: grabbing; user-select: none; }
 .g-cat-tabs::-webkit-scrollbar { display: none; }
 .g-cat-tab {
   flex-shrink: 0; white-space: nowrap;
   padding: 8px 14px; border-radius: 40px;
   background: var(--card); border: 1.5px solid #EEE0F0;
-  font-size: .78rem; font-weight: 800; color: var(--tx);
+  font-size: .78rem; font-weight: 600; color: var(--tx);
   box-shadow: var(--card-shadow);
 }
 .g-cat-tab:hover { border-color: var(--pk); color: var(--pkd); text-decoration: none; }
+
+/* ── Sprint 29: 다른 육아정보 페이지로 이동하는 탭 (상단, 페이지 간 이동) ── */
+.g-page-nav {
+  display: flex; gap: 7px; overflow-x: auto; scrollbar-width: none;
+  margin-bottom: 16px; padding-bottom: 2px; cursor: grab;
+}
+.g-page-nav.dragging { cursor: grabbing; user-select: none; }
+.g-page-nav::-webkit-scrollbar { display: none; }
+.g-page-nav-tab {
+  flex-shrink: 0; white-space: nowrap;
+  padding: 9px 15px; border-radius: 40px;
+  background: var(--pkl); color: var(--pkd);
+  font-size: .78rem; font-weight: 600;
+}
+.g-page-nav-tab:hover { text-decoration: none; opacity: .85; }
+.g-page-nav-tab.on {
+  background: linear-gradient(135deg, #F06292, #9C27B0);
+  color: #fff;
+}
+
+/* ── Sprint 29: 맨 위로 가기 버튼 ── */
+.g-top-btn {
+  position: fixed; right: 18px; bottom: 22px; z-index: 20;
+  width: 42px; height: 42px; border-radius: 50%;
+  background: linear-gradient(135deg, #F06292, #9C27B0);
+  color: #fff; font-size: 1.1rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 14px rgba(200,80,180,.35);
+}
+.g-top-btn:hover { text-decoration: none; opacity: .9; }
 
 .g-item { padding: 14px 0; border-bottom: 1px solid #F3EAF2; scroll-margin-top: 76px; }
 .g-item:last-child { border-bottom: none; padding-bottom: 0; }
@@ -200,7 +239,7 @@ a:hover { text-decoration: underline; }
 .g-cta-banner h2 { font-size: 1.05rem; font-weight: 900; margin: 0 0 8px; }
 .g-cta-banner p { font-size: .82rem; opacity: .92; margin: 0 0 16px; }
 .g-cta-banner a {
-  display: inline-block; background: #fff; color: var(--pkd); font-weight: 800;
+  display: inline-block; background: #fff; color: var(--pkd); font-weight: 600;
   font-size: .85rem; padding: 10px 22px; border-radius: 40px;
 }
 .g-cta-banner a:hover { text-decoration: none; opacity: .9; }

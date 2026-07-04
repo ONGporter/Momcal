@@ -12,6 +12,7 @@ import { getLatestGrowth }       from './growth.js';
 import { getDailyTip }           from '../data/tips.js';
 import { renderPwaInstallLink }  from './pwaInstall.js';
 import { renderFamilyShareLink } from './familyShare.js';
+import { renderNotificationSettings } from './notifications.js';
 import { renderAdSlot }          from './adSlot.js';
 
 /* ════════════════════════════════════
@@ -61,6 +62,8 @@ export function renderHome() {
   renderPwaInstallLink();
   // 배우자와 함께 쓰기 링크
   renderFamilyShareLink();
+  // 알림 받기 (Sprint 29)
+  renderNotificationSettings();
 }
 
 /* ════════════════════════════════════
