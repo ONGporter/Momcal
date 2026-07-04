@@ -17,6 +17,7 @@ import { pregEvMap }       from '../data/pregnancy.js';
 import { checkEvs, foodEvs } from '../data/milestones.js';
 import { recalcVaccineSeries } from './vaccineSeries.js';
 import { govSupportSchedule } from '../data/government-support.js';
+import { getHoliday } from '../data/kr-holidays.js';
 
 /**
  * 정부지원 항목 마감 임박 여부 (Sprint 20)
@@ -638,7 +639,7 @@ function renderMonthView() {
   let html = `
     <div class="cal-wrap">
       <div class="cal-head-row" style="background:${th.g}">
-        ${days.map(d => `<div class="cal-head-cell">${d}</div>`).join('')}
+        ${days.map((d, i) => `<div class="cal-head-cell${i === 0 || i === 6 ? ' cal-head-red' : ''}">${d}</div>`).join('')}
       </div>
       <div class="cal-body">`;
 
@@ -722,6 +723,11 @@ function cellHTML(ds, d, other, evs, td, th) {
   const de           = groupVaxEvents(applyCalFilter(evs.filter(e => e.date === ds)));
   const stickersAll  = S.dayStickers[ds] || [];
 
+  // v0.0.12: 토요일·일요일·한국 공휴일은 날짜 숫자를 붉은색 계열로 표시
+  const dow        = new Date(ds).getDay();
+  const isHoliday  = !!getHoliday(ds);
+  const isRedDay   = dow === 0 || dow === 6 || isHoliday;
+
   // v0.0.11: 이유식 스티커는 따로 빼서 날짜 숫자 옆에 표시 — 나머지 스티커의
   // "3개 넘으면 +N" 묶음 카운트에 포함되지 않도록 완전히 독립적으로 처리
   const foodStickers  = stickersAll.filter(s => FOOD_STICKER_SET.has(s));
@@ -750,6 +756,11 @@ function cellHTML(ds, d, other, evs, td, th) {
 
   const evsHtml = renderCellEvents(de);
 
+  // 오늘 날짜면 기존처럼 원형 강조가 우선, 아니면 주말/공휴일 여부에 따라 붉은 글자색만 적용
+  const dayNumStyle = ds === td
+    ? `background:${th.today};color:#fff;border-radius:50%`
+    : (isRedDay ? 'color:var(--holiday-red)' : '');
+
   return `
     <div class="cal-cell${other ? ' other-month' : ''}${ds === td ? ' today' : ''}${isSel ? ' selected' : ''}"
          onclick="selectDate('${ds}')"
@@ -759,7 +770,7 @@ function cellHTML(ds, d, other, evs, td, th) {
          ondrop="onDrop(event,'${ds}')"
          style="${isSel ? `background:${th.cell};border:1.5px solid var(--pk)` : ''}">
       <div class="day-num-row">
-        <div class="day-num" style="${ds === td ? `background:${th.today};color:#fff;border-radius:50%` : ''}">${d}</div>
+        <div class="day-num" style="${dayNumStyle}">${d}</div>
         ${foodHtml}
       </div>
       ${evsHtml}
@@ -857,9 +868,11 @@ function renderWeekView() {
     <div class="cal-wrap">
       <div class="cal-head-row" style="background:${th.g};grid-template-columns:44px repeat(7,1fr)">
         <div class="cal-head-cell" style="font-size:.6rem">시간</div>
-        ${weekDays.map((d, i) =>
-          `<div class="cal-head-cell">${days[i]}<br><span style="font-size:.84rem;font-weight:900">${d.getDate()}</span></div>`
-        ).join('')}
+        ${weekDays.map((d, i) => {
+          const wds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+          const isRed = i === 0 || i === 6 || !!getHoliday(wds);
+          return `<div class="cal-head-cell${isRed ? ' cal-head-red' : ''}">${days[i]}<br><span style="font-size:.84rem;font-weight:900">${d.getDate()}</span></div>`;
+        }).join('')}
       </div>
       <div style="display:grid;grid-template-columns:44px repeat(7,1fr)">`;
 
@@ -1007,23 +1020,32 @@ export function showDayPanel(ds) {
  *  커스텀 일정 추가 / 삭제
  * ══════════════════════════════════════ */
 export function addCustomEv() {
-  const date  = document.getElementById('evDate').value;
-  const title = document.getElementById('evTitle').value.trim();
-  const note  = document.getElementById('evNote').value.trim();
-  const time  = document.getElementById('evTime').value;
+  const date    = document.getElementById('evDate').value;
+  const title   = document.getElementById('evTitle').value.trim();
+  const note    = document.getElementById('evNote').value.trim();
+  const time    = document.getElementById('evTime').value;
+  const endTime = document.getElementById('evEndTime').value;
   if (!date || !title) { alert('날짜와 제목을 입력해주세요'); return; }
+
+  // v0.0.12: 시작 시간만 입력하면 기존처럼 "HH:MM 제목", 종료 시간까지 입력하면
+  // "HH:MM~HH:MM 제목" 형태로 제목 앞에 붙임 — 기존에 제목 안에 시간을 담아두던 방식과
+  // 그대로 호환되어 캘린더 필·데이 패널 등 표시 로직을 따로 안 건드려도 자동으로 반영됨
+  let prefix = '';
+  if (time && endTime) prefix = `${time}~${endTime} `;
+  else if (time) prefix = `${time} `;
 
   S.customEvs.push({
     date,
-    title: time ? `${time} ${title}` : title,
+    title: prefix ? `${prefix}${title}` : title,
     note,
     type: S.evType,
     auto: false,
     _id:  Date.now(),
   });
-  document.getElementById('evTitle').value = '';
-  document.getElementById('evNote').value  = '';
-  document.getElementById('evTime').value  = '';
+  document.getElementById('evTitle').value   = '';
+  document.getElementById('evNote').value    = '';
+  document.getElementById('evTime').value    = '';
+  document.getElementById('evEndTime').value = '';
   renderCal();
   if (S.selDate === date) showDayPanel(date);
   debounceSave();

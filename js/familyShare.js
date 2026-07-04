@@ -1,17 +1,25 @@
 /**
  * js/familyShare.js
- * 홈 탭 — 배우자/보호자와 함께 쓰기 링크 (Sprint 13)
+ * 설정 탭 — 배우자/보호자와 함께 쓰기
  *
- * 맘캘은 현재 Firestore 문서가 users/{uid} 단위(1계정 = 1문서)로 저장되는 구조라,
- * "각자 로그인해도 같은 데이터를 실시간 공동 편집"하는 진짜 멀티 계정 가족 공유는
- * 아직 지원하지 않음 (계정 구조 변경이 필요한 큰 작업 — TODO.md 로드맵 항목).
+ * v0.0.12: 진짜 가족 그룹 공유(각자 자기 계정으로 로그인해도 실시간 공동 편집) 추가.
+ * 기존의 "같은 계정으로 로그인" 공유 방식은 그대로 남겨두고, 그 아래에
+ * "가족 그룹으로 공유(베타)" — 초대 코드로 여러 계정을 하나의 공유 데이터에
+ * 연결하는 방식을 추가함(js/state.js의 createFamily/joinFamily/leaveFamily 참고).
  *
- * 대신 지금 당장 배우자와 함께 쓸 수 있도록: 같은 계정(이메일/비밀번호)으로
- * 로그인하면 onSnapshot 실시간 동기화로 두 사람 모두 같은 캘린더·체크리스트를
- * 보게 되므로, 그 안내 문구 + 앱 링크를 간편하게 공유하는 기능을 제공한다.
+ * ⚠️ 이 기능이 실제로 안전하게 동작하려면 Firebase 콘솔의 Firestore 보안 규칙에
+ * 아래 내용을 추가해야 합니다 (js/state.js 상단 주석에도 동일하게 적어둠):
+ *
+ *   match /families/{familyId} {
+ *     allow read, write: if request.auth != null;
+ *   }
+ *
+ * (초대 코드 자체를 비밀번호처럼 취급하는 모델 — 코드를 아는 사람만 실질적으로
+ * 접근 가능하고, 멤버 목록은 표시·관리용으로만 사용)
  */
 
-import { showModal } from './modal.js';
+import { S, createFamily, joinFamily, leaveFamily } from './state.js';
+import { showModal, cm } from './modal.js';
 
 const APP_URL = 'https://momcal.app';
 
@@ -19,10 +27,28 @@ function shareMessage() {
   return `맘캘로 우리 아이 육아 일정을 같이 관리해요 👨‍👩‍👧\n제 계정으로 로그인하면 같은 캘린더·체크리스트를 실시간으로 함께 볼 수 있어요!\n${APP_URL}`;
 }
 
-/** 홈 탭 "배우자와 함께 쓰기" 링크 렌더 */
+/** 설정 탭 "배우자와 함께 쓰기" 영역 렌더 — 가족 그룹 소속 여부에 따라 다르게 표시 */
 export function renderFamilyShareLink() {
   const wrap = document.getElementById('familyShareWrap');
   if (!wrap) return;
+
+  if (S.familyId) {
+    wrap.innerHTML = `
+      <div class="install-link" style="cursor:default">
+        <span class="install-ico" style="background:var(--pul)">👪</span>
+        <div class="install-txt">
+          <div class="install-title">가족 그룹으로 공유 중</div>
+          <div class="install-sub">초대 코드 <b style="letter-spacing:1px;color:var(--pkd)">${S.familyId}</b> — 이 코드로 다른 가족도 참여할 수 있어요</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn" style="flex:1;background:var(--pkl);color:var(--pkd);box-shadow:none"
+                onclick="copyFamilyCode()">📋 코드 복사</button>
+        <button class="btn" style="flex:1;background:#FFF5F5;color:#E53935;box-shadow:none;border:1px solid #FFCDD2"
+                onclick="confirmLeaveFamily()">가족 그룹 나가기</button>
+      </div>`;
+    return;
+  }
 
   wrap.innerHTML = `
     <div class="install-link" onclick="shareWithFamily()">
@@ -32,10 +58,78 @@ export function renderFamilyShareLink() {
         <div class="install-sub">같은 계정으로 로그인하면 실시간으로 공유돼요</div>
       </div>
       <span class="install-arrow">›</span>
+    </div>
+    <div class="install-link" style="margin-top:8px" onclick="openFamilyGroupModal()">
+      <span class="install-ico" style="background:var(--pul)">👪</span>
+      <div class="install-txt">
+        <div class="install-title">가족 그룹으로 공유 (베타)</div>
+        <div class="install-sub">각자 자기 계정으로 로그인해도 함께 볼 수 있어요</div>
+      </div>
+      <span class="install-arrow">›</span>
     </div>`;
 }
 
-/** 공유 실행 — Web Share API 우선, 미지원 시 클립보드 복사로 폴백 */
+/** 가족 그룹 만들기/참여하기 모달 */
+function openFamilyGroupModal() {
+  showModal('👪 가족 그룹으로 공유 (베타)', `
+    <p style="font-size:.8rem;color:var(--txl);font-weight:700;line-height:1.7;margin-bottom:14px">
+      각자 자기 계정으로 로그인한 채로 같은 캘린더·체크리스트·성장 기록을 실시간으로
+      함께 볼 수 있어요. 가족 그룹에 들어가면
+      <span style="color:var(--pkd)">지금 이 계정에 있던 데이터 대신 가족 그룹의 데이터가 보여요</span>
+      (그룹에서 나가면 원래 내 데이터로 다시 돌아와요).
+    </p>
+    <button class="btn bpk" style="width:100%" onclick="createFamilyGroup()">✨ 새 가족 그룹 만들기</button>
+    <div style="text-align:center;font-size:.72rem;color:var(--txl);font-weight:800;margin:14px 0">또는</div>
+    <div class="fg" style="margin:0">
+      <label>초대 코드 입력</label>
+      <input id="familyJoinCode" placeholder="예) AB3D9F2K" style="text-transform:uppercase">
+    </div>
+    <button class="btn" style="width:100%;margin-top:10px;background:var(--pul);color:#4A148C;box-shadow:none"
+            onclick="joinFamilyGroup()">🔑 코드로 참여하기</button>
+  `);
+}
+
+/** 새 가족 그룹 생성 */
+async function createFamilyGroup() {
+  try {
+    const id = await createFamily();
+    cm();
+    alert(`가족 그룹을 만들었어요! 초대 코드: ${id}\n\n배우자에게 이 코드를 알려주고, 설정 탭 "가족 그룹으로 공유"에서 코드로 참여하게 해주세요.`);
+    location.reload();
+  } catch (e) {
+    alert('가족 그룹 생성에 실패했어요: ' + e.message);
+  }
+}
+
+/** 초대 코드로 가족 그룹 참여 */
+async function joinFamilyGroup() {
+  const code = (document.getElementById('familyJoinCode')?.value || '').trim().toUpperCase();
+  if (!code) { alert('초대 코드를 입력해주세요'); return; }
+  if (!confirm('가족 그룹에 참여하면 지금 내 계정의 데이터 대신 가족 그룹 데이터가 보여요. 계속할까요?')) return;
+  try {
+    await joinFamily(code);
+    cm();
+    location.reload();
+  } catch (e) {
+    alert('참여에 실패했어요: ' + e.message);
+  }
+}
+
+/** 초대 코드 클립보드 복사 */
+function copyFamilyCode() {
+  if (!S.familyId) return;
+  navigator.clipboard?.writeText(S.familyId)
+    .then(() => alert('초대 코드가 복사됐어요!'))
+    .catch(() => {});
+}
+
+/** 가족 그룹 나가기 확인 */
+function confirmLeaveFamily() {
+  if (!confirm('가족 그룹에서 나갈까요? 나가면 원래 내 개인 데이터로 돌아가요.')) return;
+  leaveFamily().then(() => location.reload());
+}
+
+/** 공유 실행 — Web Share API 우선, 미지원 시 클립보드 복사로 폴백 (같은 계정 공유용) */
 async function shareWithFamily() {
   const text = shareMessage();
 
@@ -71,5 +165,10 @@ async function shareWithFamily() {
   }
 }
 
-window.shareWithFamily      = shareWithFamily;
+window.shareWithFamily       = shareWithFamily;
 window.renderFamilyShareLink = renderFamilyShareLink;
+window.openFamilyGroupModal  = openFamilyGroupModal;
+window.createFamilyGroup     = createFamilyGroup;
+window.joinFamilyGroup       = joinFamilyGroup;
+window.copyFamilyCode        = copyFamilyCode;
+window.confirmLeaveFamily    = confirmLeaveFamily;

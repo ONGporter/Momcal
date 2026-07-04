@@ -22,6 +22,7 @@ import {
 import {
   getFirestore,
   doc,
+  getDoc,
   setDoc,
   deleteDoc,
   onSnapshot,
@@ -55,6 +56,7 @@ export {
   reauthenticateWithPopup,
   EmailAuthProvider,
   doc,
+  getDoc,
   setDoc,
   deleteDoc,
   onSnapshot,

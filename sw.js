@@ -9,8 +9,8 @@
  * Firebase 등 외부 도메인 요청(인증·데이터 동기화)은 건드리지 않고 그대로 통과시킵니다.
  */
 
-// v0.0.8: 다크모드 대폭 보정+육아정보 페이지 다크모드 지원, 글자크기 5단계, 대시보드 레이아웃 변경 — 캐시 버전 상향
-const CACHE_NAME = 'momcal-shell-v17';
+// v0.0.12: 일정 시간 범위·공휴일 표시·가족 그룹 공유 등 정적 파일 변경 — 캐시 버전 상향
+const CACHE_NAME = 'momcal-shell-v18';
 
 const APP_SHELL = [
   './',
@@ -47,6 +47,7 @@ const APP_SHELL = [
   './data/vaccine-series.js',
   './data/vaccines.js',
   './data/who-growth.js',
+  './data/kr-holidays.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-192-maskable.png',

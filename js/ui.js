@@ -134,7 +134,7 @@ function dashNextEventCard(child) {
   }
   const days = Math.round((new Date(upcoming.date) - new Date(todayStr)) / 86400000);
   const dLabel = days === 0 ? '오늘' : `${days}일 후`;
-  return dashCard('📅', 'var(--bll)', '다음 일정', upcoming.title.replace(/^\d{2}:\d{2}\s/, ''), dLabel, "gp('calendar',document.querySelector('.np[data-page=calendar]'))");
+  return dashCard('📅', 'var(--bll)', '다음 일정', upcoming.title.replace(/^\d{2}:\d{2}(~\d{2}:\d{2})?\s/, ''), dLabel, "gp('calendar',document.querySelector('.np[data-page=calendar]'))");
 }
 
 /** 📋 오늘 체크리스트 진행 (+ v0.0.11: Master/Legend 배지만 표시, 없으면 응원 문구) */

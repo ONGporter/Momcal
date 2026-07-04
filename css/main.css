@@ -51,6 +51,7 @@ html[data-fontsize="xl"] { font-size: 23px; }
   --tx:  #2D2D3A; --txl: #8A849A; --wh: #fff;
   --bg:  #F8F4FA;
   --card: #fff;
+  --holiday-red: #E53935; /* v0.0.12: 캘린더 토·일·공휴일 날짜 숫자 표시색 */
   --card-shadow: 0 2px 16px rgba(160,80,140,.09);
   --radius: 20px;
 }
@@ -515,6 +516,7 @@ html[data-theme="dark"] {
   --yll: #332C13;
   --pul: #2A2438;
   --bll: #1B2A38;
+  --holiday-red: #FF6B6B; /* v0.0.12: 다크 배경에서 더 잘 보이도록 밝게 조정 */
 }
 html[data-theme="dark"] body { background: var(--bg); color: var(--tx); }
 
