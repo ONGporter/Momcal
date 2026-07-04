@@ -22,13 +22,18 @@
 4. **momcal.app 도메인 연결 후속 조치 필요** (아래 "도메인 연결 후속 조치" 항목 참고) — Vercel 연결은 완료됐지만 Firebase Auth·Search Console·Naver 서치어드바이저 쪽은 콘솔에서 옹짐꾼님이 직접 추가 설정해야 함
 5. **글자 크기 조절 5단계 전환 직후라 실제 기기에서 최종 확인 필요** — 특히 "매우 크게"(23px)에서 레이아웃이 깨지는 화면이 있는지, 홈 대시보드 새 레이아웃(모바일 2열+1열 혼합)이 여러 화면 크기에서 다 괜찮은지 확인 권장
 
-### 도메인 연결 후속 조치 (momcal.app, v0.0.9)
-Vercel에 커스텀 도메인 연결은 완료됐고, 코드 안에서 도메인을 참조하던 곳(canonical/OG 태그, sitemap.xml, robots.txt, 가족 공유 링크 등)은 전부 `momcal.app`으로 바꿔뒀습니다. 다만 아래는 각 서비스 콘솔에서 옹짐꾼님이 직접 해줘야 하는 부분이라 코드로는 처리 못 했어요:
+### 도메인 연결 후속 조치 (momcal.app, v0.0.9~)
+Vercel 쪽 도메인 설정(momcal.app 프로덕션 연결, www.momcal.app → momcal.app 301, momcal.vercel.app → momcal.app 301)은 옹짐꾼님이 Vercel 대시보드에서 완료하셨습니다. 코드 안에서 도메인을 참조하던 곳(canonical/OG 태그, sitemap.xml, robots.txt, 가족 공유 링크 등)도 전부 `momcal.app`으로 바꿔뒀습니다. 다만 아래는 각 서비스 콘솔에서 옹짐꾼님이 직접 해줘야 하는 부분이라 코드로는 처리 못 했어요:
 - [ ] **Firebase Auth → 승인된 도메인(Authorized domains)에 `momcal.app` 추가** — 안 하면 새 도메인에서 로그인(이메일/구글) 자체가 막힐 수 있음 (Firebase 콘솔 → Authentication → Settings)
-- [ ] **Google OAuth 클라이언트의 승인된 자바스크립트 원본에도 `https://momcal.app` 추가** — 구글 로그인 버튼 관련
-- [ ] **Google Search Console에 `momcal.app` 속성 새로 등록 + 새 sitemap.xml 제출** — 기존 `momcal.vercel.app` 속성과는 별개로 잡힘. 최종적으로 어느 도메인을 정식 주소로 쓸지 정해지면 기존 vercel.app 속성에서 새 도메인으로 이전 설정(301 등)도 고려
-- [ ] **네이버 서치어드바이저도 동일하게 `momcal.app` 재등록**
-- [ ] `momcal.vercel.app`으로 들어오는 기존 방문자·북마크가 있을 수 있으니, 당분간 두 도메인 다 접속되게 유지할지(Vercel은 기본적으로 둘 다 열어둠) 결정 필요
+- [ ] **Google OAuth 클라이언트의 승인된 자바스크립트 원본·리디렉션 URI에도 `momcal.app` 추가** — 구글 로그인 버튼 관련 (GCP 콘솔 → Google Auth Platform → Clients)
+- [x] **Google Search Console에 `momcal.app` 도메인 속성 등록** — 완료 (DNS 인증 방식)
+- [ ] **Search Console에서 momcal.app 속성으로 sitemap.xml 제출 확인**
+- [x] **네이버 서치어드바이저용 `momcal.app` 인증 메타태그 반영** — 완료 (v0.0.10, `index.html`)
+- [ ] **네이버 서치어드바이저에서 소유확인 버튼 클릭 → 완료되면 sitemap.xml 제출**
+
+### ⚠️ 도메인 설정(Vercel)과 코드 배포(git push)는 별개입니다
+momcal.vercel.app에서 v0.0.8이 계속 보이는 문제 — Vercel 대시보드의 "Domains" 화면에서 도메인 연결/리디렉션을 설정하는 것과, 실제 앱 코드(v0.0.9 zip 내용)를 배포하는 것은 완전히 다른 작업입니다. Domains 화면 작업은 "이 도메인으로 들어오면 어느 배포본을 보여줄지" 라우팅만 정할 뿐, 새 코드를 올리는 게 아니에요. v0.0.9(이번엔 v0.0.10) zip을 아직 로컬 저장소에 반영 → git push 하지 않으셨다면 momcal.app이든 momcal.vercel.app이든 계속 예전 버전(v0.0.8)이 보이는 게 정상입니다. 매번 그렇듯 **zip을 받아서 VS Code에 덮어쓰고 → git add/commit/push** 하셔야 Vercel이 새로 빌드해서 반영합니다.
+
 
 ### 알아두면 좋은 것
 - 정식 도메인은 `momcal.app`(Vercel 커스텀 도메인 연결 완료, v0.0.9) — `momcal.vercel.app`도 계속 접속은 가능
