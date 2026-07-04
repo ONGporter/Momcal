@@ -56,7 +56,16 @@
 .day-num {
   width: 22px; height: 22px;
   display: flex; align-items: center; justify-content: center;
-  font-size: .72rem; font-weight: 800; margin-bottom: 3px;
+  font-size: .72rem; font-weight: 800;
+}
+
+/* ── v0.0.11: 날짜 숫자 + 이유식 스티커 한 줄 배치 ── */
+.day-num-row { display: flex; align-items: center; gap: 3px; margin-bottom: 3px; }
+.day-food-stickers { display: flex; align-items: center; gap: 1px; }
+.food-sticker-on-cal   { font-size: .74rem; line-height: 1; }
+.food-sticker-overflow {
+  font-size: .48rem; background: var(--pk); color: #fff;
+  border-radius: 4px; padding: 1px 3px; font-weight: 800; line-height: 1.3;
 }
 
 /* ── EVENT LINES (Sprint 26, 형광펜 스타일로 개편 Sprint 27) ── */
@@ -93,6 +102,7 @@
 
 /* ── DAY PANEL ── */
 .day-panel { background: var(--card); border-radius: var(--radius); box-shadow: var(--card-shadow); padding: 22px; margin-top: 14px; }
+.dp-vax-item-row { background: rgba(255,255,255,.6); }
 .dp-date   { font-size: .97rem; font-weight: 900; margin-bottom: 16px; display: flex; align-items: center; gap: 7px; }
 .dp-ev     { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border-radius: 13px; margin-bottom: 8px; }
 .dp-ev-main  { flex: 1; }

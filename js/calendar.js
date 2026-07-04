@@ -540,7 +540,26 @@ export function setTheme(t, btn) {
   debounceSave();
 }
 
+/**
+ * v0.0.11 버그 수정: 주간 뷰에서 ◀/▶ 를 눌러도 한 주가 아니라 "한 달"씩 이동해서
+ * 계속 같은 주(그 달 1일이 속한 주)만 보이던 문제.
+ * 원인: renderWeekView()가 매번 `new Date(S.calY, S.calM, 1)`(그 달의 1일)을 기준으로
+ * 주를 다시 계산했는데, calMove()는 월(S.calM)만 ±1 해서 주 단위 이동 상태를 따로
+ * 기억할 방법이 없었음. 이제 주간 뷰 전용 기준일(S.calWeekRef)을 따로 두고,
+ * 주간 뷰에서는 이 값을 7일 단위로 이동시킨다 (월간 뷰의 월 이동 로직은 그대로 유지).
+ */
 export function calMove(d) {
+  if (S.calView === 'week') {
+    if (!S.calWeekRef) S.calWeekRef = S.selDate || today();
+    const wd = new Date(S.calWeekRef);
+    wd.setDate(wd.getDate() + d * 7);
+    S.calWeekRef = `${wd.getFullYear()}-${String(wd.getMonth() + 1).padStart(2, '0')}-${String(wd.getDate()).padStart(2, '0')}`;
+    // 월간 뷰로 다시 전환했을 때도 자연스럽게 이어지도록 년/월도 함께 맞춰둔다
+    S.calY = wd.getFullYear();
+    S.calM = wd.getMonth();
+    renderCal();
+    return;
+  }
   S.calM += d;
   if (S.calM > 11) { S.calM = 0; S.calY++; }
   else if (S.calM < 0) { S.calM = 11; S.calY--; }
@@ -551,6 +570,14 @@ export function setCalView(v, btn) {
   S.calView = v;
   document.querySelectorAll('.cvt').forEach(b => b.classList.remove('on'));
   btn.classList.add('on');
+  if (v === 'week') {
+    // 월간 뷰에서 보고 있던 달(또는 그 달 안에서 선택한 날짜) 기준으로 주 기준일을 새로 맞춤
+    // — 이후엔 calMove()가 이 기준일을 주 단위로 옮겨가며 이어서 탐색함
+    const curMonthPrefix = `${S.calY}-${String(S.calM + 1).padStart(2, '0')}`;
+    S.calWeekRef = (S.selDate && S.selDate.startsWith(curMonthPrefix))
+      ? S.selDate
+      : `${curMonthPrefix}-01`;
+  }
   renderCal();
 }
 
@@ -584,7 +611,13 @@ export function renderCal() {
       </button>`
     ).join('');
   }
-  document.getElementById('calTitle').textContent = `${S.calY}년 ${S.calM + 1}월`;
+  // v0.0.11: 주간 뷰는 자체 기준일(S.calWeekRef)을 따로 갖고 있어서, 그 기준일의 월/연도로 타이틀 표시
+  if (S.calView === 'week' && S.calWeekRef) {
+    const wd = new Date(S.calWeekRef);
+    document.getElementById('calTitle').textContent = `${wd.getFullYear()}년 ${wd.getMonth() + 1}월`;
+  } else {
+    document.getElementById('calTitle').textContent = `${S.calY}년 ${S.calM + 1}월`;
+  }
   S.calView === 'month' ? renderMonthView() : renderWeekView();
   renderCalLegend();
 }
@@ -686,17 +719,33 @@ function groupVaxEvents(dayEvs) {
  * - 이벤트 필: 드래그 가능, 클릭 → 수정 Modal, ✅ 완료 표시
  */
 function cellHTML(ds, d, other, evs, td, th) {
-  const de          = groupVaxEvents(applyCalFilter(evs.filter(e => e.date === ds)));
-  const stickersAll = S.dayStickers[ds] || [];
-  const overflow    = Math.max(0, stickersAll.length - 3);
-  const showCount   = overflow > 0 ? 3 : stickersAll.length;
+  const de           = groupVaxEvents(applyCalFilter(evs.filter(e => e.date === ds)));
+  const stickersAll  = S.dayStickers[ds] || [];
+
+  // v0.0.11: 이유식 스티커는 따로 빼서 날짜 숫자 옆에 표시 — 나머지 스티커의
+  // "3개 넘으면 +N" 묶음 카운트에 포함되지 않도록 완전히 독립적으로 처리
+  const foodStickers  = stickersAll.filter(s => FOOD_STICKER_SET.has(s));
+  const otherStickers = stickersAll.filter(s => !FOOD_STICKER_SET.has(s));
+
+  const overflow    = Math.max(0, otherStickers.length - 3);
+  const showCount   = overflow > 0 ? 3 : otherStickers.length;
   const isSel       = ds === S.selDate;
 
-  const stickerHtml = stickersAll.length
+  const stickerHtml = otherStickers.length
     ? `<div class="sticker-row">
-        ${stickersAll.slice(0, showCount).map(s => `<span class="sticker-on-cal">${s}</span>`).join('')}
+        ${otherStickers.slice(0, showCount).map(s => `<span class="sticker-on-cal">${s}</span>`).join('')}
         ${overflow > 0 ? `<span class="sticker-overflow">+${overflow}</span>` : ''}
        </div>`
+    : '';
+
+  const FOOD_MAX     = 2;
+  const foodOverflow = Math.max(0, foodStickers.length - FOOD_MAX);
+  const foodShow     = foodOverflow > 0 ? FOOD_MAX : foodStickers.length;
+  const foodHtml     = foodStickers.length
+    ? `<span class="day-food-stickers">
+        ${foodStickers.slice(0, foodShow).map(s => `<span class="food-sticker-on-cal">${s}</span>`).join('')}
+        ${foodOverflow > 0 ? `<span class="food-sticker-overflow">+${foodOverflow}</span>` : ''}
+       </span>`
     : '';
 
   const evsHtml = renderCellEvents(de);
@@ -709,7 +758,10 @@ function cellHTML(ds, d, other, evs, td, th) {
          ondragleave="onDragLeave(event)"
          ondrop="onDrop(event,'${ds}')"
          style="${isSel ? `background:${th.cell};border:1.5px solid var(--pk)` : ''}">
-      <div class="day-num" style="${ds === td ? `background:${th.today};color:#fff;border-radius:50%` : ''}">${d}</div>
+      <div class="day-num-row">
+        <div class="day-num" style="${ds === td ? `background:${th.today};color:#fff;border-radius:50%` : ''}">${d}</div>
+        ${foodHtml}
+      </div>
       ${evsHtml}
       ${stickerHtml}
     </div>`;
@@ -788,7 +840,11 @@ function renderEventLine(e) {
 function renderWeekView() {
   const th   = themes[S.theme];
   const evs  = getAllEvs();
-  const curr = new Date(S.calY, S.calM, 1);
+  // v0.0.11: 이전엔 항상 "그 달 1일"을 기준으로 주를 계산해서, calMove()로 아무리 이동해도
+  // (월 단위로만 바뀌다 보니) 사실상 그 달의 첫 주만 계속 보였음.
+  // 이제 주간 뷰 전용 기준일(S.calWeekRef, calMove()가 7일 단위로 이동시킴)을 사용한다.
+  if (!S.calWeekRef) S.calWeekRef = S.selDate || today();
+  const curr = new Date(S.calWeekRef);
   const weekStart = new Date(curr);
   weekStart.setDate(curr.getDate() - curr.getDay());
   const days     = ['일', '월', '화', '수', '목', '금', '토'];
@@ -808,7 +864,7 @@ function renderWeekView() {
       <div style="display:grid;grid-template-columns:44px repeat(7,1fr)">`;
 
   [0, 6, 8, 10, 12, 14, 16, 18, 20, 22].forEach(h => {
-    html += `<div style="font-size:.62rem;color:var(--txl);font-weight:700;padding:8px 4px;text-align:right;border-bottom:1px solid #F5EEF8">${h}시</div>`;
+    html += `<div class="week-grid-line" style="font-size:.62rem;color:var(--txl);font-weight:700;padding:8px 4px;text-align:right;border-bottom:1px solid #F5EEF8">${h}시</div>`;
     weekDays.forEach(d => {
       const ds   = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       const de   = groupVaxEvents(applyCalFilter(evs.filter(e => e.date === ds)));
@@ -816,6 +872,7 @@ function renderWeekView() {
       html += `
         <div onclick="selectDate('${ds}')"
              data-date="${ds}"
+             class="week-grid-line${isTd ? ' week-today-cell' : ''}"
              ondragover="onDragOver(event)"
              ondragleave="onDragLeave(event)"
              ondrop="onDrop(event,'${ds}')"
@@ -890,8 +947,8 @@ export function showDayPanel(ds) {
                   </div>
                   <div style="display:flex;flex-direction:column;gap:6px">
                     ${e._groupItems.map(item => `
-                      <div style="display:flex;justify-content:space-between;align-items:center;
-                                  background:rgba(255,255,255,.6);border-radius:9px;padding:6px 10px">
+                      <div class="dp-vax-item-row" style="display:flex;justify-content:space-between;align-items:center;
+                                  border-radius:9px;padding:6px 10px">
                         <span style="font-size:.78rem;font-weight:700;color:var(--tx)">
                           ${item.done ? '✅' : '⬜'} ${stripLeadingEmoji(item.title)}
                           ${item.recalculated ? '<span style="color:#7B1FA2;font-size:.65rem;margin-left:4px">🔄조정됨</span>' : ''}
@@ -990,6 +1047,13 @@ export const stickerCats = [
   { label: '🥣 이유식', items: ['🍚','🌾','🥩','🐔','🐟','🥕','🥦','🍠','🥔','🌽','🫛','🧀','🥚','🍳','🫐','🍎','🍌','🍓','🍇','🥑','🥛','🧆','🍲','🥣','🍜','🥗','🫘','🧅','🧄','🫚'] },
   { label: '💊 건강',   items: ['💊','💉','🩺','🏥','🩹','💪','🩻','🔬','🧬','🌡️','🩸','⚕️','🏋️','🧘','🚑','🫀'] },
 ];
+
+/**
+ * v0.0.11: 이유식 스티커 판별용 Set
+ * 캘린더 셀에서 이유식 스티커만 날짜 숫자 옆으로 따로 빼서 보여주기 위함
+ * (다른 스티커들의 "3개 넘으면 +N" 묶음 카운트와는 완전히 독립적으로 표시)
+ */
+const FOOD_STICKER_SET = new Set(stickerCats.find(c => c.label === '🥣 이유식').items);
 
 export function renderStickerPicker() {
   document.getElementById('spTabs').innerHTML = stickerCats.map((c, i) =>

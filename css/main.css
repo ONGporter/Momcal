@@ -598,3 +598,13 @@ html[data-theme="dark"] .growth-pct-empty {
 /* 저장 완료 배지 · 로그인 화면 닫기 버튼 */
 html[data-theme="dark"] .save-badge { background: #1E3324; color: #66BB6A; }
 html[data-theme="dark"] .auth-close { background: #2A2733; }
+
+/* v0.0.11: 캘린더 다크모드 추가 보정 — 캡처로 짚어주신 부분
+   (테마별 인라인 색상이 캘린더 색상 테마(장미/민트/맑음/라벤더/복숭아)의 밝은 파스텔색을
+   그대로 쓰고 있어서, 다크 모드에서도 선택된 날짜 칸이 하얗게 남아있던 문제 등) */
+html[data-theme="dark"] .cal-cell.selected { background: var(--pkl) !important; }
+html[data-theme="dark"] .week-today-cell { background: var(--pkl) !important; }
+html[data-theme="dark"] .week-grid-line { border-color: rgba(255,255,255,.08) !important; }
+/* 예방접종 그룹 카드 안의 회차별 개별 항목 줄 — 흰 배경(rgba(255,255,255,.6))이 다크에서도
+   그대로 밝게 남아 회색 알약처럼 떠 보이던 부분 */
+html[data-theme="dark"] .dp-vax-item-row { background: rgba(255,255,255,.08); }

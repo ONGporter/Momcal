@@ -137,28 +137,25 @@ function dashNextEventCard(child) {
   return dashCard('📅', 'var(--bll)', '다음 일정', upcoming.title.replace(/^\d{2}:\d{2}\s/, ''), dLabel, "gp('calendar',document.querySelector('.np[data-page=calendar]'))");
 }
 
-/** 📋 오늘 체크리스트 진행 (+ v0.0.9: 배지 현황 · 다음 추천 항목 표시) */
+/** 📋 오늘 체크리스트 진행 (+ v0.0.11: Master/Legend 배지만 표시, 없으면 응원 문구) */
 function dashChecklistCard(child) {
   const info = getTodayCategoryInfo(child);
   if (!info) {
     return dashCard('📋', 'var(--mnl)', '체크리스트', '-', '', "gp('checklist',document.querySelector('.np[data-page=checklist]'))");
   }
-  const { tier, nextItem, doneTotal, itemsTotal, reqDone, reqTotal } = info;
+  const { tier, doneTotal, itemsTotal } = info;
 
-  // 다른 대시보드 카드처럼 강조색 sub 텍스트 추가 — 배지를 얻었으면 배지 현황을,
-  // 아직이면 배지 획득을 위해 다음에 체크하면 좋을 항목을 추천해준다.
-  const trunc = (t) => (t.length > 11 ? t.slice(0, 11) + '…' : t);
+  // v0.0.11: "다음 추천 항목" 문구는 복잡하다는 피드백으로 제거하고,
+  // Master/Legend 배지가 있을 때만 보여주고 없으면 짧은 응원 문구로 단순화
+  // (Perfect는 배지 축에 안 넣음 — 필수만 채운 상태라 아직 "달성감"을 주기엔 이르다고 판단)
+  const CHEER = ['오늘도 화이팅! 🌱', '천천히 해도 괜찮아요', '조금씩 채워가요 💪', '아이와 함께 잘 하고 있어요 😊'];
   let sub;
   if (tier === 'legend') {
-    sub = '🌈 Legend 배지 달성!';
+    sub = '🌈 Legend';
   } else if (tier === 'master') {
-    sub = nextItem ? `👑 Master 달성 · 다음 "${trunc(nextItem.t)}"` : '👑 Master 배지 획득!';
-  } else if (tier === 'perfect') {
-    sub = nextItem ? `🏅 Perfect 달성 · 다음 "${trunc(nextItem.t)}"` : '🏅 Perfect 배지 획득!';
-  } else if (nextItem) {
-    sub = `다음 "${trunc(nextItem.t)}" 체크해보세요`;
+    sub = '👑 Master';
   } else {
-    sub = `필수 ${reqDone}/${reqTotal} 남음`;
+    sub = CHEER[new Date(today()).getDate() % CHEER.length];
   }
 
   return dashCard('📋', 'var(--mnl)', info.cat.label, `${doneTotal} / ${itemsTotal} 완료`, sub, "gp('checklist',document.querySelector('.np[data-page=checklist]'))");
