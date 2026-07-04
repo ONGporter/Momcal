@@ -38,8 +38,13 @@ body {
   line-height: 1.7;
 }
 
-/* Sprint 29: 제목 계열(h1~h3)과 로고는 Paperlogy Bold */
-h1, h2, h3, .g-logo {
+/* v0.0.2: 제목 계열(h1~h3)은 Paperlogy → Pretendard Bold로 변경(앱 본체와 동일하게 적용).
+   "맘캘" 로고(.g-logo)는 브랜드 워드마크라 Paperlogy를 그대로 유지함 */
+h1, h2, h3 {
+  font-family: 'Pretendard', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+  font-weight: 700;
+}
+.g-logo {
   font-family: 'Paperlogy', 'Pretendard', sans-serif;
   font-weight: 700;
 }
@@ -57,15 +62,16 @@ a:hover { text-decoration: underline; }
   flex-wrap: wrap; gap: 10px;
 }
 .g-logo {
-  font-size: 1.22rem; font-weight: 700; letter-spacing: -.3px;
+  font-size: 1.5rem; letter-spacing: -.3px;
   background: linear-gradient(135deg, #F06292, #9C27B0);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
 }
-/* Sprint 24: 로고 옆 하트 이모지 대신 실제 마스코트 캐릭터 이미지 */
+/* Sprint 24: 로고 옆 하트 이모지 대신 실제 마스코트 캐릭터 이미지
+   v0.0.2: 앱 본체 topbar와 크기가 다르게 남아있던 것을 통일(1.35em → 1.9em), 로고 글씨도 확대 */
 .brand-mark {
-  height: 1.35em;
+  height: 1.9em;
   width: auto;
-  vertical-align: -.32em;
+  vertical-align: -.5em;
   margin-left: 2px;
 }
 .g-cta {
@@ -251,7 +257,26 @@ a:hover { text-decoration: underline; }
 }
 
 /* ── 푸터 ── */
-.g-footer {
-  text-align: center; padding: 26px 20px 40px; font-size: .74rem; color: var(--txl);
+/* v0.0.2: 앱 본체(css/main.css의 .site-footer*)와 항상 동일한 스타일로 유지 —
+   두 곳의 푸터 구조/문구/버전 표시가 어긋나지 않도록 함 */
+.site-footer {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 26px 20px 10px;
+  text-align: center;
 }
-.g-footer a { color: var(--txl); margin: 0 6px; }
+.site-footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 16px;
+  font-size: .72rem;
+}
+.site-footer-links a { color: var(--txl); }
+.site-footer-version {
+  text-align: center;
+  padding-bottom: 40px;
+  font-size: .62rem;
+  color: var(--txl);
+  opacity: .6;
+}

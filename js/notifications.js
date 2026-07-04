@@ -1,5 +1,5 @@
 /**
- * js/notifications.js — Sprint 29
+ * js/notifications.js — Sprint 29, v0.0.2에서 알림 끄기 토글 추가
  * 알림 기능 1차 버전 (브라우저 알림 권한 기반의 "로컬" 알림)
  *
  * ⚠️ 중요 — 진짜 FCM 푸시 알림(앱을 완전히 꺼도 정해진 시각에 오는 알림)은 아직 아님.
@@ -15,12 +15,29 @@
  *  - 오늘 예정된 일정(예방접종·건강검진·이유식·정부지원)이 있는 경우
  *  - 정부지원 마감이 임박한 경우 (Sprint 20의 isGovDeadlineSoon 재사용)
  * 하루 한 번만 뜨도록 localStorage에 마지막 알림 날짜를 기록해둠.
+ *
+ * v0.0.2: 브라우저 알림 권한(Notification.permission) 자체는 JS로 되돌릴 수 없어서
+ * (권한 취소는 브라우저/기기 설정에서만 가능), 앱 안에서 껐다 켰다 할 수 있는 별도의
+ * "알림 사용 여부" 플래그(localStorage)를 추가함 — 권한은 유지한 채 알림 표시만 끔.
  */
 
 import { today, stripLeadingEmoji } from './utils.js';
 import { getAllEvs, isGovDeadlineSoon } from './calendar.js';
 
 const LAST_NOTIFIED_KEY = 'momcal_last_notified_date';
+const NOTIF_ENABLED_KEY = 'momcal_notif_enabled'; // v0.0.2
+
+/** v0.0.2: 알림 사용 여부 — 값이 없으면(처음 권한을 받았을 때) 기본 켜짐으로 취급 */
+function isNotifEnabled() {
+  return localStorage.getItem(NOTIF_ENABLED_KEY) !== 'false';
+}
+
+/** v0.0.2: 알림 켜기/끄기 토글 버튼 클릭 핸들러 */
+export function toggleNotifications(enable) {
+  localStorage.setItem(NOTIF_ENABLED_KEY, enable ? 'true' : 'false');
+  renderNotificationSettings();
+  if (enable) checkAndNotify(true);
+}
 
 /** 홈 탭 "더 편하게 쓰기" 아래 — 알림 권한 상태에 따른 안내/버튼 렌더 */
 export function renderNotificationSettings() {
@@ -35,15 +52,28 @@ export function renderNotificationSettings() {
   const perm = Notification.permission; // 'default' | 'granted' | 'denied'
 
   if (perm === 'granted') {
-    wrap.innerHTML = `
-      <div class="install-link" style="cursor:default">
-        <span class="install-ico" style="background:var(--mnl)">🔔</span>
-        <div class="install-txt">
-          <div class="install-title">알림 켜짐</div>
-          <div class="install-sub">오늘 일정·마감 임박 알림을 받아요 (앱을 열었을 때 확인)</div>
-        </div>
-      </div>`;
-    checkAndNotify();
+    if (isNotifEnabled()) {
+      wrap.innerHTML = `
+        <div class="install-link" style="cursor:default">
+          <span class="install-ico" style="background:var(--mnl)">🔔</span>
+          <div class="install-txt">
+            <div class="install-title">알림 켜짐</div>
+            <div class="install-sub">오늘 일정·마감 임박 알림을 받아요 (앱을 열었을 때 확인)</div>
+          </div>
+          <button class="notif-toggle-btn" onclick="event.stopPropagation();toggleNotifications(false)">끄기</button>
+        </div>`;
+      checkAndNotify();
+    } else {
+      wrap.innerHTML = `
+        <div class="install-link" style="cursor:default;opacity:.7">
+          <span class="install-ico">🔕</span>
+          <div class="install-txt">
+            <div class="install-title">알림 꺼짐</div>
+            <div class="install-sub">앱에서 알림을 받지 않아요. 다시 켜면 오늘 일정을 알려드려요</div>
+          </div>
+          <button class="notif-toggle-btn" onclick="event.stopPropagation();toggleNotifications(true)">켜기</button>
+        </div>`;
+    }
     return;
   }
 
@@ -74,6 +104,7 @@ export function renderNotificationSettings() {
 export async function requestNotificationPermission() {
   if (!('Notification' in window)) return;
   const result = await Notification.requestPermission();
+  if (result === 'granted') localStorage.setItem(NOTIF_ENABLED_KEY, 'true'); // v0.0.2: 새로 허용하면 항상 켜짐 상태로 시작
   renderNotificationSettings();
   if (result === 'granted') checkAndNotify(true);
 }
@@ -84,6 +115,7 @@ export async function requestNotificationPermission() {
  */
 export async function checkAndNotify(force = false) {
   if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  if (!isNotifEnabled()) return; // v0.0.2: 앱 내에서 알림을 꺼둔 경우 표시하지 않음
 
   const todayStr = today();
   if (!force && localStorage.getItem(LAST_NOTIFIED_KEY) === todayStr) return; // 하루 한 번만
@@ -123,3 +155,4 @@ export async function checkAndNotify(force = false) {
 window.requestNotificationPermission = requestNotificationPermission;
 window.renderNotificationSettings    = renderNotificationSettings;
 window.checkAndNotify                = checkAndNotify;
+window.toggleNotifications           = toggleNotifications;

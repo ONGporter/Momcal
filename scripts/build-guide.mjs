@@ -28,6 +28,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT  = join(__dirname, '..');
 const GUIDE = join(ROOT, 'guide');
 const SITE  = 'https://momcal.vercel.app';
+/* v0.0.2: 앱 본체(index.html 최하단)와 반드시 같은 값으로 유지 — 버전을 올릴 땐 이 값과
+   index.html의 .site-footer-version 텍스트를 함께 수정해야 함 (PROJECT_SPEC.md 버전 관리 정책 참고) */
+const APP_VERSION = 'v0.0.2';
 
 /* 정부지원 데이터는 {preg, postpartum, parenting} 키의 배열이라 체크리스트와 형태가 달라
    가이드 페이지용 카테고리 배열로 한 번 변환해준다. */
@@ -113,9 +116,16 @@ function header() {
 }
 
 function footer() {
-  return `<div class="g-footer">
-  © 맘캘 MomCal · <a href="./index.html">육아정보</a> · <a href="../privacy.html">개인정보처리방침</a> · <a href="../terms.html">이용약관</a> · <a href="../contact.html">문의</a> · <a href="${SITE}/">앱 바로가기</a>
-</div>
+  return `<footer class="site-footer">
+  <div class="site-footer-links">
+    <a href="./index.html">📖 육아정보</a>
+    <a href="../privacy.html">🔒 개인정보처리방침</a>
+    <a href="../terms.html">📄 이용약관</a>
+    <a href="../contact.html">✉️ 문의</a>
+    <a href="${SITE}/">🏠 앱으로</a>
+  </div>
+  <div class="site-footer-version">맘캘 MomCal ${APP_VERSION}</div>
+</footer>
 <a href="#" class="g-top-btn" aria-label="맨 위로">↑</a>
 ${returningUserScript()}`;
 }

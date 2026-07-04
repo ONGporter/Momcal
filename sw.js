@@ -11,7 +11,7 @@
 
 // Sprint 29: 폰트 전면 교체(Paperlogy/Pretendard), 캘린더 타임존 버그 수정, 알림 기능 추가 등
 // 다수 파일이 바뀌어서 캐시 버전을 올림
-const CACHE_NAME = 'momcal-shell-v7';
+const CACHE_NAME = 'momcal-shell-v8'; // v0.0.2: 아이콘·CSS·JS 변경으로 캐시 버전 상향
 
 const APP_SHELL = [
   './',

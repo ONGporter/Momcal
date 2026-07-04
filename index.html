@@ -357,7 +357,7 @@
     <div style="position:relative;height:220px">
       <canvas id="growthChartCanvas"></canvas>
     </div>
-    <div class="growth-disclaimer">📌 실선은 우리 아이, 점선은 또래 평균(P50)·상위 10%(P90)·하위 10%(P10) 참고선이에요. 그래프와 백분위는 참고용 추정치이며 의학적 진단이 아닙니다. 정확한 발달 평가는 소아과 영유아 건강검진을 따라주세요.</div>
+    <div class="growth-disclaimer">📌 실선은 우리 아이, 점선은 또래 평균(P50)·상위 10%(P90)·하위 10%(P10) 참고선이에요. 분홍 점선(🔮)은 최근 기록 추세를 연장한 한 달 뒤 예상치예요. 그래프와 백분위·예상치는 참고용 추정치이며 의학적 진단이 아닙니다. 정확한 발달 평가는 소아과 영유아 건강검진을 따라주세요.</div>
   </div>
 
   <div id="growthPredictionCard"></div>
@@ -369,18 +369,17 @@
   <div id="adSlotGrowth" class="ad-slot-wrap" style="margin-top:18px"></div>
 </div>
 
-<!-- 하단 푸터 — 육아정보·정책 페이지 링크 (Sprint 16) -->
-<footer style="max-width:960px;margin:0 auto;padding:8px 16px 32px;text-align:center;
-               font-size:.72rem;color:var(--txl);display:flex;flex-wrap:wrap;
-               justify-content:center;gap:10px 16px">
-  <a href="./guide/index.html" style="color:var(--txl)">📖 육아정보</a>
-  <a href="./privacy.html" style="color:var(--txl)">🔒 개인정보처리방침</a>
-  <a href="./terms.html" style="color:var(--txl)">📄 이용약관</a>
-  <a href="./contact.html" style="color:var(--txl)">✉️ 문의</a>
+<!-- 하단 푸터 — 육아정보·정책 페이지 링크 (Sprint 16)
+     v0.0.2: guide/ 페이지 푸터(scripts/build-guide.mjs의 footer())와 항상 동일한 구조·문구로 유지 -->
+<footer class="site-footer">
+  <div class="site-footer-links">
+    <a href="./guide/index.html">📖 육아정보</a>
+    <a href="./privacy.html">🔒 개인정보처리방침</a>
+    <a href="./terms.html">📄 이용약관</a>
+    <a href="./contact.html">✉️ 문의</a>
+  </div>
+  <div class="site-footer-version">맘캘 MomCal v0.0.2</div>
 </footer>
-<div style="text-align:center;padding-bottom:14px;font-size:.62rem;color:var(--txl);opacity:.6">
-  맘캘 MomCal v0.0.1
-</div>
 
 <!-- ════════════════════════════════════
      MODAL

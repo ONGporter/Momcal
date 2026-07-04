@@ -171,7 +171,7 @@
   border-radius: 40px;
   font-size: .8rem;
   font-weight: 800;
-  font-family: 'Nunito', sans-serif;
+  font-family: 'Pretendard', sans-serif; /* v0.0.2: 폰트 교체 때 빠졌던 Nunito 잔재 수정 */
   pointer-events: none;
   box-shadow: 0 6px 20px rgba(200,80,180,.35);
   white-space: nowrap;

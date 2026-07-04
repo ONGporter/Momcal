@@ -1,6 +1,7 @@
-/* Sprint 29: 폰트 전면 교체 — 제목·"맘캘" 로고는 Paperlogy Bold, 본문은 Pretendard Regular,
+/* v0.0.1(Sprint 29): 폰트 전면 교체 — 제목·"맘캘" 로고는 Paperlogy Bold, 본문은 Pretendard Regular,
    버튼은 Pretendard SemiBold. 둘 다 상업적 이용 가능한 무료 폰트(SIL OFL)라 CDN으로 바로 사용 가능.
-   (이전 스프린트의 Nunito/Jua/Fredoka 실험은 전부 이 폰트로 대체됨) */
+   (이전 스프린트의 Nunito/Jua/Fredoka 실험은 전부 이 폰트로 대체됨)
+   v0.0.2: 제목(h1~h3/.sec)만 다시 Pretendard Bold로 변경 — "맘캘" 로고는 Paperlogy Bold 유지 */
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
 @import url('https://cdn.jsdelivr.net/gh/fonts-archive/Paperlogy/subsets/Paperlogy-dynamic-subset.css');
 
@@ -29,9 +30,10 @@ body {
   min-height: 100vh;
 }
 
-/* Sprint 29: 제목 계열은 Paperlogy Bold — 진짜 헤딩 태그와 섹션 라벨(.sec)에 적용 */
+/* v0.0.2: 제목 계열 폰트를 Paperlogy → Pretendard Bold로 변경(본문과 통일감 있게).
+   단, "맘캘" 로고(.logo/.auth-logo/.g-logo)는 브랜드 워드마크라 Paperlogy를 그대로 유지함 */
 h1, h2, h3, .sec {
-  font-family: 'Paperlogy', 'Pretendard', sans-serif;
+  font-family: 'Pretendard', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
   font-weight: 700;
 }
 
@@ -64,7 +66,7 @@ h1, h2, h3, .sec {
 
 .logo {
   font-family: 'Paperlogy', 'Pretendard', sans-serif;
-  font-size: 1.22rem;
+  font-size: 1.5rem;
   font-weight: 700;
   background: linear-gradient(135deg, #F06292, #9C27B0);
   -webkit-background-clip: text;
@@ -74,7 +76,8 @@ h1, h2, h3, .sec {
   flex-shrink: 0;
 }
 /* Sprint 24: 로고 옆 하트 이모지(💕) 대신 실제 마스코트 캐릭터 이미지 사용
-   Sprint 29: 캐릭터가 너무 작다는 피드백 — 약 1.4배 확대(1.35em → 1.9em) */
+   Sprint 29: 캐릭터가 너무 작다는 피드백 — 약 1.4배 확대(1.35em → 1.9em)
+   v0.0.2: 마스코트가 커진 만큼 "맘캘" 글씨도 함께 확대(1.22rem → 1.5rem) */
 .brand-mark {
   height: 1.9em;
   width: auto;
@@ -352,6 +355,46 @@ h1, h2, h3, .sec {
   z-index: 300; opacity: 0; transition: opacity .3s;
 }
 .save-badge.show { opacity: 1; }
+
+/* ── v0.0.2: 알림 켜기/끄기 토글 버튼 ── */
+.notif-toggle-btn {
+  flex-shrink: 0;
+  border: 1.5px solid #EEE0F0;
+  background: #fff;
+  color: var(--txl);
+  font-size: .68rem;
+  font-weight: 800;
+  padding: 6px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all .2s;
+}
+.notif-toggle-btn:hover { border-color: var(--pk); color: var(--pkd); }
+
+/* ── v0.0.2: 앱 본체·육아정보 페이지 공통 하단 푸터(정책 링크 + 버전 표시) ──
+   guide.css의 .site-footer*와 항상 동일한 스타일로 유지해야 두 페이지의 푸터가 통일되어 보임 */
+.site-footer {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 8px 16px 10px;
+  text-align: center;
+}
+.site-footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 16px;
+  font-size: .72rem;
+}
+.site-footer-links a { color: var(--txl); }
+.site-footer-version {
+  text-align: center;
+  padding-bottom: 14px;
+  font-size: .62rem;
+  color: var(--txl);
+  opacity: .6;
+}
 
 /* ── RESPONSIVE ── */
 @media (max-width: 640px) {

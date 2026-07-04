@@ -31,19 +31,30 @@ function ageDaysAt(birth, dateStr) {
 }
 
 /**
- * X축 최대값 계산 (Sprint 11)
+ * X축 최대값 계산 (Sprint 11, v0.0.2에서 step 단위 세분화)
  * "오늘 기준 우리 아이 생후 일수"가 축의 약 70% 지점에 오도록 계산하고,
- * 보기 좋게 100일 단위로 반올림한다. (예: 오늘 140일 → 200일까지 표시)
+ * 보기 좋은 단위로 반올림한다. (예: 오늘 140일 → 200일까지 표시, 오늘 14일 → 20일까지 표시)
+ * ⚠️ v0.0.1까지는 항상 100일 단위로만 반올림해서, 신생아처럼 생후 일수가 작을 때
+ * 축이 필요 이상으로 넓어 보이는 문제가 있었음(예: 14일 아기인데 0~100일 축) — 아이 나이대에
+ * 맞춰 5/20/50/100일 단위로 유연하게 반올림하도록 수정.
  * 단, 실제 기록이 이보다 더 최근/많으면(예: 미래 날짜 오기록 등) 기록도 항상 포함되도록 보정한다.
  */
-const AXIS_STEP    = 100;
 const AXIS_POSITION = 0.7; // 오늘 날짜가 축의 70% 지점에 오도록
+
+/** 목표값 크기에 따라 보기 좋은 반올림 단위를 고른다 */
+function niceAxisStep(target) {
+  if (target <= 50)  return 5;
+  if (target <= 200) return 20;
+  if (target <= 600) return 50;
+  return 100;
+}
 
 function computeAxisMax(todayAgeDays, ageDaysList) {
   const maxRecordAge = ageDaysList.length ? Math.max(...ageDaysList) : 0;
   const baseAge = Math.max(todayAgeDays, maxRecordAge);
   const target  = baseAge / AXIS_POSITION;
-  return Math.max(AXIS_STEP, Math.ceil(target / AXIS_STEP) * AXIS_STEP);
+  const step    = niceAxisStep(target);
+  return Math.max(step, Math.ceil(target / step) * step);
 }
 
 /* ══════════════════════════════════════
@@ -294,12 +305,28 @@ function renderChart(child, metric) {
 
   const { label, unit } = growthMetricLabel[metric];
 
-  // Sprint 10/11: X축을 "생후 일수" 고정 축으로 — 오늘 날짜가 축의 70% 지점에 오도록 계산되고,
-  // 100일 단위로 반올림해서 100→200→300...으로 자연스럽게 확장된다.
+  // Sprint 10/11, v0.0.2: X축을 "생후 일수" 고정 축으로 — 오늘 날짜가 축의 70% 지점에 오도록 계산됨
   const ageDaysList  = records.map(r => ageDaysAt(child.birth, r.date));
   const todayAgeDays = ageDaysAt(child.birth, new Date());
-  const axisMax      = computeAxisMax(todayAgeDays, ageDaysList);
-  const refStep      = axisMax <= 200 ? 5 : 10; // 참고선을 촘촘하게 그릴 간격(일)
+
+  // v0.0.2: "한 달 뒤 예상" 참고선 — 최근 기록 지점에서 예측 지점까지 이어지는 점선을 그래프에도 표시.
+  // renderPrediction()의 카드와 같은 계산(predictGrowth)을 그대로 재사용.
+  const prediction = predictGrowth(child.id, metric);
+  let predictionLine = null;
+  if (prediction && ageDaysList.length) {
+    const lastAgeDays = ageDaysList[ageDaysList.length - 1];
+    const lastValue   = records[records.length - 1][metric];
+    const predAgeDays = lastAgeDays + 30; // predictGrowth는 30.44일 기준 — 정수 축이라 30일로 표기
+    predictionLine = {
+      data: [{ x: lastAgeDays, y: lastValue }, { x: predAgeDays, y: prediction.predicted }],
+      ageDays: predAgeDays,
+    };
+  }
+
+  // 예측 지점까지 포함해서 축 범위를 계산 — 예측선이 잘리지 않도록
+  const axisCandidates = predictionLine ? [...ageDaysList, predictionLine.ageDays] : ageDaysList;
+  const axisMax = computeAxisMax(todayAgeDays, axisCandidates);
+  const refStep = axisMax <= 200 ? 5 : 10; // 참고선을 촘촘하게 그릴 간격(일)
 
   const myPoints = records.map((r, i) => ({ x: ageDaysList[i], y: r[metric] }));
 
@@ -323,59 +350,78 @@ function renderChart(child, metric) {
     return;
   }
 
+  // v0.0.2: "은유 키" 실측 데이터 영역 채우기(fill) 제거 — 실선/점선과 색상만으로 구분하도록 정리
+  const datasets = [
+    {
+      label: `${child.name} ${label}`,
+      data: myPoints,
+      borderColor: '#F06292',
+      borderWidth: 2.5,
+      pointRadius: 4,
+      pointBackgroundColor: '#F06292',
+      tension: .3,
+      fill: false,
+    },
+    {
+      label: '또래 평균 (P50)',
+      data: refPoints,
+      borderColor: '#B0A8C0',
+      borderDash: [5, 4],
+      borderWidth: 1.5,
+      pointRadius: 0,
+      tension: .3,
+      fill: false,
+    },
+    {
+      label: '상위 10% (P90)',
+      data: p90Points,
+      borderColor: '#FFB74D',
+      borderDash: [3, 3],
+      borderWidth: 1.2,
+      pointRadius: 0,
+      tension: .3,
+      fill: false,
+    },
+    {
+      // v0.0.2: P90과 같은 색이라 구별이 안 되고, 그 사이 음영 채우기도 헷갈린다는 피드백 —
+      // 채우기 제거하고 민트 계열 색으로 바꿔서 상위/하위 참고선을 색으로 구분되게 함
+      label: '하위 10% (P10)',
+      data: p10Points,
+      borderColor: '#4DB6AC',
+      borderDash: [3, 3],
+      borderWidth: 1.2,
+      pointRadius: 0,
+      tension: .3,
+      fill: false,
+    },
+  ];
+
+  if (predictionLine) {
+    datasets.push({
+      // v0.0.2: 그래프 안에도 "한 달 뒤 예상" 점선을 추가 — 실측(진한 실선)과 구분되도록
+      // 얇은 점선 + 끝점만 빈 원으로 표시, 실제 기록이 아니라 참고용 추정치임을 시각적으로 구분
+      label: '🔮 한 달 뒤 예상 (참고용)',
+      data: predictionLine.data,
+      borderColor: '#F06292',
+      borderDash: [2, 3],
+      borderWidth: 1.8,
+      pointRadius: [0, 4],
+      pointBackgroundColor: '#fff',
+      pointBorderColor: '#F06292',
+      pointBorderWidth: 2,
+      tension: 0,
+      fill: false,
+    });
+  }
+
   _chart = new Chart(canvas.getContext('2d'), {
     type: 'line',
-    data: {
-      datasets: [
-        {
-          label: `${child.name} ${label}`,
-          data: myPoints,
-          borderColor: '#F06292',
-          backgroundColor: 'rgba(240,98,146,.12)',
-          borderWidth: 2.5,
-          pointRadius: 4,
-          pointBackgroundColor: '#F06292',
-          tension: .3,
-          fill: true,
-        },
-        {
-          label: '또래 평균 (P50)',
-          data: refPoints,
-          borderColor: '#B0A8C0',
-          borderDash: [5, 4],
-          borderWidth: 1.5,
-          pointRadius: 0,
-          tension: .3,
-          fill: false,
-        },
-        {
-          label: '상위 10% (P90)',
-          data: p90Points,
-          borderColor: '#FFB74D',
-          borderDash: [3, 3],
-          borderWidth: 1.2,
-          pointRadius: 0,
-          tension: .3,
-          fill: false,
-        },
-        {
-          label: '하위 10% (P10)',
-          data: p10Points,
-          borderColor: '#FFB74D',
-          borderDash: [3, 3],
-          borderWidth: 1.2,
-          pointRadius: 0,
-          tension: .3,
-          fill: '-1', // 바로 위 데이터셋(P90)까지 음영 채우기 → 또래 10~90% 정상범위 밴드
-          backgroundColor: 'rgba(255,183,77,.09)',
-        },
-      ],
-    },
+    data: { datasets },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { position: 'bottom', labels: { font: { size: 11, family: 'Nunito' }, boxWidth: 12 } },
+        legend: { position: 'bottom', labels: { font: { size: 11, family: 'Pretendard' }, boxWidth: 12 } },
         tooltip: {
           callbacks: {
             title: (items) => `생후 ${items[0]?.parsed.x ?? ''}일`,
