@@ -4,7 +4,10 @@
    진하게 안 만들어도 다른 텍스트와는 충분히 구분됨.
    (이전 Pretendard/Paperlogy 조합, 그 이전 Nunito/Jua/Fredoka 실험은 전부 이 폰트로 대체됨)
    v0.0.4: 체크리스트 상세 설명처럼 정보성 긴 글은 손글씨 폰트가 가독성을 해친다는 피드백 —
-   Pretendard를 다시 불러와서 "세부 정보" 텍스트(.ci-detail)에만 한정적으로 적용함 */
+   Pretendard를 다시 불러와서 "세부 정보" 텍스트(.ci-detail)에만 한정적으로 적용함
+   v0.0.5: "따로 노는 느낌"이라는 피드백 — 세부 정보 텍스트를 Pretendard 대신 옹짐꾼님이
+   두 번째로 주신 손글씨 폰트 "오뮤 다예쁨체"로 교체(제목·본문에 쓰는 온글잎체와는 다른 폰트지만,
+   둘 다 손글씨 계열이라 Pretendard보다는 톤이 더 잘 어울림) */
 @font-face {
   font-family: 'OwnglyphParkDahyun';
   src: url('../fonts/OwnglyphParkDahyun.ttf') format('truetype');
@@ -12,7 +15,13 @@
   font-style: normal;
   font-display: swap;
 }
-@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
+@font-face {
+  font-family: 'OmyuPretty';
+  src: url('../fonts/OmyuPretty.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
 
 /* v0.0.4: "전체적으로 글씨가 너무 작다"는 피드백 — 루트 크기를 16px→17px로 살짝 올려서
    rem 단위를 쓰는 앱 전체 글자가 함께 커짐. 단, 캘린더 셀 안의 이벤트 텍스트(.ev-line/.ev-more)는
@@ -106,7 +115,7 @@ h1, h2, h3, .sec {
 /* 탭 줄 — 4개 탭이 화면 너비에 맞춰 균등하게 나뉘어, 기종에 상관없이 전부 보임 */
 .nav-pills {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr)); /* v0.0.5: 설정 탭 추가로 5개 */
   gap: 4px;
   width: 100%;
 }
@@ -133,8 +142,13 @@ h1, h2, h3, .sec {
   box-shadow: 0 3px 12px rgba(200,80,180,.28);
 }
 
+/* v0.0.5: 탭이 4개→5개(설정 추가)로 늘어나 모바일에서 더 빠듯해짐 — 글자 크기 살짝 축소 */
+@media (max-width: 520px) {
+  .np { font-size: .66rem; padding: 8px 2px; }
+}
+
 @media (max-width: 380px) {
-  .np { font-size: .64rem; padding: 7px 2px; }
+  .np { font-size: .58rem; padding: 6px 1px; }
   /* v0.0.4: 로고 글씨를 키운 뒤 아주 좁은 화면에서 등록 버튼·유저칩과 겹칠 수 있어 살짝만 축소 */
   .logo { font-size: 1.7rem; }
   .brand-mark { height: 2.2rem; vertical-align: -.55rem; }
@@ -430,3 +444,48 @@ h1, h2, h3, .sec {
      1열로 쌓아서 카드마다 폭을 넉넉하게 확보 */
   .dash-grid       { grid-template-columns: 1fr; }
 }
+
+/* ═══════════════════════════════════════════════════
+ *  DARK MODE (v0.0.5) — 설정 탭 토글, js/theme.js
+ *  <html data-theme="dark">일 때 적용됨. 앱 대부분이 CSS 변수(--bg/--card/--tx/--txl/--wh 등)를
+ *  쓰고 있어서 변수만 재정의해도 상당 부분 자동으로 반영되고, 변수를 안 쓰는 하드코딩된
+ *  흰색/밝은 배경 요소들은 아래에서 개별적으로 덮어씀. 육아정보 페이지(guide/)는 정적 SEO
+ *  페이지라 이번 버전 다크 모드 대상에서 제외(앱 본체만 지원)
+ * ═══════════════════════════════════════════════════ */
+html[data-theme="dark"] {
+  --bg:  #17151D;
+  --card: #221F29;
+  --card-shadow: 0 2px 16px rgba(0,0,0,.4);
+  --wh:  #221F29;
+  --tx:  #EDE8F2;
+  --txl: #9C93AC;
+  --pkl: #3A2430;
+  --mnl: #1E332F;
+  --yll: #332C13;
+  --pul: #2A2438;
+  --bll: #1B2A38;
+}
+html[data-theme="dark"] body { background: var(--bg); color: var(--tx); }
+
+/* 변수를 쓰지 않고 흰색/밝은 색을 직접 지정해뒀던 요소들 — 다크 모드 전용 보정 */
+html[data-theme="dark"] .topbar { background: rgba(30,27,38,.95); border-bottom-color: rgba(255,255,255,.08); }
+html[data-theme="dark"] .np { background: #2A2733; color: var(--txl); }
+html[data-theme="dark"] .cvt, html[data-theme="dark"] .cal-filter-btn { background: #2A2733; }
+html[data-theme="dark"] .ci-detail { background: #241F2C; border-color: #3A2E3C; }
+html[data-theme="dark"] .cal-cell { border-color: rgba(255,255,255,.06); }
+html[data-theme="dark"] .cal-cell:hover { background: #221E2A; }
+html[data-theme="dark"] .cal-head-row { filter: brightness(.9); }
+html[data-theme="dark"] .notif-toggle-btn { background: var(--card); border-color: rgba(255,255,255,.12); }
+html[data-theme="dark"] .auth-box,
+html[data-theme="dark"] .btn-google,
+html[data-theme="dark"] .auth-tab.on,
+html[data-theme="dark"] #userMenu {
+  background: var(--card); color: var(--tx);
+}
+html[data-theme="dark"] .auth-divider::before,
+html[data-theme="dark"] .auth-divider::after { background: rgba(255,255,255,.1); }
+html[data-theme="dark"] .btn-google { border-color: rgba(255,255,255,.12); }
+html[data-theme="dark"] .fg input,
+html[data-theme="dark"] .fg select,
+html[data-theme="dark"] .fg textarea { background: var(--card); color: var(--tx); border-color: rgba(255,255,255,.12); }
+html[data-theme="dark"] .mo { background: rgba(0,0,0,.6); }

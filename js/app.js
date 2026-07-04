@@ -15,16 +15,18 @@ import {
 } from './state.js';
 import { showApp } from './auth.js';
 import { enterGuestMode, hasGuestData, getGuestData, clearGuestData } from './guestMode.js';
-import { renderHome, renderRegList, gp } from './ui.js';
+import { renderHome, renderRegList, renderSettings, gp } from './ui.js';
 import { renderCal, renderStickerPicker } from './calendar.js';
 import { renderChecklist, renderClSidebar } from './checklist.js';
 import { renderGrowthPage } from './growthChart.js';
+import { checkAndNotify } from './notifications.js';
 import './growth.js';
 import './demoMode.js';
 import './checklistCalendarLink.js';
 import './pwaInstall.js';
 import './familyShare.js';
 import './accountDelete.js';
+import './theme.js'; // v0.0.5: 다크 모드 — 설정 탭을 열지 않아도 window.toggleTheme 등록되도록 임포트
 
 /* ── 초기 로드 여부 플래그 ── */
 let _firstLoad = true;
@@ -55,6 +57,14 @@ function onDataLoaded(data) {
   syncThemeUI();
   renderHome();
   renderRegList();
+
+  // v0.0.5: 알림 확인 UI를 설정 탭으로 옮기면서, 알림 자체는 탭 방문 여부와 무관하게
+  // 앱을 열 때마다(데이터 로드 시) 항상 확인하도록 여기서 별도로 호출
+  checkAndNotify();
+
+  if (document.getElementById('pg-settings').classList.contains('on')) {
+    renderSettings();
+  }
 
   if (document.getElementById('pg-calendar').classList.contains('on')) {
     renderCal();

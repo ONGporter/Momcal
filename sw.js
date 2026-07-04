@@ -9,8 +9,8 @@
  * Firebase 등 외부 도메인 요청(인증·데이터 동기화)은 건드리지 않고 그대로 통과시킵니다.
  */
 
-// v0.0.4: 로고 크기·폰트 부분 적용·전체 글자 크기·이모지 제거 등 다수 CSS/JS 변경 — 캐시 버전 상향
-const CACHE_NAME = 'momcal-shell-v10';
+// v0.0.5: 설정 탭·다크모드·폰트 교체 등 다수 CSS/JS 변경 — 캐시 버전 상향
+const CACHE_NAME = 'momcal-shell-v11';
 
 const APP_SHELL = [
   './',
@@ -54,6 +54,7 @@ const APP_SHELL = [
   './icons/apple-touch-icon.png',
   './icons/logo-mark.png',
   './fonts/OwnglyphParkDahyun.ttf', // v0.0.3: 커스텀 폰트 추가 — 오프라인에서도 폰트가 깨지지 않도록 미리 캐싱
+  './fonts/OmyuPretty.ttf', // v0.0.5: 세부 정보용 폰트 추가
 ];
 
 self.addEventListener('install', (event) => {

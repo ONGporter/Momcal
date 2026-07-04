@@ -13,6 +13,7 @@ import { getDailyTip }           from '../data/tips.js';
 import { renderPwaInstallLink }  from './pwaInstall.js';
 import { renderFamilyShareLink } from './familyShare.js';
 import { renderNotificationSettings } from './notifications.js';
+import { renderThemeSettings }   from './theme.js';
 import { renderAdSlot }          from './adSlot.js';
 
 /* ════════════════════════════════════
@@ -21,7 +22,7 @@ import { renderAdSlot }          from './adSlot.js';
 
 /**
  * 페이지 전환
- * @param {string} id  - 'home' | 'register' | 'calendar' | 'checklist'
+ * @param {string} id  - 'home' | 'register' | 'calendar' | 'checklist' | 'growth' | 'settings'
  * @param {Element} btn - 클릭된 nav 버튼
  */
 export function gp(id, btn) {
@@ -37,8 +38,20 @@ export function gp(id, btn) {
     checklist: () => window.renderChecklist(),
     growth:    () => window.renderGrowthPage(),
     register:  () => renderRegList(),
+    settings:  () => renderSettings(), // v0.0.5: 설정 탭 신규
   };
   pageRender[id]?.();
+}
+
+/* ════════════════════════════════════
+ *  설정 탭 (v0.0.5)
+ *  기존 홈 화면 "더 편하게 쓰기" 항목(가족 공유·알림)과 다크 모드를 여기로 모음.
+ *  "어플로 추가"는 사용자 요청으로 홈 화면에 그대로 남겨둠(pwaInstall.js 참고)
+ * ════════════════════════════════════ */
+export function renderSettings() {
+  renderThemeSettings();
+  renderFamilyShareLink();
+  renderNotificationSettings();
 }
 
 /* ════════════════════════════════════
@@ -58,12 +71,8 @@ export function renderHome() {
     </div>`
   ).join('') + `<div class="add-pcard" onclick="gp('register',document.querySelector('.np[data-page=register]'))"><span>＋</span><p>등록하기</p></div>`;
 
-  // 홈 화면 추가(PWA 설치) 링크
+  // 홈 화면 추가(PWA 설치) 링크 — v0.0.5: 이것만 홈에 남기고 나머지는 설정 탭으로 이동
   renderPwaInstallLink();
-  // 배우자와 함께 쓰기 링크
-  renderFamilyShareLink();
-  // 알림 받기 (Sprint 29)
-  renderNotificationSettings();
 }
 
 /* ════════════════════════════════════

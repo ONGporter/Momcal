@@ -39,7 +39,7 @@
 - **Frontend**: Vanilla JS (ES6 Module), HTML5, CSS3
 - **Backend**: Firebase Auth + Cloud Firestore
 - **배포**: GitHub Push → Vercel 자동 배포
-- **폰트**: 옹짐꾼님이 제공한 손글씨 폰트 "온글잎 박다현체"(Ownglyph PDH, 상업적 이용 무료)를 기본으로 사용 — 제목·본문·버튼·로고 대부분 동일. `fonts/OwnglyphParkDahyun.ttf` 파일을 `@font-face`로 직접 서빙(외부 CDN 아님). Regular 굵기만 제공되어 굵게 표시가 필요한 곳도 `font-weight: normal`로 고정함(v0.0.3). **예외**: 체크리스트 세부 설명·육아정보 항목 설명·정책 페이지 본문처럼 정보 전달용 긴 글은 가독성을 위해 Pretendard로 원복함(v0.0.4, `.ci-detail`/`.g-item p`/`.g-doc`)
+- **폰트**: 옹짐꾼님이 제공한 손글씨 폰트 "온글잎 박다현체"(Ownglyph PDH, 상업적 이용 무료)를 기본으로 사용 — 제목·본문·버튼·로고 대부분 동일. `fonts/OwnglyphParkDahyun.ttf` 파일을 `@font-face`로 직접 서빙(외부 CDN 아님). Regular 굵기만 제공되어 굵게 표시가 필요한 곳도 `font-weight: normal`로 고정함(v0.0.3). **예외**: 체크리스트 세부 설명·육아정보 항목 설명·정책 페이지 본문처럼 정보 전달용 긴 글은 손글씨 폰트 "오뮤 다예쁨체"(Omyu Pretty, 상업적 이용 무료, `fonts/OmyuPretty.ttf`)로 별도 적용함(v0.0.4에서 Pretendard로 임시 원복했다가, v0.0.5에서 옹짐꾼님이 주신 이 폰트로 교체 — `.ci-detail`/`.g-item p`/`.g-doc`)
 - **기준 글자 크기**: `html { font-size: 17px }`(v0.0.4, 기본 16px에서 확대) — 앱 전체 `rem` 기반 글자가 이 값에 비례해서 커짐. 단, 캘린더 셀 안 이벤트 텍스트(`.ev-line`/`.ev-more`, `css/calendar.css`)는 셀 공간이 빠듯해 과거 여러 버전에 걸쳐 맞춘 크기라 의도적으로 `px`로 고정해 이 확대에서 제외되어 있음 — **새로 만드는 캘린더 셀 안 텍스트도 이 규칙을 따를지 검토할 것**
 - **아이콘**: 이모지 전용 (외부 아이콘 라이브러리 없음)
 - **차트**: Chart.js (CDN, jsDelivr 폴백)
@@ -95,9 +95,10 @@ momcal/
 │   ├── govSupport.js         # 정부지원 체크리스트 탭
 │   ├── growth.js              # 성장 기록 CRUD
 │   ├── growthChart.js        # 성장그래프 페이지(Chart.js), 성장 예측(Sprint 29)
-│   ├── pwaInstall.js         # "어플로 추가" 링크 (설치 프롬프트/iOS 안내)
-│   ├── familyShare.js        # "배우자와 함께 쓰기" 공유 링크
-│   ├── notifications.js      # 알림 기능 1차 버전(로컬 알림) — Sprint 29, FCM 백엔드 연동은 TODO 참고
+│   ├── pwaInstall.js         # "어플로 추가" 링크 (설치 프롬프트/iOS 안내) — 홈 화면에 위치
+│   ├── familyShare.js        # "배우자와 함께 쓰기" 공유 링크 — 설정 탭에 위치(v0.0.5)
+│   ├── notifications.js      # 알림 기능 1차 버전(로컬 알림) — Sprint 29, FCM 백엔드 연동은 TODO 참고. 설정 탭에 위치(v0.0.5)
+│   ├── theme.js              # 다크 모드 토글 (v0.0.5) — 설정 탭, localStorage 저장, 앱 본체 전용(육아정보 페이지 미지원)
 │   ├── guestMode.js          # 게스트 모드 — 로그인 없이 로컬(localStorage)에 실제 데이터 저장 (Sprint 15)
 │   ├── accountDelete.js      # 계정 영구 삭제(자체 탈퇴) — Firestore 문서 + Auth 계정 삭제 (Sprint 17)
 │   ├── adSlot.js              # 광고 슬롯 컴포넌트 (AdSense 연동 준비)
@@ -371,3 +372,4 @@ momcal/
 | v0.0.2 | 앱 아이콘(`icon-192`/`icon-512`/`apple-touch-icon`/마스커블 2종) 내 마스코트를 더 크게 재제작, topbar·육아정보 헤더의 "맘캘" 로고 글씨 확대(마스코트 크기에 맞춤), 제목(h1~h3/`.sec`) 폰트를 Paperlogy→Pretendard Bold로 재변경(로고는 Paperlogy 유지), 앱 본체·육아정보 페이지 하단 푸터를 동일한 구조(`.site-footer`)로 통일하고 육아정보 페이지에도 버전 표시 추가, 성장그래프 X축 반올림 단위를 5/20/50/100일로 세분화(신생아 등 생후 일수가 작을 때도 70% 지점 규칙이 정확히 맞도록), 성장그래프의 실측 데이터·상하위 10% 밴드 배경 채우기 제거 후 선/점선/색상만으로 구분(하위 10%는 민트색으로 변경해 상위 10%와 구분), 그래프에 "한 달 뒤 예상" 점선 추가, 알림 끄기/켜기 토글 추가, 폰트 교체 때 남아있던 `Nunito` 잔재(캘린더 드래그 고스트, 그래프 범례) 정리 |
 | v0.0.3 | 옹짐꾼님이 제공한 손글씨 폰트 "온글잎 박다현체"로 전면 교체 — Paperlogy+Pretendard 조합을 완전히 대체하고 제목/본문/버튼/로고 전부 하나의 폰트로 통일(외부 CDN 대신 `fonts/OwnglyphParkDahyun.ttf` 직접 서빙). Bold 파일이 없어 관련 요소들을 `font-weight: normal`로 조정, 서비스워커 앱쉘에 폰트 파일 추가 및 캐시 버전 상향(`v8`→`v9`) |
 | v0.0.4 | "맘캘" 로고 글씨 확대(1.5rem→2.2rem, 마스코트 크기는 rem 고정값으로 분리해 독립적으로 조정 가능하게 함), 체크리스트 세부 설명·육아정보 항목 설명·정책 페이지 본문을 Pretendard로 원복(정보 글 가독성 개선), 앱 전체 기준 글자 크기 확대(`html` 16px→17px, 캘린더 이벤트 텍스트는 px 고정으로 제외·날짜 숫자는 포함), 성장그래프 "한 달 뒤 예상" 관련 🔮 이모티콘 제거, 캐시 버전 상향(`v9`→`v10`) |
+| v0.0.5 | 체크리스트 세부 설명·육아정보 항목 설명·정책 페이지 본문 폰트를 Pretendard→"오뮤 다예쁨체"로 교체(옹짐꾼님 제공 2번째 폰트, `fonts/OmyuPretty.ttf`), 육아정보 허브 페이지 배너(`.g-hero`) 위아래 여백 축소(40px→24px), 허브 페이지 부제 문구에 모바일 가독성용 줄바꿈 추가, **설정 탭 신규 추가**(성장 탭 오른쪽, `pg-settings`) — 홈 화면의 "더 편하게 쓰기"(배우자와 함께 쓰기·알림)를 설정 탭으로 이동하고 "어플로 추가"는 홈 화면에 단독으로 남김, **다크 모드 신규 추가**(설정 탭, `js/theme.js`, localStorage 저장, 앱 본체 전용) — 캐시 버전 상향(`v10`→`v11`) |

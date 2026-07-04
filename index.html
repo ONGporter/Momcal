@@ -3,6 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<!-- v0.0.5: 다크 모드 저장값을 CSS 로드 전에 미리 적용 — 밝은 화면이 잠깐 번쩍이는 현상(FOUC) 방지 -->
+<script>
+  try {
+    if (localStorage.getItem('momcal_theme') === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+  } catch (e) {}
+</script>
 <title>맘캘 MomCal — 임신부터 육아까지, 한눈에 관리하는 육아 캘린더</title>
 
 <!-- SEO (Sprint 14) -->
@@ -145,6 +153,7 @@
     <button class="np"    data-page="calendar"  onclick="gp('calendar',this)">📅 캘린더</button>
     <button class="np"    data-page="checklist" onclick="gp('checklist',this)">✅ 체크리스트</button>
     <button class="np"    data-page="growth"    onclick="gp('growth',this)">📈 성장</button>
+    <button class="np"    data-page="settings"  onclick="gp('settings',this)">⚙️ 설정</button>
   </nav>
 </div>
 
@@ -184,9 +193,19 @@
   <div class="sec">👨‍👩‍👧 우리 가족</div>
   <div class="profile-strip" id="homeProfiles"></div>
 
+  <!-- v0.0.5: "더 편하게 쓰기" 묶음은 설정 탭으로 이동. "어플로 추가"만 홈에 그대로 유지 -->
+  <div id="pwaInstallWrap" style="margin-top:22px"></div>
+</div>
+
+<!-- ════════════════════════════════════
+     SETTINGS PAGE (v0.0.5)
+════════════════════════════════════ -->
+<div id="pg-settings" class="pg">
+  <div class="sec">🌗 화면</div>
+  <div id="themeSettingsWrap"></div>
+
   <div class="sec" style="margin-top:22px">📱 더 편하게 쓰기</div>
-  <div id="pwaInstallWrap"></div>
-  <div id="familyShareWrap" style="margin-top:10px"></div>
+  <div id="familyShareWrap"></div>
   <div id="notifSettingsWrap" style="margin-top:10px"></div>
 </div>
 
@@ -378,7 +397,7 @@
     <a href="./terms.html">📄 이용약관</a>
     <a href="./contact.html">✉️ 문의</a>
   </div>
-  <div class="site-footer-version">맘캘 MomCal v0.0.4</div>
+  <div class="site-footer-version">맘캘 MomCal v0.0.5</div>
 </footer>
 
 <!-- ════════════════════════════════════

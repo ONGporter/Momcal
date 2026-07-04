@@ -73,7 +73,7 @@
 
 .ci-detail {
   display: none; font-size: .76rem; color: var(--tx); font-weight: 400;
-  font-family: 'Pretendard', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif; /* v0.0.4: 정보 글 가독성 위해 원복 */
+  font-family: 'OmyuPretty', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif; /* v0.0.5: Pretendard→오뮤 다예쁨체 */
   line-height: 1.7; background: #FBF6FA; border: 1.5px solid #F0D0E0; border-top: none;
   border-radius: 0 0 13px 13px; margin-top: -1.5px; padding: 4px 14px 12px 43px;
 }
