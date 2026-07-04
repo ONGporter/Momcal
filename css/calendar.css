@@ -66,13 +66,15 @@
    배경·글자색은 JS에서 인라인 style로 지정(연한 배경 + 진한 글자, 뱃지와 같은 톤 규칙) */
 .ev-lines { display: flex; flex-direction: column; gap: 2px; margin-top: 2px; }
 .ev-line {
-  font-size: .66rem; font-weight: 800; line-height: 1.4;
+  /* v0.0.4: 앱 전체 글자 확대(html 17px)에서 이 텍스트만 제외 — 셀 공간이 빠듯해서
+     과거 여러 스프린트에 걸쳐 맞춰둔 크기라 rem 대신 px로 고정(기존 .66rem = 10.56px과 동일) */
+  font-size: 10.56px; font-weight: 800; line-height: 1.4;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   max-width: 100%; box-sizing: border-box;
   padding: 0 3px; border-radius: 4px;
 }
 .ev-more {
-  font-size: .5rem; font-weight: 700; color: var(--txl); margin-top: 1px;
+  font-size: 8px; font-weight: 700; color: var(--txl); margin-top: 1px; /* v0.0.4: 기존 .5rem 고정(px) */
 }
 
 /* ── STICKERS ON CALENDAR ── */
@@ -133,8 +135,9 @@
   .cal-cell { min-height: 76px; }
 
   /* Sprint 25: 모바일은 PC보다 셀 폭이 훨씬 좁아서 같은 글자 크기라도 한 줄에 들어가는
-     글자 수가 적음 — 모바일 글자 크기는 그대로 유지(Sprint 27: PC만 확대, 모바일은 그대로) */
-  .ev-line { font-size: .5rem; padding: 0 2px; }
+     글자 수가 적음 — 모바일 글자 크기는 그대로 유지(Sprint 27: PC만 확대, 모바일은 그대로)
+     v0.0.4: 여기도 px로 고정해 전체 확대 대상에서 제외(기존 .5rem = 8px과 동일) */
+  .ev-line { font-size: 8px; padding: 0 2px; }
 }
 
 /* ══════════════════════════════════════

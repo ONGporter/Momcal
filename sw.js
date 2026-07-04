@@ -9,8 +9,8 @@
  * Firebase 등 외부 도메인 요청(인증·데이터 동기화)은 건드리지 않고 그대로 통과시킵니다.
  */
 
-// v0.0.3: 폰트를 전면 교체(온글잎 박다현체)하고 폰트 파일을 앱쉘에 추가 — 캐시 버전을 올림
-const CACHE_NAME = 'momcal-shell-v9';
+// v0.0.4: 로고 크기·폰트 부분 적용·전체 글자 크기·이모지 제거 등 다수 CSS/JS 변경 — 캐시 버전 상향
+const CACHE_NAME = 'momcal-shell-v10';
 
 const APP_SHELL = [
   './',

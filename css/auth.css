@@ -31,6 +31,12 @@
   background: linear-gradient(135deg, #F06292, #9C27B0);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
 }
+/* v0.0.4: css/main.css에서 .brand-mark 높이를 고정값(2.85rem)으로 바꾸면서 로그인 화면
+   마스코트까지 같이 작아지는 부작용이 있어, 로그인 화면은 기존 크기(1.9em × 1.85rem)를 그대로 유지 */
+.auth-logo .brand-mark {
+  height: 3.515rem;
+  vertical-align: -.925rem;
+}
 
 .auth-sub { font-size: .78rem; color: var(--txl); margin-bottom: 8px; }
 .auth-sub-guest {

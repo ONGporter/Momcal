@@ -256,7 +256,7 @@ function renderPrediction(child) {
 
   el.innerHTML = `
     <div class="growth-predict-card">
-      <div class="growth-predict-title">🔮 한 달 뒤 예상 (참고용)</div>
+      <div class="growth-predict-title">한 달 뒤 예상 (참고용)</div>
       <div class="growth-predict-rows">
         ${rows.map(({ metric, pred }) => {
           const { label, unit, icon } = growthMetricLabel[metric];
@@ -400,7 +400,7 @@ function renderChart(child, metric) {
     datasets.push({
       // v0.0.2: 그래프 안에도 "한 달 뒤 예상" 점선을 추가 — 실측(진한 실선)과 구분되도록
       // 얇은 점선 + 끝점만 빈 원으로 표시, 실제 기록이 아니라 참고용 추정치임을 시각적으로 구분
-      label: '🔮 한 달 뒤 예상 (참고용)',
+      label: '한 달 뒤 예상 (참고용)',
       data: predictionLine.data,
       borderColor: '#F06292',
       borderDash: [2, 3],
