@@ -26,8 +26,13 @@
 /* v0.0.4: "전체적으로 글씨가 너무 작다"는 피드백 — 루트 크기를 16px→17px로 살짝 올려서
    rem 단위를 쓰는 앱 전체 글자가 함께 커짐. 단, 캘린더 셀 안의 이벤트 텍스트(.ev-line/.ev-more)는
    공간이 빠듯해서 과거 여러 스프린트에 걸쳐 크기를 맞춰둔 것이라 px로 고정해 이 확대에서 제외함
-   (캘린더 날짜 숫자 .day-num은 다른 곳과 동일하게 커지도록 그대로 rem 유지) */
+   (캘린더 날짜 숫자 .day-num은 다른 곳과 동일하게 커지도록 그대로 rem 유지)
+   v0.0.7: 설정 탭에서 사용자가 직접 글자 크기를 고를 수 있도록 3단계로 나눔(js/fontSize.js).
+   17px(보통)가 기존 기본값이고, <html data-fontsize="..."> 속성으로 전환됨.
+   육아정보 페이지(guide/guide.css)에도 반드시 동일한 3단계 값을 넣어야 함(핵심 개발 원칙 9번) */
 html { font-size: 17px; }
+html[data-fontsize="sm"] { font-size: 15px; }
+html[data-fontsize="lg"] { font-size: 19px; }
 
 /* ── RESET & ROOT ── */
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -112,10 +117,11 @@ h1, h2, h3, .sec {
   margin-left: 2px;
 }
 
-/* 탭 줄 — 4개 탭이 화면 너비에 맞춰 균등하게 나뉘어, 기종에 상관없이 전부 보임 */
+/* 탭 줄 — 홈/캘린더/체크리스트/성장 4개는 기존처럼 균등하게, "설정"만 아이콘 위주로 좁게
+   v0.0.7: "5개 탭이 다 똑같이 커져서 이상하다"는 피드백 — 설정 탭 너비만 줄이고 나머지 4개는 원래 크기로 복원 */
 .nav-pills {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr)); /* v0.0.5: 설정 탭 추가로 5개 */
+  grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(0, .55fr);
   gap: 4px;
   width: 100%;
 }
@@ -142,13 +148,8 @@ h1, h2, h3, .sec {
   box-shadow: 0 3px 12px rgba(200,80,180,.28);
 }
 
-/* v0.0.5: 탭이 4개→5개(설정 추가)로 늘어나 모바일에서 더 빠듯해짐 — 글자 크기 살짝 축소 */
-@media (max-width: 520px) {
-  .np { font-size: .66rem; padding: 8px 2px; }
-}
-
 @media (max-width: 380px) {
-  .np { font-size: .58rem; padding: 6px 1px; }
+  .np { font-size: .64rem; padding: 7px 2px; }
   /* v0.0.4: 로고 글씨를 키운 뒤 아주 좁은 화면에서 등록 버튼·유저칩과 겹칠 수 있어 살짝만 축소 */
   .logo { font-size: 1.7rem; }
   .brand-mark { height: 2.2rem; vertical-align: -.55rem; }
@@ -301,18 +302,8 @@ h1, h2, h3, .sec {
 .install-txt   { flex: 1; min-width: 0; }
 .install-title { font-size: .87rem; font-weight: 900; color: var(--tx); }
 .install-sub   { font-size: .71rem; color: var(--txl); font-weight: 700; margin-top: 2px; }
-
-/* v0.0.6: 설정 탭이 너무 크다는 피드백 — 홈 화면의 "어플로 추가" 카드(.install-link 공용 클래스)는
-   그대로 두고, 설정 탭(#pg-settings) 안에서만 카드 크기·글자 크기·여백을 확 줄임 */
-#pg-settings .sec { font-size: .72rem; margin-bottom: 8px; }
-#pg-settings .sec + .sec,
-#pg-settings > div[id$="Wrap"] + .sec { margin-top: 14px; }
-#pg-settings .install-link { padding: 9px 12px; gap: 9px; border-radius: 13px; }
-#pg-settings .install-ico  { width: 28px; height: 28px; border-radius: 8px; font-size: .85rem; }
-#pg-settings .install-title { font-size: .76rem; }
-#pg-settings .install-sub   { font-size: .62rem; margin-top: 0; }
-#pg-settings .notif-toggle-btn { font-size: .58rem; padding: 4px 9px; }
-#pg-settings #notifSettingsWrap { margin-top: 6px; }
+/* v0.0.7: v0.0.6에서 넣었던 "#pg-settings 안 항목 축소" 스타일은 사용자 요청으로 되돌림 —
+   실제로 줄이고 싶었던 건 하단 nav-pills의 "설정" 탭 너비였음(아래 .nav-pills 참고) */
 .install-arrow { font-size: 1.3rem; color: var(--pk); font-weight: 900; flex-shrink: 0; }
 
 /* ── 광고 슬롯 (Sprint 13) ──
@@ -419,6 +410,42 @@ h1, h2, h3, .sec {
 }
 .notif-toggle-btn:hover { border-color: var(--pk); color: var(--pkd); }
 
+/* v0.0.7: 설정 탭 — 글자 크기 3단 버튼(작게/보통/크게) */
+.fontsize-seg {
+  display: flex; flex-shrink: 0; background: #F3EDF6; border-radius: 20px; padding: 3px;
+}
+.fontsize-seg-btn {
+  border: none; background: transparent; color: var(--txl);
+  font-size: .66rem; font-weight: 800; font-family: inherit;
+  padding: 5px 10px; border-radius: 16px; cursor: pointer; transition: all .2s;
+}
+.fontsize-seg-btn.on {
+  background: linear-gradient(135deg, #F06292, #9C27B0); color: #fff;
+  box-shadow: 0 2px 8px rgba(200,80,180,.28);
+}
+
+/* v0.0.7: 알림 세부 설정(카테고리별 on/off, 시간대) */
+.notif-subsettings {
+  background: var(--card); border-radius: 16px; box-shadow: var(--card-shadow);
+  padding: 12px 16px; margin-top: 8px; display: flex; flex-direction: column; gap: 10px;
+}
+.notif-check {
+  display: flex; align-items: center; gap: 9px;
+  font-size: .78rem; font-weight: 700; color: var(--tx); cursor: pointer;
+}
+.notif-check input[type="checkbox"] {
+  width: 17px; height: 17px; accent-color: var(--pk); cursor: pointer; flex-shrink: 0;
+}
+.notif-window-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  font-size: .78rem; font-weight: 700; color: var(--tx);
+  padding-top: 10px; border-top: 1px solid #F0E5EE;
+}
+.notif-window-row select {
+  border: 1.5px solid #EEE0F0; border-radius: 10px; padding: 5px 8px;
+  font-size: .73rem; font-family: inherit; color: var(--tx); background: var(--wh);
+}
+
 /* ── v0.0.2: 앱 본체·육아정보 페이지 공통 하단 푸터(정책 링크 + 버전 표시) ──
    guide.css의 .site-footer*와 항상 동일한 스타일로 유지해야 두 페이지의 푸터가 통일되어 보임 */
 .site-footer {
@@ -501,3 +528,7 @@ html[data-theme="dark"] .fg input,
 html[data-theme="dark"] .fg select,
 html[data-theme="dark"] .fg textarea { background: var(--card); color: var(--tx); border-color: rgba(255,255,255,.12); }
 html[data-theme="dark"] .mo { background: rgba(0,0,0,.6); }
+/* v0.0.7: 글자 크기 세그먼트·알림 세부 설정 다크 모드 보정 */
+html[data-theme="dark"] .fontsize-seg { background: #2A2733; }
+html[data-theme="dark"] .notif-window-row { border-top-color: rgba(255,255,255,.1); }
+html[data-theme="dark"] .notif-window-row select { border-color: rgba(255,255,255,.12); }

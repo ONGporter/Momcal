@@ -3,11 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<!-- v0.0.5: 다크 모드 저장값을 CSS 로드 전에 미리 적용 — 밝은 화면이 잠깐 번쩍이는 현상(FOUC) 방지 -->
+<!-- v0.0.5: 다크 모드 저장값을 CSS 로드 전에 미리 적용 — 밝은 화면이 잠깐 번쩍이는 현상(FOUC) 방지
+     v0.0.7: 글자 크기 설정(momcal_fontsize)도 같은 방식으로 미리 적용 -->
 <script>
   try {
     if (localStorage.getItem('momcal_theme') === 'dark') {
       document.documentElement.setAttribute('data-theme', 'dark');
+    }
+    var fs = localStorage.getItem('momcal_fontsize');
+    if (fs === 'sm' || fs === 'lg') {
+      document.documentElement.setAttribute('data-fontsize', fs);
     }
   } catch (e) {}
 </script>
@@ -203,10 +208,11 @@
 <div id="pg-settings" class="pg">
   <div class="sec">🌗 화면</div>
   <div id="themeSettingsWrap"></div>
+  <div id="fontSizeSettingsWrap" style="margin-top:10px"></div>
 
-  <div class="sec" style="margin-top:14px">📱 더 편하게 쓰기</div>
+  <div class="sec" style="margin-top:22px">📱 더 편하게 쓰기</div>
   <div id="familyShareWrap"></div>
-  <div id="notifSettingsWrap" style="margin-top:6px"></div>
+  <div id="notifSettingsWrap" style="margin-top:10px"></div>
 </div>
 
 <!-- ════════════════════════════════════
@@ -397,7 +403,7 @@
     <a href="./terms.html">📄 이용약관</a>
     <a href="./contact.html">✉️ 문의</a>
   </div>
-  <div class="site-footer-version">맘캘 MomCal v0.0.6</div>
+  <div class="site-footer-version">맘캘 MomCal v0.0.7</div>
 </footer>
 
 <!-- ════════════════════════════════════

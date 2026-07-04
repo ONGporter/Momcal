@@ -14,6 +14,7 @@ import { renderPwaInstallLink }  from './pwaInstall.js';
 import { renderFamilyShareLink } from './familyShare.js';
 import { renderNotificationSettings } from './notifications.js';
 import { renderThemeSettings }   from './theme.js';
+import { renderFontSizeSettings } from './fontSize.js';
 import { renderAdSlot }          from './adSlot.js';
 
 /* ════════════════════════════════════
@@ -50,6 +51,7 @@ export function gp(id, btn) {
  * ════════════════════════════════════ */
 export function renderSettings() {
   renderThemeSettings();
+  renderFontSizeSettings();
   renderFamilyShareLink();
   renderNotificationSettings();
 }

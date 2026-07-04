@@ -45,6 +45,10 @@
 
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; font-size: 17px; } /* Sprint 28: 부드러운 스크롤 / v0.0.4: 전체 글자 크기 확대 */
+/* v0.0.7: 설정 탭의 글자 크기 조절이 육아정보 페이지에도 동일하게 적용되도록 앱 본체(css/main.css)와
+   똑같은 3단계 값을 정의 — 값이 하나라도 어긋나면 두 곳의 글자 크기가 달라지니 항상 같이 수정할 것 */
+html[data-fontsize="sm"] { font-size: 15px; }
+html[data-fontsize="lg"] { font-size: 19px; }
 
 body {
   margin: 0;

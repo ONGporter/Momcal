@@ -1,5 +1,5 @@
 /**
- * js/notifications.js — Sprint 29, v0.0.2에서 알림 끄기 토글 추가
+ * js/notifications.js — Sprint 29, v0.0.2에서 알림 끄기 토글 추가, v0.0.7에서 세부 설정 추가
  * 알림 기능 1차 버전 (브라우저 알림 권한 기반의 "로컬" 알림)
  *
  * ⚠️ 중요 — 진짜 FCM 푸시 알림(앱을 완전히 꺼도 정해진 시각에 오는 알림)은 아직 아님.
@@ -19,6 +19,14 @@
  * v0.0.2: 브라우저 알림 권한(Notification.permission) 자체는 JS로 되돌릴 수 없어서
  * (권한 취소는 브라우저/기기 설정에서만 가능), 앱 안에서 껐다 켰다 할 수 있는 별도의
  * "알림 사용 여부" 플래그(localStorage)를 추가함 — 권한은 유지한 채 알림 표시만 끔.
+ *
+ * v0.0.7: 알림 세부 설정 2가지 추가
+ *  - 카테고리별 on/off: "오늘 일정" 알림과 "정부지원 마감" 알림을 따로 껐다 켤 수 있음
+ *  - 알림 받을 시간대: "언제든/오전/낮/저녁" 중 고르면, 그 시간대에 앱을 열었을 때만 알림이 뜸.
+ *    ⚠️ 이건 정해진 시각에 알림을 "보내주는" 게 아니라, 그 시간대에 앱을 열어야 알림이 뜨는
+ *    방식이라는 한계는 그대로임 — 그래도 "오전에만"으로 해두면 밤늦게 앱을 열었을 때
+ *    알림이 안 뜨게 걸러주는 효과는 있음. 시간대를 벗어나 알림을 건너뛴 날은
+ *    "오늘 확인함" 처리를 하지 않아서, 같은 날 나중에 그 시간대 안에 다시 앱을 열면 정상적으로 뜸
  */
 
 import { today, stripLeadingEmoji } from './utils.js';
@@ -26,10 +34,54 @@ import { getAllEvs, isGovDeadlineSoon } from './calendar.js';
 
 const LAST_NOTIFIED_KEY = 'momcal_last_notified_date';
 const NOTIF_ENABLED_KEY = 'momcal_notif_enabled'; // v0.0.2
+const NOTIF_CAT_TODAY_KEY = 'momcal_notif_cat_today'; // v0.0.7
+const NOTIF_CAT_GOV_KEY   = 'momcal_notif_cat_gov';   // v0.0.7
+const NOTIF_WINDOW_KEY    = 'momcal_notif_window';    // v0.0.7: 'any' | 'morning' | 'afternoon' | 'evening'
+
+const TIME_WINDOWS = [
+  { key: 'any',       label: '언제든' },
+  { key: 'morning',   label: '오전 (6~12시)' },
+  { key: 'afternoon', label: '낮 (12~18시)' },
+  { key: 'evening',   label: '저녁 (18~24시)' },
+];
 
 /** v0.0.2: 알림 사용 여부 — 값이 없으면(처음 권한을 받았을 때) 기본 켜짐으로 취급 */
 function isNotifEnabled() {
   return localStorage.getItem(NOTIF_ENABLED_KEY) !== 'false';
+}
+
+/** v0.0.7: 카테고리별 on/off — 값이 없으면 기본 켜짐 */
+function isCategoryEnabled(catKey) {
+  return localStorage.getItem(catKey) !== 'false';
+}
+
+/** v0.0.7: 카테고리 토글 버튼 클릭 핸들러 */
+export function toggleNotifCategory(catKey) {
+  localStorage.setItem(catKey, isCategoryEnabled(catKey) ? 'false' : 'true');
+  renderNotificationSettings();
+}
+
+/** v0.0.7: 현재 저장된 알림 시간대 */
+function getTimeWindow() {
+  const v = localStorage.getItem(NOTIF_WINDOW_KEY);
+  return TIME_WINDOWS.some(w => w.key === v) ? v : 'any';
+}
+
+/** v0.0.7: 알림 시간대 select 변경 핸들러 */
+export function setNotifWindow(value) {
+  localStorage.setItem(NOTIF_WINDOW_KEY, value);
+  renderNotificationSettings();
+}
+
+/** v0.0.7: 지금이 선택된 알림 시간대 안인지 확인 */
+function isWithinTimeWindow() {
+  const w = getTimeWindow();
+  if (w === 'any') return true;
+  const hour = new Date().getHours();
+  if (w === 'morning')   return hour >= 6  && hour < 12;
+  if (w === 'afternoon') return hour >= 12 && hour < 18;
+  if (w === 'evening')   return hour >= 18 && hour < 24;
+  return true;
 }
 
 /** v0.0.2: 알림 켜기/끄기 토글 버튼 클릭 핸들러 */
@@ -39,7 +91,31 @@ export function toggleNotifications(enable) {
   if (enable) checkAndNotify(true);
 }
 
-/** 홈 탭 "더 편하게 쓰기" 아래 — 알림 권한 상태에 따른 안내/버튼 렌더 */
+/** v0.0.7: 알림이 켜져 있을 때 "설정 탭"에 표시할 세부 설정(카테고리·시간대) */
+function renderNotifSubSettings() {
+  const todayOn = isCategoryEnabled(NOTIF_CAT_TODAY_KEY);
+  const govOn   = isCategoryEnabled(NOTIF_CAT_GOV_KEY);
+  const win     = getTimeWindow();
+  return `
+    <div class="notif-subsettings">
+      <label class="notif-check">
+        <input type="checkbox" ${todayOn ? 'checked' : ''} onchange="toggleNotifCategory('${NOTIF_CAT_TODAY_KEY}')">
+        오늘 일정 알림
+      </label>
+      <label class="notif-check">
+        <input type="checkbox" ${govOn ? 'checked' : ''} onchange="toggleNotifCategory('${NOTIF_CAT_GOV_KEY}')">
+        정부지원 마감 알림
+      </label>
+      <div class="notif-window-row">
+        <span>알림 받을 시간대</span>
+        <select onchange="setNotifWindow(this.value)">
+          ${TIME_WINDOWS.map(w => `<option value="${w.key}" ${w.key === win ? 'selected' : ''}>${w.label}</option>`).join('')}
+        </select>
+      </div>
+    </div>`;
+}
+
+/** 설정 탭 — 알림 권한 상태에 따른 안내/버튼 렌더 */
 export function renderNotificationSettings() {
   const wrap = document.getElementById('notifSettingsWrap');
   if (!wrap) return;
@@ -61,7 +137,8 @@ export function renderNotificationSettings() {
             <div class="install-sub">오늘 일정·마감 임박 알림을 받아요 (앱을 열었을 때 확인)</div>
           </div>
           <button class="notif-toggle-btn" onclick="event.stopPropagation();toggleNotifications(false)">끄기</button>
-        </div>`;
+        </div>
+        ${renderNotifSubSettings()}`;
       checkAndNotify();
     } else {
       wrap.innerHTML = `
@@ -111,18 +188,23 @@ export async function requestNotificationPermission() {
 
 /**
  * 오늘 일정·마감 임박 여부를 확인해서 알림을 띄움
- * @param {boolean} force - true면 오늘 이미 띄웠어도 다시 확인(권한을 방금 허용했을 때 등)
+ * @param {boolean} force - true면 오늘 이미 띄웠어도, 선호 시간대가 아니어도 강제로 다시 확인
+ *   (권한을 방금 허용했을 때, 설정을 방금 켰을 때 등 — 사용자가 방금 한 조작에 바로 피드백을 주기 위함)
  */
 export async function checkAndNotify(force = false) {
   if (!('Notification' in window) || Notification.permission !== 'granted') return;
   if (!isNotifEnabled()) return; // v0.0.2: 앱 내에서 알림을 꺼둔 경우 표시하지 않음
 
+  // v0.0.7: 선호 시간대가 아니면 "오늘 확인함" 처리를 하지 않고 그냥 건너뜀 —
+  // 그래야 같은 날 나중에 선호 시간대 안에 다시 앱을 열었을 때 정상적으로 알림이 뜸
+  if (!force && !isWithinTimeWindow()) return;
+
   const todayStr = today();
   if (!force && localStorage.getItem(LAST_NOTIFIED_KEY) === todayStr) return; // 하루 한 번만
 
   const evs = getAllEvs();
-  const todayEvs   = evs.filter(e => e.date === todayStr && !e.done);
-  const urgentGov  = evs.filter(e => isGovDeadlineSoon(e));
+  const todayEvs  = isCategoryEnabled(NOTIF_CAT_TODAY_KEY) ? evs.filter(e => e.date === todayStr && !e.done) : [];
+  const urgentGov = isCategoryEnabled(NOTIF_CAT_GOV_KEY)   ? evs.filter(e => isGovDeadlineSoon(e)) : [];
 
   const messages = [];
   if (todayEvs.length) {
@@ -156,3 +238,5 @@ window.requestNotificationPermission = requestNotificationPermission;
 window.renderNotificationSettings    = renderNotificationSettings;
 window.checkAndNotify                = checkAndNotify;
 window.toggleNotifications           = toggleNotifications;
+window.toggleNotifCategory           = toggleNotifCategory;
+window.setNotifWindow                = setNotifWindow;

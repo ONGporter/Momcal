@@ -40,7 +40,7 @@
 - **Backend**: Firebase Auth + Cloud Firestore
 - **배포**: GitHub Push → Vercel 자동 배포
 - **폰트**: 옹짐꾼님이 제공한 손글씨 폰트 "온글잎 박다현체"(Ownglyph PDH, 상업적 이용 무료)를 기본으로 사용 — 제목·본문·버튼·로고 대부분 동일. `fonts/OwnglyphParkDahyun.ttf` 파일을 `@font-face`로 직접 서빙(외부 CDN 아님). Regular 굵기만 제공되어 굵게 표시가 필요한 곳도 `font-weight: normal`로 고정함(v0.0.3). **예외**: 체크리스트 세부 설명·육아정보 항목 설명·정책 페이지 본문처럼 정보 전달용 긴 글은 손글씨 폰트 "오뮤 다예쁨체"(Omyu Pretty, 상업적 이용 무료, `fonts/OmyuPretty.ttf`)로 별도 적용함(v0.0.4에서 Pretendard로 임시 원복했다가, v0.0.5에서 옹짐꾼님이 주신 이 폰트로 교체 — `.ci-detail`/`.g-item p`/`.g-doc`)
-- **기준 글자 크기**: `html { font-size: 17px }`(v0.0.4, 기본 16px에서 확대) — 앱 전체 `rem` 기반 글자가 이 값에 비례해서 커짐. 단, 캘린더 셀 안 이벤트 텍스트(`.ev-line`/`.ev-more`, `css/calendar.css`)는 셀 공간이 빠듯해 과거 여러 버전에 걸쳐 맞춘 크기라 의도적으로 `px`로 고정해 이 확대에서 제외되어 있음 — **새로 만드는 캘린더 셀 안 텍스트도 이 규칙을 따를지 검토할 것**
+- **기준 글자 크기**: `html { font-size: 17px }`(v0.0.4, 기본 16px에서 확대) — 앱 전체 `rem` 기반 글자가 이 값에 비례해서 커짐. 단, 캘린더 셀 안 이벤트 텍스트(`.ev-line`/`.ev-more`, `css/calendar.css`)는 셀 공간이 빠듯해 과거 여러 버전에 걸쳐 맞춘 크기라 의도적으로 `px`로 고정해 이 확대에서 제외되어 있음 — **새로 만드는 캘린더 셀 안 텍스트도 이 규칙을 따를지 검토할 것**. v0.0.7부터 설정 탭에서 사용자가 이 기준값을 15px(작게)/17px(보통)/19px(크게)로 직접 조절 가능(`html[data-fontsize]`, `js/fontSize.js`) — 앱 본체·육아정보 페이지·정책 페이지 전체에 동일 적용됨
 - **아이콘**: 이모지 전용 (외부 아이콘 라이브러리 없음)
 - **차트**: Chart.js (CDN, jsDelivr 폴백)
 - **PWA**: manifest.json + sw.js (홈 화면 설치·오프라인 앱 셸 캐싱)
@@ -99,6 +99,7 @@ momcal/
 │   ├── familyShare.js        # "배우자와 함께 쓰기" 공유 링크 — 설정 탭에 위치(v0.0.5)
 │   ├── notifications.js      # 알림 기능 1차 버전(로컬 알림) — Sprint 29, FCM 백엔드 연동은 TODO 참고. 설정 탭에 위치(v0.0.5)
 │   ├── theme.js              # 다크 모드 토글 (v0.0.5) — 설정 탭, localStorage 저장, 앱 본체 전용(육아정보 페이지 미지원)
+│   ├── fontSize.js           # 글자 크기 조절 (v0.0.7) — 설정 탭, localStorage 저장, 앱 본체+육아정보 페이지+정책 페이지 전체 적용
 │   ├── guestMode.js          # 게스트 모드 — 로그인 없이 로컬(localStorage)에 실제 데이터 저장 (Sprint 15)
 │   ├── accountDelete.js      # 계정 영구 삭제(자체 탈퇴) — Firestore 문서 + Auth 계정 삭제 (Sprint 17)
 │   ├── adSlot.js              # 광고 슬롯 컴포넌트 (AdSense 연동 준비)
@@ -291,7 +292,7 @@ momcal/
 7. **window 노출 규칙** — 인라인 onclick에서 쓰는 함수는 모듈 하단에 `window.xxx = xxx`
 8. **ES6 Module 사용** — `type="module"`, `import/export` 일관 적용
 9. **앱 본체·육아정보 페이지(`guide/`) 동시 적용 원칙 (v0.0.2 추가)** — 앱은 `index.html`(SPA)과 `guide/*.html`(정적 페이지, `scripts/build-guide.mjs`로 생성) 두 갈래로 나뉘어 있고 스타일시트도 각각 `css/main.css`/`guide/guide.css`로 분리돼 있어서, 한쪽만 고치고 다른 쪽을 빼먹기 쉬움. **아래 항목을 변경할 땐 반드시 양쪽을 함께 확인·수정할 것**:
-   - 폰트(제목/본문/버튼 font-family, `fonts/` 아래 커스텀 폰트 파일과 `@font-face` 선언), 색상 팔레트, 로고·마스코트(`.logo`/`.g-logo`, `.brand-mark`) 크기
+   - 폰트(제목/본문/버튼 font-family, `fonts/` 아래 커스텀 폰트 파일과 `@font-face` 선언), 색상 팔레트, 로고·마스코트(`.logo`/`.g-logo`, `.brand-mark`) 크기, 글자 크기 조절 기준값(`html[data-fontsize]`, v0.0.7)
    - 버전 표시(`.site-footer-version`) — 위 "버전 관리 정책" 참고
    - 하단 푸터 구성(`.site-footer`/`.site-footer-links`) — 링크 목록·아이콘·순서가 서로 달라지지 않도록 함
    - 공용 아이콘 이미지(`icons/` 아래 파일들)
@@ -374,3 +375,4 @@ momcal/
 | v0.0.4 | "맘캘" 로고 글씨 확대(1.5rem→2.2rem, 마스코트 크기는 rem 고정값으로 분리해 독립적으로 조정 가능하게 함), 체크리스트 세부 설명·육아정보 항목 설명·정책 페이지 본문을 Pretendard로 원복(정보 글 가독성 개선), 앱 전체 기준 글자 크기 확대(`html` 16px→17px, 캘린더 이벤트 텍스트는 px 고정으로 제외·날짜 숫자는 포함), 성장그래프 "한 달 뒤 예상" 관련 🔮 이모티콘 제거, 캐시 버전 상향(`v9`→`v10`) |
 | v0.0.5 | 체크리스트 세부 설명·육아정보 항목 설명·정책 페이지 본문 폰트를 Pretendard→"오뮤 다예쁨체"로 교체(옹짐꾼님 제공 2번째 폰트, `fonts/OmyuPretty.ttf`), 육아정보 허브 페이지 배너(`.g-hero`) 위아래 여백 축소(40px→24px), 허브 페이지 부제 문구에 모바일 가독성용 줄바꿈 추가, **설정 탭 신규 추가**(성장 탭 오른쪽, `pg-settings`) — 홈 화면의 "더 편하게 쓰기"(배우자와 함께 쓰기·알림)를 설정 탭으로 이동하고 "어플로 추가"는 홈 화면에 단독으로 남김, **다크 모드 신규 추가**(설정 탭, `js/theme.js`, localStorage 저장, 앱 본체 전용) — 캐시 버전 상향(`v10`→`v11`) |
 | v0.0.6 | 육아정보 카테고리 페이지의 안내 문구(`.g-intro`, `.g-disclaimer`)와 성장그래프 안내 문구(`.growth-disclaimer`)를 오뮤 다예쁨체로 통일, 설정 탭(`#pg-settings`) 카드·아이콘·글자 크기를 스코프 지정 축소(홈 화면 "어플로 추가" 카드는 영향 없음) — 캐시 버전 상향(`v11`→`v12`) |
+| v0.0.7 | v0.0.6의 설정 탭 축소가 요청 취지와 달라 원복(실제로는 nav-pills의 "설정" 탭 너비만 줄이면 되는 것이었음 — `repeat(5,1fr)`→`repeat(4,1fr)+0.55fr`), **글자 크기 조절 기능 신규 추가**(설정 탭, 작게/보통/크게 3단, `js/fontSize.js`, 앱 본체+육아정보 페이지+정책 페이지 전체 적용), **알림 세부 설정 추가**(카테고리별 on/off, 알림 받을 시간대) — 캐시 버전 상향(`v12`→`v13`) |

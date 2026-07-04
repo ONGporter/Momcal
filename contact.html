@@ -3,6 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- v0.0.7: 설정 탭에서 고른 글자 크기를 CSS 로드 전에 미리 적용 -->
+<script>
+  try {
+    var fs = localStorage.getItem('momcal_fontsize');
+    if (fs === 'sm' || fs === 'lg') document.documentElement.setAttribute('data-fontsize', fs);
+  } catch (e) {}
+</script>
 <title>문의하기 | 맘캘 MomCal</title>
 <meta name="description" content="맘캘 MomCal에 문의하실 내용이 있으시면 이메일로 연락해주세요. 서비스 이용 문의, 오류 신고, 개인정보 관련 요청을 받고 있습니다.">
 <link rel="canonical" href="https://momcal.vercel.app/contact.html">

@@ -3,6 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- v0.0.7: 설정 탭에서 고른 글자 크기를 CSS 로드 전에 미리 적용 — 앱 본체 index.html과 동일한 방식 -->
+<script>
+  try {
+    var fs = localStorage.getItem('momcal_fontsize');
+    if (fs === 'sm' || fs === 'lg') document.documentElement.setAttribute('data-fontsize', fs);
+  } catch (e) {}
+</script>
 <title>임신 주차별 체크리스트 총정리 (4주~40주) | 맘캘 육아정보</title>
 <meta name="description" content="임신 4주부터 40주까지 산부인과 검사, 영양제, 출산 준비물을 주차별로 정리했어요. 엽산·철분 복용 시기부터 기형아 검사 일정까지 한눈에 확인하세요.">
 <link rel="canonical" href="https://momcal.vercel.app/guide/pregnancy.html">
@@ -722,7 +729,7 @@
     <a href="../contact.html">✉️ 문의</a>
     <a href="https://momcal.vercel.app/">🏠 앱으로</a>
   </div>
-  <div class="site-footer-version">맘캘 MomCal v0.0.6</div>
+  <div class="site-footer-version">맘캘 MomCal v0.0.7</div>
 </footer>
 <a href="#" class="g-top-btn" aria-label="맨 위로">↑</a>
 <script>

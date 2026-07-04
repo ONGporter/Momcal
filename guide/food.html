@@ -3,6 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- v0.0.7: 설정 탭에서 고른 글자 크기를 CSS 로드 전에 미리 적용 — 앱 본체 index.html과 동일한 방식 -->
+<script>
+  try {
+    var fs = localStorage.getItem('momcal_fontsize');
+    if (fs === 'sm' || fs === 'lg') document.documentElement.setAttribute('data-fontsize', fs);
+  } catch (e) {}
+</script>
 <title>이유식 단계별 시작 가이드 (초기~유아식) | 맘캘 육아정보</title>
 <meta name="description" content="쌀미음부터 유아식까지, 이유식을 단계별로 언제 어떻게 시작해야 하는지 정리했어요. 재료별 효과, 알레르기 체크 방법, 소금·설탕 없이 조리하는 법까지 확인하세요.">
 <link rel="canonical" href="https://momcal.vercel.app/guide/food.html">
@@ -498,7 +505,7 @@
     <a href="../contact.html">✉️ 문의</a>
     <a href="https://momcal.vercel.app/">🏠 앱으로</a>
   </div>
-  <div class="site-footer-version">맘캘 MomCal v0.0.6</div>
+  <div class="site-footer-version">맘캘 MomCal v0.0.7</div>
 </footer>
 <a href="#" class="g-top-btn" aria-label="맨 위로">↑</a>
 <script>

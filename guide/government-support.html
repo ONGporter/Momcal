@@ -3,6 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- v0.0.7: 설정 탭에서 고른 글자 크기를 CSS 로드 전에 미리 적용 — 앱 본체 index.html과 동일한 방식 -->
+<script>
+  try {
+    var fs = localStorage.getItem('momcal_fontsize');
+    if (fs === 'sm' || fs === 'lg') document.documentElement.setAttribute('data-fontsize', fs);
+  } catch (e) {}
+</script>
 <title>임신·출산·육아 정부지원금 총정리 | 맘캘 육아정보</title>
 <meta name="description" content="국민행복카드, 부모급여, 아동수당, 첫만남이용권 등 임신부터 육아까지 받을 수 있는 정부지원 제도를 시기별로 정리했어요. 신청 마감 기한까지 한눈에 확인하세요.">
 <link rel="canonical" href="https://momcal.vercel.app/guide/government-support.html">
@@ -354,7 +361,7 @@
     <a href="../contact.html">✉️ 문의</a>
     <a href="https://momcal.vercel.app/">🏠 앱으로</a>
   </div>
-  <div class="site-footer-version">맘캘 MomCal v0.0.6</div>
+  <div class="site-footer-version">맘캘 MomCal v0.0.7</div>
 </footer>
 <a href="#" class="g-top-btn" aria-label="맨 위로">↑</a>
 <script>
