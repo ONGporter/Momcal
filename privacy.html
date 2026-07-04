@@ -3,11 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!-- v0.0.7: 설정 탭에서 고른 글자 크기를 CSS 로드 전에 미리 적용 -->
+<!-- v0.0.7: 설정 탭에서 고른 글자 크기를 CSS 로드 전에 미리 적용 / v0.0.8: 다크 모드도 추가 -->
 <script>
   try {
+    if (localStorage.getItem('momcal_theme') === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
     var fs = localStorage.getItem('momcal_fontsize');
-    if (fs === 'sm' || fs === 'lg') document.documentElement.setAttribute('data-fontsize', fs);
+    if (fs && fs !== 'md') document.documentElement.setAttribute('data-fontsize', fs);
   } catch (e) {}
 </script>
 <title>개인정보처리방침 | 맘캘 MomCal</title>

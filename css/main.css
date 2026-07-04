@@ -28,11 +28,15 @@
    공간이 빠듯해서 과거 여러 스프린트에 걸쳐 크기를 맞춰둔 것이라 px로 고정해 이 확대에서 제외함
    (캘린더 날짜 숫자 .day-num은 다른 곳과 동일하게 커지도록 그대로 rem 유지)
    v0.0.7: 설정 탭에서 사용자가 직접 글자 크기를 고를 수 있도록 3단계로 나눔(js/fontSize.js).
-   17px(보통)가 기존 기본값이고, <html data-fontsize="..."> 속성으로 전환됨.
-   육아정보 페이지(guide/guide.css)에도 반드시 동일한 3단계 값을 넣어야 함(핵심 개발 원칙 9번) */
-html { font-size: 17px; }
-html[data-fontsize="sm"] { font-size: 15px; }
-html[data-fontsize="lg"] { font-size: 19px; }
+   v0.0.8: "크게가 기본이면 좋겠다"는 요청으로, 기존 "크게"(19px)가 새 기본값 "보통"이 되고
+   위아래로 2단계씩 더해 매우작게/작게/보통/크게/매우크게 5단계로 확장(js/fontSize.js).
+   기본값이 19px로 바뀌었기 때문에 <html>에 아무 속성이 없어도 이전보다 한 단계 커져 있음.
+   육아정보 페이지(guide/guide.css)에도 반드시 동일한 5단계 값을 넣어야 함(핵심 개발 원칙 9번) */
+html { font-size: 19px; }
+html[data-fontsize="xs"] { font-size: 15px; }
+html[data-fontsize="sm"] { font-size: 17px; }
+html[data-fontsize="lg"] { font-size: 21px; }
+html[data-fontsize="xl"] { font-size: 23px; }
 
 /* ── RESET & ROOT ── */
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -412,12 +416,17 @@ h1, h2, h3, .sec {
 
 /* v0.0.7: 설정 탭 — 글자 크기 3단 버튼(작게/보통/크게) */
 .fontsize-seg {
-  display: flex; flex-shrink: 0; background: #F3EDF6; border-radius: 20px; padding: 3px;
+  display: flex; background: #F3EDF6; border-radius: 20px; padding: 3px;
 }
+/* v0.0.8: 3단→5단으로 늘어나면서 install-link 한 줄에 다 안 들어가 별도 줄로 뺌(js/fontSize.js) —
+   버튼 5개가 한 줄에 들어가도록 각 버튼 폭을 균등 분배하고 글자를 더 작게 */
+.fontsize-seg-5 { margin-top: 8px; }
+.fontsize-seg-5 .fontsize-seg-btn { flex: 1; font-size: .58rem; padding: 7px 2px; }
 .fontsize-seg-btn {
   border: none; background: transparent; color: var(--txl);
   font-size: .66rem; font-weight: 800; font-family: inherit;
   padding: 5px 10px; border-radius: 16px; cursor: pointer; transition: all .2s;
+  white-space: nowrap;
 }
 .fontsize-seg-btn.on {
   background: linear-gradient(135deg, #F06292, #9C27B0); color: #fff;
@@ -480,8 +489,11 @@ h1, h2, h3, .sec {
   .fg2             { grid-template-columns: 1fr; }
 
   /* Sprint 28: 모바일에서는 대시보드 카드 2열이 좁아서 글자가 잘려 보인다는 피드백 —
-     1열로 쌓아서 카드마다 폭을 넉넉하게 확보 */
-  .dash-grid       { grid-template-columns: 1fr; }
+     1열로 쌓아서 카드마다 폭을 넉넉하게 확보
+     v0.0.8: "은유 오늘"·"체크리스트"는 모바일에서도 첫 줄에 나란히 보이면 좋겠다는 요청 —
+     2열 그리드로 되돌리되, 3번째 카드(다음 일정)부터는 한 줄 전체를 차지하도록 함 */
+  .dash-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dash-grid > .dash-card:nth-child(n+3) { grid-column: 1 / -1; }
 }
 
 /* ═══════════════════════════════════════════════════
@@ -532,3 +544,19 @@ html[data-theme="dark"] .mo { background: rgba(0,0,0,.6); }
 html[data-theme="dark"] .fontsize-seg { background: #2A2733; }
 html[data-theme="dark"] .notif-window-row { border-top-color: rgba(255,255,255,.1); }
 html[data-theme="dark"] .notif-window-row select { border-color: rgba(255,255,255,.12); }
+
+/* v0.0.8: "아직도 흰 배경이 많다"는 피드백으로 대대적으로 추가 보정 —
+   변수 대신 밝은 회색·파스텔 색을 하드코딩해뒀던 카드형 요소들을 전부 찾아서 어둡게 */
+html[data-theme="dark"] .ad-fallback { background: linear-gradient(135deg, #2A2430, #251F2C); border-color: #3A2E3C; }
+html[data-theme="dark"] .ci,
+html[data-theme="dark"] .gov-cl-item,
+html[data-theme="dark"] .growth-record-item { background: #241F2C; }
+html[data-theme="dark"] .ci:hover { background: #2A232F; border-color: #3A2E3C; }
+html[data-theme="dark"] .gov-cl-item:hover { background: #26302A; border-color: #2E4A3A; }
+html[data-theme="dark"] .gov-cl-item.gov-cl-urgent { background: #3A2323; }
+html[data-theme="dark"] .gov-cl-item.gov-cl-urgent:hover { background: #442626; }
+html[data-theme="dark"] .auth-tabs { background: #1C1922; }
+html[data-theme="dark"] .progress-bar { background: #2A2733; }
+html[data-theme="dark"] .cl-sb-pct.cl-sb-low { background: #2A2733; color: var(--txl); }
+html[data-theme="dark"] .sp-tab { background: #2A2733; color: var(--txl); }
+html[data-theme="dark"] .cal-nav-btn { border-color: rgba(255,255,255,.1); }

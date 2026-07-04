@@ -30,7 +30,7 @@ const GUIDE = join(ROOT, 'guide');
 const SITE  = 'https://momcal.vercel.app';
 /* v0.0.2: 앱 본체(index.html 최하단)와 반드시 같은 값으로 유지 — 버전을 올릴 땐 이 값과
    index.html의 .site-footer-version 텍스트를 함께 수정해야 함 (PROJECT_SPEC.md 버전 관리 정책 참고) */
-const APP_VERSION = 'v0.0.7';
+const APP_VERSION = 'v0.0.8';
 
 /* 정부지원 데이터는 {preg, postpartum, parenting} 키의 배열이라 체크리스트와 형태가 달라
    가이드 페이지용 카테고리 배열로 한 번 변환해준다. */
@@ -68,11 +68,15 @@ const searchIndex = buildSearchIndex();
 function head(title, desc, path, jsonLd) {
   return `<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!-- v0.0.7: 설정 탭에서 고른 글자 크기를 CSS 로드 전에 미리 적용 — 앱 본체 index.html과 동일한 방식 -->
+<!-- v0.0.7: 설정 탭에서 고른 글자 크기를 CSS 로드 전에 미리 적용 — 앱 본체 index.html과 동일한 방식
+     v0.0.8: 다크 모드도 같은 방식으로 추가 -->
 <script>
   try {
+    if (localStorage.getItem('momcal_theme') === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
     var fs = localStorage.getItem('momcal_fontsize');
-    if (fs === 'sm' || fs === 'lg') document.documentElement.setAttribute('data-fontsize', fs);
+    if (fs && fs !== 'md') document.documentElement.setAttribute('data-fontsize', fs);
   } catch (e) {}
 </script>
 <title>${title}</title>

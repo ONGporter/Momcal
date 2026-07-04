@@ -3,11 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!-- v0.0.7: 설정 탭에서 고른 글자 크기를 CSS 로드 전에 미리 적용 — 앱 본체 index.html과 동일한 방식 -->
+<!-- v0.0.7: 설정 탭에서 고른 글자 크기를 CSS 로드 전에 미리 적용 — 앱 본체 index.html과 동일한 방식
+     v0.0.8: 다크 모드도 같은 방식으로 추가 -->
 <script>
   try {
+    if (localStorage.getItem('momcal_theme') === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
     var fs = localStorage.getItem('momcal_fontsize');
-    if (fs === 'sm' || fs === 'lg') document.documentElement.setAttribute('data-fontsize', fs);
+    if (fs && fs !== 'md') document.documentElement.setAttribute('data-fontsize', fs);
   } catch (e) {}
 </script>
 <title>월령별 예방접종 · 국가건강검진 완벽 가이드 (0~5세) | 맘캘 육아정보</title>
@@ -881,7 +885,7 @@
     <a href="../contact.html">✉️ 문의</a>
     <a href="https://momcal.vercel.app/">🏠 앱으로</a>
   </div>
-  <div class="site-footer-version">맘캘 MomCal v0.0.7</div>
+  <div class="site-footer-version">맘캘 MomCal v0.0.8</div>
 </footer>
 <a href="#" class="g-top-btn" aria-label="맨 위로">↑</a>
 <script>

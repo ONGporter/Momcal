@@ -4,14 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <!-- v0.0.5: 다크 모드 저장값을 CSS 로드 전에 미리 적용 — 밝은 화면이 잠깐 번쩍이는 현상(FOUC) 방지
-     v0.0.7: 글자 크기 설정(momcal_fontsize)도 같은 방식으로 미리 적용 -->
+     v0.0.7: 글자 크기 설정(momcal_fontsize)도 같은 방식으로 미리 적용
+     v0.0.8: 글자 크기가 5단계(xs/sm/md/lg/xl)로 늘어나면서 조건을 "md가 아니면 적용"으로 단순화 -->
 <script>
   try {
     if (localStorage.getItem('momcal_theme') === 'dark') {
       document.documentElement.setAttribute('data-theme', 'dark');
     }
     var fs = localStorage.getItem('momcal_fontsize');
-    if (fs === 'sm' || fs === 'lg') {
+    if (fs && fs !== 'md') {
       document.documentElement.setAttribute('data-fontsize', fs);
     }
   } catch (e) {}
@@ -403,7 +404,7 @@
     <a href="./terms.html">📄 이용약관</a>
     <a href="./contact.html">✉️ 문의</a>
   </div>
-  <div class="site-footer-version">맘캘 MomCal v0.0.7</div>
+  <div class="site-footer-version">맘캘 MomCal v0.0.8</div>
 </footer>
 
 <!-- ════════════════════════════════════

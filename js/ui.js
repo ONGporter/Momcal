@@ -100,8 +100,10 @@ export function renderDashboard() {
 
   el.innerHTML = [
     dashAgeCard(child),
-    dashNextEventCard(child),
+    // v0.0.8: "은유 오늘"과 "체크리스트"를 나란히 첫 줄에 보이도록 순서 변경
+    // (데스크톱 2열 그리드에서 바로 옆에 오게 됨 — css/main.css .dash-grid 참고)
     dashChecklistCard(child),
+    dashNextEventCard(child),
     dashGrowthCard(child),
     dashVaxCard(child),
     dashTipCard(),
