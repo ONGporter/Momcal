@@ -301,6 +301,18 @@ h1, h2, h3, .sec {
 .install-txt   { flex: 1; min-width: 0; }
 .install-title { font-size: .87rem; font-weight: 900; color: var(--tx); }
 .install-sub   { font-size: .71rem; color: var(--txl); font-weight: 700; margin-top: 2px; }
+
+/* v0.0.6: 설정 탭이 너무 크다는 피드백 — 홈 화면의 "어플로 추가" 카드(.install-link 공용 클래스)는
+   그대로 두고, 설정 탭(#pg-settings) 안에서만 카드 크기·글자 크기·여백을 확 줄임 */
+#pg-settings .sec { font-size: .72rem; margin-bottom: 8px; }
+#pg-settings .sec + .sec,
+#pg-settings > div[id$="Wrap"] + .sec { margin-top: 14px; }
+#pg-settings .install-link { padding: 9px 12px; gap: 9px; border-radius: 13px; }
+#pg-settings .install-ico  { width: 28px; height: 28px; border-radius: 8px; font-size: .85rem; }
+#pg-settings .install-title { font-size: .76rem; }
+#pg-settings .install-sub   { font-size: .62rem; margin-top: 0; }
+#pg-settings .notif-toggle-btn { font-size: .58rem; padding: 4px 9px; }
+#pg-settings #notifSettingsWrap { margin-top: 6px; }
 .install-arrow { font-size: 1.3rem; color: var(--pk); font-weight: 900; flex-shrink: 0; }
 
 /* ── 광고 슬롯 (Sprint 13) ──

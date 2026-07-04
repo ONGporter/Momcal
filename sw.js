@@ -9,8 +9,8 @@
  * Firebase 등 외부 도메인 요청(인증·데이터 동기화)은 건드리지 않고 그대로 통과시킵니다.
  */
 
-// v0.0.5: 설정 탭·다크모드·폰트 교체 등 다수 CSS/JS 변경 — 캐시 버전 상향
-const CACHE_NAME = 'momcal-shell-v11';
+// v0.0.6: 육아정보 인트로/안내문구 폰트 통일, 설정 탭 축소 — 캐시 버전 상향
+const CACHE_NAME = 'momcal-shell-v12';
 
 const APP_SHELL = [
   './',

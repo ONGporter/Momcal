@@ -36,6 +36,7 @@
 .growth-disclaimer {
   margin-top: 12px; font-size: .68rem; color: var(--txl); font-weight: 700;
   line-height: 1.6; background: #F8F4FA; border-radius: 10px; padding: 8px 11px;
+  font-family: 'OmyuPretty', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif; /* v0.0.6: 정보 글 폰트 통일 */
 }
 
 /* ── Sprint 29: 성장 예측 카드 ── */

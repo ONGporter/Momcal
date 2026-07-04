@@ -115,6 +115,7 @@ a:hover { text-decoration: underline; }
 .g-intro {
   background: var(--card); border-radius: var(--radius); box-shadow: var(--card-shadow);
   padding: 20px 22px; margin-bottom: 26px; font-size: .88rem; color: var(--tx); font-weight: 600;
+  font-family: 'OmyuPretty', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif; /* v0.0.6: 정보 글 폰트 통일 */
 }
 
 /* ── 허브 페이지: 카테고리 카드 ── */
@@ -276,6 +277,7 @@ a:hover { text-decoration: underline; }
 .g-disclaimer {
   font-size: .74rem; color: var(--txl); background: #F5F0F6; border-radius: 12px;
   padding: 12px 14px; margin-bottom: 24px; line-height: 1.6;
+  font-family: 'OmyuPretty', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif; /* v0.0.6: 정보 글 폰트 통일 */
 }
 
 /* ── 푸터 ── */
