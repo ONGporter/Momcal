@@ -69,37 +69,28 @@ background: linear-gradient(135deg, #F06292, #9C27B0);
 ## 타이포그래피
 
 ```css
-/* "맘캘" 로고(워드마크 전용) */
-font-family: 'Paperlogy', 'Pretendard', sans-serif;
-font-weight: 700; /* Bold */
-
-/* 제목(h1/h2/h3/.sec) · 본문 */
-font-family: 'Pretendard', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
-font-weight: 700; /* 제목 Bold */ /* 본문은 400 Regular */
-
-/* 버튼 */
-font-family: 'Pretendard', ...; /* body에서 상속 */
-font-weight: 600; /* SemiBold */
+/* 제목·본문·버튼·"맘캘" 로고 — 전부 동일 (v0.0.3부터) */
+font-family: 'OwnglyphParkDahyun', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+font-weight: 400; /* Regular만 존재 — Bold 파일 없음 */
 ```
 
-- **"맘캘" 로고**: Paperlogy Bold — `.logo`/`.auth-logo`/`.g-logo`에만 적용됨 (브랜드 워드마크 전용, v0.0.2에서 제목과 분리)
-- **제목**: Pretendard Bold — `h1`, `h2`, `h3`, `.sec`(섹션 라벨)에 적용됨 (v0.0.2에서 Paperlogy→Pretendard로 변경, 본문과 통일감 있게)
-- **본문**: Pretendard Regular — `body`에 기본 적용, 대부분의 텍스트가 상속받음
-- **버튼**: Pretendard SemiBold — `.btn`/`.st-btn`/`.g-btn`/`.np`(nav pill) 등 공용 버튼 클래스에 적용됨
-- 둘 다 무료 상업용 폰트(SIL OFL)이며 jsDelivr CDN으로 로드함(`@import`) — Google Fonts에는 없는 폰트라 별도 CDN 사용
-- ⚠️ 앱 전체의 모든 개별 요소(수백 곳의 인라인 스타일 font-weight)를 다 SemiBold로 통일하지는 않았음 — 새로 만드는 버튼/제목류는 위 규칙을 따르고, 기존에 이미 있던 요소 중 안 바뀐 곳이 있으면 개별적으로 알려주면 조정 가능
-- ⚠️ **앱 본체(`css/main.css`)와 육아정보 페이지(`guide/guide.css`)는 별도 파일이라 폰트 규칙이 자동으로 동기화되지 않음** — 폰트를 바꿀 땐 항상 두 파일을 함께 수정할 것 (PROJECT_SPEC.md "핵심 개발 원칙" 9번 참고)
+- **v0.0.3부터 폰트 하나로 통일**: 옹짐꾼님이 제공한 손글씨 폰트 "온글잎 박다현체"(Ownglyph PDH)를 제목·본문·버튼·로고 구분 없이 전부 사용. 이전처럼 로고/제목/본문/버튼마다 다른 폰트를 쓰던 방식(Paperlogy+Pretendard)을 완전히 그만둠
+- **파일 위치**: `fonts/OwnglyphParkDahyun.ttf` — 외부 CDN이 아니라 프로젝트에 직접 포함된 파일이며, `css/main.css`와 `guide/guide.css`에 각각 `@font-face`로 선언되어 있음(두 파일이 별도 스타일시트라 폰트를 바꿀 땐 항상 같이 수정 필요)
+- **Bold 파일 없음**: 이 폰트는 Regular 굵기만 제공됨. 브라우저가 임의로 두껍게 그리는 faux bold를 방지하기 위해, 원래 Bold였던 제목(`h1~h3`/`.sec`)·로고(`.logo`/`.auth-logo`/`.g-logo`)·버튼(`.btn`/`.st-btn`/`.g-btn`/`.np`)도 전부 `font-weight: normal`로 맞춰둠. 손글씨체 특성상 안 굵어도 다른 텍스트와 충분히 구분됨
+- **한글 글자 수 제한**: 온글잎 폰트는 실사용 빈도가 높은 한글 2,780자만 지원함(전체 한글 11,172자 중 일부). 희귀한 한자어·이름 등 특수 글자를 쓰면 해당 글자만 시스템 기본 폰트로 대체되어 보일 수 있음 — 실제로 깨지는 곳이 보이면 캡처해서 알려주면 확인 가능
+- 라이선스: 온글잎이 제작·배포하는 폰트는 영리적·상업적 사용 포함 모든 용도에 제한 없이 사용 가능(저작권은 (주)보이저엑스에 있음) — AdSense 수익화 목적에도 문제 없음
+- ⚠️ **앱 본체(`css/main.css`)와 육아정보 페이지(`guide/guide.css`)는 별도 파일이라 폰트 규칙이 자동으로 동기화되지 않음** — 폰트를 바꿀 땐 항상 두 파일(`@font-face` 선언 포함)을 함께 수정할 것 (PROJECT_SPEC.md "핵심 개발 원칙" 9번 참고)
 
 | 용도 | size | weight |
 |------|------|--------|
-| 페이지 제목 | 1.1~1.55rem | 700 (Pretendard Bold) |
-| 카드 제목 | 0.9~0.97rem | 900 |
-| 본문 | 0.84~0.88rem | 400 (Pretendard Regular) |
-| 보조 텍스트 | 0.71~0.78rem | 700 |
-| 배지/태그 | 0.58~0.72rem | 800 |
-| 섹션 라벨 | 0.82rem | 700 (Pretendard Bold), uppercase |
-| 버튼 | - | 600 (Pretendard SemiBold) |
-| "맘캘" 로고 워드마크 | 1.5rem(topbar/육아정보) · 1.85rem(로그인 화면) | 700 (Paperlogy Bold) |
+| 페이지 제목 | 1.1~1.55rem | 400 (Regular, Bold 파일 없음) |
+| 카드 제목 | 0.9~0.97rem | 400 (동일 폰트에서는 900 지정해도 렌더링상 큰 차이 없음) |
+| 본문 | 0.84~0.88rem | 400 (Regular) |
+| 보조 텍스트 | 0.71~0.78rem | 400 |
+| 배지/태그 | 0.58~0.72rem | 400 |
+| 섹션 라벨 | 0.82rem | 400, uppercase |
+| 버튼 | - | 400 |
+| "맘캘" 로고 워드마크 | 1.5rem(topbar/육아정보) · 1.85rem(로그인 화면) | 400 |
 
 ### 참고 — 폰트 실험 이력
 - Sprint 22: 로고에 Fredoka 시도 → 한글 미지원이라 실제로는 적용 안 됨(무효)
@@ -107,8 +98,9 @@ font-weight: 600; /* SemiBold */
 - Sprint 27: 윤고딕 요청(상업용 폰트라 무료 CDN 불가) → Nunito로 전체 원복
 - Sprint 28: 로고에만 Jua 재적용
 - v0.0.1(Sprint 29): 제목·로고는 Paperlogy Bold, 본문은 Pretendard Regular, 버튼은 Pretendard SemiBold로 정착
-- **v0.0.2**: 제목(h1~h3/`.sec`)만 Pretendard Bold로 다시 변경 — 로고(워드마크)는 Paperlogy Bold 그대로 유지. "제목 폰트가 로고랑 안 어울린다"는 피드백 반영. 이때부터 "Sprint" 대신 "버전"(v0.0.x) 명칭 사용
-- 윤고딕처럼 무료 CDN에 없는 유료 폰트를 쓰려면 라이선스 구매 후 폰트 파일(.woff2 등)을 직접 전달해주셔야 프로젝트에 넣을 수 있습니다.
+- v0.0.2: 제목(h1~h3/`.sec`)만 Pretendard Bold로 다시 변경 — 로고(워드마크)는 Paperlogy Bold 그대로 유지. "제목 폰트가 로고랑 안 어울린다"는 피드백 반영. 이때부터 "Sprint" 대신 "버전"(v0.0.x) 명칭 사용
+- **v0.0.3**: 옹짐꾼님이 폰트 파일(온글잎 박다현체)을 직접 제공 — Paperlogy+Pretendard 조합을 완전히 버리고 이 폰트 하나로 전면 통일. 외부 CDN 대신 프로젝트에 폰트 파일을 직접 포함하는 방식은 이번이 처음
+- 앞으로 다른 폰트로 또 바꾸고 싶다면, 무료 CDN에 있는 폰트는 이름만 알려줘도 되고, 유료/커스텀 폰트는 이번처럼 파일(.ttf/.otf/.woff2)을 직접 전달해주면 적용 가능. Bold 등 여러 굵기가 필요하면 해당 굵기 파일도 함께 주는 게 좋음(없으면 이번처럼 전부 Regular로 통일)
 
 ---
 

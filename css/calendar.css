@@ -170,8 +170,8 @@
   padding: 7px 14px;
   border-radius: 40px;
   font-size: .8rem;
-  font-weight: 800;
-  font-family: 'Pretendard', sans-serif; /* v0.0.2: 폰트 교체 때 빠졌던 Nunito 잔재 수정 */
+  font-weight: 400;
+  font-family: 'OwnglyphParkDahyun', sans-serif; /* v0.0.3: 온글잎 박다현체로 전면 교체 */
   pointer-events: none;
   box-shadow: 0 6px 20px rgba(200,80,180,.35);
   white-space: nowrap;

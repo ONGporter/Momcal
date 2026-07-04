@@ -421,7 +421,7 @@ function renderChart(child, metric) {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { position: 'bottom', labels: { font: { size: 11, family: 'Pretendard' }, boxWidth: 12 } },
+        legend: { position: 'bottom', labels: { font: { size: 11, family: 'OwnglyphParkDahyun' }, boxWidth: 12 } },
         tooltip: {
           callbacks: {
             title: (items) => `생후 ${items[0]?.parsed.x ?? ''}일`,

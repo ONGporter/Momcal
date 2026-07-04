@@ -9,9 +9,8 @@
  * Firebase 등 외부 도메인 요청(인증·데이터 동기화)은 건드리지 않고 그대로 통과시킵니다.
  */
 
-// Sprint 29: 폰트 전면 교체(Paperlogy/Pretendard), 캘린더 타임존 버그 수정, 알림 기능 추가 등
-// 다수 파일이 바뀌어서 캐시 버전을 올림
-const CACHE_NAME = 'momcal-shell-v8'; // v0.0.2: 아이콘·CSS·JS 변경으로 캐시 버전 상향
+// v0.0.3: 폰트를 전면 교체(온글잎 박다현체)하고 폰트 파일을 앱쉘에 추가 — 캐시 버전을 올림
+const CACHE_NAME = 'momcal-shell-v9';
 
 const APP_SHELL = [
   './',
@@ -54,6 +53,7 @@ const APP_SHELL = [
   './icons/icon-512-maskable.png',
   './icons/apple-touch-icon.png',
   './icons/logo-mark.png',
+  './fonts/OwnglyphParkDahyun.ttf', // v0.0.3: 커스텀 폰트 추가 — 오프라인에서도 폰트가 깨지지 않도록 미리 캐싱
 ];
 
 self.addEventListener('install', (event) => {

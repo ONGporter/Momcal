@@ -39,7 +39,7 @@
 - **Frontend**: Vanilla JS (ES6 Module), HTML5, CSS3
 - **Backend**: Firebase Auth + Cloud Firestore
 - **배포**: GitHub Push → Vercel 자동 배포
-- **폰트**: 제목·"맘캘" 로고는 Paperlogy Bold, 본문은 Pretendard Regular, 버튼은 Pretendard SemiBold (둘 다 무료 상업용 폰트, jsDelivr CDN — Sprint 29에서 여러 폰트 실험 끝에 정착)
+- **폰트**: 옹짐꾼님이 제공한 손글씨 폰트 "온글잎 박다현체"(Ownglyph PDH, 상업적 이용 무료) 하나로 통일 — 제목·본문·버튼·로고 전부 동일. `fonts/OwnglyphParkDahyun.ttf` 파일을 `@font-face`로 직접 서빙(외부 CDN 아님). Regular 굵기만 제공되어 굵게 표시가 필요한 곳도 `font-weight: normal`로 고정함(v0.0.3, 이전 Paperlogy+Pretendard 조합에서 교체)
 - **아이콘**: 이모지 전용 (외부 아이콘 라이브러리 없음)
 - **차트**: Chart.js (CDN, jsDelivr 폴백)
 - **PWA**: manifest.json + sw.js (홈 화면 설치·오프라인 앱 셸 캐싱)
@@ -72,6 +72,8 @@ momcal/
 │   ├── apple-touch-icon.png
 │   ├── logo-mark.png          # 로고 옆 인라인용 마스코트 이미지, 배경 투명 (Sprint 24)
 │   └── og-image.png          # 소셜 공유 미리보기 이미지 1200x630 (Sprint 14 생성, Sprint 22에서 마스코트 캐릭터로 교체)
+├── fonts/
+│   └── OwnglyphParkDahyun.ttf  # 커스텀 폰트 "온글잎 박다현체" (v0.0.3, 옹짐꾼님 제공, 상업적 이용 무료) — css/main.css·guide/guide.css에서 @font-face로 각자 로드
 ├── css/
 │   ├── main.css             # 전역 스타일, topbar, 대시보드, 광고 슬롯, 설치/공유 링크
 │   ├── auth.css              # 로그인 화면, 유저 메뉴
@@ -287,7 +289,7 @@ momcal/
 7. **window 노출 규칙** — 인라인 onclick에서 쓰는 함수는 모듈 하단에 `window.xxx = xxx`
 8. **ES6 Module 사용** — `type="module"`, `import/export` 일관 적용
 9. **앱 본체·육아정보 페이지(`guide/`) 동시 적용 원칙 (v0.0.2 추가)** — 앱은 `index.html`(SPA)과 `guide/*.html`(정적 페이지, `scripts/build-guide.mjs`로 생성) 두 갈래로 나뉘어 있고 스타일시트도 각각 `css/main.css`/`guide/guide.css`로 분리돼 있어서, 한쪽만 고치고 다른 쪽을 빼먹기 쉬움. **아래 항목을 변경할 땐 반드시 양쪽을 함께 확인·수정할 것**:
-   - 폰트(제목/본문/버튼 font-family), 색상 팔레트, 로고·마스코트(`.logo`/`.g-logo`, `.brand-mark`) 크기
+   - 폰트(제목/본문/버튼 font-family, `fonts/` 아래 커스텀 폰트 파일과 `@font-face` 선언), 색상 팔레트, 로고·마스코트(`.logo`/`.g-logo`, `.brand-mark`) 크기
    - 버전 표시(`.site-footer-version`) — 위 "버전 관리 정책" 참고
    - 하단 푸터 구성(`.site-footer`/`.site-footer-links`) — 링크 목록·아이콘·순서가 서로 달라지지 않도록 함
    - 공용 아이콘 이미지(`icons/` 아래 파일들)
@@ -366,3 +368,4 @@ momcal/
 | 버전 | 주요 기능 |
 |:---:|------|
 | v0.0.2 | 앱 아이콘(`icon-192`/`icon-512`/`apple-touch-icon`/마스커블 2종) 내 마스코트를 더 크게 재제작, topbar·육아정보 헤더의 "맘캘" 로고 글씨 확대(마스코트 크기에 맞춤), 제목(h1~h3/`.sec`) 폰트를 Paperlogy→Pretendard Bold로 재변경(로고는 Paperlogy 유지), 앱 본체·육아정보 페이지 하단 푸터를 동일한 구조(`.site-footer`)로 통일하고 육아정보 페이지에도 버전 표시 추가, 성장그래프 X축 반올림 단위를 5/20/50/100일로 세분화(신생아 등 생후 일수가 작을 때도 70% 지점 규칙이 정확히 맞도록), 성장그래프의 실측 데이터·상하위 10% 밴드 배경 채우기 제거 후 선/점선/색상만으로 구분(하위 10%는 민트색으로 변경해 상위 10%와 구분), 그래프에 "한 달 뒤 예상" 점선 추가, 알림 끄기/켜기 토글 추가, 폰트 교체 때 남아있던 `Nunito` 잔재(캘린더 드래그 고스트, 그래프 범례) 정리 |
+| v0.0.3 | 옹짐꾼님이 제공한 손글씨 폰트 "온글잎 박다현체"로 전면 교체 — Paperlogy+Pretendard 조합을 완전히 대체하고 제목/본문/버튼/로고 전부 하나의 폰트로 통일(외부 CDN 대신 `fonts/OwnglyphParkDahyun.ttf` 직접 서빙). Bold 파일이 없어 관련 요소들을 `font-weight: normal`로 조정, 서비스워커 앱쉘에 폰트 파일 추가 및 캐시 버전 상향(`v8`→`v9`) |
