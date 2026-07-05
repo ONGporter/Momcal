@@ -805,35 +805,27 @@ function evPriority(e) {
 }
 
 /**
- * v0.0.13 버그 수정: 주간 뷰 시간대별 배치
+ * v0.0.14: 주간 뷰 — "종일" 행 신설 + 시작~종료 구간 전체 색칠
  *
- * 기존엔 각 시간 칸(0/6/8/10/…/22시)마다 "그 날짜의 이벤트"를 필터링 없이 전부 다시
- * 그려서, 시작·종료 시간을 넣어도 하루 종일 모든 시간 칸에 똑같이 나타났음
- * (원인: evs.filter(e => e.date === ds)에 날짜만 있고 시간 조건이 없었음).
- *
- * 이제 제목 맨 앞의 "HH:MM" 또는 "HH:MM~HH:MM" 프리픽스(js/calendar.js의 addCustomEv()가
- * 붙여줌)에서 시작 시각을 읽어와, 그 시각이 속하는 시간 칸에만 표시되도록 함.
- * 시간이 없는 이벤트(예방접종·건강검진 등 대부분의 자동 일정)는 맨 위 "0시" 칸에 모아서
- * 보여줌(하루 종일 일정 취급) — 여러 칸에 걸치는 것까지는 지원하지 않고 시작 시각
- * 기준 한 칸에만 표시함(복잡한 기능보다 사용성 우선 원칙에 따른 단순화).
+ * v0.0.13에서는 제목 앞 "HH:MM" 시작 시각만 읽어 그 시각이 속하는 한 칸에만 표시했는데,
+ * 이번엔 옹짐꾼님 요청으로 두 가지를 개선함:
+ * 1. 시간이 없는 이벤트(예방접종·건강검진 등 대부분의 자동 일정)와 스티커는 시간 그리드
+ *    맨 위의 별도 "종일" 행으로 옮김 (기존엔 0시 칸에 섞여 있었고, 스티커는 심지어
+ *    모든 시간 칸에 중복 표시되는 버그도 있었음)
+ * 2. "10:00~14:00"처럼 종료 시간이 있는 일정은 겹치는 모든 시간 칸에 색이 쭉 이어지도록
+ *    표시(getEvTimeRangeMinutes로 구간을 구해서, 각 시간 칸과 겹치는지(overlap) 판정).
+ *    두 일정이 겹치면 기존 방식 그대로 우선순위 높은 쪽 색 + "+N" 표시로 처리.
  */
 const WEEK_HOUR_SLOTS = [0, 6, 8, 10, 12, 14, 16, 18, 20, 22];
 
-function getEvStartMinutes(ev) {
-  const m = (ev.title || '').match(/^(\d{2}):(\d{2})/);
+/** 제목 앞 "HH:MM" 또는 "HH:MM~HH:MM" 프리픽스에서 [시작,종료) 분 단위 구간을 추출.
+ *  시간 정보가 없으면 null(=주간 뷰 "종일" 행 대상). 종료 시간이 없으면 1분짜리 구간으로 취급. */
+function getEvTimeRangeMinutes(ev) {
+  const m = (ev.title || '').match(/^(\d{2}):(\d{2})(?:~(\d{2}):(\d{2}))?/);
   if (!m) return null;
-  return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
-}
-
-function getWeekHourSlot(ev) {
-  const mins = getEvStartMinutes(ev);
-  if (mins == null) return WEEK_HOUR_SLOTS[0]; // 시간 미지정 → 맨 위 0시 칸(하루 종일 취급)
-  const hour = Math.floor(mins / 60);
-  let slot = WEEK_HOUR_SLOTS[0];
-  for (const s of WEEK_HOUR_SLOTS) {
-    if (hour >= s) slot = s; else break;
-  }
-  return slot;
+  const start = parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+  const end   = m[3] != null ? parseInt(m[3], 10) * 60 + parseInt(m[4], 10) : start + 1;
+  return { start, end };
 }
 
 function esc(str) {
@@ -908,11 +900,57 @@ function renderWeekView() {
       </div>
       <div style="display:grid;grid-template-columns:44px repeat(7,1fr)">`;
 
-  [0, 6, 8, 10, 12, 14, 16, 18, 20, 22].forEach(h => {
+  // v0.0.14: "종일" 행 신설 — 시간이 없는 일정(대부분의 자동 일정)과 스티커를 여기로 모음.
+  // 예전엔 이 둘 다 0시 칸을 포함한 모든 시간 칸에 반복 표시되던 버그가 있었음.
+  html += `<div class="week-grid-line" style="font-size:.62rem;color:var(--txl);font-weight:700;padding:8px 4px;text-align:right;border-bottom:1px solid #F5EEF8">종일</div>`;
+  weekDays.forEach(d => {
+    const ds  = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const de  = groupVaxEvents(applyCalFilter(evs.filter(e => e.date === ds && !getEvTimeRangeMinutes(e))));
+    const isTd = ds === td;
+
+    const stickersAll   = S.dayStickers[ds] || [];
+    const foodStickers  = stickersAll.filter(s => FOOD_STICKER_SET.has(s));
+    const otherStickers = stickersAll.filter(s => !FOOD_STICKER_SET.has(s));
+    const stickerHtml = stickersAll.length
+      ? `<div class="sticker-row" style="margin-top:2px">
+          ${foodStickers.slice(0, 2).map(s => `<span class="food-sticker-on-cal">${s}</span>`).join('')}
+          ${otherStickers.slice(0, 3).map(s => `<span class="sticker-on-cal">${s}</span>`).join('')}
+          ${otherStickers.length > 3 ? `<span class="sticker-overflow">+${otherStickers.length - 3}</span>` : ''}
+         </div>`
+      : '';
+
+    html += `
+      <div onclick="selectDate('${ds}')"
+           data-date="${ds}"
+           class="week-grid-line${isTd ? ' week-today-cell' : ''}"
+           ondragover="onDragOver(event)"
+           ondragleave="onDragLeave(event)"
+           ondrop="onDrop(event,'${ds}')"
+           style="border-left:1px solid #F5EEF8;border-bottom:1px solid #F5EEF8;
+                  padding:3px;cursor:pointer;background:${isTd ? th.cell : 'var(--wh)'};transition:background .14s"
+           onmouseover="this.style.background='var(--pkl)'"
+           onmouseout="this.style.background='${isTd ? th.cell : 'var(--wh)'}'">
+        ${renderCellEvents(de)}
+        ${stickerHtml}
+      </div>`;
+  });
+
+  // v0.0.14: 시간대별 행 — 이제 "그 시각에 시작하는 일정"만 보여주는 게 아니라, 시작~종료
+  // 구간이 그 행의 시간대와 조금이라도 겹치면 표시한다. 그 덕에 "10시~14시"처럼 종료 시간을
+  // 넣은 일정은 10시·12시 행 모두에 걸쳐 색이 쭉 칠해진 것처럼 보인다. 두 일정이 겹치면
+  // 우선순위가 높은 쪽 색으로 대표 표시하고 "+N"으로 나머지 개수를 보여준다(기존 방식 그대로).
+  WEEK_HOUR_SLOTS.forEach((h, hi) => {
+    const slotStart = h * 60;
+    const slotEnd   = (WEEK_HOUR_SLOTS[hi + 1] ?? 24) * 60;
+
     html += `<div class="week-grid-line" style="font-size:.62rem;color:var(--txl);font-weight:700;padding:8px 4px;text-align:right;border-bottom:1px solid #F5EEF8">${h}시</div>`;
     weekDays.forEach(d => {
       const ds   = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      const de   = groupVaxEvents(applyCalFilter(evs.filter(e => e.date === ds && getWeekHourSlot(e) === h)));
+      const de   = groupVaxEvents(applyCalFilter(evs.filter(e => {
+        if (e.date !== ds) return false;
+        const tr = getEvTimeRangeMinutes(e);
+        return tr && tr.start < slotEnd && tr.end > slotStart;
+      })));
       const isTd = ds === td;
       html += `
         <div onclick="selectDate('${ds}')"
@@ -936,9 +974,8 @@ function renderWeekView() {
             const clickAttr = primary._isVaxGroup ? '' : `onclick="event.stopPropagation();openEvModal(${primary._idx})"`;
             const doneCss = primary.done ? 'text-decoration:line-through;opacity:.55;' : '';
             const extra = de.length > 1 ? `<div style="font-size:.5rem;color:var(--txl)">+${de.length - 1}</div>` : '';
-            return `<div class="ev-line" style="font-size:.66rem;background:${bg};color:${color};${doneCss}" ${clickAttr}>${label}</div>${extra}`;
+            return `<div class="ev-line" style="font-size:.66rem;background:${bg};color:${color};height:100%;${doneCss}" ${clickAttr}>${label}</div>${extra}`;
           })()}
-          ${(S.dayStickers[ds] || []).slice(0, 1).map(s => `<span style="font-size:.78rem">${s}</span>`).join('')}
         </div>`;
     });
   });

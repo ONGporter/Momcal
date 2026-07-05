@@ -54,6 +54,15 @@
 
 .badge-r { display: inline-block; background: #FFEBEE; color: #C62828; font-size: .58rem; font-weight: 800; padding: 2px 6px; border-radius: 7px; margin-left: 4px; }
 .badge-o { display: inline-block; background: #E0F2F1; color: #00695C; font-size: .58rem; font-weight: 800; padding: 2px 6px; border-radius: 7px; margin-left: 4px; }
+/* v0.0.14: 사용자가 직접 추가한 체크리스트 항목 표시 + 항목 추가 버튼 */
+.badge-custom { display: inline-block; background: var(--pul); color: #5B4FCF; font-size: .58rem; font-weight: 800; padding: 2px 6px; border-radius: 7px; margin-left: 4px; }
+.cl-add-item-btn {
+  display: block; width: 100%; margin-top: 10px; padding: 12px;
+  background: none; border: 1.5px dashed #E0C8D8; border-radius: 14px;
+  color: var(--txl); font-family: inherit; font-size: .8rem; font-weight: 800;
+  cursor: pointer; transition: all .15s;
+}
+.cl-add-item-btn:hover { background: var(--pkl); border-color: var(--pk); color: var(--pkd); }
 
 /* ── 체크리스트 항목 상세 설명 펼치기 (Sprint 14) ── */
 .ci-wrap { margin-bottom: 7px; }

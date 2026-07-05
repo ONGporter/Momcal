@@ -15,6 +15,7 @@ export function emptyState() {
     customEvs:   [],   // 사용자가 직접 추가한 일정
     dayStickers: {},   // { 'YYYY-MM-DD': [emoji, ...] }
     checks:      {},   // { 'childId_catKey': { itemId: true } }
+    customClItems: {}, // v0.0.14: { 'childId_catKey': [{ id, t, r }] } — 사용자가 직접 추가한 체크리스트 항목
     eventMods:   {},   // { 'eventKey': { actualDate, hospital, memo, done } }
     growthRecords: [], // [{ id, childId, date, height, weight, head }] — 성장 기록 (Sprint 4)
     evColors:    {},   // { req, rec, food, vax, gov, custom } — 사용자 지정 일정 색상 (Sprint 21, 없으면 기본색)
@@ -90,6 +91,7 @@ export async function saveState() {
       customEvs:   S.customEvs,
       dayStickers: S.dayStickers,
       checks:      S.checks,
+      customClItems: S.customClItems || {},
       eventMods:   S.eventMods || {},
       growthRecords: S.growthRecords || [],
       evColors:    S.evColors || {},
@@ -216,6 +218,7 @@ export async function createFamily() {
     customEvs:   S.customEvs,
     dayStickers: S.dayStickers,
     checks:      S.checks,
+    customClItems: S.customClItems || {},
     eventMods:   S.eventMods || {},
     growthRecords: S.growthRecords || [],
     evColors:    S.evColors || {},
@@ -268,6 +271,7 @@ export function applyData(data) {
   S.customEvs   = fresh.customEvs   || [];
   S.dayStickers = fresh.dayStickers || {};
   S.checks      = fresh.checks      || {};
+  S.customClItems = fresh.customClItems || {};
   S.eventMods   = fresh.eventMods   || {};
   S.growthRecords = fresh.growthRecords || [];
   S.evColors    = fresh.evColors    || {};

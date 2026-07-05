@@ -29,6 +29,7 @@ import { clData }          from '../data/checklist-data.js';
 import { renderGovChecklistTab } from './govSupport.js';
 import { syncChecklistToCalendar } from './checklistCalendarLink.js';
 import { renderAdSlot } from './adSlot.js';
+import { showModal, cm } from './modal.js';
 
 /* ────────────────────────────────────
  *  점수 계산 유틸
@@ -44,10 +45,14 @@ import { renderAdSlot } from './adSlot.js';
  *       필수 4개 모두 완료 + 선택 2개 모두 → 200%
  * 매번 현재 checks 상태로부터 처음부터 다시 계산하므로, 체크 순서나
  * 체크/해제 이력과 무관하게 항상 "지금 체크된 항목"만 기준으로 정확한 값이 나온다.
+ *
+ * v0.0.14: 세 번째 인자 key를 넘기면 사용자가 직접 추가한 항목(S.customClItems[key])도
+ * 기존 항목과 완전히 똑같은 규칙으로 필수/선택 계산에 합산된다 (getCatItems() 참고).
  */
-export function calcScore(cat, checks) {
-  const reqItems = cat.items.filter(it => it.r);
-  const optItems = cat.items.filter(it => !it.r);
+export function calcScore(cat, checks, key) {
+  const items    = key ? getCatItems(cat, key) : cat.items;
+  const reqItems = items.filter(it => it.r);
+  const optItems = items.filter(it => !it.r);
   const reqDone  = reqItems.filter(it => checks[it.id]).length;
   const optDone  = optItems.filter(it => checks[it.id]).length;
   const reqTotal = reqItems.length;
@@ -64,6 +69,12 @@ export function calcScore(cat, checks) {
     reqDone,
     reqTotal,
   };
+}
+
+/** v0.0.14: 카테고리의 원래 항목 + 사용자가 직접 추가한 항목을 합친 배열 반환 */
+export function getCatItems(cat, key) {
+  const custom = (S.customClItems && S.customClItems[key]) || [];
+  return custom.length ? [...cat.items, ...custom] : cat.items;
 }
 
 /** 점수 → 티어 (필수/선택 완료 개수 기준 — score 임계값이 아닌 실제 완료 여부로 판단) */
@@ -199,24 +210,25 @@ export function getTodayCategoryInfo(child) {
   const cat = cats[idx];
   const key = `${child.id}_${cat.key}`;
   const checks = S.checks[key] || {};
-  const { reqDone, reqTotal, optDone, optTotal } = calcScore(cat, checks);
+  const { reqDone, reqTotal, optDone, optTotal } = calcScore(cat, checks, key);
 
   // v0.0.9: 홈 대시보드 카드용 — 배지 티어 + 다음 추천 항목
   // (다른 대시보드 카드들처럼 강조색 서브 텍스트를 보여주기 위함)
   const tier = getTier(reqDone, reqTotal, optDone, optTotal);
+  const catItems = getCatItems(cat, key);
   let nextItem = null;
   if (tier === null) {
     // 필수 미완료 → 다음 미완료 필수 항목을 추천 (배지를 얻으려면 이것부터)
-    nextItem = cat.items.find(it => it.r && !checks[it.id]) || null;
+    nextItem = catItems.find(it => it.r && !checks[it.id]) || null;
   } else if (tier === 'perfect' || tier === 'master') {
     // 필수는 이미 완료 → 다음 미완료 선택 항목을 추천 (다음 티어로)
-    nextItem = cat.items.find(it => !it.r && !checks[it.id]) || null;
+    nextItem = catItems.find(it => !it.r && !checks[it.id]) || null;
   }
 
   return {
     cat, reqDone, reqTotal, optDone, optTotal, tier, nextItem,
     doneTotal:  reqDone + optDone,
-    itemsTotal: cat.items.length,
+    itemsTotal: catItems.length,
   };
 }
 
@@ -321,7 +333,7 @@ export function renderClSidebar() {
     const key = `${child.id}_${cat.key}`;
     if (!S.checks[key]) S.checks[key] = {};
 
-    const { score, basePct, reqDone, reqTotal, optDone, optTotal } = calcScore(cat, S.checks[key]);
+    const { score, basePct, reqDone, reqTotal, optDone, optTotal } = calcScore(cat, S.checks[key], key);
     const tier = getTier(reqDone, reqTotal, optDone, optTotal);
 
     let pctHtml;
@@ -363,7 +375,7 @@ export function renderClMain() {
   const key = `${child.id}_${cat.key}`;
   if (!S.checks[key]) S.checks[key] = {};
 
-  const { score, basePct, optDone, optTotal, reqDone, reqTotal } = calcScore(cat, S.checks[key]);
+  const { score, basePct, optDone, optTotal, reqDone, reqTotal } = calcScore(cat, S.checks[key], key);
   const tier = getTier(reqDone, reqTotal, optDone, optTotal);
 
   // ── 배지 & 상태 텍스트 ──
@@ -396,9 +408,10 @@ export function renderClMain() {
       ? `<div style="font-size:.68rem;color:#5B4FCF;font-weight:700;margin:-10px 0 14px">🌟 선택 항목까지 체크하면 최대 200%까지 올라가요!</div>`
       : ''
     }
-    ${cat.items.map(it => {
-      const uid     = `${key}_${it.id}`;
-      const checked = !!S.checks[key][it.id];
+    ${getCatItems(cat, key).map(it => {
+      const uid      = `${key}_${it.id}`;
+      const checked  = !!S.checks[key][it.id];
+      const isCustom = it.id.startsWith('custom_');
       return `
       <div class="ci-wrap" id="ciwrap_${uid}">
         <div class="ci ${checked ? 'done' : ''}" onclick="tgCk('${key}','${it.id}')">
@@ -406,10 +419,15 @@ export function renderClMain() {
           <div style="flex:1;min-width:0">
             <div class="ci-title">${it.t}
               ${it.r ? '<span class="badge-r">필수</span>' : '<span class="badge-o">선택</span>'}
+              ${isCustom ? '<span class="badge-custom">내가 추가함</span>' : ''}
             </div>
             ${it.d ? `<div class="ci-desc">${it.d}</div>` : ''}
           </div>
-          ${it.dd ? `
+          ${isCustom ? `
+          <button type="button" class="ci-expand-btn" aria-label="삭제"
+                  onclick="event.stopPropagation();deleteCustomClItem('${key}','${it.id}')">
+            <span class="ci-expand-arrow">✕</span>
+          </button>` : it.dd ? `
           <button type="button" class="ci-expand-btn" aria-label="자세히 보기"
                   onclick="event.stopPropagation();toggleCiDetail('${uid}')">
             <span class="ci-expand-arrow">▾</span>
@@ -417,7 +435,60 @@ export function renderClMain() {
         </div>
         ${it.dd ? `<div class="ci-detail">📖 ${it.dd}</div>` : ''}
       </div>`;
-    }).join('')}`;
+    }).join('')}
+    <button type="button" class="cl-add-item-btn" onclick="openAddClItemModal('${key}')">
+      ＋ 항목 직접 추가하기
+    </button>`;
+}
+
+/**
+ * v0.0.14: 체크리스트 항목 직접 추가
+ * 사용자가 추가한 항목도 기존 항목과 완전히 동일한 규칙(calcScore)으로 필수/선택
+ * 퍼센티지 계산에 들어간다 — getCatItems()가 cat.items와 합쳐서 반환해주기 때문에
+ * 별도 계산 로직을 새로 만들 필요 없이 그대로 반영됨.
+ */
+function openAddClItemModal(key) {
+  showModal('➕ 체크리스트 항목 추가', `
+    <div class="fg" style="margin:0">
+      <label>항목 이름</label>
+      <input id="clNewItemTitle" placeholder="예) 목욕 후 보습제 바르기" maxlength="40">
+    </div>
+    <div class="fg" style="margin-top:10px">
+      <label>필수 여부</label>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <label style="display:flex;align-items:center;gap:5px;font-size:.8rem;font-weight:700;color:var(--tx);cursor:pointer">
+          <input type="radio" name="clNewItemReq" value="1" checked> 필수
+        </label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:.8rem;font-weight:700;color:var(--tx);cursor:pointer">
+          <input type="radio" name="clNewItemReq" value="0"> 선택
+        </label>
+      </div>
+    </div>
+    <button class="btn bpk" style="width:100%;margin-top:16px" onclick="submitAddClItem('${key}')">추가하기</button>
+  `);
+}
+
+function submitAddClItem(key) {
+  const titleInput = document.getElementById('clNewItemTitle');
+  const title = (titleInput?.value || '').trim();
+  if (!title) { alert('항목 이름을 입력해주세요'); return; }
+  const req = document.querySelector('input[name="clNewItemReq"]:checked')?.value === '1';
+
+  if (!S.customClItems[key]) S.customClItems[key] = [];
+  S.customClItems[key].push({ id: `custom_${Date.now()}`, t: title, r: req });
+
+  cm();
+  renderClSidebar(); // 사이드바 %와 메인 화면 함께 갱신
+  debounceSave();
+}
+
+/** 내가 추가한 항목 삭제 (기존 체크리스트 원본 항목은 삭제 불가) */
+function deleteCustomClItem(key, id) {
+  if (!confirm('이 항목을 삭제할까요?')) return;
+  S.customClItems[key] = (S.customClItems[key] || []).filter(it => it.id !== id);
+  if (S.checks[key]) delete S.checks[key][id];
+  renderClSidebar();
+  debounceSave();
 }
 
 /** 체크리스트 항목 상세 설명 펼치기/접기 (Sprint 14) */
@@ -455,3 +526,6 @@ window.renderClMain    = renderClMain;
 window.tgCk            = tgCk;
 window.switchClTab     = switchClTab;
 window.toggleCiDetail  = toggleCiDetail;
+window.openAddClItemModal = openAddClItemModal;
+window.submitAddClItem    = submitAddClItem;
+window.deleteCustomClItem = deleteCustomClItem;
