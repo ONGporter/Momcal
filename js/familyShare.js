@@ -42,9 +42,9 @@ export function renderFamilyShareLink() {
         </div>
       </div>
       <div style="display:flex;gap:8px;margin-top:8px">
-        <button class="btn" style="flex:1;background:var(--pkl);color:var(--pkd);box-shadow:none"
+        <button class="btn family-copy-btn" style="flex:1;box-shadow:none"
                 onclick="copyFamilyCode()">📋 코드 복사</button>
-        <button class="btn" style="flex:1;background:#FFF5F5;color:#E53935;box-shadow:none;border:1px solid #FFCDD2"
+        <button class="btn family-leave-btn" style="flex:1;box-shadow:none"
                 onclick="confirmLeaveFamily()">가족 그룹 나가기</button>
       </div>`;
     return;

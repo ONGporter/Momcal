@@ -10,7 +10,7 @@
  */
 
 // v0.0.12: 일정 시간 범위·공휴일 표시·가족 그룹 공유 등 정적 파일 변경 — 캐시 버전 상향
-const CACHE_NAME = 'momcal-shell-v20';
+const CACHE_NAME = 'momcal-shell-v21';
 
 const APP_SHELL = [
   './',

@@ -289,6 +289,19 @@ h1, h2, h3, .sec {
 .dash-tip { grid-column: 1 / -1; }
 .dash-empty { grid-column: 1 / -1; flex-direction: column; align-items: center; text-align: center; gap: 6px; }
 
+/* v0.0.15: 홈 대시보드 체크리스트 카드 — 필수 100%/필수+선택 100% 달성 시 보이는 작은 배지 칩 */
+.dash-badge-mini {
+  display: inline-block; margin-top: 4px; padding: 2px 8px;
+  font-size: .64rem; font-weight: 800; border-radius: 9px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
+}
+.dash-badge-mini-perfect { background: linear-gradient(135deg, #FFF8E1, #FFF3CD); color: #7B5800; border: 1px solid #FFE082; }
+.dash-badge-mini-master  { background: linear-gradient(135deg, #EDE7F6, #D1C4E9); color: #4A148C; border: 1px solid #CE93D8; }
+.dash-badge-mini-legend  { background: linear-gradient(135deg, #FCE4EC, #F3E5F5, #E3F2FD); color: var(--pkd); border: 1px solid var(--pk); }
+html[data-theme="dark"] .dash-badge-mini-perfect { background: linear-gradient(135deg, var(--yll), #3A2E14); color: #FFD54F; border-color: #5A4A20; }
+html[data-theme="dark"] .dash-badge-mini-master  { background: linear-gradient(135deg, var(--pul), #322A44); color: #CE93D8; border-color: #4A3A5E; }
+html[data-theme="dark"] .dash-badge-mini-legend  { background: linear-gradient(135deg, var(--pkl), var(--pul), var(--bll)); color: var(--pk); border-color: var(--pk); }
+
 /* Sprint 28: 모바일(640px 이하)에서는 1열로 바뀜 — 아래 반응형(RESPONSIVE) 섹션 참고 */
 
 /* ── PWA 설치 링크 (Sprint 12) ── */
@@ -310,6 +323,14 @@ h1, h2, h3, .sec {
 /* v0.0.7: v0.0.6에서 넣었던 "#pg-settings 안 항목 축소" 스타일은 사용자 요청으로 되돌림 —
    실제로 줄이고 싶었던 건 하단 nav-pills의 "설정" 탭 너비였음(아래 .nav-pills 참고) */
 .install-arrow { font-size: 1.3rem; color: var(--pk); font-weight: 900; flex-shrink: 0; }
+
+/* v0.0.15: 가족 그룹 공유 카드의 "코드 복사"/"가족 그룹 나가기" 버튼 —
+   인라인 색상 대신 클래스로 분리해서 다크 모드에서도 잘 보이게 함 */
+.family-copy-btn  { background: var(--pkl); color: var(--pkd); }
+.family-leave-btn { background: #FFF5F5; color: #E53935; border: 1px solid #FFCDD2; }
+html[data-theme="dark"] .family-leave-btn {
+  background: #3A2323; color: #FF8A80; border-color: #5A2E2E;
+}
 
 /* ── 광고 슬롯 (Sprint 13) ──
    AdSense 미연동 시엔 .ad-fallback(육아 팁)이 대신 표시되어 빈 공간이 생기지 않음 */
@@ -607,6 +628,7 @@ html[data-theme="dark"] .auth-close { background: #2A2733; }
 html[data-theme="dark"] .cal-cell.selected { background: var(--pkl) !important; }
 html[data-theme="dark"] .week-today-cell { background: var(--pkl) !important; }
 html[data-theme="dark"] .week-grid-line { border-color: rgba(255,255,255,.08) !important; }
+html[data-theme="dark"] .week-hour-line { border-top-color: rgba(255,255,255,.08); }
 /* 예방접종 그룹 카드 안의 회차별 개별 항목 줄 — 흰 배경(rgba(255,255,255,.6))이 다크에서도
    그대로 밝게 남아 회색 알약처럼 떠 보이던 부분 */
 html[data-theme="dark"] .dp-vax-item-row { background: rgba(255,255,255,.08); }

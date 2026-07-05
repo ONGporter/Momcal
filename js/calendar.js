@@ -805,18 +805,21 @@ function evPriority(e) {
 }
 
 /**
- * v0.0.14: 주간 뷰 — "종일" 행 신설 + 시작~종료 구간 전체 색칠
+ * v0.0.15: 주간 뷰 시간대 그리드 — 연속 병합 + 겹침 시 좌우 분할로 전면 개편
  *
- * v0.0.13에서는 제목 앞 "HH:MM" 시작 시각만 읽어 그 시각이 속하는 한 칸에만 표시했는데,
- * 이번엔 옹짐꾼님 요청으로 두 가지를 개선함:
- * 1. 시간이 없는 이벤트(예방접종·건강검진 등 대부분의 자동 일정)와 스티커는 시간 그리드
- *    맨 위의 별도 "종일" 행으로 옮김 (기존엔 0시 칸에 섞여 있었고, 스티커는 심지어
- *    모든 시간 칸에 중복 표시되는 버그도 있었음)
- * 2. "10:00~14:00"처럼 종료 시간이 있는 일정은 겹치는 모든 시간 칸에 색이 쭉 이어지도록
- *    표시(getEvTimeRangeMinutes로 구간을 구해서, 각 시간 칸과 겹치는지(overlap) 판정).
- *    두 일정이 겹치면 기존 방식 그대로 우선순위 높은 쪽 색 + "+N" 표시로 처리.
+ * v0.0.14까지는 시간대를 여러 칸("6시","8시"...)으로 나눠 각 칸마다 이벤트를 따로
+ * 그렸는데, 그러다 보니 여러 시간에 걸친 일정이 칸 경계마다 끊어져 보이고(같은 제목이
+ * 칸 수만큼 반복 표시) 겹치는 일정은 "+N"으로만 뭉뚱그려졌음.
+ * v0.0.15부터는 하루 칸을 절대좌표 컨테이너 하나로 만들고, 그 안에 이벤트를
+ * 시작~종료 시각에 맞춰 실제 높이를 가진 블록 하나로 이어서 그린다(제목도 블록당 1번만
+ * 표시). 겹치는 시간대의 일정은 겹치는 것들끼리만 트랙을 나눠 좌우로 분할 배치한다
+ * (Google Calendar류 캘린더의 흔한 레이아웃 방식 — layoutDayTimedEvents 참고).
  */
 const WEEK_HOUR_SLOTS = [0, 6, 8, 10, 12, 14, 16, 18, 20, 22];
+const WEEK_ROW_H = 48; // px — 위 슬롯 하나당 세로 높이(라벨 칸 높이와 반드시 일치시켜야 함)
+const WEEK_MIN_BLOCK_H = 22; // px — 아주 짧은 일정도 최소 이 높이는 확보(탭하기 쉽게)
+// 슬롯 경계를 "분" 단위로 환산한 누적 배열 (예: [0,360,480,600,...,1440])
+const WEEK_SLOT_BOUNDS_MIN = [...WEEK_HOUR_SLOTS.map(h => h * 60), 24 * 60];
 
 /** 제목 앞 "HH:MM" 또는 "HH:MM~HH:MM" 프리픽스에서 [시작,종료) 분 단위 구간을 추출.
  *  시간 정보가 없으면 null(=주간 뷰 "종일" 행 대상). 종료 시간이 없으면 1분짜리 구간으로 취급. */
@@ -826,6 +829,105 @@ function getEvTimeRangeMinutes(ev) {
   const start = parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
   const end   = m[3] != null ? parseInt(m[3], 10) * 60 + parseInt(m[4], 10) : start + 1;
   return { start, end };
+}
+
+/**
+ * "분(0~1440)" → 시간 그리드 세로 픽셀 위치로 변환.
+ * WEEK_HOUR_SLOTS는 칸마다 실제 길이가 다르지만(0~6시=6시간, 6~8시=2시간 등) 화면에서는
+ * 모두 같은 높이(WEEK_ROW_H)로 그려지므로, 슬롯 안에서는 비례(fraction)로 위치를 잡는다.
+ */
+function weekMinutesToY(min) {
+  for (let i = 0; i < WEEK_HOUR_SLOTS.length; i++) {
+    const segStart = WEEK_SLOT_BOUNDS_MIN[i];
+    const segEnd   = WEEK_SLOT_BOUNDS_MIN[i + 1];
+    if (min <= segEnd) {
+      const frac = segEnd > segStart ? (min - segStart) / (segEnd - segStart) : 0;
+      return (i + frac) * WEEK_ROW_H;
+    }
+  }
+  return WEEK_HOUR_SLOTS.length * WEEK_ROW_H;
+}
+
+/**
+ * 하루치 시간 일정을 겹치는 것끼리만 묶어(cluster) 트랙(가로 분할 자리)을 배정한다.
+ * 겹치지 않는 일정은 트랙 계산에서 서로 영향을 주지 않으므로(전체 폭을 그대로 씀),
+ * 하루에 겹치는 일정이 하나만 있어도 나머지 일정 전부가 좁아지는 일은 없다.
+ * 각 항목에 _track(내 트랙 번호)과 _trackCount(그 그룹의 전체 트랙 수)를 추가해서 반환.
+ */
+function layoutDayTimedEvents(items) {
+  const sorted = [...items].sort((a, b) => a.top - b.top || a.bottom - b.bottom);
+  const clusters = [];
+  let current = [];
+  let clusterEnd = -Infinity;
+  sorted.forEach(it => {
+    if (current.length && it.top >= clusterEnd) {
+      clusters.push(current);
+      current = [];
+      clusterEnd = -Infinity;
+    }
+    current.push(it);
+    clusterEnd = Math.max(clusterEnd, it.bottom);
+  });
+  if (current.length) clusters.push(current);
+
+  const out = [];
+  clusters.forEach(cluster => {
+    const trackEnds = []; // 각 트랙의 마지막 종료 위치(px)
+    cluster.forEach(it => {
+      let track = trackEnds.findIndex(end => end <= it.top);
+      if (track === -1) { track = trackEnds.length; trackEnds.push(it.bottom); }
+      else { trackEnds[track] = it.bottom; }
+      it._track = track;
+    });
+    const trackCount = trackEnds.length;
+    cluster.forEach(it => { it._trackCount = trackCount; out.push(it); });
+  });
+  return out;
+}
+
+/** 시간대 그리드 안 이벤트 블록 1건 HTML (제목은 블록당 한 번만 표시) */
+function renderWeekTimedBlock(e, top, height, track, trackCount) {
+  const urgent = isGovDeadlineSoon(e);
+  const color  = urgent ? '#C62828' : getEvColor(getEvCategory(e));
+  const bg     = color + '2B';
+  const label  = stripLeadingEmoji(e.title);
+  const safe   = esc(label);
+  const doneCss = e.done ? 'text-decoration:line-through;opacity:.55;' : '';
+  const leftPct  = (track / trackCount) * 100;
+  const widthPct = 100 / trackCount;
+  const style = `position:absolute;top:${top}px;height:${height}px;
+                 left:calc(${leftPct}% + 1px);width:calc(${widthPct}% - 2px);
+                 background:${bg};color:${color};${doneCss}
+                 display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;
+                 overflow:hidden;white-space:normal;line-height:1.25;padding:2px 4px;z-index:1`;
+
+  if (e._isVaxGroup) {
+    const groupIndices = `[${e._groupItems.map(item => item._idx).join(',')}]`;
+    return `
+      <div class="ev-line week-ev-block"
+           style="${style}"
+           draggable="true"
+           ondragstart="event.stopPropagation();onDragStart(event,${groupIndices})"
+           ondragend="onDragEnd(event)"
+           ontouchstart="onTouchStart(event,${groupIndices})"
+           ontouchmove="onTouchMove(event)"
+           ontouchend="onTouchEnd(event)"
+           ontouchcancel="onTouchCancel(event)"
+           title="${safe} — 탭하면 자세히, 꾹 눌러 이동">${label}</div>`;
+  }
+
+  return `
+    <div class="ev-line week-ev-block"
+         style="${style}"
+         draggable="true"
+         ondragstart="event.stopPropagation();onDragStart(event,${e._idx})"
+         ondragend="onDragEnd(event)"
+         ontouchstart="onTouchStart(event,${e._idx})"
+         ontouchmove="onTouchMove(event)"
+         ontouchend="onTouchEnd(event)"
+         ontouchcancel="onTouchCancel(event)"
+         onclick="event.stopPropagation();openEvModal(${e._idx})"
+         title="${safe}${urgent ? ' — ⏰ 마감 임박' : ''}">${label}</div>`;
 }
 
 function esc(str) {
@@ -888,6 +990,8 @@ function renderWeekView() {
   });
   const td = today();
 
+  // v0.0.15: 헤더의 이유식 스티커는 날짜 숫자 밑에, 일반 스티커는 아래 "종일" 행에 —
+  // 이전엔 "종일" 행 하나에 이유식+일반 스티커가 섞여 있어서 이유식 스티커가 잘 안 보였음.
   let html = `
     <div class="cal-wrap">
       <div class="cal-head-row" style="background:${th.g};grid-template-columns:44px repeat(7,1fr)">
@@ -895,29 +999,80 @@ function renderWeekView() {
         ${weekDays.map((d, i) => {
           const wds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
           const isRed = i === 0 || i === 6 || !!getHoliday(wds);
-          return `<div class="cal-head-cell${isRed ? ' cal-head-red' : ''}">${days[i]}<br><span style="font-size:.84rem;font-weight:900">${d.getDate()}</span></div>`;
+          const foodStickers  = (S.dayStickers[wds] || []).filter(s => FOOD_STICKER_SET.has(s));
+          const FOOD_MAX      = 2;
+          const foodOverflow  = Math.max(0, foodStickers.length - FOOD_MAX);
+          const foodHtml = foodStickers.length
+            ? `<div class="week-head-food-stickers">
+                 ${foodStickers.slice(0, FOOD_MAX).map(s => `<span class="food-sticker-on-cal">${s}</span>`).join('')}
+                 ${foodOverflow > 0 ? `<span class="food-sticker-overflow">+${foodOverflow}</span>` : ''}
+               </div>`
+            : '';
+          return `<div class="cal-head-cell${isRed ? ' cal-head-red' : ''}">${days[i]}<br><span style="font-size:.84rem;font-weight:900">${d.getDate()}</span>${foodHtml}</div>`;
         }).join('')}
       </div>
-      <div style="display:grid;grid-template-columns:44px repeat(7,1fr)">`;
+      <div style="display:grid;grid-template-columns:44px repeat(7,1fr);
+                   grid-template-rows:auto repeat(${WEEK_HOUR_SLOTS.length},${WEEK_ROW_H}px)">`;
 
-  // v0.0.14: "종일" 행 신설 — 시간이 없는 일정(대부분의 자동 일정)과 스티커를 여기로 모음.
-  // 예전엔 이 둘 다 0시 칸을 포함한 모든 시간 칸에 반복 표시되던 버그가 있었음.
-  html += `<div class="week-grid-line" style="font-size:.62rem;color:var(--txl);font-weight:700;padding:8px 4px;text-align:right;border-bottom:1px solid #F5EEF8">종일</div>`;
-  weekDays.forEach(d => {
+  // ── "종일" 행 (1행) — 시간 없는 일정 + 일반 스티커 (이유식 스티커는 위 헤더로 이동) ──
+  html += `<div class="week-grid-line" style="grid-column:1;grid-row:1;font-size:.62rem;color:var(--txl);font-weight:700;padding:10px 4px;text-align:right;border-bottom:1px solid #F5EEF8">종일</div>`;
+  weekDays.forEach((d, di) => {
     const ds  = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     const de  = groupVaxEvents(applyCalFilter(evs.filter(e => e.date === ds && !getEvTimeRangeMinutes(e))));
     const isTd = ds === td;
 
-    const stickersAll   = S.dayStickers[ds] || [];
-    const foodStickers  = stickersAll.filter(s => FOOD_STICKER_SET.has(s));
-    const otherStickers = stickersAll.filter(s => !FOOD_STICKER_SET.has(s));
-    const stickerHtml = stickersAll.length
-      ? `<div class="sticker-row" style="margin-top:2px">
-          ${foodStickers.slice(0, 2).map(s => `<span class="food-sticker-on-cal">${s}</span>`).join('')}
-          ${otherStickers.slice(0, 3).map(s => `<span class="sticker-on-cal">${s}</span>`).join('')}
-          ${otherStickers.length > 3 ? `<span class="sticker-overflow">+${otherStickers.length - 3}</span>` : ''}
+    const otherStickers = (S.dayStickers[ds] || []).filter(s => !FOOD_STICKER_SET.has(s));
+    const stickerHtml = otherStickers.length
+      ? `<div class="sticker-row" style="position:static;margin-top:2px;justify-content:flex-start">
+          ${otherStickers.slice(0, 4).map(s => `<span class="sticker-on-cal">${s}</span>`).join('')}
+          ${otherStickers.length > 4 ? `<span class="sticker-overflow">+${otherStickers.length - 4}</span>` : ''}
          </div>`
       : '';
+
+    html += `
+      <div onclick="selectDate('${ds}')"
+           data-date="${ds}"
+           class="week-grid-line${isTd ? ' week-today-cell' : ''}"
+           style="grid-column:${di + 2};grid-row:1;min-height:56px;
+                  border-left:1px solid #F5EEF8;border-bottom:1px solid #F5EEF8;
+                  padding:4px;cursor:pointer;background:${isTd ? th.cell : 'var(--wh)'};transition:background .14s"
+           ondragover="onDragOver(event)"
+           ondragleave="onDragLeave(event)"
+           ondrop="onDrop(event,'${ds}')"
+           onmouseover="this.style.background='var(--pkl)'"
+           onmouseout="this.style.background='${isTd ? th.cell : 'var(--wh)'}'">
+        ${renderCellEvents(de)}
+        ${stickerHtml}
+      </div>`;
+  });
+
+  // ── 시간 라벨 칸 (왼쪽 첫 열, 슬롯당 1칸) ──
+  WEEK_HOUR_SLOTS.forEach((h, hi) => {
+    html += `<div class="week-grid-line" style="grid-column:1;grid-row:${hi + 2};height:${WEEK_ROW_H}px;box-sizing:border-box;font-size:.62rem;color:var(--txl);font-weight:700;padding:6px 4px 0 0;text-align:right;border-bottom:1px solid #F5EEF8">${h}시</div>`;
+  });
+
+  // ── 요일별 시간대 트랙 (하루 전체를 세로로 이어진 절대좌표 컨테이너 하나로) ──
+  // v0.0.15: 시작~종료 구간이 있는 일정을 실제 길이를 가진 블록 하나로 이어 그리고,
+  // 겹치는 일정끼리만 좌우로 트랙을 나눠 색을 분리한다(layoutDayTimedEvents 참고).
+  const trackHeight = WEEK_HOUR_SLOTS.length * WEEK_ROW_H;
+  weekDays.forEach((d, di) => {
+    const ds  = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const isTd = ds === td;
+
+    const timedEvs = groupVaxEvents(applyCalFilter(evs.filter(e => e.date === ds && !!getEvTimeRangeMinutes(e))));
+    const items = timedEvs.map(e => {
+      const tr  = getEvTimeRangeMinutes(e);
+      const top = weekMinutesToY(tr.start);
+      const bottom = Math.max(weekMinutesToY(tr.end), top + WEEK_MIN_BLOCK_H);
+      return { ev: e, top, bottom };
+    });
+    const laidOut = layoutDayTimedEvents(items);
+    const blocksHtml = laidOut
+      .map(it => renderWeekTimedBlock(it.ev, it.top, it.bottom - it.top, it._track, it._trackCount))
+      .join('');
+    const hourLinesHtml = WEEK_HOUR_SLOTS
+      .map((_, hi) => `<div class="week-hour-line" style="position:absolute;top:${hi * WEEK_ROW_H}px;left:0;right:0"></div>`)
+      .join('');
 
     html += `
       <div onclick="selectDate('${ds}')"
@@ -926,58 +1081,15 @@ function renderWeekView() {
            ondragover="onDragOver(event)"
            ondragleave="onDragLeave(event)"
            ondrop="onDrop(event,'${ds}')"
-           style="border-left:1px solid #F5EEF8;border-bottom:1px solid #F5EEF8;
-                  padding:3px;cursor:pointer;background:${isTd ? th.cell : 'var(--wh)'};transition:background .14s"
+           style="grid-column:${di + 2};grid-row:2 / span ${WEEK_HOUR_SLOTS.length};
+                  position:relative;height:${trackHeight}px;box-sizing:border-box;
+                  border-left:1px solid #F5EEF8;cursor:pointer;
+                  background:${isTd ? th.cell : 'var(--wh)'};transition:background .14s"
            onmouseover="this.style.background='var(--pkl)'"
            onmouseout="this.style.background='${isTd ? th.cell : 'var(--wh)'}'">
-        ${renderCellEvents(de)}
-        ${stickerHtml}
+        ${hourLinesHtml}
+        ${blocksHtml}
       </div>`;
-  });
-
-  // v0.0.14: 시간대별 행 — 이제 "그 시각에 시작하는 일정"만 보여주는 게 아니라, 시작~종료
-  // 구간이 그 행의 시간대와 조금이라도 겹치면 표시한다. 그 덕에 "10시~14시"처럼 종료 시간을
-  // 넣은 일정은 10시·12시 행 모두에 걸쳐 색이 쭉 칠해진 것처럼 보인다. 두 일정이 겹치면
-  // 우선순위가 높은 쪽 색으로 대표 표시하고 "+N"으로 나머지 개수를 보여준다(기존 방식 그대로).
-  WEEK_HOUR_SLOTS.forEach((h, hi) => {
-    const slotStart = h * 60;
-    const slotEnd   = (WEEK_HOUR_SLOTS[hi + 1] ?? 24) * 60;
-
-    html += `<div class="week-grid-line" style="font-size:.62rem;color:var(--txl);font-weight:700;padding:8px 4px;text-align:right;border-bottom:1px solid #F5EEF8">${h}시</div>`;
-    weekDays.forEach(d => {
-      const ds   = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      const de   = groupVaxEvents(applyCalFilter(evs.filter(e => {
-        if (e.date !== ds) return false;
-        const tr = getEvTimeRangeMinutes(e);
-        return tr && tr.start < slotEnd && tr.end > slotStart;
-      })));
-      const isTd = ds === td;
-      html += `
-        <div onclick="selectDate('${ds}')"
-             data-date="${ds}"
-             class="week-grid-line${isTd ? ' week-today-cell' : ''}"
-             ondragover="onDragOver(event)"
-             ondragleave="onDragLeave(event)"
-             ondrop="onDrop(event,'${ds}')"
-             style="border-left:1px solid #F5EEF8;border-bottom:1px solid #F5EEF8;
-                    padding:3px;cursor:pointer;background:${isTd ? th.cell : 'var(--wh)'};transition:background .14s"
-             onmouseover="this.style.background='var(--pkl)'"
-             onmouseout="this.style.background='${isTd ? th.cell : 'var(--wh)'}'">
-          ${(() => {
-            const sorted  = [...de].sort((a, b) => evPriority(a) - evPriority(b));
-            const primary = sorted[0];
-            if (!primary) return '';
-            const urgent  = isGovDeadlineSoon(primary);
-            const color   = urgent ? '#C62828' : getEvColor(getEvCategory(primary));
-            const bg      = color + '2B';
-            const label   = stripLeadingEmoji(primary.title);
-            const clickAttr = primary._isVaxGroup ? '' : `onclick="event.stopPropagation();openEvModal(${primary._idx})"`;
-            const doneCss = primary.done ? 'text-decoration:line-through;opacity:.55;' : '';
-            const extra = de.length > 1 ? `<div style="font-size:.5rem;color:var(--txl)">+${de.length - 1}</div>` : '';
-            return `<div class="ev-line" style="font-size:.66rem;background:${bg};color:${color};height:100%;${doneCss}" ${clickAttr}>${label}</div>${extra}`;
-          })()}
-        </div>`;
-    });
   });
 
   html += '</div></div>';

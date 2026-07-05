@@ -137,35 +137,39 @@ function dashNextEventCard(child) {
   return dashCard('📅', 'var(--bll)', '다음 일정', upcoming.title.replace(/^\d{2}:\d{2}(~\d{2}:\d{2})?\s/, ''), dLabel, "gp('calendar',document.querySelector('.np[data-page=calendar]'))");
 }
 
-/** 📋 오늘 체크리스트 진행 (+ v0.0.11: Master/Legend 배지만 표시, 없으면 응원 문구) */
+/**
+ * 📋 오늘 체크리스트 진행
+ * v0.0.15: 기존엔 "N / N 완료"로 필수+선택을 합쳐서 한 줄로만 보여줬는데,
+ * 필수만 봐도 되는지 헷갈린다는 피드백으로 "필수" 줄 / "전체" 줄을 나눠 두 줄로 표시.
+ * (예: "3 / 5 완료(필수)" + "4 / 8 완료(전체)") 배지(Perfect/Master/Legend)는 그 아래
+ * 작은 칩으로 별도 표시 — 기존엔 Perfect는 배지 축에서 빠졌었는데, 필수만 다 채워도
+ * 성취감을 주는 게 낫다는 피드백으로 Perfect 배지도 추가함.
+ */
 function dashChecklistCard(child) {
   const info = getTodayCategoryInfo(child);
+  const onclick = "gp('checklist',document.querySelector('.np[data-page=checklist]'))";
   if (!info) {
-    return dashCard('📋', 'var(--mnl)', '체크리스트', '-', '', "gp('checklist',document.querySelector('.np[data-page=checklist]'))");
+    return dashCard('📋', 'var(--mnl)', '체크리스트', '-', '', onclick);
   }
-  const { tier, doneTotal, itemsTotal } = info;
+  const { tier, reqDone, reqTotal, doneTotal, itemsTotal } = info;
 
-  // v0.0.11: "다음 추천 항목" 문구는 복잡하다는 피드백으로 제거하고,
-  // Master/Legend 배지가 있을 때만 보여주고 없으면 짧은 응원 문구로 단순화
-  // (Perfect는 배지 축에 안 넣음 — 필수만 채운 상태라 아직 "달성감"을 주기엔 이르다고 판단)
-  // v0.0.13: "응원 문구가 계속 안 바뀐다"는 피드백 — 기존엔 날짜(일)로 고정돼서 하루 종일
-  // 같은 문구만 보였음. 홈에 올 때마다(대시보드 렌더링마다) 랜덤하게 바뀌도록 변경하고,
-  // 문구 풀도 더 다양하게 늘림
-  const CHEER = [
-    '오늘도 화이팅! 🌱', '천천히 해도 괜찮아요', '조금씩 채워가요 💪',
-    '아이와 함께 잘 하고 있어요 😊', '오늘 하루도 수고했어요', '차근차근 하나씩요 🐣',
-    '잘 하고 있는 중이에요', '지금도 충분히 잘하고 있어요 🌷',
-  ];
-  let sub;
-  if (tier === 'legend') {
-    sub = '🌈 Legend';
-  } else if (tier === 'master') {
-    sub = '👑 Master';
-  } else {
-    sub = CHEER[Math.floor(Math.random() * CHEER.length)];
-  }
+  const BADGE = {
+    perfect: { cls: 'dash-badge-mini-perfect', label: '🏅 Perfect' },
+    master:  { cls: 'dash-badge-mini-master',  label: '👑 Master' },
+    legend:  { cls: 'dash-badge-mini-legend',  label: '🌈 Legend' },
+  };
+  const badge = BADGE[tier];
 
-  return dashCard('📋', 'var(--mnl)', info.cat.label, `${doneTotal} / ${itemsTotal} 완료`, sub, "gp('checklist',document.querySelector('.np[data-page=checklist]'))");
+  return `
+    <div class="dash-card" onclick="${onclick}">
+      <div class="dash-icon" style="background:var(--mnl)">📋</div>
+      <div class="dash-body">
+        <div class="dash-label">${info.cat.label}</div>
+        <div class="dash-value">${reqDone} / ${reqTotal} 완료(필수)</div>
+        <div class="dash-sub">${doneTotal} / ${itemsTotal} 완료(전체)</div>
+        ${badge ? `<div class="dash-badge-mini ${badge.cls}">${badge.label}</div>` : ''}
+      </div>
+    </div>`;
 }
 
 /** 📈 성장 기록 (+ Sprint 11: 30일 이상 기록 없으면 리마인더) */

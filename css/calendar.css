@@ -102,6 +102,19 @@
   align-self: center;
 }
 
+/* ── v0.0.15: 주간 뷰 시간대 그리드 — 연속 병합 블록 + 겹침 트랙 분할 ── */
+.week-hour-line {
+  border-top: 1px solid #F5EEF8;
+  pointer-events: none; /* 배경 구분선일 뿐, 클릭은 그 아래 날짜 칸으로 그대로 전달 */
+}
+.week-ev-block {
+  border-radius: 6px;
+  font-size: 10.56px;
+  cursor: pointer;
+}
+/* v0.0.15: 헤더의 날짜 숫자 아래 표시되는 이유식 스티커(주간 뷰 전용) */
+.week-head-food-stickers { display: flex; align-items: center; justify-content: center; gap: 1px; margin-top: 1px; }
+
 /* ── DAY PANEL ── */
 .day-panel { background: var(--card); border-radius: var(--radius); box-shadow: var(--card-shadow); padding: 22px; margin-top: 14px; }
 .dp-vax-item-row { background: rgba(255,255,255,.6); }
