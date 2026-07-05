@@ -152,6 +152,7 @@ momcal/
       "title": "소아과 방문",
       "note": "메모",
       "type": "custom",
+      "color": "#64B5F6",
       "auto": false
     }
   ],
@@ -274,12 +275,12 @@ match /families/{familyId} {
 | 키 | 타입 | Firebase 저장 | 설명 |
 |----|------|:---:|------|
 | `children` | Array | ✅ | 등록된 아이/임신 프로필 목록 |
-| `customEvs` | Array | ✅ | 사용자 직접 추가 일정 |
+| `customEvs` | Array | ✅ | 사용자 직접 추가 일정. `type:'custom'`("내 일정")인 경우에만 v0.0.16부터 `color`(개별 일정 색상, 없으면 `evColors.custom`/기본색) 필드를 가질 수 있음 |
 | `dayStickers` | Object | ✅ | 날짜별 스티커 배열 |
 | `checks` | Object | ✅ | 체크리스트 완료 상태 |
 | `eventMods` | Object | ✅ | 자동 일정의 실제일·완료·메모 등 수정 사항 (Sprint 2) |
 | `growthRecords` | Array | ✅ | 성장 기록 목록 (Sprint 4) |
-| `evColors` | Object | ✅ | 사용자 지정 일정 색상 `{req, rec, food, vax, gov, custom}` — 없으면 기본색 사용 (Sprint 21) |
+| `evColors` | Object | ✅ | 사용자 지정 카테고리 공통 색상 `{req, rec, food, vax, gov}` — 없으면 기본색 사용 (Sprint 21). v0.0.16부터 `custom`은 범례에서 빠지고 일정별 `color` 필드로 대체됨(범례로는 더 이상 못 바꿈, 기존에 저장된 `evColors.custom` 값은 그대로 남아있지만 이제 쓰이지 않음) |
 | `theme` | String | ✅ | 캘린더 테마 (rose/mint/sunny/lavender/peach) |
 | `selC` | Number | ✅ | 현재 선택된 아이 인덱스 |
 | `calY`, `calM` | Number | ❌ (UI 전용) | 캘린더 표시 연·월 |

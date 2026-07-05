@@ -1,6 +1,8 @@
 /* ── CALENDAR TOOLBAR ── */
-.cal-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
-.cal-toolbar h2 { font-size: 1.1rem; font-weight: 900; }
+.cal-toolbar { display: grid; grid-template-columns: auto 1fr auto; align-items: center; margin-bottom: 18px; }
+.cal-toolbar h2 { font-size: 1.1rem; font-weight: 900; text-align: center; }
+.cal-toolbar-right { display: flex; gap: 6px; justify-self: end; }
+.cal-settings-shortcut { font-size: .9rem; padding: 7px 11px; }
 .cal-nav-btn {
   background: var(--card); border: 1.5px solid #EEE0F0; border-radius: 10px;
   padding: 7px 15px; cursor: pointer; font-weight: 800; font-family: inherit;
@@ -88,6 +90,20 @@
   font-size: 8px; font-weight: 700; color: var(--txl); margin-top: 1px; /* v0.0.4: 기존 .5rem 고정(px) */
 }
 
+/* ── v0.0.16: 캘린더 전용 글자 크기 조절 ──
+   .ev-line/.ev-more/.week-ev-block은 앱 전체 글자 크기 설정(rem 기반)의 영향을 받지 않는
+   px 고정 텍스트라(위 주석 참고), 별도의 data-cal-fontsize 속성으로 이 부분만 조절함
+   (js/calFontSize.js 참고). 'md'(보통)는 기본값이라 속성이 안 붙고 위 기본 px 그대로 씀. */
+html[data-cal-fontsize="sm"] .ev-line,
+html[data-cal-fontsize="sm"] .week-ev-block { font-size: 9px; }
+html[data-cal-fontsize="sm"] .ev-more { font-size: 7px; }
+html[data-cal-fontsize="lg"] .ev-line,
+html[data-cal-fontsize="lg"] .week-ev-block { font-size: 12.5px; }
+html[data-cal-fontsize="lg"] .ev-more { font-size: 9.5px; }
+html[data-cal-fontsize="xl"] .ev-line,
+html[data-cal-fontsize="xl"] .week-ev-block { font-size: 14px; }
+html[data-cal-fontsize="xl"] .ev-more { font-size: 11px; }
+
 /* ── STICKERS ON CALENDAR ── */
 /* Bug #7 fix: stickers display in a small row, max 4, with +N overflow */
 .sticker-row {
@@ -113,7 +129,9 @@
   cursor: pointer;
 }
 /* v0.0.15: 헤더의 날짜 숫자 아래 표시되는 이유식 스티커(주간 뷰 전용) */
-.week-head-food-stickers { display: flex; align-items: center; justify-content: center; gap: 1px; margin-top: 1px; }
+.week-head-food-stickers { display: flex; align-items: center; justify-content: center; gap: 2px; margin-top: 1px; flex-wrap: nowrap; }
+/* v0.0.16: 이모지만 있으면 무슨 스티커인지 알기 어렵다는 피드백 — "이유식" 글자 라벨 추가 */
+.week-head-food-label { font-size: .48rem; font-weight: 800; opacity: .9; white-space: nowrap; }
 
 /* ── DAY PANEL ── */
 .day-panel { background: var(--card); border-radius: var(--radius); box-shadow: var(--card-shadow); padding: 22px; margin-top: 14px; }
@@ -162,7 +180,7 @@
   /* Sprint 25: 모바일은 PC보다 셀 폭이 훨씬 좁아서 같은 글자 크기라도 한 줄에 들어가는
      글자 수가 적음 — 모바일 글자 크기는 그대로 유지(Sprint 27: PC만 확대, 모바일은 그대로)
      v0.0.4: 여기도 px로 고정해 전체 확대 대상에서 제외(기존 .5rem = 8px과 동일) */
-  .ev-line { font-size: 8px; padding: 0 2px; }
+  .ev-line, .week-ev-block { font-size: 8px; padding: 0 2px; }
 }
 
 /* ══════════════════════════════════════

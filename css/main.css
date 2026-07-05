@@ -265,25 +265,28 @@ h1, h2, h3, .sec {
 /* ── HOME DASHBOARD (Sprint 4) ── */
 .dash-grid {
   display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px; margin-bottom: 22px;
+  gap: 10px; margin-bottom: 22px;
 }
+/* v0.0.16: 카드가 전반적으로 높다는 피드백 — 패딩·아이콘·여백을 줄여서 더 콤팩트하게 */
 .dash-card {
-  background: var(--card); border-radius: 18px; padding: 15px 16px;
+  background: var(--card); border-radius: 16px; padding: 11px 13px;
   box-shadow: var(--card-shadow); cursor: pointer;
-  transition: all .22s; display: flex; align-items: flex-start; gap: 12px;
-  min-height: 76px; min-width: 0;
+  transition: all .22s; display: flex; align-items: flex-start; gap: 10px;
+  min-height: 60px; min-width: 0;
 }
 .dash-card:not([onclick]) { cursor: default; }
 .dash-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(180,80,160,.16); }
 .dash-icon {
-  width: 40px; height: 40px; border-radius: 12px;
+  width: 34px; height: 34px; border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 1.2rem; flex-shrink: 0;
+  font-size: 1.05rem; flex-shrink: 0;
 }
 .dash-body   { min-width: 0; flex: 1; }
-.dash-label  { font-size: .68rem; font-weight: 800; color: var(--txl); margin-bottom: 3px; text-transform: uppercase; letter-spacing: .03em; }
+.dash-label  { font-size: .68rem; font-weight: 800; color: var(--txl); margin-bottom: 2px; text-transform: uppercase; letter-spacing: .03em; }
 .dash-value  { font-size: .87rem; font-weight: 900; color: var(--tx); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.dash-sub    { font-size: .68rem; color: var(--pk); font-weight: 700; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dash-sub    { font-size: .68rem; color: var(--pk); font-weight: 700; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* v0.0.16: 체크리스트 카드 — "N/N 완료(전체)"를 "N/N 완료(필수)" 오른쪽에 나란히 표시 */
+.dash-sub-inline { font-size: .68rem; color: var(--pk); font-weight: 700; margin-left: 4px; }
 .dash-tip .dash-value,
 .dash-tip-text { font-size: .78rem; font-weight: 700; color: var(--tx); white-space: normal; line-height: 1.4; }
 .dash-tip { grid-column: 1 / -1; }
@@ -291,7 +294,7 @@ h1, h2, h3, .sec {
 
 /* v0.0.15: 홈 대시보드 체크리스트 카드 — 필수 100%/필수+선택 100% 달성 시 보이는 작은 배지 칩 */
 .dash-badge-mini {
-  display: inline-block; margin-top: 4px; padding: 2px 8px;
+  display: inline-block; margin-top: 3px; padding: 2px 8px;
   font-size: .64rem; font-weight: 800; border-radius: 9px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
 }
@@ -512,8 +515,10 @@ html[data-theme="dark"] .family-leave-btn {
 
   /* Sprint 28: 모바일에서는 대시보드 카드 2열이 좁아서 글자가 잘려 보인다는 피드백 —
      1열로 쌓아서 카드마다 폭을 넉넉하게 확보
-     v0.0.8: "은유 오늘"·"체크리스트"는 모바일에서도 첫 줄에 나란히 보이면 좋겠다는 요청 —
-     2열 그리드로 되돌리되, 3번째 카드(다음 일정)부터는 한 줄 전체를 차지하도록 함 */
+     v0.0.8: 카드 중 처음 두 개(당시 "오늘"·"체크리스트")는 모바일에서도 첫 줄에 나란히
+     보이면 좋겠다는 요청 — 2열 그리드로 되돌리되, 3번째 카드부터는 한 줄 전체를 차지하도록 함.
+     이 규칙은 카드 이름이 아니라 "순서(처음 두 개)" 기준이라, v0.0.16에서 카드 순서를
+     원래대로("오늘"+"다음 일정"이 첫 줄) 되돌렸을 때도 코드 수정 없이 그대로 적용됨 */
   .dash-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .dash-grid > .dash-card:nth-child(n+3) { grid-column: 1 / -1; }
 }

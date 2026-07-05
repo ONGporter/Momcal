@@ -66,6 +66,18 @@ export function getEvColor(cat) {
   return (S.evColors && S.evColors[cat]) || DEFAULT_EV_COLORS[cat] || '#9E9E9E';
 }
 
+/**
+ * v0.0.16: 일정 1건의 실제 표시 색상.
+ * "내 일정"(custom)으로 직접 추가한 일정은 추가할 때 고른 색(e.color)을 그대로 쓰고,
+ * 그 외(필수/추천/접종/정부지원 등)는 기존처럼 카테고리 공통 색(범례에서 바꿀 수 있음)을 쓴다.
+ * "내 일정"을 카테고리 공통 색 하나로 묶어두면 여러 개인 일정을 구분하기 어렵다는
+ * 피드백으로, "내 일정"만 일정 추가 시 직접 색을 고르는 방식으로 바꿈(범례에서는 제외됨).
+ */
+export function getEvDisplayColor(e) {
+  if (e.type === 'custom' && e.color) return e.color;
+  return getEvColor(getEvCategory(e));
+}
+
 /** 사용자가 특정 카테고리 색상을 직접 지정 */
 export function setEvColor(cat, color) {
   if (!S.evColors) S.evColors = {};
@@ -87,11 +99,15 @@ export function resetEvColor(cat) {
   debounceSave();
 }
 
-/** 캘린더 하단 색상 범례 렌더 — 각 항목을 탭하면 색상을 직접 고를 수 있음 */
+/**
+ * 캘린더 하단 색상 범례 렌더 — 각 항목을 탭하면 색상을 직접 고를 수 있음
+ * v0.0.16: "내 일정"(custom)은 일정을 추가할 때 직접 색을 고르는 방식으로 바뀌어서
+ * 범례에서는 제외함(카테고리 공통 색 하나로 묶어두면 여러 개인 일정을 구분하기 어려웠음)
+ */
 export function renderCalLegend() {
   const el = document.getElementById('calLegend');
   if (!el) return;
-  el.innerHTML = EV_CATEGORY_ORDER.map(cat => {
+  el.innerHTML = EV_CATEGORY_ORDER.filter(cat => cat !== 'custom').map(cat => {
     const color = getEvColor(cat);
     const label = EV_CATEGORY_LABELS[cat];
     const isCustomColor = !!(S.evColors && S.evColors[cat]);
@@ -304,6 +320,12 @@ export function openEvModal(idx) {
         <label>🏥 병원명</label>
         <input id="evModHospital" placeholder="예) 서울소아과" value="${hospital}">
       </div>` : ''}
+    ${(!isGov && ev.type === 'custom' && !ev.auto) ? `
+      <div class="fg">
+        <label>🎨 일정 색상</label>
+        <input type="color" id="evModColor" value="${ev.color || getEvColor('custom')}"
+               style="height:40px;padding:2px;cursor:pointer">
+      </div>` : ''}
     <div class="fg">
       <label>📝 메모</label>
       <input id="evModMemo" placeholder="메모 (선택)" value="${memo}">
@@ -368,10 +390,16 @@ export function saveEventMod() {
     ? { actualDate, hospital, memo, done, govStatus }
     : { actualDate, hospital, memo, done };
 
-  // 커스텀 이벤트는 날짜도 직접 반영
+  // 커스텀 이벤트는 날짜도 직접 반영 (+ v0.0.16: "내 일정"이면 색상도 함께)
   if (!ev.auto) {
     const ce = S.customEvs.find(e => e._id === ev._id);
-    if (ce) ce.date = actualDate;
+    if (ce) {
+      ce.date = actualDate;
+      if (ev.type === 'custom') {
+        const colorInput = document.getElementById('evModColor');
+        if (colorInput) ce.color = colorInput.value;
+      }
+    }
   }
 
   // Sprint 6: 예방접종이면 이후 회차 자동 재계산 (병원 권장 최소 간격 유지)
@@ -593,6 +621,9 @@ export function setEvType(t, btn) {
   S.evType = t;
   document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('on'));
   btn.classList.add('on');
+  // v0.0.16: "내 일정"일 때만 색상 선택 필드를 보여줌(그 외 종류는 범례의 공통 색을 그대로 씀)
+  const colorGroup = document.getElementById('evColorGroup');
+  if (colorGroup) colorGroup.style.display = t === 'custom' ? 'block' : 'none';
 }
 
 /* ══════════════════════════════════════
@@ -888,7 +919,7 @@ function layoutDayTimedEvents(items) {
 /** 시간대 그리드 안 이벤트 블록 1건 HTML (제목은 블록당 한 번만 표시) */
 function renderWeekTimedBlock(e, top, height, track, trackCount) {
   const urgent = isGovDeadlineSoon(e);
-  const color  = urgent ? '#C62828' : getEvColor(getEvCategory(e));
+  const color  = urgent ? '#C62828' : getEvDisplayColor(e);
   const bg     = color + '2B';
   const label  = stripLeadingEmoji(e.title);
   const safe   = esc(label);
@@ -937,7 +968,7 @@ function esc(str) {
 /** 이벤트 1건 — 배경 없이 카테고리 색상 그대로 텍스트에 입힘 (네이티브 캘린더 스타일) */
 function renderEventLine(e) {
   const urgent = isGovDeadlineSoon(e);
-  const color  = urgent ? '#C62828' : getEvColor(getEvCategory(e));
+  const color  = urgent ? '#C62828' : getEvDisplayColor(e);
   const bg     = color + '2B'; // 형광펜 느낌의 옅은 배경 (~17% 불투명도) — 뱃지와 같은 "연한 배경 + 진한 글자" 톤
   const label  = stripLeadingEmoji(e.title);
   const safe   = esc(label);
@@ -1003,7 +1034,8 @@ function renderWeekView() {
           const FOOD_MAX      = 2;
           const foodOverflow  = Math.max(0, foodStickers.length - FOOD_MAX);
           const foodHtml = foodStickers.length
-            ? `<div class="week-head-food-stickers">
+            ? `<div class="week-head-food-stickers" title="이유식 스티커">
+                 <span class="week-head-food-label">이유식</span>
                  ${foodStickers.slice(0, FOOD_MAX).map(s => `<span class="food-sticker-on-cal">${s}</span>`).join('')}
                  ${foodOverflow > 0 ? `<span class="food-sticker-overflow">+${foodOverflow}</span>` : ''}
                </div>`
@@ -1128,7 +1160,7 @@ export function showDayPanel(ds) {
 
       ${evs.length
         ? evs.map(e => {
-            const bc  = getEvColor(getEvCategory(e));
+            const bc  = getEvDisplayColor(e);
             const bg  = bc + '1A'; // 배경은 포인트 색의 옅은 톤(약 10% 불투명도)
 
             // Sprint 10: 예방접종 그룹 카드 — 회차별 개별 항목을 리스트로 펼쳐 보여줌
@@ -1221,11 +1253,16 @@ export function addCustomEv() {
   if (time && endTime) prefix = `${time}~${endTime} `;
   else if (time) prefix = `${time} `;
 
+  // v0.0.16: "내 일정"으로 추가할 때는 직접 고른 색을 이 일정에만 저장(color 필드) —
+  // 필수/추천/접종으로 추가하면 기존처럼 카테고리 공통 색을 그대로 씀
+  const color = S.evType === 'custom' ? (document.getElementById('evColor')?.value || '') : '';
+
   S.customEvs.push({
     date,
     title: prefix ? `${prefix}${title}` : title,
     note,
     type: S.evType,
+    ...(color ? { color } : {}),
     auto: false,
     _id:  Date.now(),
   });

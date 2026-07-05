@@ -28,6 +28,7 @@ import './familyShare.js';
 import './accountDelete.js';
 import './theme.js'; // v0.0.5: 다크 모드 — 설정 탭을 열지 않아도 window.toggleTheme 등록되도록 임포트
 import './fontSize.js'; // v0.0.7: 글자 크기 조절 — 설정 탭을 열지 않아도 window.setFontSize 등록되도록 임포트
+import './calFontSize.js'; // v0.0.16: 캘린더 전용 글자 크기 조절 — 설정 탭을 열지 않아도 window.setCalFontSize 등록되도록 임포트
 
 /* ── 초기 로드 여부 플래그 ── */
 let _firstLoad = true;

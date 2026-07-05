@@ -15,6 +15,10 @@
     if (fs && fs !== 'md') {
       document.documentElement.setAttribute('data-fontsize', fs);
     }
+    var cfs = localStorage.getItem('momcal_cal_fontsize');
+    if (cfs && cfs !== 'md') {
+      document.documentElement.setAttribute('data-cal-fontsize', cfs);
+    }
   } catch (e) {}
 </script>
 <title>맘캘 MomCal — 임신부터 육아까지, 한눈에 관리하는 육아 캘린더</title>
@@ -210,6 +214,7 @@
   <div class="sec">🌗 화면</div>
   <div id="themeSettingsWrap"></div>
   <div id="fontSizeSettingsWrap" style="margin-top:10px"></div>
+  <div id="calFontSizeSettingsWrap" style="margin-top:10px"></div>
 
   <div class="sec" style="margin-top:22px">📱 더 편하게 쓰기</div>
   <div id="familyShareWrap"></div>
@@ -257,7 +262,10 @@
   <div class="cal-toolbar">
     <button class="cal-nav-btn" onclick="calMove(-1)">◀</button>
     <h2 id="calTitle"></h2>
-    <button class="cal-nav-btn" onclick="calMove(1)">▶</button>
+    <div class="cal-toolbar-right">
+      <button class="cal-nav-btn" onclick="calMove(1)">▶</button>
+      <button class="cal-nav-btn cal-settings-shortcut" onclick="goToCalSettings()" title="글자 크기 등 설정으로 이동">⚙️</button>
+    </div>
   </div>
 
   <!-- 아이 선택 버튼 -->
@@ -329,6 +337,10 @@
         <button class="type-btn"    onclick="setEvType('rec',this)">✓ 추천</button>
         <button class="type-btn"    onclick="setEvType('vax',this)">💉 접종</button>
       </div>
+    </div>
+    <div class="fg" id="evColorGroup">
+      <label>🎨 일정 색상</label>
+      <input type="color" id="evColor" value="#64B5F6" style="height:40px;padding:2px;cursor:pointer">
     </div>
     <button class="btn bpk" style="margin-top:6px" onclick="addCustomEv()">일정 추가</button>
   </div>

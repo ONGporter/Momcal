@@ -15,6 +15,7 @@ import { renderFamilyShareLink } from './familyShare.js';
 import { renderNotificationSettings } from './notifications.js';
 import { renderThemeSettings }   from './theme.js';
 import { renderFontSizeSettings } from './fontSize.js';
+import { renderCalFontSizeSettings } from './calFontSize.js';
 import { renderAdSlot }          from './adSlot.js';
 
 /* ════════════════════════════════════
@@ -52,6 +53,7 @@ export function gp(id, btn) {
 export function renderSettings() {
   renderThemeSettings();
   renderFontSizeSettings();
+  renderCalFontSizeSettings();
   renderFamilyShareLink();
   renderNotificationSettings();
 }
@@ -100,12 +102,14 @@ export function renderDashboard() {
 
   el.innerHTML = [
     dashAgeCard(child),
-    // v0.0.8: "은유 오늘"과 "체크리스트"를 나란히 첫 줄에 보이도록 순서 변경
-    // (데스크톱 2열 그리드에서 바로 옆에 오게 됨 — css/main.css .dash-grid 참고)
-    dashChecklistCard(child),
     dashNextEventCard(child),
+    // v0.0.16: "체크리스트가 '오늘' 카드 옆이 아니라 원래처럼 아래에 오면 좋겠다"는 요청으로
+    // v0.0.8에서 바꿨던 "오늘"+"체크리스트" 나란히 배치를 되돌림 — 순서만 원래(Sprint 4)대로
+    // 복원하면 데스크톱 2열 그리드에서도, 모바일의 "첫 두 카드만 나란히" 규칙에서도
+    // 체크리스트가 자연스럽게 둘째 줄(아래)에 위치하게 됨(css/main.css .dash-grid 참고)
+    dashChecklistCard(child),
     dashGrowthCard(child),
-    dashVaxCard(child),
+    // v0.0.16: "최근 접종" 카드는 사용자 요청으로 제거함
     dashTipCard(),
   ].join('');
 }
@@ -140,10 +144,11 @@ function dashNextEventCard(child) {
 /**
  * 📋 오늘 체크리스트 진행
  * v0.0.15: 기존엔 "N / N 완료"로 필수+선택을 합쳐서 한 줄로만 보여줬는데,
- * 필수만 봐도 되는지 헷갈린다는 피드백으로 "필수" 줄 / "전체" 줄을 나눠 두 줄로 표시.
- * (예: "3 / 5 완료(필수)" + "4 / 8 완료(전체)") 배지(Perfect/Master/Legend)는 그 아래
- * 작은 칩으로 별도 표시 — 기존엔 Perfect는 배지 축에서 빠졌었는데, 필수만 다 채워도
- * 성취감을 주는 게 낫다는 피드백으로 Perfect 배지도 추가함.
+ * 필수만 봐도 되는지 헷갈린다는 피드백으로 "필수" / "전체" 수치를 나눠서 표시.
+ * v0.0.16: 처음엔 두 줄로 나눴는데, "전체" 수치를 "필수" 수치 오른쪽으로 옮겨 한 줄로
+ * 합쳐달라는 요청으로 변경(길면 카드 폭에서 말줄임표로 잘릴 수 있음, 옹짐꾼님 확인).
+ * 배지(Perfect/Master/Legend)는 그 아래 작은 칩으로 별도 표시 — 기존엔 Perfect는 배지
+ * 축에서 빠졌었는데, 필수만 다 채워도 성취감을 주는 게 낫다는 피드백으로 Perfect 배지도 추가함.
  */
 function dashChecklistCard(child) {
   const info = getTodayCategoryInfo(child);
@@ -165,8 +170,7 @@ function dashChecklistCard(child) {
       <div class="dash-icon" style="background:var(--mnl)">📋</div>
       <div class="dash-body">
         <div class="dash-label">${info.cat.label}</div>
-        <div class="dash-value">${reqDone} / ${reqTotal} 완료(필수)</div>
-        <div class="dash-sub">${doneTotal} / ${itemsTotal} 완료(전체)</div>
+        <div class="dash-value">${reqDone} / ${reqTotal} 완료(필수) <span class="dash-sub-inline">${doneTotal} / ${itemsTotal} 완료(전체)</span></div>
         ${badge ? `<div class="dash-badge-mini ${badge.cls}">${badge.label}</div>` : ''}
       </div>
     </div>`;
@@ -194,19 +198,6 @@ function dashGrowthCard(child) {
     parts.push(`몸무게 ${latest.weight}kg${d != null ? ` (${d >= 0 ? '+' : ''}${d.toFixed(1)})` : ''}`);
   }
   return dashCard('📈', 'var(--yll)', '성장 기록', parts[0] || '-', parts[1] || `${latest.date} 기록`, 'openGrowthModal()');
-}
-
-/** 💉 최근 접종 */
-function dashVaxCard(child) {
-  const todayStr = today();
-  const recent = getAllEvs()
-    .filter(e => e.type === 'vax' && e.done && e.date <= todayStr)
-    .sort((a, b) => a.date > b.date ? -1 : 1)[0];
-
-  if (!recent) {
-    return dashCard('💉', 'var(--pul)', '최근 접종', '완료 기록 없음', '캘린더에서 완료 체크하기', "gp('calendar',document.querySelector('.np[data-page=calendar]'))");
-  }
-  return dashCard('💉', 'var(--pul)', '최근 접종', recent.title.replace(/^💉\s*/, ''), `${recent.date} 완료`, "gp('calendar',document.querySelector('.np[data-page=calendar]'))");
 }
 
 /** ⭐ 오늘의 육아 팁 */
