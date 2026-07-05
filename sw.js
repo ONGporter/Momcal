@@ -9,8 +9,11 @@
  * Firebase 등 외부 도메인 요청(인증·데이터 동기화)은 건드리지 않고 그대로 통과시킵니다.
  */
 
-// v0.0.12: 일정 시간 범위·공휴일 표시·가족 그룹 공유 등 정적 파일 변경 — 캐시 버전 상향
-const CACHE_NAME = 'momcal-shell-v23';
+// v0.0.17: 폴더 구조 정리(AGENTS.md/ARCHITECTURE.md/docs/) 작업 중 앱쉘 캐시 목록에서
+// 누락된 js 모듈 8개(theme.js/fontSize.js/calFontSize.js/guestMode.js/familyShare.js/
+// accountDelete.js/pwaInstall.js/adSlot.js) 발견 — 여러 버전에 걸쳐 계속 빠져있었음(오프라인
+// 상태에서 다크모드·글자크기·가족공유 등 설정 탭 기능이 깨질 수 있었던 잠재 버그) — 추가하고 캐시 버전 상향
+const CACHE_NAME = 'momcal-shell-v24';
 
 const APP_SHELL = [
   './',
@@ -22,19 +25,27 @@ const APP_SHELL = [
   './css/checklist.css',
   './css/modal.css',
   './css/growth.css',
+  './js/accountDelete.js',
+  './js/adSlot.js',
   './js/app.js',
   './js/auth.js',
   './js/calendar.js',
+  './js/calFontSize.js',
   './js/checklist.js',
   './js/checklistCalendarLink.js',
   './js/demoMode.js',
+  './js/familyShare.js',
   './js/firebase.js',
+  './js/fontSize.js',
   './js/govSupport.js',
   './js/growth.js',
   './js/growthChart.js',
+  './js/guestMode.js',
   './js/modal.js',
   './js/notifications.js',
+  './js/pwaInstall.js',
   './js/state.js',
+  './js/theme.js',
   './js/ui.js',
   './js/utils.js',
   './js/vaccineSeries.js',

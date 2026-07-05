@@ -36,91 +36,7 @@
 
 ## 기술 스택
 
-- **Frontend**: Vanilla JS (ES6 Module), HTML5, CSS3
-- **Backend**: Firebase Auth + Cloud Firestore
-- **배포**: GitHub Push → Vercel 자동 배포
-- **폰트**: 옹짐꾼님이 제공한 손글씨 폰트 "온글잎 박다현체"(Ownglyph PDH, 상업적 이용 무료)를 기본으로 사용 — 제목·본문·버튼·로고 대부분 동일. `fonts/OwnglyphParkDahyun.ttf` 파일을 `@font-face`로 직접 서빙(외부 CDN 아님). Regular 굵기만 제공되어 굵게 표시가 필요한 곳도 `font-weight: normal`로 고정함(v0.0.3). **예외**: 체크리스트 세부 설명·육아정보 항목 설명·정책 페이지 본문처럼 정보 전달용 긴 글은 손글씨 폰트 "오뮤 다예쁨체"(Omyu Pretty, 상업적 이용 무료, `fonts/OmyuPretty.ttf`)로 별도 적용함(v0.0.4에서 Pretendard로 임시 원복했다가, v0.0.5에서 옹짐꾼님이 주신 이 폰트로 교체 — `.ci-detail`/`.g-item p`/`.g-doc`)
-- **기준 글자 크기**: `html { font-size: 19px }`(v0.0.8 기준, 기본 16px에서 확대) — 앱 전체 `rem` 기반 글자가 이 값에 비례해서 커짐. 단, 캘린더 셀 안 이벤트 텍스트(`.ev-line`/`.ev-more`, `css/calendar.css`)는 셀 공간이 빠듯해 과거 여러 버전에 걸쳐 맞춘 크기라 의도적으로 `px`로 고정해 이 확대에서 제외되어 있음 — **새로 만드는 캘린더 셀 안 텍스트도 이 규칙을 따를지 검토할 것**. 설정 탭에서 사용자가 이 기준값을 5단계(매우작게 15px/작게 17px/보통 19px/크게 21px/매우크게 23px)로 직접 조절 가능(`html[data-fontsize]`, `js/fontSize.js`, v0.0.7 신규→v0.0.8에서 3단계→5단계 확장, "보통" 기본값이 옛 "크게" 자리로 이동) — 앱 본체·육아정보 페이지·정책 페이지 전체에 동일 적용됨
-- **아이콘**: 이모지 전용 (외부 아이콘 라이브러리 없음)
-- **차트**: Chart.js (CDN, jsDelivr 폴백)
-- **PWA**: manifest.json + sw.js (홈 화면 설치·오프라인 앱 셸 캐싱)
-
----
-
-## 프로젝트 구조
-
-```
-momcal/
-├── index.html              # 앱 진입점 (SEO 메타·OG 태그·PWA 메타 포함)
-├── privacy.html             # 개인정보처리방침 (Sprint 16, 로그인 불필요)
-├── terms.html                # 이용약관 (Sprint 16, 로그인 불필요)
-├── contact.html              # 문의 페이지 (Sprint 16, 로그인 불필요)
-├── manifest.json            # PWA 매니페스트
-├── sw.js                     # 서비스 워커 (정적 파일 캐싱)
-├── robots.txt                # 검색엔진 크롤링 허용 + sitemap 위치 안내 (Sprint 14)
-├── sitemap.xml                # 검색엔진 제출용 사이트맵 (Sprint 14, Sprint 16에서 guide/정책 페이지 URL 추가)
-├── guide/                    # 로그인 없이 보는 공개 육아정보 콘텐츠 (Sprint 16, SEO 목적)
-│   ├── index.html             # 육아정보 허브 (카테고리 목록)
-│   ├── pregnancy.html         # 임신 주차별 체크리스트 상세 (정적 HTML, JS 불필요)
-│   ├── parenting.html         # 월령별 예방접종·건강검진 상세
-│   ├── food.html               # 이유식 단계별 가이드
-│   ├── government-support.html # 정부지원금 시기별 가이드 (Sprint 18)
-│   └── guide.css               # 공개 페이지 전용 스타일 (앱 css와 독립)
-├── scripts/
-│   └── build-guide.mjs        # data/checklist-data.js → guide/*.html 정적 생성 스크립트 (Sprint 16)
-├── icons/
-│   ├── icon-192.png, icon-512.png (+maskable 버전)
-│   ├── apple-touch-icon.png
-│   ├── logo-mark.png          # 로고 옆 인라인용 마스코트 이미지, 배경 투명 (Sprint 24)
-│   └── og-image.png          # 소셜 공유 미리보기 이미지 1200x630 (Sprint 14 생성, Sprint 22에서 마스코트 캐릭터로 교체)
-├── fonts/
-│   └── OwnglyphParkDahyun.ttf  # 커스텀 폰트 "온글잎 박다현체" (v0.0.3, 옹짐꾼님 제공, 상업적 이용 무료) — css/main.css·guide/guide.css에서 @font-face로 각자 로드
-├── css/
-│   ├── main.css             # 전역 스타일, topbar, 대시보드, 광고 슬롯, 설치/공유 링크
-│   ├── auth.css              # 로그인 화면, 유저 메뉴
-│   ├── calendar.css          # 캘린더 그리드, 이벤트 필, 필터
-│   ├── checklist.css        # 체크리스트 레이아웃, 상세 설명 아코디언
-│   ├── modal.css              # 모달 공통
-│   └── growth.css             # 성장그래프 페이지
-├── js/
-│   ├── app.js               # 메인 진입점 — Auth 감시·데이터 연결·SW 등록
-│   ├── firebase.js          # Firebase 초기화 및 export
-│   ├── state.js              # 전역 상태(S), Firestore 저장/로드
-│   ├── auth.js                # 로그인·회원가입·Google·로그아웃
-│   ├── ui.js                  # 홈 대시보드·등록·네비게이션
-│   ├── calendar.js           # 캘린더 렌더·자동일정·드래그·필터·모달
-│   ├── checklist.js          # 체크리스트 렌더·토글·상세 설명 아코디언
-│   ├── checklistCalendarLink.js # 체크리스트 ↔ 캘린더 완료 상태 양방향 연동
-│   ├── vaccineSeries.js      # 예방접종 실접종일 기준 이후 회차 자동 재계산
-│   ├── govSupport.js         # 정부지원 체크리스트 탭
-│   ├── growth.js              # 성장 기록 CRUD
-│   ├── growthChart.js        # 성장그래프 페이지(Chart.js), 성장 예측(Sprint 29)
-│   ├── pwaInstall.js         # "어플로 추가" 링크 (설치 프롬프트/iOS 안내) — 홈 화면에 위치
-│   ├── familyShare.js        # "배우자와 함께 쓰기" 공유 링크 — 설정 탭에 위치(v0.0.5)
-│   ├── notifications.js      # 알림 기능 1차 버전(로컬 알림) — Sprint 29, FCM 백엔드 연동은 TODO 참고. 설정 탭에 위치(v0.0.5)
-│   ├── theme.js              # 다크 모드 토글 (v0.0.5) — 설정 탭, localStorage 저장, 앱 본체 전용(육아정보 페이지 미지원)
-│   ├── fontSize.js           # 글자 크기 조절 (v0.0.7) — 설정 탭, localStorage 저장, 앱 본체+육아정보 페이지+정책 페이지 전체 적용
-│   ├── guestMode.js          # 게스트 모드 — 로그인 없이 로컬(localStorage)에 실제 데이터 저장 (Sprint 15)
-│   ├── accountDelete.js      # 계정 영구 삭제(자체 탈퇴) — Firestore 문서 + Auth 계정 삭제 (Sprint 17)
-│   ├── adSlot.js              # 광고 슬롯 컴포넌트 (AdSense 연동 준비)
-│   ├── demoMode.js            # 예시 데이터로 둘러보기 (샘플 데이터, 저장 안 함 — 게스트 모드와는 별개)
-│   ├── modal.js               # showModal(), cm()
-│   └── utils.js                # today()(KST 기준, Sprint 29), ageD(), ageFmt() 등 유틸
-└── data/
-    ├── vaccines.js            # 예방접종 스케줄 (월령별 백신 목록 — 캘린더 자동일정의 단일 진실 공급원)
-    ├── vaccine-series.js      # 예방접종 회차별 최소 접종 간격 (자동 재계산용)
-    ├── pregnancy.js            # 임신 주차별 자동 일정
-    ├── milestones.js          # 건강검진·발달·이유식 마일스톤 (예방접종은 다루지 않음 — vaccines.js와 역할 분리)
-    ├── checklist-data.js       # 체크리스트 전체 데이터 (항목별 상세 설명 dd 필드 포함, Sprint 14)
-    ├── checklist-links.js      # 체크리스트 ↔ 캘린더 일정 매핑
-    ├── government-support.js   # 정부지원금 스케줄·안내
-    ├── who-growth.js            # WHO 성장 백분위 근사 참고 테이블
-    └── tips.js                  # 오늘의 육아 팁 (홈 대시보드·광고 슬롯 대체 콘텐츠 겸용)
-```
-
-> ⚠️ **예방접종 데이터는 `data/vaccines.js`(vaxSched)가 유일한 소스입니다.** 캘린더에 표시되는 개별 접종 이벤트(💉 DTaP 1차 등)는 전부 여기서 생성돼요. `data/milestones.js`의 건강검진 마일스톤에는 예방접종을 요약해서 언급하는 항목을 절대 추가하지 마세요 — 같은 날짜에 두 번 표시되는 "중복" 버그의 원인이었습니다 (Sprint 14에서 수정).
-
----
+> 기술 스택 상세(폰트·글자 크기·PWA 등)는 `ARCHITECTURE.md`의 "기술 스택"으로 옮겼습니다. 여기서는 중복하지 않습니다.
 
 ## Firebase 구조
 
@@ -268,63 +184,22 @@ match /families/{familyId} {
 - 신규 파일: `js/accountDelete.js`
 
 ---
+
 ## 전역 상태 객체 (S)
 
-`js/state.js`에 정의. 모든 모듈이 `import { S } from './state.js'`로 공유.
-
-| 키 | 타입 | Firebase 저장 | 설명 |
-|----|------|:---:|------|
-| `children` | Array | ✅ | 등록된 아이/임신 프로필 목록 |
-| `customEvs` | Array | ✅ | 사용자 직접 추가 일정. `type:'custom'`("내 일정")인 경우에만 v0.0.16부터 `color`(개별 일정 색상, 없으면 `evColors.custom`/기본색) 필드를 가질 수 있음 |
-| `dayStickers` | Object | ✅ | 날짜별 스티커 배열 |
-| `checks` | Object | ✅ | 체크리스트 완료 상태 |
-| `eventMods` | Object | ✅ | 자동 일정의 실제일·완료·메모 등 수정 사항 (Sprint 2) |
-| `growthRecords` | Array | ✅ | 성장 기록 목록 (Sprint 4) |
-| `evColors` | Object | ✅ | 사용자 지정 카테고리 공통 색상 `{req, rec, food, vax, gov}` — 없으면 기본색 사용 (Sprint 21). v0.0.16부터 `custom`은 범례에서 빠지고 일정별 `color` 필드로 대체됨(범례로는 더 이상 못 바꿈, 기존에 저장된 `evColors.custom` 값은 그대로 남아있지만 이제 쓰이지 않음) |
-| `theme` | String | ✅ | 캘린더 테마 (rose/mint/sunny/lavender/peach) |
-| `selC` | Number | ✅ | 현재 선택된 아이 인덱스 |
-| `calY`, `calM` | Number | ❌ (UI 전용) | 캘린더 표시 연·월 |
-| `calView` | String | ❌ | 'month' \| 'week' |
-| `selDate` | String | ❌ | 선택된 날짜 (YYYY-MM-DD) |
-| `evType` | String | ❌ | 일정 추가 종류 |
-| `selSCat` | Number | ❌ | 스티커 카테고리 인덱스 |
-| `clTab` | Number | ❌ | 체크리스트 탭 인덱스 |
-| `selClCat` | Number | ❌ | 체크리스트 사이드바 선택 항목 |
-| `growthMetric` | String | ❌ | 성장그래프 선택 지표 ('height'\|'weight'\|'head') |
-| `isDemoMode` | Boolean | ❌ | 예시 데이터 둘러보기 여부 — 저장 안 함 (Sprint 8) |
-| `isGuestMode` | Boolean | ❌ (로컬 저장은 함) | 게스트 모드 여부 — Firestore 대신 localStorage에 저장 (Sprint 15) |
-| `calFilter` | Object | ❌ | 캘린더 타입 필터 {food, vax, gov} (Sprint 11) |
+> `S`의 전체 필드 표는 `ARCHITECTURE.md`의 "전역 상태 객체 (S)"로 옮겼습니다.
 
 ---
 
 ## 이벤트 타입
 
-| 타입 | 의미 | 색상 |
-|------|------|------|
-| `req` | 필수 일정 | 핑크 #F06292 |
-| `rec` | 추천 일정 | 민트 #4DB6AC |
-| `vax` | 예방접종 | 보라 #9575CD |
-| `gov` | 정부지원 | 그린 (Sprint 6 추가) |
-| `custom` | 내 일정 | 파랑 #64B5F6 |
+> 이벤트 타입·색상 표는 `ARCHITECTURE.md`의 "이벤트 타입"으로 옮겼습니다.
 
 ---
 
 ## 핵심 개발 원칙
 
-1. **기존 기능 절대 삭제 금지** — 리팩터링·기능 추가 시에도 기존 동작 유지
-2. **새 프로젝트를 생성하지 않는다** — 항상 기존 레포·기존 구조 위에서 이어서 작업
-3. **Firebase 구조 유지** — Firestore 문서 스키마 변경 시 하위 호환성 확보 (필드 추가는 되지만 기존 필드명·구조는 바꾸지 않음)
-4. **기존 UI 디자인을 최대한 유지** — UI_GUIDELINE.md의 컬러·타이포·컴포넌트 규칙을 따름
-5. **모든 기능은 모듈화** — 새 기능은 새 파일 또는 기존 모듈에 함수 추가
-6. **사용성 우선** — 복잡한 기능보다 매일 쓰는 기능을 더 쉽게, 부모가 매일 여는 앱을 목표로 개발
-7. **window 노출 규칙** — 인라인 onclick에서 쓰는 함수는 모듈 하단에 `window.xxx = xxx`
-8. **ES6 Module 사용** — `type="module"`, `import/export` 일관 적용
-9. **앱 본체·육아정보 페이지(`guide/`) 동시 적용 원칙 (v0.0.2 추가)** — 앱은 `index.html`(SPA)과 `guide/*.html`(정적 페이지, `scripts/build-guide.mjs`로 생성) 두 갈래로 나뉘어 있고 스타일시트도 각각 `css/main.css`/`guide/guide.css`로 분리돼 있어서, 한쪽만 고치고 다른 쪽을 빼먹기 쉬움. **아래 항목을 변경할 땐 반드시 양쪽을 함께 확인·수정할 것**:
-   - 폰트(제목/본문/버튼 font-family, `fonts/` 아래 커스텀 폰트 파일과 `@font-face` 선언), 색상 팔레트, 로고·마스코트(`.logo`/`.g-logo`, `.brand-mark`) 크기, 글자 크기 조절 기준값(`html[data-fontsize]`, v0.0.7)
-   - 버전 표시(`.site-footer-version`) — 위 "버전 관리 정책" 참고
-   - 하단 푸터 구성(`.site-footer`/`.site-footer-links`) — 링크 목록·아이콘·순서가 서로 달라지지 않도록 함
-   - 공용 아이콘 이미지(`icons/` 아래 파일들)
-   - 그 외 "앱 전체에 적용해달라"는 식의 요청은 기본적으로 이 두 갈래 모두를 포함하는 것으로 해석함
+> 최우선 원칙(1~6번)은 `AGENTS.md`로, 코딩 컨벤션(window 노출 규칙·ES6 모듈·앱 본체/육아정보 동시 적용 원칙)은 `ARCHITECTURE.md`의 "코딩 컨벤션"으로 옮겼습니다. 새로 작업을 시작할 땐 이 두 문서를 먼저 확인하세요.
 
 ---
 

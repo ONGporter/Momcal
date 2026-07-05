@@ -8,7 +8,7 @@
  *
  * 왜 정적 생성인가?
  *  - 맘캘 본체는 Firebase 로그인 뒤에서 JS로 그려지는 SPA라 검색엔진이 색인할 실질적인
- *    공개 콘텐츠가 없었음 (PROJECT_SPEC.md "수익화 & 트래픽 전략" 참고)
+ *    공개 콘텐츠가 없었음 (docs/PROJECT_SPEC.md "수익화 & 트래픽 전략" 참고)
  *  - 이 가이드 페이지들은 로그인·JS 실행 없이도 크롤러가 텍스트를 그대로 읽을 수 있는
  *    순수 정적 HTML로 만들어 실질적인 SEO 콘텐츠 역할을 하게 함
  *  - 원본 데이터(체크리스트 dd 필드)와 내용이 어긋나지 않도록, 직접 손으로 쓰지 않고
@@ -29,8 +29,8 @@ const ROOT  = join(__dirname, '..');
 const GUIDE = join(ROOT, 'guide');
 const SITE  = 'https://momcal.app';
 /* v0.0.2: 앱 본체(index.html 최하단)와 반드시 같은 값으로 유지 — 버전을 올릴 땐 이 값과
-   index.html의 .site-footer-version 텍스트를 함께 수정해야 함 (PROJECT_SPEC.md 버전 관리 정책 참고) */
-const APP_VERSION = 'v0.0.17';
+   index.html의 .site-footer-version 텍스트를 함께 수정해야 함 (docs/PROJECT_SPEC.md 버전 관리 정책 참고) */
+const APP_VERSION = 'v0.0.18';
 
 /* 정부지원 데이터는 {preg, postpartum, parenting} 키의 배열이라 체크리스트와 형태가 달라
    가이드 페이지용 카테고리 배열로 한 번 변환해준다. */
