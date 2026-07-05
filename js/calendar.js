@@ -2,7 +2,7 @@
  * js/calendar.js — Sprint 2 업데이트
  *
  * 추가 기능:
- * - 이벤트 클릭 → 수정 Modal (권장일·실제일·병원·메모·완료)
+ * - 이벤트 클릭 → 수정 Modal (권장일·실제일·메모·완료, "내 일정"은 제목·시작/종료 시간·색상도 수정 가능 — v0.0.17)
  * - 완료 시 ✅ 표시 (캘린더 필 + 데이 패널)
  * - PC 드래그앤드롭으로 일정 이동
  * - 모바일 길게 눌러 이동 (500ms long press)
@@ -76,6 +76,55 @@ export function getEvColor(cat) {
 export function getEvDisplayColor(e) {
   if (e.type === 'custom' && e.color) return e.color;
   return getEvColor(getEvCategory(e));
+}
+
+/**
+ * v0.0.17: "내 일정" 색상 선택 폭이 너무 넓다는 피드백(자유 색상 피커) — 파스텔 톤 7개 중
+ * 고르는 방식으로 변경. 첫 번째("하늘")는 기존 기본색(#64B5F6)과 동일해서, 이미 저장된
+ * 옛 일정도 그대로 프리셋 중 하나로 자연스럽게 매칭됨.
+ */
+export const CUSTOM_EV_COLOR_PRESETS = [
+  { name: '하늘',   color: '#64B5F6' },
+  { name: '민트',   color: '#80CBC4' },
+  { name: '라벤더', color: '#B39DDB' },
+  { name: '로즈',   color: '#F48FB1' },
+  { name: '피치',   color: '#FFAB91' },
+  { name: '레몬',   color: '#FFE082' },
+  { name: '그레이', color: '#B0BEC5' },
+];
+
+/** 색상 스와치 UI(숨김 input + 동그란 버튼들) HTML — 일정 추가 폼·수정 모달에서 공용으로 씀 */
+function colorSwatchesHtml(hiddenInputId, selectedColor) {
+  const sel = (selectedColor || CUSTOM_EV_COLOR_PRESETS[0].color).toLowerCase();
+  return `
+    <input type="hidden" id="${hiddenInputId}" value="${sel}">
+    <div class="ev-color-swatches">
+      ${CUSTOM_EV_COLOR_PRESETS.map(p => `
+        <button type="button"
+                class="ev-color-swatch${p.color.toLowerCase() === sel ? ' on' : ''}"
+                style="background:${p.color}" title="${p.name}"
+                onclick="selectEvColorSwatch('${hiddenInputId}', '${p.color}', this)"></button>
+      `).join('')}
+    </div>`;
+}
+
+/** 스와치 클릭 핸들러 — 숨김 input 값을 갱신하고 선택 표시를 옮김 */
+export function selectEvColorSwatch(inputId, color, btn) {
+  const input = document.getElementById(inputId);
+  if (input) input.value = color;
+  btn.parentElement.querySelectorAll('.ev-color-swatch').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+}
+window.selectEvColorSwatch = selectEvColorSwatch;
+
+/** 일정 추가 폼의 색상 스와치 렌더 — renderCal()에서 캘린더 탭을 열 때마다 호출됨.
+ *  이미 골라둔 색이 있으면 그대로 유지(일정을 여러 개 연달아 추가할 때 매번 다시
+ *  고르지 않아도 되도록) — 없으면 첫 번째 프리셋("하늘")을 기본값으로 보여줌 */
+export function renderAddEvColorSwatches() {
+  const wrap = document.getElementById('evColorSwatchWrap');
+  if (!wrap) return;
+  const prevColor = document.getElementById('evColor')?.value;
+  wrap.innerHTML = colorSwatchesHtml('evColor', prevColor || CUSTOM_EV_COLOR_PRESETS[0].color);
 }
 
 /** 사용자가 특정 카테고리 색상을 직접 지정 */
@@ -271,11 +320,15 @@ export function openEvModal(idx) {
   const mod      = S.eventMods[key] || {};
   const recDate  = ev.recDate || ev._origDate || ev.date;
   const actDate  = mod.actualDate || ev.date;
-  const hospital = mod.hospital || '';
   const memo     = mod.memo     || ev.note || '';
   const done     = !!mod.done;
   const isGov    = ev.type === 'gov';
   const govStatus = mod.govStatus || 'none';
+  // v0.0.17: "내 일정"으로 직접 추가한 일정(!ev.auto)만 제목·시작/종료 시간을 수정할 수 있음 —
+  // 자동 생성 일정(예방접종·정부지원 등)은 제목이 데이터에서 나오는 값이라 수정 대상에서 제외
+  const { time: parsedTime, endTime: parsedEndTime, title: parsedTitle } = ev.auto
+    ? { time: '', endTime: '', title: '' }
+    : parseEvTitleWithTime(ev.title);
 
   const typeLabel = {
     req: '★ 필수', rec: '✓ 추천', vax: '💉 접종', gov: '🟢 정부지원', custom: '📌 내 일정',
@@ -309,22 +362,24 @@ export function openEvModal(idx) {
         <label>🗓 권장일</label>
         <input type="date" value="${recDate}" readonly
                style="background:#F8F4FA;color:var(--txl);cursor:default;border-color:#EEE0F0">
-      </div>` : ''}
+      </div>` : `
+      <div class="fg">
+        <label>📝 제목</label>
+        <input id="evModTitle" value="${esc(parsedTitle)}">
+      </div>
+      <div class="fg2">
+        <div class="fg" style="margin:0"><label>시작 시간 (선택)</label><input type="time" id="evModTime" value="${parsedTime}"></div>
+        <div class="fg" style="margin:0"><label>종료 시간 (선택)</label><input type="time" id="evModEndTime" value="${parsedEndTime}"></div>
+      </div>`}
 
     <div class="fg">
       <label>${isGov ? '📅 신청 예정일' : '📅 실제 일정'}</label>
       <input type="date" id="evModDate" value="${actDate}">
     </div>
-    ${!isGov ? `
-      <div class="fg">
-        <label>🏥 병원명</label>
-        <input id="evModHospital" placeholder="예) 서울소아과" value="${hospital}">
-      </div>` : ''}
-    ${(!isGov && ev.type === 'custom' && !ev.auto) ? `
+    ${(ev.type === 'custom' && !ev.auto) ? `
       <div class="fg">
         <label>🎨 일정 색상</label>
-        <input type="color" id="evModColor" value="${ev.color || getEvColor('custom')}"
-               style="height:40px;padding:2px;cursor:pointer">
+        ${colorSwatchesHtml('evModColor', ev.color || getEvColor('custom'))}
       </div>` : ''}
     <div class="fg">
       <label>📝 메모</label>
@@ -379,28 +434,40 @@ export function saveEventMod() {
 
   if (!S.eventMods) S.eventMods = {};
   const key        = getEventKey(ev);
+  const mod        = S.eventMods[key] || {};
   const isGov      = ev.type === 'gov';
   const actualDate = document.getElementById('evModDate')?.value    || ev.date;
-  const hospital   = isGov ? '' : (document.getElementById('evModHospital')?.value || '');
+  // v0.0.17: 병원명 입력 필드는 없앴지만(요청), 예전에 이미 저장된 값이 있다면 그대로 유지
+  // (수정 모달에서 다른 항목을 저장할 때 조용히 지워지지 않도록)
+  const hospital   = mod.hospital || '';
   const memo       = document.getElementById('evModMemo')?.value     || '';
   const govStatus  = isGov ? (document.getElementById('evModGovStatus')?.value || 'none') : undefined;
   const done       = isGov ? govStatus === 'paid' : (document.getElementById('evModDone')?.checked || false);
 
-  S.eventMods[key] = isGov
-    ? { actualDate, hospital, memo, done, govStatus }
-    : { actualDate, hospital, memo, done };
-
-  // 커스텀 이벤트는 날짜도 직접 반영 (+ v0.0.16: "내 일정"이면 색상도 함께)
+  // v0.0.17: "내 일정"(!ev.auto)은 제목·시작/종료 시간도 함께 검증·반영
   if (!ev.auto) {
+    const newTime    = document.getElementById('evModTime')?.value    || '';
+    const newEndTime = document.getElementById('evModEndTime')?.value || '';
+    const newTitle   = document.getElementById('evModTitle')?.value.trim() || '';
+    if (!newTitle) { alert('제목을 입력해주세요'); return; }
+    if (newTime && newEndTime && newEndTime <= newTime) {
+      alert('종료 시간이 시작 시간보다 늦어야 해요');
+      return;
+    }
     const ce = S.customEvs.find(e => e._id === ev._id);
     if (ce) {
-      ce.date = actualDate;
+      ce.date  = actualDate;
+      ce.title = buildEvTitleWithTime(newTime, newEndTime, newTitle);
       if (ev.type === 'custom') {
         const colorInput = document.getElementById('evModColor');
         if (colorInput) ce.color = colorInput.value;
       }
     }
   }
+
+  S.eventMods[key] = isGov
+    ? { actualDate, hospital, memo, done, govStatus }
+    : { actualDate, hospital, memo, done };
 
   // Sprint 6: 예방접종이면 이후 회차 자동 재계산 (병원 권장 최소 간격 유지)
   let recalced = [];
@@ -652,6 +719,7 @@ export function renderCal() {
   }
   S.calView === 'month' ? renderMonthView() : renderWeekView();
   renderCalLegend();
+  renderAddEvColorSwatches(); // v0.0.17: 일정 추가 폼의 "내 일정" 색상 스와치(멱등적이라 매번 다시 그려도 안전)
 }
 
 /* ── 월간 뷰 ── */
@@ -1232,6 +1300,26 @@ export function showDayPanel(ds) {
 /* ══════════════════════════════════════
  *  커스텀 일정 추가 / 삭제
  * ══════════════════════════════════════ */
+
+/**
+ * v0.0.17: "HH:MM"/"HH:MM~HH:MM" 시간 프리픽스를 제목 앞에 붙이거나(build) 다시
+ * 분리해내는(parse) 공용 헬퍼. addCustomEv(추가)·saveEventMod(수정)가 함께 씀 —
+ * 로직이 한 곳에만 있어야 두 곳이 서로 다르게 동작하는 일이 없음.
+ */
+function buildEvTitleWithTime(time, endTime, title) {
+  let prefix = '';
+  if (time && endTime) prefix = `${time}~${endTime} `;
+  else if (time) prefix = `${time} `;
+  return prefix ? `${prefix}${title}` : title;
+}
+
+/** 저장된 제목에서 시간 프리픽스와 순수 제목을 분리 (수정 모달 프리필용) */
+function parseEvTitleWithTime(fullTitle) {
+  const m = (fullTitle || '').match(/^(\d{2}:\d{2})(?:~(\d{2}:\d{2}))?\s(.*)$/);
+  if (!m) return { time: '', endTime: '', title: fullTitle || '' };
+  return { time: m[1], endTime: m[2] || '', title: m[3] };
+}
+
 export function addCustomEv() {
   const date    = document.getElementById('evDate').value;
   const title   = document.getElementById('evTitle').value.trim();
@@ -1246,20 +1334,13 @@ export function addCustomEv() {
     return;
   }
 
-  // v0.0.12: 시작 시간만 입력하면 기존처럼 "HH:MM 제목", 종료 시간까지 입력하면
-  // "HH:MM~HH:MM 제목" 형태로 제목 앞에 붙임 — 기존에 제목 안에 시간을 담아두던 방식과
-  // 그대로 호환되어 캘린더 필·데이 패널 등 표시 로직을 따로 안 건드려도 자동으로 반영됨
-  let prefix = '';
-  if (time && endTime) prefix = `${time}~${endTime} `;
-  else if (time) prefix = `${time} `;
-
   // v0.0.16: "내 일정"으로 추가할 때는 직접 고른 색을 이 일정에만 저장(color 필드) —
   // 필수/추천/접종으로 추가하면 기존처럼 카테고리 공통 색을 그대로 씀
   const color = S.evType === 'custom' ? (document.getElementById('evColor')?.value || '') : '';
 
   S.customEvs.push({
     date,
-    title: prefix ? `${prefix}${title}` : title,
+    title: buildEvTitleWithTime(time, endTime, title),
     note,
     type: S.evType,
     ...(color ? { color } : {}),

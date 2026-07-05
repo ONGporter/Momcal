@@ -173,6 +173,16 @@ html[data-cal-fontsize="xl"] .ev-more { font-size: 11px; }
 }
 .type-btn.on { border-color: var(--pk); background: var(--pkl); color: var(--pkd); }
 
+/* v0.0.17: "내 일정" 색상 스와치 — 자유 색상 피커 대신 파스텔 톤 7개 중 고르는 방식 */
+.ev-color-swatches { display: flex; gap: 8px; flex-wrap: wrap; padding-top: 2px; }
+.ev-color-swatch {
+  width: 30px; height: 30px; border-radius: 50%; cursor: pointer;
+  border: 2.5px solid transparent; padding: 0; transition: all .18s;
+  box-shadow: 0 1px 4px rgba(0,0,0,.12);
+}
+.ev-color-swatch:hover { transform: scale(1.12); }
+.ev-color-swatch.on { border-color: var(--tx); transform: scale(1.12); }
+
 /* ── RESPONSIVE ── */
 @media (max-width: 640px) {
   .cal-cell { min-height: 76px; }
