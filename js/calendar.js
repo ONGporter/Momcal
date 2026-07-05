@@ -804,6 +804,38 @@ function evPriority(e) {
   return order[getEvCategory(e)] ?? 9;
 }
 
+/**
+ * v0.0.13 버그 수정: 주간 뷰 시간대별 배치
+ *
+ * 기존엔 각 시간 칸(0/6/8/10/…/22시)마다 "그 날짜의 이벤트"를 필터링 없이 전부 다시
+ * 그려서, 시작·종료 시간을 넣어도 하루 종일 모든 시간 칸에 똑같이 나타났음
+ * (원인: evs.filter(e => e.date === ds)에 날짜만 있고 시간 조건이 없었음).
+ *
+ * 이제 제목 맨 앞의 "HH:MM" 또는 "HH:MM~HH:MM" 프리픽스(js/calendar.js의 addCustomEv()가
+ * 붙여줌)에서 시작 시각을 읽어와, 그 시각이 속하는 시간 칸에만 표시되도록 함.
+ * 시간이 없는 이벤트(예방접종·건강검진 등 대부분의 자동 일정)는 맨 위 "0시" 칸에 모아서
+ * 보여줌(하루 종일 일정 취급) — 여러 칸에 걸치는 것까지는 지원하지 않고 시작 시각
+ * 기준 한 칸에만 표시함(복잡한 기능보다 사용성 우선 원칙에 따른 단순화).
+ */
+const WEEK_HOUR_SLOTS = [0, 6, 8, 10, 12, 14, 16, 18, 20, 22];
+
+function getEvStartMinutes(ev) {
+  const m = (ev.title || '').match(/^(\d{2}):(\d{2})/);
+  if (!m) return null;
+  return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+}
+
+function getWeekHourSlot(ev) {
+  const mins = getEvStartMinutes(ev);
+  if (mins == null) return WEEK_HOUR_SLOTS[0]; // 시간 미지정 → 맨 위 0시 칸(하루 종일 취급)
+  const hour = Math.floor(mins / 60);
+  let slot = WEEK_HOUR_SLOTS[0];
+  for (const s of WEEK_HOUR_SLOTS) {
+    if (hour >= s) slot = s; else break;
+  }
+  return slot;
+}
+
 function esc(str) {
   return String(str).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
@@ -880,7 +912,7 @@ function renderWeekView() {
     html += `<div class="week-grid-line" style="font-size:.62rem;color:var(--txl);font-weight:700;padding:8px 4px;text-align:right;border-bottom:1px solid #F5EEF8">${h}시</div>`;
     weekDays.forEach(d => {
       const ds   = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      const de   = groupVaxEvents(applyCalFilter(evs.filter(e => e.date === ds)));
+      const de   = groupVaxEvents(applyCalFilter(evs.filter(e => e.date === ds && getWeekHourSlot(e) === h)));
       const isTd = ds === td;
       html += `
         <div onclick="selectDate('${ds}')"
@@ -1026,6 +1058,12 @@ export function addCustomEv() {
   const time    = document.getElementById('evTime').value;
   const endTime = document.getElementById('evEndTime').value;
   if (!date || !title) { alert('날짜와 제목을 입력해주세요'); return; }
+
+  // v0.0.13: 종료 시간이 시작 시간보다 빠르거나 같으면 등록 막고 안내
+  if (time && endTime && endTime <= time) {
+    alert('종료 시간이 시작 시간보다 늦어야 해요');
+    return;
+  }
 
   // v0.0.12: 시작 시간만 입력하면 기존처럼 "HH:MM 제목", 종료 시간까지 입력하면
   // "HH:MM~HH:MM 제목" 형태로 제목 앞에 붙임 — 기존에 제목 안에 시간을 담아두던 방식과

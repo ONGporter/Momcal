@@ -148,14 +148,21 @@ function dashChecklistCard(child) {
   // v0.0.11: "다음 추천 항목" 문구는 복잡하다는 피드백으로 제거하고,
   // Master/Legend 배지가 있을 때만 보여주고 없으면 짧은 응원 문구로 단순화
   // (Perfect는 배지 축에 안 넣음 — 필수만 채운 상태라 아직 "달성감"을 주기엔 이르다고 판단)
-  const CHEER = ['오늘도 화이팅! 🌱', '천천히 해도 괜찮아요', '조금씩 채워가요 💪', '아이와 함께 잘 하고 있어요 😊'];
+  // v0.0.13: "응원 문구가 계속 안 바뀐다"는 피드백 — 기존엔 날짜(일)로 고정돼서 하루 종일
+  // 같은 문구만 보였음. 홈에 올 때마다(대시보드 렌더링마다) 랜덤하게 바뀌도록 변경하고,
+  // 문구 풀도 더 다양하게 늘림
+  const CHEER = [
+    '오늘도 화이팅! 🌱', '천천히 해도 괜찮아요', '조금씩 채워가요 💪',
+    '아이와 함께 잘 하고 있어요 😊', '오늘 하루도 수고했어요', '차근차근 하나씩요 🐣',
+    '잘 하고 있는 중이에요', '지금도 충분히 잘하고 있어요 🌷',
+  ];
   let sub;
   if (tier === 'legend') {
     sub = '🌈 Legend';
   } else if (tier === 'master') {
     sub = '👑 Master';
   } else {
-    sub = CHEER[new Date(today()).getDate() % CHEER.length];
+    sub = CHEER[Math.floor(Math.random() * CHEER.length)];
   }
 
   return dashCard('📋', 'var(--mnl)', info.cat.label, `${doneTotal} / ${itemsTotal} 완료`, sub, "gp('checklist',document.querySelector('.np[data-page=checklist]'))");
