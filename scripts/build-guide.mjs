@@ -30,7 +30,7 @@ const GUIDE = join(ROOT, 'guide');
 const SITE  = 'https://momcal.app';
 /* v0.0.2: 앱 본체(index.html 최하단)와 반드시 같은 값으로 유지 — 버전을 올릴 땐 이 값과
    index.html의 .site-footer-version 텍스트를 함께 수정해야 함 (docs/PROJECT_SPEC.md 버전 관리 정책 참고) */
-const APP_VERSION = 'v0.0.19';
+const APP_VERSION = 'v0.0.20';
 
 /* 정부지원 데이터는 {preg, postpartum, parenting} 키의 배열이라 체크리스트와 형태가 달라
    가이드 페이지용 카테고리 배열로 한 번 변환해준다. */
@@ -92,6 +92,9 @@ function head(title, desc, path, jsonLd) {
 <meta property="og:locale" content="ko_KR">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="${SITE}/icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0&display=block" rel="stylesheet">
 <link rel="stylesheet" href="./guide.css">${jsonLd ? `\n${jsonLd}` : ''}`;
 }
 
@@ -122,18 +125,18 @@ function faqJsonLd(cats, questionFn, answerFn) {
 function header() {
   return `<header class="g-header">
   <a class="g-logo" href="./index.html">맘캘 <img src="${SITE}/icons/logo-mark.png" alt="" class="brand-mark"></a>
-  <a class="g-cta js-cta" href="${SITE}/">📅 맘캘 앱 무료로 쓰기</a>
+  <a class="g-cta js-cta" href="${SITE}/"><span class="icon icon-sm" translate="no" aria-hidden="true">calendar_month</span> 맘캘 앱 무료로 쓰기</a>
 </header>`;
 }
 
 function footer() {
   return `<footer class="site-footer">
   <div class="site-footer-links">
-    <a href="./index.html">📖 육아정보</a>
-    <a href="../privacy.html">🔒 개인정보처리방침</a>
-    <a href="../terms.html">📄 이용약관</a>
-    <a href="../contact.html">✉️ 문의</a>
-    <a href="${SITE}/">🏠 앱으로</a>
+    <a href="./index.html"><span class="icon icon-sm" translate="no" aria-hidden="true">menu_book</span> 육아정보</a>
+    <a href="../privacy.html"><span class="icon icon-sm" translate="no" aria-hidden="true">lock</span> 개인정보처리방침</a>
+    <a href="../terms.html"><span class="icon icon-sm" translate="no" aria-hidden="true">description</span> 이용약관</a>
+    <a href="../contact.html"><span class="icon icon-sm" translate="no" aria-hidden="true">mail</span> 문의</a>
+    <a href="${SITE}/"><span class="icon icon-sm" translate="no" aria-hidden="true">home</span> 앱으로</a>
   </div>
   <div class="site-footer-version">맘캘 MomCal ${APP_VERSION}</div>
 </footer>

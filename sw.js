@@ -9,11 +9,13 @@
  * Firebase 등 외부 도메인 요청(인증·데이터 동기화)은 건드리지 않고 그대로 통과시킵니다.
  */
 
-// v0.0.17: 폴더 구조 정리(AGENTS.md/ARCHITECTURE.md/docs/) 작업 중 앱쉘 캐시 목록에서
+// v0.0.18: 폴더 구조 정리(AGENTS.md/ARCHITECTURE.md/docs/) 작업 중 앱쉘 캐시 목록에서
 // 누락된 js 모듈 8개(theme.js/fontSize.js/calFontSize.js/guestMode.js/familyShare.js/
 // accountDelete.js/pwaInstall.js/adSlot.js) 발견 — 여러 버전에 걸쳐 계속 빠져있었음(오프라인
 // 상태에서 다크모드·글자크기·가족공유 등 설정 탭 기능이 깨질 수 있었던 잠재 버그) — 추가하고 캐시 버전 상향
-const CACHE_NAME = 'momcal-shell-v24';
+// v0.0.20: "AI스럽지 않은 실제 서비스 수준" 리디자인 — 아이콘 라이브러리 도입,
+// 팔레트·반경·간격 토큰 변경으로 CSS/JS 다수 변경 — 캐시 버전 상향
+const CACHE_NAME = 'momcal-shell-v25';
 
 const APP_SHELL = [
   './',

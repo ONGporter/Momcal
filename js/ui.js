@@ -4,7 +4,7 @@
  */
 
 import { S, debounceSave }       from './state.js';
-import { ageFmt, ageD, today }   from './utils.js';
+import { ageFmt, ageD, today, icon } from './utils.js';
 import { showModal }             from './modal.js';
 import { getAllEvs }             from './calendar.js';
 import { getTodayCategoryInfo }  from './checklist.js';
@@ -114,19 +114,19 @@ export function renderDashboard() {
   ].join('');
 }
 
-/** 👶 오늘 며칠째 / 몇 주차 */
+/** 오늘 며칠째 / 몇 주차 */
 function dashAgeCard(child) {
   if (child.stage === 'preg') {
     const week = parseInt(child.week) || 0;
     const left = Math.max(0, 40 - week);
-    return dashCard('🤰', 'var(--pul)', '임신 주차', `${week}주차`, `출산까지 약 ${left}주`);
+    return dashCard('pregnant_woman', '임신 주차', `${week}주차`, `출산까지 약 ${left}주`);
   }
   const d = ageD(child.birth);
   const m = Math.floor(d / 30.44);
-  return dashCard('👶', 'var(--pkl)', `${child.name} 오늘`, `${d}일째`, m >= 1 ? `${m}개월` : '신생아');
+  return dashCard('child_care', `${child.name} 오늘`, `${d}일째`, m >= 1 ? `${m}개월` : '신생아');
 }
 
-/** 📅 다음 일정 */
+/** 다음 일정 */
 function dashNextEventCard(child) {
   const todayStr = today();
   const upcoming = getAllEvs()
@@ -134,58 +134,60 @@ function dashNextEventCard(child) {
     .sort((a, b) => a.date < b.date ? -1 : 1)[0];
 
   if (!upcoming) {
-    return dashCard('📅', 'var(--bll)', '다음 일정', '예정된 일정 없음', '캘린더에서 추가해보세요', "gp('calendar',document.querySelector('.np[data-page=calendar]'))");
+    return dashCard('calendar_month', '다음 일정', '예정된 일정 없음', '캘린더에서 추가해보세요', "gp('calendar',document.querySelector('.np[data-page=calendar]'))");
   }
   const days = Math.round((new Date(upcoming.date) - new Date(todayStr)) / 86400000);
   const dLabel = days === 0 ? '오늘' : `${days}일 후`;
-  return dashCard('📅', 'var(--bll)', '다음 일정', upcoming.title.replace(/^\d{2}:\d{2}(~\d{2}:\d{2})?\s/, ''), dLabel, "gp('calendar',document.querySelector('.np[data-page=calendar]'))");
+  return dashCard('calendar_month', '다음 일정', upcoming.title.replace(/^\d{2}:\d{2}(~\d{2}:\d{2})?\s/, ''), dLabel, "gp('calendar',document.querySelector('.np[data-page=calendar]'))");
 }
 
 /**
- * 📋 오늘 체크리스트 진행
+ * 오늘 체크리스트 진행
  * v0.0.15: 기존엔 "N / N 완료"로 필수+선택을 합쳐서 한 줄로만 보여줬는데,
  * 필수만 봐도 되는지 헷갈린다는 피드백으로 "필수" / "전체" 수치를 나눠서 표시.
  * v0.0.16: 처음엔 두 줄로 나눴는데, "전체" 수치를 "필수" 수치 오른쪽으로 옮겨 한 줄로
  * 합쳐달라는 요청으로 변경(길면 카드 폭에서 말줄임표로 잘릴 수 있음, 옹짐꾼님 확인).
  * 배지(Perfect/Master/Legend)는 그 아래 작은 칩으로 별도 표시 — 기존엔 Perfect는 배지
  * 축에서 빠졌었는데, 필수만 다 채워도 성취감을 주는 게 낫다는 피드백으로 Perfect 배지도 추가함.
+ * v0.0.20: 배지 이모지(🏅👑🌈)를 아이콘으로 교체 — 등급 구분은 배지 배경색(금/보라/무지개
+ * 그라디언트)으로 유지하되(정보 전달용 색상 예외, docs/UI_GUIDELINE.md 참고), 글자는 아이콘+텍스트로
  */
 function dashChecklistCard(child) {
   const info = getTodayCategoryInfo(child);
   const onclick = "gp('checklist',document.querySelector('.np[data-page=checklist]'))";
   if (!info) {
-    return dashCard('📋', 'var(--mnl)', '체크리스트', '-', '', onclick);
+    return dashCard('checklist', '체크리스트', '-', '', onclick);
   }
   const { tier, reqDone, reqTotal, doneTotal, itemsTotal } = info;
 
   const BADGE = {
-    perfect: { cls: 'dash-badge-mini-perfect', label: '🏅 Perfect' },
-    master:  { cls: 'dash-badge-mini-master',  label: '👑 Master' },
-    legend:  { cls: 'dash-badge-mini-legend',  label: '🌈 Legend' },
+    perfect: { cls: 'dash-badge-mini-perfect', iconName: 'verified',          label: 'Perfect' },
+    master:  { cls: 'dash-badge-mini-master',  iconName: 'workspace_premium', label: 'Master' },
+    legend:  { cls: 'dash-badge-mini-legend',  iconName: 'auto_awesome',      label: 'Legend' },
   };
   const badge = BADGE[tier];
 
   return `
     <div class="dash-card" onclick="${onclick}">
-      <div class="dash-icon" style="background:var(--mnl)">📋</div>
+      <div class="dash-icon">${icon('checklist')}</div>
       <div class="dash-body">
         <div class="dash-label">${info.cat.label}</div>
         <div class="dash-value">${reqDone} / ${reqTotal} 완료(필수) <span class="dash-sub-inline">${doneTotal} / ${itemsTotal} 완료(전체)</span></div>
-        ${badge ? `<div class="dash-badge-mini ${badge.cls}">${badge.label}</div>` : ''}
+        ${badge ? `<div class="dash-badge-mini ${badge.cls}">${icon(badge.iconName, { size: 'sm' })} ${badge.label}</div>` : ''}
       </div>
     </div>`;
 }
 
-/** 📈 성장 기록 (+ Sprint 11: 30일 이상 기록 없으면 리마인더) */
+/** 성장 기록 (+ Sprint 11: 30일 이상 기록 없으면 리마인더) */
 function dashGrowthCard(child) {
   const { latest, prev } = getLatestGrowth(child.id);
   if (!latest) {
-    return dashCard('📈', 'var(--yll)', '성장 기록', '아직 기록 없어요', '탭해서 첫 기록 남기기', 'openGrowthModal()');
+    return dashCard('trending_up', '성장 기록', '아직 기록 없어요', '탭해서 첫 기록 남기기', 'openGrowthModal()');
   }
 
   const daysSince = Math.floor((new Date(today()) - new Date(latest.date)) / 86400000);
   if (daysSince >= 30) {
-    return dashCard('📈', 'var(--yll)', '성장 기록', `마지막 기록 ${daysSince}일 전`, '탭해서 새 기록 남기기 ✏️', 'openGrowthModal()');
+    return dashCard('trending_up', '성장 기록', `마지막 기록 ${daysSince}일 전`, '탭해서 새 기록 남기기', 'openGrowthModal()');
   }
 
   const parts = [];
@@ -197,19 +199,24 @@ function dashGrowthCard(child) {
     const d = prev?.weight != null ? latest.weight - prev.weight : null;
     parts.push(`몸무게 ${latest.weight}kg${d != null ? ` (${d >= 0 ? '+' : ''}${d.toFixed(1)})` : ''}`);
   }
-  return dashCard('📈', 'var(--yll)', '성장 기록', parts[0] || '-', parts[1] || `${latest.date} 기록`, 'openGrowthModal()');
+  return dashCard('trending_up', '성장 기록', parts[0] || '-', parts[1] || `${latest.date} 기록`, 'openGrowthModal()');
 }
 
-/** ⭐ 오늘의 육아 팁 */
+/** 오늘의 육아 팁 */
 function dashTipCard() {
-  return dashCard('⭐', 'var(--pkl)', '오늘의 육아 팁', getDailyTip(), '', '', true);
+  return dashCard('lightbulb', '오늘의 육아 팁', getDailyTip(), '', '', true);
 }
 
-/** 대시보드 카드 공통 HTML */
-function dashCard(icon, bg, label, value, sub, onclick, isTip) {
+/**
+ * 대시보드 카드 공통 HTML
+ * v0.0.20: 아이콘 배경을 카드마다 다른 파스텔 색(var(--pul)/var(--bll)/var(--yll) 등)으로
+ * 칠하던 방식에서 벗어나, 중립 그레이(var(--gray-100)) + 핑크 아이콘으로 통일함 — "카드마다
+ * 다른 색 사각형"이 흔한 AI 생성 대시보드 패턴이라, 단일 액센트로 차분하게 정리(docs/UI_GUIDELINE.md 참고)
+ */
+function dashCard(iconName, label, value, sub, onclick, isTip) {
   return `
     <div class="dash-card${isTip ? ' dash-tip' : ''}" ${onclick ? `onclick="${onclick}"` : ''}>
-      <div class="dash-icon" style="background:${bg}">${icon}</div>
+      <div class="dash-icon">${icon(iconName)}</div>
       <div class="dash-body">
         <div class="dash-label">${label}</div>
         <div class="dash-value${isTip ? ' dash-tip-text' : ''}">${value}</div>

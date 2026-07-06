@@ -56,3 +56,20 @@ export function stripLeadingEmoji(str) {
   if (!str) return '';
   return str.replace(/^[\p{Extended_Pictographic}\u200d\uFE0F\s]+/u, '').trim();
 }
+
+/**
+ * v0.0.20: 아이콘 렌더링 공용 헬퍼 — Material Symbols 아이콘 하나를 만들 때 항상 이 함수를 씀.
+ * "아이콘 색은 훅 하나로 통일" 원칙 — 마크업·클래스 이름이 여기 한 곳에만 있어서,
+ * 나중에 아이콘 라이브러리를 바꾸거나 스타일을 조정할 때 이 함수만 고치면 됨.
+ * @param {string} name  Material Symbols 아이콘 이름(예: 'home', 'calendar_month')
+ * @param {object} [opts]
+ * @param {'sm'|'md'|'lg'} [opts.size='md']
+ * @param {boolean} [opts.fill=false]  채워진 스타일 아이콘(활성 상태 표시 등에 사용)
+ * @param {string} [opts.style='']     추가 인라인 스타일
+ */
+export function icon(name, opts = {}) {
+  const { size = 'md', fill = false, style = '' } = opts;
+  const sizeCls = size === 'sm' ? ' icon-sm' : size === 'lg' ? ' icon-lg' : '';
+  const fillCls = fill ? ' icon-fill' : '';
+  return `<span class="icon${sizeCls}${fillCls}" style="${style}" translate="no" aria-hidden="true">${name}</span>`;
+}

@@ -1,7 +1,7 @@
 /* ── AUTH SCREEN ── */
 #authScreen {
   position: fixed; inset: 0; z-index: 1000;
-  background: linear-gradient(135deg, #F48FB1 0%, #CE93D8 50%, #90CAF9 100%);
+  background: linear-gradient(135deg, #F8BBD0 0%, #F06292 100%);
   display: flex; align-items: center; justify-content: center;
   padding: 20px;
 }
@@ -28,7 +28,7 @@
 .auth-logo {
   font-family: 'OwnglyphParkDahyun', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
   font-size: 1.85rem; font-weight: 400; margin-bottom: 4px;
-  background: linear-gradient(135deg, #F06292, #9C27B0);
+  background: var(--pk);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
 }
 /* v0.0.4: css/main.css에서 .brand-mark 높이를 고정값(2.85rem)으로 바꾸면서 로그인 화면
@@ -86,7 +86,7 @@
 
 .demo-banner {
   display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 500;
-  background: linear-gradient(90deg, #F06292, #9C27B0);
+  background: var(--pk);
   color: #fff; text-align: center; padding: 8px 14px;
   font-size: .74rem; font-weight: 800;
   align-items: center; justify-content: center; gap: 10px;
@@ -111,7 +111,7 @@ body.demo-active #authScreen { padding-top: 36px; }
 }
 .user-avatar {
   width: 24px; height: 24px; border-radius: 50%;
-  background: linear-gradient(135deg, #F06292, #9C27B0);
+  background: var(--pk);
   color: #fff; display: flex; align-items: center;
   justify-content: center; font-size: .72rem; font-weight: 900; flex-shrink: 0;
 }

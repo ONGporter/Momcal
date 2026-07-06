@@ -40,8 +40,22 @@
   --bg:  #F8F4FA;
   --card: #ffffff;
   --card-shadow: 0 2px 16px rgba(160,80,140,.09);
-  --radius: 20px;
+  /* v0.0.20: 앱 본체(css/main.css)와 동일한 디자인 토큰 — "동시 적용 원칙" 참고 */
+  --radius: 16px;
+  --gray-100: #F2F2F5;
 }
+
+/* v0.0.20: Material Symbols 아이콘 공통 클래스 — css/main.css의 .icon과 동일(동시 적용 원칙) */
+.icon {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal; font-style: normal; font-size: 1.35rem; line-height: 1;
+  letter-spacing: normal; text-transform: none; display: inline-block;
+  white-space: nowrap; word-wrap: normal; direction: ltr;
+  -webkit-font-smoothing: antialiased; vertical-align: middle; color: currentColor;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+.icon-sm { font-size: 1.05rem; }
+.icon-lg { font-size: 1.7rem; }
 
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; font-size: 19px; } /* Sprint 28: 부드러운 스크롤 / v0.0.4: 전체 글자 크기 확대 / v0.0.8: 기본값 17→19px(보통) */
