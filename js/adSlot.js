@@ -28,9 +28,9 @@ const AD_SLOTS   = {
 const FALLBACK_OFFSET = { home: 5, checklist: 9, growth: 13 };
 
 const FALLBACK_LABEL = {
-  home:      '💡 오늘의 육아 팁',
-  checklist: '💡 체크리스트 활용 팁',
-  growth:    '💡 성장 기록 팁',
+  home:      '오늘의 육아 팁',
+  checklist: '체크리스트 활용 팁',
+  growth:    '성장 기록 팁',
 };
 
 /**
@@ -64,9 +64,9 @@ export function renderAdSlot(containerId, placement) {
   const tip = getDailyTip(FALLBACK_OFFSET[placement] ?? 0);
   el.innerHTML = `
     <div class="ad-slot ad-fallback">
-      <span class="ad-fallback-ico">💡</span>
+      <span class="ad-fallback-ico"><span class="icon icon-sm" translate="no" aria-hidden="true">lightbulb</span></span>
       <div class="ad-fallback-body">
-        <div class="ad-fallback-label">${FALLBACK_LABEL[placement] ?? '💡 육아 팁'}</div>
+        <div class="ad-fallback-label">${FALLBACK_LABEL[placement] ?? '육아 팁'}</div>
         <div class="ad-fallback-text">${tip}</div>
       </div>
     </div>`;

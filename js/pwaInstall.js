@@ -55,7 +55,7 @@ export function renderPwaInstallLink() {
 function installLinkHTML(onclick) {
   return `
     <div class="install-link" onclick="${onclick}">
-      <span class="install-ico">📲</span>
+      <span class="install-ico"><span class="icon icon-sm" translate="no" aria-hidden="true">install_mobile</span></span>
       <div class="install-txt">
         <div class="install-title">어플로 추가</div>
         <div class="install-sub">앱처럼 빠르고 편하게 열어보세요</div>
@@ -75,11 +75,11 @@ async function installPwa() {
 
 /** iOS — 수동 설치 안내 모달 */
 function showIosInstallGuide() {
-  showModal('📲 어플로 추가하기', `
+  showModal('어플로 추가하기', `
     <div style="font-size:.86rem;font-weight:700;color:var(--tx);line-height:1.7">
       <p style="margin-bottom:14px">사파리 브라우저에서 아래 순서대로 진행해주세요.</p>
       <ol style="padding-left:18px;margin:0;display:flex;flex-direction:column;gap:10px">
-        <li>화면 하단(또는 상단)의 <b style="color:var(--pk)">공유 버튼 ⬆️</b>을 탭하세요</li>
+        <li>화면 하단(또는 상단)의 <b style="color:var(--pk)">공유 버튼 <span class="icon icon-sm" translate="no" aria-hidden="true">ios_share</span></b>을 탭하세요</li>
         <li>메뉴에서 <b style="color:var(--pk)">"홈 화면에 추가"</b>를 선택하세요</li>
         <li>오른쪽 위 <b style="color:var(--pk)">"추가"</b>를 탭하면 완료예요!</li>
       </ol>

@@ -53,7 +53,7 @@ export function renderFontSizeSettings() {
   const cur = getFontSize();
   wrap.innerHTML = `
     <div class="install-link" style="cursor:default">
-      <span class="install-ico">🔤</span>
+      <span class="install-ico"><span class="icon icon-sm" translate="no" aria-hidden="true">text_fields</span></span>
       <div class="install-txt">
         <div class="install-title">글자 크기</div>
         <div class="install-sub">앱과 육아정보 페이지 글자 크기를 함께 조절해요</div>

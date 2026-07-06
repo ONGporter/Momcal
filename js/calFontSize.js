@@ -47,7 +47,7 @@ export function renderCalFontSizeSettings() {
   const cur = getCalFontSize();
   wrap.innerHTML = `
     <div class="install-link" style="cursor:default">
-      <span class="install-ico">📅</span>
+      <span class="install-ico"><span class="icon icon-sm" translate="no" aria-hidden="true">calendar_month</span></span>
       <div class="install-txt">
         <div class="install-title">캘린더 글자 크기</div>
         <div class="install-sub">캘린더 안 일정 글자만 따로 조절해요</div>

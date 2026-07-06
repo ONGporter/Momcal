@@ -26,7 +26,7 @@ export function openDeleteAccountModal() {
   const user = auth.currentUser;
   if (!user) return;
 
-  showModal('⚠️ 계정 영구 삭제', `
+  showModal('계정 영구 삭제', `
     <div style="font-size:.86rem;font-weight:700;color:var(--tx);line-height:1.7;text-align:left">
       <p>계정을 삭제하면 아래 데이터가 <b style="color:#C62828">전부 영구적으로 사라지고 복구할 수 없어요.</b></p>
       <ul style="margin:10px 0;padding-left:20px;color:var(--txl);font-size:.8rem">
@@ -67,7 +67,7 @@ export async function confirmDeleteAccount() {
     cm();
     // 탈퇴 완료 안내 — onAuthStateChanged가 곧바로 게스트 모드로 전환해줌
     setTimeout(() => {
-      showModal('👋 탈퇴가 완료됐어요', `
+      showModal('탈퇴가 완료됐어요', `
         <p style="font-size:.86rem;font-weight:700;color:var(--tx);line-height:1.7">
           그동안 맘캘을 이용해주셔서 감사했어요.<br>모든 데이터가 삭제됐습니다.
         </p>
@@ -114,7 +114,7 @@ async function handleReauthThenDelete(err, btn) {
     await performDeletion();
     cm();
     setTimeout(() => {
-      showModal('👋 탈퇴가 완료됐어요', `
+      showModal('탈퇴가 완료됐어요', `
         <p style="font-size:.86rem;font-weight:700;color:var(--tx);line-height:1.7">
           그동안 맘캘을 이용해주셔서 감사했어요.<br>모든 데이터가 삭제됐습니다.
         </p>
@@ -131,7 +131,7 @@ async function handleReauthThenDelete(err, btn) {
 /** 비밀번호 재입력 모달 (Promise로 값을 반환 — 취소 시 null) */
 function promptPassword() {
   return new Promise((resolve) => {
-    showModal('🔐 본인 확인', `
+    showModal('본인 확인', `
       <p style="font-size:.84rem;font-weight:700;color:var(--tx);margin-bottom:10px">
         보안을 위해 비밀번호를 다시 한 번 입력해주세요.
       </p>

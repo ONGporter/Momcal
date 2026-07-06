@@ -27,10 +27,10 @@ export function getLatestGrowth(childId) {
 /** 기록 추가 모달 열기 */
 export function openGrowthModal() {
   const child = S.children[S.selC];
-  if (!child) { alert('먼저 아이를 등록해주세요 🥺'); return; }
+  if (!child) { alert('먼저 아이를 등록해주세요'); return; }
   const { latest } = getLatestGrowth(child.id);
 
-  showModal(`📈 ${child.name} 성장 기록`, `
+  showModal(`${child.name} 성장 기록`, `
     <div class="fg">
       <label>측정일</label>
       <input type="date" id="grDate" value="${today()}">
@@ -49,7 +49,7 @@ export function openGrowthModal() {
       <label>머리둘레 (cm, 선택)</label>
       <input type="number" step="0.1" id="grHead" placeholder="예) 44.0" value="${latest?.head ?? ''}">
     </div>
-    <button class="btn bpk" onclick="saveGrowthRecord()">💾 기록 저장</button>
+    <button class="btn bpk" onclick="saveGrowthRecord()"><span class="icon icon-sm" translate="no" aria-hidden="true">save</span> 기록 저장</button>
   `);
 }
 

@@ -77,7 +77,7 @@ export function startDemoMode() {
   document.body.classList.add('demo-active');
   document.getElementById('demoBanner')?.classList.add('show');
 
-  showApp({ displayName: '체험 중', email: '🎬 체험 모드 (로그인 안 함)' });
+  showApp({ displayName: '체험 중', email: '체험 모드 (로그인 안 함)' });
 
   // 초기 렌더 (app.js의 onDataLoaded와 동일한 순서)
   window.renderHome?.();

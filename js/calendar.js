@@ -10,7 +10,7 @@
  */
 
 import { S, debounceSave } from './state.js';
-import { today, daysUntil, stripLeadingEmoji } from './utils.js';
+import { today, daysUntil, stripLeadingEmoji, icon } from './utils.js';
 import { showModal, cm }   from './modal.js';
 import { vaxSched }        from '../data/vaccines.js';
 import { pregEvMap }       from '../data/pregnancy.js';
@@ -353,18 +353,18 @@ export function openEvModal(idx) {
       <div style="background:${urgent ? '#FFF3F3' : '#F8F4FA'};border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:.78rem;color:var(--tx);line-height:1.6;${urgent ? 'border:1.5px solid #C62828' : ''}">
         ${ev.desc ? `<div>${ev.desc}</div>` : ''}
         ${(ev.deadlineDate || ev.deadlineNote) ? `<div style="color:#C62828;font-weight:800;margin-top:6px">⏰ 마감: ${ev.deadlineDate || ev.deadlineNote}${urgentText}</div>` : ''}
-        ${ev.link ? `<a href="${ev.link}" target="_blank" rel="noopener" style="display:inline-block;margin-top:6px;color:var(--bl);font-weight:800;text-decoration:underline">🔗 관련 기관 바로가기</a>` : ''}
+        ${ev.link ? `<a href="${ev.link}" target="_blank" rel="noopener" style="display:inline-block;margin-top:6px;color:var(--bl);font-weight:800;text-decoration:underline"><span class="icon icon-sm" translate="no" aria-hidden="true">open_in_new</span> 관련 기관 바로가기</a>` : ''}
       </div>`;
     })() : ''}
 
     ${ev.auto ? `
       <div class="fg">
-        <label>🗓 권장일</label>
+        <label><span class="icon icon-sm" translate="no" aria-hidden="true">event_available</span> 권장일</label>
         <input type="date" value="${recDate}" readonly
                style="background:#F8F4FA;color:var(--txl);cursor:default;border-color:#EEE0F0">
       </div>` : `
       <div class="fg">
-        <label>📝 제목</label>
+        <label><span class="icon icon-sm" translate="no" aria-hidden="true">edit_note</span> 제목</label>
         <input id="evModTitle" value="${esc(parsedTitle)}">
       </div>
       <div class="fg2">
@@ -373,23 +373,23 @@ export function openEvModal(idx) {
       </div>`}
 
     <div class="fg">
-      <label>${isGov ? '📅 신청 예정일' : '📅 실제 일정'}</label>
+      <label><span class="icon icon-sm" translate="no" aria-hidden="true">calendar_month</span> ${isGov ? '신청 예정일' : '실제 일정'}</label>
       <input type="date" id="evModDate" value="${actDate}">
     </div>
     ${(ev.type === 'custom' && !ev.auto) ? `
       <div class="fg">
-        <label>🎨 일정 색상</label>
+        <label><span class="icon icon-sm" translate="no" aria-hidden="true">palette</span> 일정 색상</label>
         ${colorSwatchesHtml('evModColor', ev.color || getEvColor('custom'))}
       </div>` : ''}
     <div class="fg">
-      <label>📝 메모</label>
+      <label><span class="icon icon-sm" translate="no" aria-hidden="true">edit_note</span> 메모</label>
       <input id="evModMemo" placeholder="메모 (선택)" value="${memo}">
     </div>
 
     ${isGov ? `
       <input type="hidden" id="evModGovStatus" value="${govStatus}">
       <div class="fg">
-        <label>📌 진행 상태</label>
+        <label><span class="icon icon-sm" translate="no" aria-hidden="true">flag</span> 진행 상태</label>
         <div class="type-row" id="govStatusRow">
           ${govStatusOptions.map(o => `
             <button type="button" class="type-btn${o.val === govStatus ? ' on' : ''}"
@@ -406,15 +406,15 @@ export function openEvModal(idx) {
                onclick="event.stopPropagation()">
         <label for="evModDone"
                style="font-weight:800;font-size:.9rem;cursor:pointer;color:#2E7D32">
-          ✅ 완료로 표시
+          <span class="icon icon-sm" translate="no" aria-hidden="true">check_circle</span> 완료로 표시
         </label>
       </div>`}
 
-    <button class="btn bpk" onclick="saveEventMod()">💾 저장</button>
+    <button class="btn bpk" onclick="saveEventMod()"><span class="icon icon-sm" translate="no" aria-hidden="true">save</span> 저장</button>
     ${!ev.auto ? `
       <button class="btn" style="margin-top:8px;background:#FFF5F5;color:#E53935;
                                   box-shadow:none;border:1px solid #FFCDD2"
-              onclick="delCustomEv(${ev._id});cm()">🗑 삭제</button>` : ''}
+              onclick="delCustomEv(${ev._id});cm()"><span class="icon icon-sm" translate="no" aria-hidden="true">delete</span> 삭제</button>` : ''}
   `);
 }
 
@@ -497,7 +497,7 @@ export function saveEventMod() {
 
 /** Sprint 6: 예방접종 회차 자동 조정 안내 모달 */
 function showRecalcNotice(changed) {
-  showModal('🔄 이후 접종일 자동 조정', `
+  showModal('이후 접종일 자동 조정', `
     <p style="font-size:.86rem;line-height:1.7;margin-bottom:12px;color:var(--tx)">
       실제 접종일 기준으로 이후 일정을 자동 조정했습니다.<br>
       <span style="font-size:.74rem;color:var(--txl);font-weight:600">(병원 권장 최소 간격은 유지했어요)</span>
@@ -507,7 +507,7 @@ function showRecalcNotice(changed) {
         <div style="display:flex;justify-content:space-between;align-items:center;
                     padding:9px 13px;background:var(--pul);border-radius:11px;
                     font-size:.8rem;font-weight:800;color:#4A148C">
-          <span>💉 ${stripLeadingEmoji(c.title)}</span><span>📅 ${c.newDate}</span>
+          <span>💉 ${stripLeadingEmoji(c.title)}</span><span><span class="icon icon-sm" translate="no" aria-hidden="true">calendar_month</span> ${c.newDate}</span>
         </div>`).join('')}
     </div>
     <button class="btn bpk" onclick="cm()">확인</button>
@@ -574,7 +574,7 @@ export function onTouchStart(evt, idx) {
     const touch = evt.touches[0];
     const label = Array.isArray(idx)
       ? `💉 예방접종 ${idx.length}건`
-      : '📌 ' + (stripLeadingEmoji(_cachedEvs[idx]?.title || '').slice(0, 10) || '이동 중');
+      : (stripLeadingEmoji(_cachedEvs[idx]?.title || '').slice(0, 10) || '이동 중');
     _ghostEl = document.createElement('div');
     _ghostEl.className   = 'drag-ghost';
     _ghostEl.textContent = label;
@@ -1210,12 +1210,12 @@ export function showDayPanel(ds) {
   panel.innerHTML = `
     <div class="day-panel">
       <div class="dp-date" style="color:var(--pkd)">
-        📅 ${ds} <span style="font-size:.74rem;color:var(--txl);font-weight:500">${dow}요일</span>
+        <span class="icon icon-sm" translate="no" aria-hidden="true">calendar_month</span> ${ds} <span style="font-size:.74rem;color:var(--txl);font-weight:500">${dow}요일</span>
       </div>
 
       ${stickers.length
         ? `<div style="margin-bottom:14px">
-             <div style="font-size:.71rem;font-weight:800;color:var(--txl);margin-bottom:8px">🎀 붙인 스티커 (클릭하면 삭제)</div>
+             <div style="font-size:.71rem;font-weight:800;color:var(--txl);margin-bottom:8px"><span class="icon icon-sm" translate="no" aria-hidden="true">sell</span> 붙인 스티커 (클릭하면 삭제)</div>
              <div style="display:flex;gap:6px;flex-wrap:wrap">
                ${stickers.map((s, i) =>
                  `<div onclick="removeSticker('${ds}',${i})"
@@ -1237,20 +1237,20 @@ export function showDayPanel(ds) {
                 <div class="dp-ev" style="background:${bg};flex-direction:column;align-items:stretch">
                   <div class="dp-ev-title" style="margin-bottom:8px">
                     ${stripLeadingEmoji(e.title)}
-                    ${e.done ? '<span style="color:var(--mn);margin-left:5px">✅ 모두 완료</span>' : ''}
+                    ${e.done ? '<span style="color:var(--mn);margin-left:5px"><span class="icon icon-sm" translate="no" aria-hidden="true">check_circle</span> 모두 완료</span>' : ''}
                   </div>
                   <div style="display:flex;flex-direction:column;gap:6px">
                     ${e._groupItems.map(item => `
                       <div class="dp-vax-item-row" style="display:flex;justify-content:space-between;align-items:center;
                                   border-radius:9px;padding:6px 10px">
                         <span style="font-size:.78rem;font-weight:700;color:var(--tx)">
-                          ${item.done ? '✅' : '⬜'} ${stripLeadingEmoji(item.title)}
-                          ${item.recalculated ? '<span style="color:#7B1FA2;font-size:.65rem;margin-left:4px">🔄조정됨</span>' : ''}
+                          ${item.done ? '<span class="icon icon-sm" translate="no" aria-hidden="true">check_circle</span>' : '<span class="icon icon-sm" translate="no" aria-hidden="true">radio_button_unchecked</span>'} ${stripLeadingEmoji(item.title)}
+                          ${item.recalculated ? '<span style="color:#7B1FA2;font-size:.65rem;margin-left:4px"><span class="icon icon-sm" translate="no" aria-hidden="true">sync</span>조정됨</span>' : ''}
                         </span>
                         <button onclick="openEvModal(${item._idx})"
                                 style="background:none;border:1px solid #EEE0F0;border-radius:8px;
                                        padding:2px 8px;font-size:.62rem;font-weight:800;
-                                       color:var(--txl);cursor:pointer;font-family:inherit">✏️ 수정</button>
+                                       color:var(--txl);cursor:pointer;font-family:inherit"><span class="icon icon-sm" translate="no" aria-hidden="true">edit</span> 수정</button>
                       </div>`).join('')}
                   </div>
                 </div>`;
@@ -1266,34 +1266,34 @@ export function showDayPanel(ds) {
                 <div class="dp-ev-main">
                   <div class="dp-ev-title">
                     ${stripLeadingEmoji(e.title)}
-                    ${e.done ? '<span style="color:var(--mn);margin-left:5px">✅</span>' : ''}
+                    ${e.done ? '<span style="color:var(--mn);margin-left:5px"><span class="icon icon-sm" translate="no" aria-hidden="true">check_circle</span></span>' : ''}
                     ${e.type === 'gov' && e.imp === 'req' ? '<span class="badge-r" style="margin-left:5px">필수</span>' : ''}
                     ${e.type === 'gov' && e.imp === 'rec' ? '<span class="badge-o" style="margin-left:5px">해당자</span>' : ''}
-                    ${urgent ? `<span class="badge-r" style="margin-left:5px">⏰ 마감임박</span>` : ''}
+                    ${urgent ? `<span class="badge-r" style="margin-left:5px"><span class="icon icon-sm" translate="no" aria-hidden="true">schedule</span> 마감임박</span>` : ''}
                   </div>
-                  ${e.hospital ? `<div class="dp-ev-note">🏥 ${e.hospital}</div>` : ''}
-                  ${e.note     ? `<div class="dp-ev-note">📝 ${e.note}</div>`     : ''}
+                  ${e.hospital ? `<div class="dp-ev-note"><span class="icon icon-sm" translate="no" aria-hidden="true">local_hospital</span> ${e.hospital}</div>` : ''}
+                  ${e.note     ? `<div class="dp-ev-note"><span class="icon icon-sm" translate="no" aria-hidden="true">edit_note</span> ${e.note}</div>`     : ''}
                   ${e.recDate && e.recDate !== e.date
-                    ? `<div class="dp-ev-note" style="color:var(--pu)">🗓 권장일: ${e.recDate}</div>` : ''}
+                    ? `<div class="dp-ev-note" style="color:var(--pu)"><span class="icon icon-sm" translate="no" aria-hidden="true">event_available</span> 권장일: ${e.recDate}</div>` : ''}
                   ${e.recalculated
-                    ? `<div class="dp-ev-note" style="color:#7B1FA2;font-weight:800">🔄 실접종일 기준 자동 조정됨</div>` : ''}
+                    ? `<div class="dp-ev-note" style="color:#7B1FA2;font-weight:800"><span class="icon icon-sm" translate="no" aria-hidden="true">sync</span> 실접종일 기준 자동 조정됨</div>` : ''}
                   ${e.type === 'gov' && e.desc
                     ? `<div class="dp-ev-note" style="margin-top:4px">${e.desc}</div>` : ''}
                   ${e.type === 'gov' && (e.deadlineDate || e.deadlineNote)
                     ? `<div class="dp-ev-note" style="color:#C62828;font-weight:${urgent ? 800 : 400}">⏰ 마감: ${e.deadlineDate || e.deadlineNote} ${urgentText}</div>` : ''}
                   ${e.type === 'gov' && e.link
-                    ? `<a href="${e.link}" target="_blank" rel="noopener" style="font-size:.72rem;color:var(--bl);font-weight:800;text-decoration:underline">🔗 관련 기관 바로가기</a>` : ''}
+                    ? `<a href="${e.link}" target="_blank" rel="noopener" style="font-size:.72rem;color:var(--bl);font-weight:800;text-decoration:underline"><span class="icon icon-sm" translate="no" aria-hidden="true">open_in_new</span> 관련 기관 바로가기</a>` : ''}
                 </div>
                 <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;flex-shrink:0">
                   <span class="dp-ev-badge" style="background:${bc}">${lbl}</span>
                   <button onclick="openEvModal(${e._idx})"
                           style="background:none;border:1px solid #EEE0F0;border-radius:8px;
                                  padding:3px 8px;font-size:.65rem;font-weight:800;
-                                 color:var(--txl);cursor:pointer;font-family:inherit">✏️ 수정</button>
+                                 color:var(--txl);cursor:pointer;font-family:inherit"><span class="icon icon-sm" translate="no" aria-hidden="true">edit</span> 수정</button>
                 </div>
               </div>`;
           }).join('')
-        : '<p style="color:var(--txl);font-size:.82rem;text-align:center;padding:14px">이 날은 일정이 없어요 🌸<br><span style="font-size:.74rem">아래에서 일정이나 스티커를 추가해보세요!</span></p>'}
+        : '<p style="color:var(--txl);font-size:.82rem;text-align:center;padding:14px">이 날은 일정이 없어요<br><span style="font-size:.74rem">아래에서 일정이나 스티커를 추가해보세요!</span></p>'}
     </div>`;
 }
 
@@ -1367,20 +1367,22 @@ export function delCustomEv(id) {
  *  스티커
  * ══════════════════════════════════════ */
 export const stickerCats = [
-  { label: '🌸 꽃·자연', items: ['🌸','🌼','🌺','🌻','🍀','🌿','🌈','⭐','🌙','☀️','🌊','🍃','🌷','🪷','🌱','🦋'] },
-  { label: '👶 아기',    items: ['👶','🍼','🧸','🎀','🍭','🎠','🐣','🐥','🐰','🐨','🦄','🐸','🐮','🐷','🐻','🐼'] },
-  { label: '💕 하트',   items: ['💕','💖','💗','💝','❤️','🧡','💛','💚','💙','💜','🩷','🩵','🤍','💞','💓','💘'] },
-  { label: '🎉 기념',   items: ['🎉','🎊','🎂','🎁','🏆','🥇','✨','🎈','🎀','🌟','🪄','🎗','🥳','🎺','🎵','🎶'] },
-  { label: '🥣 이유식', items: ['🍚','🌾','🥩','🐔','🐟','🥕','🥦','🍠','🥔','🌽','🫛','🧀','🥚','🍳','🫐','🍎','🍌','🍓','🍇','🥑','🥛','🧆','🍲','🥣','🍜','🥗','🫘','🧅','🧄','🫚'] },
-  { label: '💊 건강',   items: ['💊','💉','🩺','🏥','🩹','💪','🩻','🔬','🧬','🌡️','🩸','⚕️','🏋️','🧘','🚑','🫀'] },
+  { key: 'nature', label: `${icon('spa', { size: 'sm' })} 꽃·자연`, items: ['🌸','🌼','🌺','🌻','🍀','🌿','🌈','⭐','🌙','☀️','🌊','🍃','🌷','🪷','🌱','🦋'] },
+  { key: 'baby',   label: `${icon('child_care', { size: 'sm' })} 아기`, items: ['👶','🍼','🧸','🎀','🍭','🎠','🐣','🐥','🐰','🐨','🦄','🐸','🐮','🐷','🐻','🐼'] },
+  { key: 'heart',  label: `${icon('favorite', { size: 'sm' })} 하트`, items: ['💕','💖','💗','💝','❤️','🧡','💛','💚','💙','💜','🩷','🩵','🤍','💞','💓','💘'] },
+  { key: 'celebrate', label: `${icon('celebration', { size: 'sm' })} 기념`, items: ['🎉','🎊','🎂','🎁','🏆','🥇','✨','🎈','🎀','🌟','🪄','🎗','🥳','🎺','🎵','🎶'] },
+  { key: 'food',   label: `${icon('restaurant', { size: 'sm' })} 이유식`, items: ['🍚','🌾','🥩','🐔','🐟','🥕','🥦','🍠','🥔','🌽','🫛','🧀','🥚','🍳','🫐','🍎','🍌','🍓','🍇','🥑','🥛','🧆','🍲','🥣','🍜','🥗','🫘','🧅','🧄','🫚'] },
+  { key: 'health', label: `${icon('health_and_safety', { size: 'sm' })} 건강`, items: ['💊','💉','🩺','🏥','🩹','💪','🩻','🔬','🧬','🌡️','🩸','⚕️','🏋️','🧘','🚑','🫀'] },
 ];
 
 /**
  * v0.0.11: 이유식 스티커 판별용 Set
  * 캘린더 셀에서 이유식 스티커만 날짜 숫자 옆으로 따로 빼서 보여주기 위함
  * (다른 스티커들의 "3개 넘으면 +N" 묶음 카운트와는 완전히 독립적으로 표시)
+ * v0.0.21: label 텍스트로 찾던 걸 안정적인 key로 변경 — label에 아이콘 마크업이 들어가면서
+ * 텍스트 일치로 찾는 게 더 취약해짐(마크업이 바뀌면 조용히 깨질 수 있음)
  */
-const FOOD_STICKER_SET = new Set(stickerCats.find(c => c.label === '🥣 이유식').items);
+const FOOD_STICKER_SET = new Set(stickerCats.find(c => c.key === 'food').items);
 
 export function renderStickerPicker() {
   document.getElementById('spTabs').innerHTML = stickerCats.map((c, i) =>
@@ -1394,7 +1396,7 @@ export function renderStickerPicker() {
 export function selSCat(i) { S.selSCat = i; renderStickerPicker(); }
 
 export function placeSticker(s) {
-  if (!S.selDate) { alert('먼저 날짜를 클릭해서 선택해주세요! 📅'); return; }
+  if (!S.selDate) { alert('먼저 날짜를 클릭해서 선택해주세요!'); return; }
   if (!S.dayStickers[S.selDate]) S.dayStickers[S.selDate] = [];
   S.dayStickers[S.selDate].push(s);
   renderCal(); showDayPanel(S.selDate); debounceSave();

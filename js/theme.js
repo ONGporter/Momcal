@@ -38,7 +38,7 @@ export function renderThemeSettings() {
   const isDark = getTheme() === 'dark';
   wrap.innerHTML = `
     <div class="install-link" style="cursor:default">
-      <span class="install-ico" style="background:${isDark ? 'var(--pul)' : 'var(--pkl)'}">${isDark ? '🌙' : '☀️'}</span>
+      <span class="install-ico" style="background:${isDark ? 'var(--pul)' : 'var(--pkl)'}">${isDark ? '<span class="icon icon-sm" translate="no" aria-hidden="true">dark_mode</span>' : '<span class="icon icon-sm" translate="no" aria-hidden="true">light_mode</span>'}</span>
       <div class="install-txt">
         <div class="install-title">다크 모드</div>
         <div class="install-sub">${isDark ? '어두운 화면을 쓰고 있어요' : '화면을 어둡게 바꿔서 밤에 눈이 편해져요'}</div>

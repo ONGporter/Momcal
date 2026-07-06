@@ -30,7 +30,7 @@ const GUIDE = join(ROOT, 'guide');
 const SITE  = 'https://momcal.app';
 /* v0.0.2: 앱 본체(index.html 최하단)와 반드시 같은 값으로 유지 — 버전을 올릴 땐 이 값과
    index.html의 .site-footer-version 텍스트를 함께 수정해야 함 (docs/PROJECT_SPEC.md 버전 관리 정책 참고) */
-const APP_VERSION = 'v0.0.20';
+const APP_VERSION = 'v0.0.21';
 
 /* 정부지원 데이터는 {preg, postpartum, parenting} 키의 배열이라 체크리스트와 형태가 달라
    가이드 페이지용 카테고리 배열로 한 번 변환해준다. */
@@ -164,8 +164,8 @@ function returningUserScript() {
       }
     }
     if (!known) return;
-    document.querySelectorAll('.js-cta').forEach(function(el){ el.textContent = '🏠 맘캘 앱으로 돌아가기'; });
-    document.querySelectorAll('.js-cta-banner-title').forEach(function(el){ el.textContent = '📅 이 정보, 맘캘 앱에서 이어보기'; });
+    document.querySelectorAll('.js-cta').forEach(function(el){ el.textContent = '맘캘 앱으로 돌아가기'; });
+    document.querySelectorAll('.js-cta-banner-title').forEach(function(el){ el.textContent = '이 정보, 맘캘 앱에서 이어보기'; });
     document.querySelectorAll('.js-cta-banner-desc').forEach(function(el){ el.textContent = '이미 맘캘을 쓰고 계시네요! 앱으로 돌아가서 이어서 확인해보세요.'; });
     document.querySelectorAll('.js-cta-banner-btn').forEach(function(el){ el.textContent = '앱으로 돌아가기 →'; });
   } catch (e) {}
@@ -175,7 +175,7 @@ function returningUserScript() {
 
 function ctaBanner(text) {
   return `<div class="g-cta-banner">
-  <h2 class="js-cta-banner-title">📅 ${text}</h2>
+  <h2 class="js-cta-banner-title"><span class="icon icon-sm" translate="no" aria-hidden="true">calendar_month</span> ${text}</h2>
   <p class="js-cta-banner-desc">맘캘에 등록하면 오늘 날짜 기준으로 일정이 자동으로 정리돼요. 로그인 없이도 바로 써볼 수 있어요.</p>
   <a class="js-cta-banner-btn" href="${SITE}/">지금 무료로 시작하기 →</a>
 </div>`;
@@ -269,7 +269,7 @@ function categoryTabBar(cats) {
 function pageSearchBox() {
   return `<div class="g-search">
     <input type="search" id="pageSearch" class="g-search-input"
-           placeholder="🔍 이 페이지에서 검색 (예: 엽산, DTaP, 쌀미음)"
+           placeholder="이 페이지에서 검색 (예: 엽산, DTaP, 쌀미음)"
            oninput="filterGuidePage(this.value)">
     <div id="pageSearchCount" class="g-search-count"></div>
   </div>
@@ -302,10 +302,10 @@ function pageSearchBox() {
  */
 function pageNavLinks(activePath) {
   const pages = [
-    { href: './pregnancy.html',           label: '🤰 임신 체크리스트' },
-    { href: './parenting.html',           label: '👶 예방접종·건강검진' },
-    { href: './food.html',                label: '🥣 이유식 가이드' },
-    { href: './government-support.html',  label: '🏛️ 정부지원금' },
+    { href: './pregnancy.html',           label: '<span class="icon icon-sm" translate="no" aria-hidden="true">pregnant_woman</span> 임신 체크리스트' },
+    { href: './parenting.html',           label: '<span class="icon icon-sm" translate="no" aria-hidden="true">child_care</span> 예방접종·건강검진' },
+    { href: './food.html',                label: '<span class="icon icon-sm" translate="no" aria-hidden="true">restaurant</span> 이유식 가이드' },
+    { href: './government-support.html',  label: '<span class="icon icon-sm" translate="no" aria-hidden="true">account_balance</span> 정부지원금' },
   ];
   return `<div class="g-page-nav" id="pageNav">
     ${pages.map(p => `<a href="${p.href}" class="g-page-nav-tab${p.href === activePath ? ' on' : ''}">${p.label}</a>`).join('')}
@@ -329,7 +329,7 @@ ${header()}
   <div class="g-breadcrumb"><a href="./index.html">육아정보</a> › ${heroTitle}</div>
   ${pageNavLinks('./' + path.split('/').pop())}
   <div class="g-intro">${intro}</div>
-  ${disclaimer ? `<div class="g-disclaimer">⚠️ ${disclaimer}</div>` : ''}
+  ${disclaimer ? `<div class="g-disclaimer"><span class="icon icon-sm" translate="no" aria-hidden="true">warning</span> ${disclaimer}</div>` : ''}
   ${pageSearchBox()}
   ${categoryTabBar(cats)}
   ${cats.map(renderCat).join('\n  ')}
@@ -346,7 +346,7 @@ const pregHtml = page({
   title: '임신 주차별 체크리스트 총정리 (4주~40주) | 맘캘 육아정보',
   desc: '임신 4주부터 40주까지 산부인과 검사, 영양제, 출산 준비물을 주차별로 정리했어요. 엽산·철분 복용 시기부터 기형아 검사 일정까지 한눈에 확인하세요.',
   path: '/guide/pregnancy.html',
-  heroTitle: '🤰 임신 주차별 체크리스트',
+  heroTitle: '<span class="icon icon-sm" translate="no" aria-hidden="true">pregnant_woman</span> 임신 주차별 체크리스트',
   heroDesc: '4주부터 40주까지, 꼭 챙겨야 할 검사·영양제·준비물을 주차별로 정리했어요',
   intro: '임신을 확인한 순간부터 출산까지, 시기별로 꼭 챙겨야 할 것들이 계속 바뀌어요. 아래는 임신 4주부터 40주까지, 그리고 출산 준비물까지 주차별로 정리한 체크리스트예요. 맘캘 앱에 등록하면 이 일정들이 자동으로 캘린더에 채워지고, 체크할 때마다 진행률도 확인할 수 있어요.',
   cats: clData.preg,
@@ -361,7 +361,7 @@ const parentingHtml = page({
   title: '월령별 예방접종 · 국가건강검진 완벽 가이드 (0~5세) | 맘캘 육아정보',
   desc: 'DTaP, MMR, 폐구균 등 국가필수예방접종을 월령별로 정리했어요. 각 백신이 무엇을 예방하는지, 총 몇 차수를 언제 맞아야 하는지, 국가건강검진 일정까지 한눈에 확인하세요.',
   path: '/guide/parenting.html',
-  heroTitle: '👶 월령별 예방접종 · 건강검진 가이드',
+  heroTitle: '<span class="icon icon-sm" translate="no" aria-hidden="true">child_care</span> 월령별 예방접종 · 건강검진 가이드',
   heroDesc: '0개월부터 5세까지, 예방접종 차수·간격과 국가건강검진 일정을 정리했어요',
   intro: '신생아부터 5세까지 맞아야 하는 예방접종은 종류도 많고 차수도 헷갈리기 쉬워요. 아래는 월령별로 정리한 예방접종·건강검진·발달 체크 가이드예요. 각 백신이 무엇을 예방하는지, 총 몇 차수인지, 다음 접종까지 간격이 얼마나 되는지 자세히 적어뒀어요. 맘캘 앱에서는 실제 접종한 날짜를 입력하면 이후 회차 일정이 자동으로 재계산돼요.',
   cats: clData.born,
@@ -376,7 +376,7 @@ const foodHtml = page({
   title: '이유식 단계별 시작 가이드 (초기~유아식) | 맘캘 육아정보',
   desc: '쌀미음부터 유아식까지, 이유식을 단계별로 언제 어떻게 시작해야 하는지 정리했어요. 재료별 효과, 알레르기 체크 방법, 소금·설탕 없이 조리하는 법까지 확인하세요.',
   path: '/guide/food.html',
-  heroTitle: '🥣 이유식 단계별 시작 가이드',
+  heroTitle: '<span class="icon icon-sm" translate="no" aria-hidden="true">restaurant</span> 이유식 단계별 시작 가이드',
   heroDesc: '6개월 쌀미음부터 24개월 유아식까지, 재료 효과와 조리 팁을 정리했어요',
   intro: '이유식은 언제 시작해야 할지, 어떤 재료부터 줘야 할지 막막하기 쉬워요. 아래는 생후 6개월 초기 이유식부터 24개월 유아식까지, 단계별로 정리한 가이드예요. 재료마다 어떤 효과가 있는지, 알레르기는 어떻게 확인해야 하는지도 함께 적어뒀어요.',
   cats: clData.food,
@@ -391,9 +391,9 @@ const govHtml = page({
   title: '임신·출산·육아 정부지원금 총정리 | 맘캘 육아정보',
   desc: '국민행복카드, 부모급여, 아동수당, 첫만남이용권 등 임신부터 육아까지 받을 수 있는 정부지원 제도를 시기별로 정리했어요. 신청 마감 기한까지 한눈에 확인하세요.',
   path: '/guide/government-support.html',
-  heroTitle: '🏛️ 정부지원금 가이드',
+  heroTitle: '<span class="icon icon-sm" translate="no" aria-hidden="true">account_balance</span> 정부지원금 가이드',
   heroDesc: '임신 중부터 육아 중까지, 시기별로 받을 수 있는 지원 제도를 정리했어요',
-  intro: `<strong style="color:var(--pkd)">📅 ${GOV_INFO_BASIS}으로 정리된 정보입니다.</strong> 정부지원 제도는 신청 기한을 놓치면 못 받는 경우가 많아 미리 알아두는 게 중요해요. 아래는 임신 중, 출산 직후, 육아 중 시기별로 정리한 정부지원 제도예요. 맘캘 앱에 등록하면 이 일정들이 자동으로 캘린더에 채워지고, 신청 마감을 놓치지 않도록 확인할 수 있어요.`,
+  intro: `<strong style="color:var(--pkd)"><span class="icon icon-sm" translate="no" aria-hidden="true">event</span> ${GOV_INFO_BASIS}으로 정리된 정보입니다.</strong> 정부지원 제도는 신청 기한을 놓치면 못 받는 경우가 많아 미리 알아두는 게 중요해요. 아래는 임신 중, 출산 직후, 육아 중 시기별로 정리한 정부지원 제도예요. 맘캘 앱에 등록하면 이 일정들이 자동으로 캘린더에 채워지고, 신청 마감을 놓치지 않도록 확인할 수 있어요.`,
   cats: govCats,
   ctaText: '지원금 신청 마감, 놓치지 않게 캘린더로 관리해보세요',
   disclaimer: '제도명·지원 대상·금액·마감 기한은 매년 바뀔 수 있습니다. 이 페이지는 신청 시기를 놓치지 않기 위한 참고용 안내이며, 정확한 자격 요건과 금액은 반드시 링크된 기관 홈페이지 또는 주민센터에서 다시 확인해주세요.',
@@ -411,7 +411,7 @@ const govHtml = page({
 function hubSearchBox() {
   return `<div class="g-search g-search-hub">
     <input type="search" id="hubSearch" class="g-search-input"
-           placeholder="🔍 궁금한 것을 검색해보세요 (예: 엽산, DTaP, 부모급여)"
+           placeholder="궁금한 것을 검색해보세요 (예: 엽산, DTaP, 부모급여)"
            oninput="filterHubSearch(this.value)">
     <div id="hubSearchResults" class="g-search-results"></div>
   </div>
@@ -437,7 +437,7 @@ function hubSearchBox() {
         }).slice(0, 20);
         box.className = 'g-search-results show';
         if (!matched.length) {
-          box.innerHTML = '<div class="g-search-empty">검색 결과가 없어요 🔍</div>';
+          box.innerHTML = '<div class="g-search-empty">검색 결과가 없어요</div>';
           return;
         }
         box.innerHTML = matched.map(function(it) {
@@ -479,7 +479,7 @@ ${head(
 <body>
 ${header()}
 <div class="g-hero">
-  <h1>📖 맘캘 육아정보</h1>
+  <h1><span class="icon icon-sm" translate="no" aria-hidden="true">menu_book</span> 맘캘 육아정보</h1>
   <p>임신부터 육아까지, 꼭 필요한 정보만 모았어요.<br>로그인 없이 누구나 볼 수 있어요.</p>
 </div>
 <div class="g-wrap">
@@ -490,22 +490,22 @@ ${header()}
   ${hubSearchBox()}
   <div class="g-card-grid">
     <a class="g-cat-card" href="./pregnancy.html">
-      <div class="ico">🤰</div>
+      <div class="ico"><span class="icon icon-lg" translate="no" aria-hidden="true">pregnant_woman</span></div>
       <h2>임신 주차별 체크리스트</h2>
       <p>4주~40주 검사·영양제·준비물 (${countItems(clData.preg)}개 항목)</p>
     </a>
     <a class="g-cat-card" href="./parenting.html">
-      <div class="ico">👶</div>
+      <div class="ico"><span class="icon icon-lg" translate="no" aria-hidden="true">child_care</span></div>
       <h2>월령별 예방접종·건강검진</h2>
       <p>0~5세 접종 일정과 발달 체크 (${countItems(clData.born)}개 항목)</p>
     </a>
     <a class="g-cat-card" href="./food.html">
-      <div class="ico">🥣</div>
+      <div class="ico"><span class="icon icon-lg" translate="no" aria-hidden="true">restaurant</span></div>
       <h2>이유식 단계별 가이드</h2>
       <p>초기~유아식 재료·조리법 (${countItems(clData.food)}개 항목)</p>
     </a>
     <a class="g-cat-card" href="./government-support.html">
-      <div class="ico">🏛️</div>
+      <div class="ico"><span class="icon icon-lg" translate="no" aria-hidden="true">account_balance</span></div>
       <h2>정부지원금 가이드</h2>
       <p>임신~육아 시기별 지원 제도 (${countItems(govCats)}개 항목)</p>
     </a>
@@ -524,7 +524,7 @@ writeFileSync(join(GUIDE, 'food.html'), foodHtml);
 writeFileSync(join(GUIDE, 'government-support.html'), govHtml);
 writeFileSync(join(GUIDE, 'index.html'), hubHtml);
 
-console.log('✅ guide 페이지 생성 완료');
+console.log('guide 페이지 생성 완료');
 console.log('  - guide/index.html');
 console.log('  - guide/pregnancy.html          (', countItems(clData.preg), '개 항목)');
 console.log('  - guide/parenting.html         (', countItems(clData.born), '개 항목)');

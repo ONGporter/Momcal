@@ -24,7 +24,7 @@
  */
 
 import { S, debounceSave } from './state.js';
-import { today }           from './utils.js';
+import { today, icon }     from './utils.js';
 import { clData }          from '../data/checklist-data.js';
 import { renderGovChecklistTab } from './govSupport.js';
 import { syncChecklistToCalendar } from './checklistCalendarLink.js';
@@ -99,8 +99,8 @@ export function renderChecklist() {
   const child   = S.children[S.selC];
   const tabDefs = child
     ? (child.stage === 'preg'
-        ? [{ label: '🤰 임신 체크', key: 'preg' }, { label: '📦 출산 준비물', key: 'prep' }, { label: '🟢 정부지원', key: 'gov' }]
-        : [{ label: '👶 육아 체크', key: 'born' }, { label: '🥣 이유식', key: 'food' }, { label: '🟢 정부지원', key: 'gov' }])
+        ? [{ label: '<span class="icon icon-sm" translate="no" aria-hidden="true">pregnant_woman</span> 임신 체크', key: 'preg' }, { label: '<span class="icon icon-sm" translate="no" aria-hidden="true">inventory_2</span> 출산 준비물', key: 'prep' }, { label: '<span class="icon icon-sm" translate="no" aria-hidden="true">account_balance</span> 정부지원', key: 'gov' }]
+        : [{ label: '<span class="icon icon-sm" translate="no" aria-hidden="true">child_care</span> 육아 체크', key: 'born' }, { label: '<span class="icon icon-sm" translate="no" aria-hidden="true">restaurant</span> 이유식', key: 'food' }, { label: '<span class="icon icon-sm" translate="no" aria-hidden="true">account_balance</span> 정부지원', key: 'gov' }])
     : [];
 
   // Sprint 3: 현재 주차/월령에 맞는 카테고리 자동 선택
@@ -246,7 +246,7 @@ function renderContextBanner(child) {
     const trimester = week <= 12 ? '1분기' : week <= 27 ? '2분기' : '3분기';
     const weeksLeft = Math.max(0, 40 - week);
     el.innerHTML = `
-      🤰 현재 <strong>${week}주차</strong> · ${trimester}
+      <span class="icon icon-sm" translate="no" aria-hidden="true">pregnant_woman</span> 현재 <strong>${week}주차</strong> · ${trimester}
       <span style="color:var(--txl);font-weight:700;margin-left:auto;font-size:.76rem">출산까지 약 ${weeksLeft}주</span>`;
 
   } else if (child.stage === 'born' && S.clTab === 0 && child.birth) {
@@ -255,8 +255,8 @@ function renderContextBanner(child) {
     const ageWeeks  = Math.floor(ageMs  / (7 * 24 * 60 * 60 * 1000));
     const display   = ageMonths < 3 ? `${ageWeeks}주` : `${ageMonths}개월`;
     el.innerHTML = `
-      👶 현재 <strong>${display}</strong>
-      <span style="color:var(--txl);font-weight:700;margin-left:auto;font-size:.76rem">${child.name}이(가) 쑥쑥 크는 중 🌱</span>`;
+      <span class="icon icon-sm" translate="no" aria-hidden="true">child_care</span> 현재 <strong>${display}</strong>
+      <span style="color:var(--txl);font-weight:700;margin-left:auto;font-size:.76rem">${child.name}이(가) 쑥쑥 크는 중 <span class="icon icon-sm" translate="no" aria-hidden="true">eco</span></span>`;
 
   } else {
     el.innerHTML = '';
@@ -288,7 +288,7 @@ export function getCats() {
 function guideSearchBoxHtml() {
   return `
     <div style="margin-top:14px;padding:12px;background:var(--pkl);border-radius:14px">
-      <div style="font-size:.68rem;font-weight:800;color:var(--pkd);margin-bottom:6px">📖 육아정보 더 알아보기</div>
+      <div style="font-size:.68rem;font-weight:800;color:var(--pkd);margin-bottom:6px"><span class="icon icon-sm" translate="no" aria-hidden="true">menu_book</span> 육아정보 더 알아보기</div>
       <div style="display:flex;gap:6px">
         <input type="text" id="clGuideSearchInput" placeholder="예: 엽산, DTaP, 쌀미음"
                style="flex:1;min-width:0;padding:7px 10px;border:1.5px solid #F0D8E4;border-radius:9px;font-size:.74rem;font-family:inherit"
@@ -316,7 +316,7 @@ export function renderClSidebar() {
   if (!child) {
     document.getElementById('clSidebar').innerHTML = '';
     document.getElementById('clMain').innerHTML =
-      '<p style="color:var(--txl);text-align:center;padding:20px">👶 아이를 먼저 등록해주세요!</p>';
+      '<p style="color:var(--txl);text-align:center;padding:20px"><span class="icon icon-sm" translate="no" aria-hidden="true">child_care</span> 아이를 먼저 등록해주세요!</p>';
     return;
   }
 
@@ -338,11 +338,11 @@ export function renderClSidebar() {
 
     let pctHtml;
     if (tier === 'legend') {
-      pctHtml = `<span class="cl-sb-pct cl-sb-legend">🌈</span>`;
+      pctHtml = `<span class="cl-sb-pct cl-sb-legend"><span class="icon icon-sm" translate="no" aria-hidden="true">auto_awesome</span></span>`;
     } else if (tier === 'master') {
-      pctHtml = `<span class="cl-sb-pct cl-sb-master">👑 ${score}%</span>`;
+      pctHtml = `<span class="cl-sb-pct cl-sb-master"><span class="icon icon-sm" translate="no" aria-hidden="true">workspace_premium</span> ${score}%</span>`;
     } else if (tier === 'perfect') {
-      pctHtml = `<span class="cl-sb-pct cl-sb-perfect">🏅 100%</span>`;
+      pctHtml = `<span class="cl-sb-pct cl-sb-perfect"><span class="icon icon-sm" translate="no" aria-hidden="true">verified</span> 100%</span>`;
     } else {
       // Bug fix: 0~49% 구간은 회색으로 표시 (기존엔 항상 녹색이었음)
       pctHtml = `<span class="cl-sb-pct${basePct < 50 ? ' cl-sb-low' : ''}">${basePct}%</span>`;
@@ -365,7 +365,7 @@ export function renderClMain() {
   const child = S.children[S.selC];
   if (!child) {
     document.getElementById('clMain').innerHTML =
-      '<p style="color:var(--txl);text-align:center;padding:20px">👶 아이를 먼저 등록해주세요!</p>';
+      '<p style="color:var(--txl);text-align:center;padding:20px"><span class="icon icon-sm" translate="no" aria-hidden="true">child_care</span> 아이를 먼저 등록해주세요!</p>';
     return;
   }
   const cats = getCats();
@@ -381,11 +381,11 @@ export function renderClMain() {
   // ── 배지 & 상태 텍스트 ──
   let badgeHtml;
   if (tier === 'legend') {
-    badgeHtml = `<div class="cl-badge cl-badge-legend">🌈 Legend — 모두 완료!</div>`;
+    badgeHtml = `<div class="cl-badge cl-badge-legend"><span class="icon icon-sm" translate="no" aria-hidden="true">auto_awesome</span> Legend — 모두 완료!</div>`;
   } else if (tier === 'master') {
-    badgeHtml = `<div class="cl-badge cl-badge-master">👑 Master — ${score}% 달성</div>`;
+    badgeHtml = `<div class="cl-badge cl-badge-master"><span class="icon icon-sm" translate="no" aria-hidden="true">workspace_premium</span> Master — ${score}% 달성</div>`;
   } else if (tier === 'perfect') {
-    badgeHtml = `<div class="cl-badge cl-badge-perfect">🏅 Perfect — 필수 100%</div>`;
+    badgeHtml = `<div class="cl-badge cl-badge-perfect"><span class="icon icon-sm" translate="no" aria-hidden="true">verified</span> Perfect — 필수 100%</div>`;
   } else {
     badgeHtml = `<span class="cl-status${basePct < 50 ? ' cl-status-low' : ''}">필수 ${reqDone}/${reqTotal}</span>`;
   }
@@ -405,7 +405,7 @@ export function renderClMain() {
     ${tier === null
       ? `<div style="font-size:.68rem;color:var(--txl);font-weight:700;margin:-10px 0 14px">필수 항목을 먼저 모두 체크하면 선택 항목이 점수에 반영돼요 (필수 완료 시 🏅 Perfect 배지 획득!)</div>`
       : tier === 'perfect' && optTotal > 0
-      ? `<div style="font-size:.68rem;color:#5B4FCF;font-weight:700;margin:-10px 0 14px">🌟 선택 항목까지 체크하면 최대 200%까지 올라가요!</div>`
+      ? `<div style="font-size:.68rem;color:#5B4FCF;font-weight:700;margin:-10px 0 14px"><span class="icon icon-sm" translate="no" aria-hidden="true">star</span> 선택 항목까지 체크하면 최대 200%까지 올라가요!</div>`
       : ''
     }
     ${getCatItems(cat, key).map(it => {
@@ -426,14 +426,14 @@ export function renderClMain() {
           ${isCustom ? `
           <button type="button" class="ci-expand-btn" aria-label="삭제"
                   onclick="event.stopPropagation();deleteCustomClItem('${key}','${it.id}')">
-            <span class="ci-expand-arrow">✕</span>
+            <span class="ci-expand-arrow"><span class="icon icon-sm" translate="no" aria-hidden="true">close</span></span>
           </button>` : it.dd ? `
           <button type="button" class="ci-expand-btn" aria-label="자세히 보기"
                   onclick="event.stopPropagation();toggleCiDetail('${uid}')">
             <span class="ci-expand-arrow">▾</span>
           </button>` : ''}
         </div>
-        ${it.dd ? `<div class="ci-detail">📖 ${it.dd}</div>` : ''}
+        ${it.dd ? `<div class="ci-detail"><span class="icon icon-sm" translate="no" aria-hidden="true">menu_book</span> ${it.dd}</div>` : ''}
       </div>`;
     }).join('')}
     <button type="button" class="cl-add-item-btn" onclick="openAddClItemModal('${key}')">
@@ -448,7 +448,7 @@ export function renderClMain() {
  * 별도 계산 로직을 새로 만들 필요 없이 그대로 반영됨.
  */
 function openAddClItemModal(key) {
-  showModal('➕ 체크리스트 항목 추가', `
+  showModal('체크리스트 항목 추가', `
     <div class="fg" style="margin:0">
       <label>항목 이름</label>
       <input id="clNewItemTitle" placeholder="예) 목욕 후 보습제 바르기" maxlength="40">

@@ -70,7 +70,7 @@ export function renderHome() {
     <div class="pcard ${i == S.selC ? 'sel' : ''}" onclick="S.selC=${i};renderHome()">
       <div class="pav">${c.avatar}</div>
       <div class="pnm">${c.name}</div>
-      <div class="pag">${c.stage === 'preg' ? `🤰 ${c.week}주차` : ageFmt(c.birth)}</div>
+      <div class="pag">${c.stage === 'preg' ? `<span class="icon icon-sm" translate="no" aria-hidden="true">pregnant_woman</span> ${c.week}주차` : ageFmt(c.birth)}</div>
       <span class="pst ${c.stage === 'preg' ? 'st-preg' : 'st-born'}">${c.stage === 'preg' ? '임신중' : '육아중'}</span>
     </div>`
   ).join('') + `<div class="add-pcard" onclick="gp('register',document.querySelector('.np[data-page=register]'))"><span>＋</span><p>등록하기</p></div>`;
@@ -93,7 +93,7 @@ export function renderDashboard() {
   if (!child) {
     el.innerHTML = `
       <div class="dash-card dash-empty" onclick="gp('register',document.querySelector('.np[data-page=register]'))">
-        <div class="dash-icon" style="background:var(--pkl)">👶</div>
+        <div class="dash-icon" style="background:var(--gray-100)"><span class="icon icon-sm" translate="no" aria-hidden="true">child_care</span></div>
         <div class="dash-label">아직 등록된 아이가 없어요</div>
         <div class="dash-value" style="font-size:.78rem;color:var(--pk)">＋ 지금 등록하기</div>
       </div>`;
@@ -247,7 +247,7 @@ export function sg(g) {
 /** 아이 등록 */
 export function regChild() {
   const name = document.getElementById('rName').value.trim();
-  if (!name) { alert('이름을 입력해주세요 🥺'); return; }
+  if (!name) { alert('이름을 입력해주세요'); return; }
 
   const av    = { m: '👦', f: '👧', u: '🍼' };
   const birth = S.rStage === 'born' ? document.getElementById('rBirth').value : '';
@@ -263,11 +263,11 @@ export function regChild() {
   renderRegList();
   renderHome();
   debounceSave();
-  showModal('🎉 등록 완료!', `
+  showModal('등록 완료!', `
     <p style="line-height:2;font-size:.9rem">
-      <b>${name}</b> 등록 완료! 🎉<br>
+      <b>${name}</b> 등록 완료! <span class="icon icon-sm" translate="no" aria-hidden="true">celebration</span><br>
       캘린더에 일정이 자동으로 채워졌어요!<br>
-      <span style="font-size:.78rem;color:var(--txl)">Firebase에 자동 저장돼요 💾</span>
+      <span style="font-size:.78rem;color:var(--txl)">Firebase에 자동 저장돼요 <span class="icon icon-sm" translate="no" aria-hidden="true">save</span></span>
     </p><br>
     <button class="btn bpk" onclick="cm();gp('calendar',document.querySelector('.np[data-page=calendar]'))">캘린더 보러가기 →</button>`
   );
@@ -286,11 +286,11 @@ export function renderRegList() {
           <div style="flex:1">
             <b style="font-size:.88rem">${c.name}</b>
             <div style="font-size:.72rem;color:var(--txl);margin-top:2px">
-              ${c.stage === 'preg' ? `🤰 임신 ${c.week}주 · 예정일 ${c.due || '미정'}` : ageFmt(c.birth)}
+              ${c.stage === 'preg' ? `<span class="icon icon-sm" translate="no" aria-hidden="true">pregnant_woman</span> 임신 ${c.week}주 · 예정일 ${c.due || '미정'}` : ageFmt(c.birth)}
             </div>
           </div>
           <button onclick="deleteChild(${i})"
-                  style="background:none;border:none;cursor:pointer;color:var(--txl);font-size:.9rem">🗑</button>
+                  style="background:none;border:none;cursor:pointer;color:var(--txl);font-size:.9rem"><span class="icon icon-sm" translate="no" aria-hidden="true">delete</span></button>
         </div>`).join('')}
     </div>`;
 }

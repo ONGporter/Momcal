@@ -20,11 +20,12 @@
 
 import { S, createFamily, joinFamily, leaveFamily } from './state.js';
 import { showModal, cm } from './modal.js';
+import { icon } from './utils.js';
 
 const APP_URL = 'https://momcal.app';
 
 function shareMessage() {
-  return `맘캘로 우리 아이 육아 일정을 같이 관리해요 👨‍👩‍👧\n제 계정으로 로그인하면 같은 캘린더·체크리스트를 실시간으로 함께 볼 수 있어요!\n${APP_URL}`;
+  return `맘캘로 우리 아이 육아 일정을 같이 관리해요\n제 계정으로 로그인하면 같은 캘린더·체크리스트를 실시간으로 함께 볼 수 있어요!\n${APP_URL}`;
 }
 
 /** 설정 탭 "배우자와 함께 쓰기" 영역 렌더 — 가족 그룹 소속 여부에 따라 다르게 표시 */
@@ -35,7 +36,7 @@ export function renderFamilyShareLink() {
   if (S.familyId) {
     wrap.innerHTML = `
       <div class="install-link" style="cursor:default">
-        <span class="install-ico" style="background:var(--pul)">👪</span>
+        <span class="install-ico" style="background:var(--pul)"><span class="icon icon-sm" translate="no" aria-hidden="true">family_restroom</span></span>
         <div class="install-txt">
           <div class="install-title">가족 그룹으로 공유 중</div>
           <div class="install-sub">초대 코드 <b style="letter-spacing:1px;color:var(--pkd)">${S.familyId}</b> — 이 코드로 다른 가족도 참여할 수 있어요</div>
@@ -43,7 +44,7 @@ export function renderFamilyShareLink() {
       </div>
       <div style="display:flex;gap:8px;margin-top:8px">
         <button class="btn family-copy-btn" style="flex:1;box-shadow:none"
-                onclick="copyFamilyCode()">📋 코드 복사</button>
+                onclick="copyFamilyCode()"><span class="icon icon-sm" translate="no" aria-hidden="true">content_copy</span> 코드 복사</button>
         <button class="btn family-leave-btn" style="flex:1;box-shadow:none"
                 onclick="confirmLeaveFamily()">가족 그룹 나가기</button>
       </div>`;
@@ -52,7 +53,7 @@ export function renderFamilyShareLink() {
 
   wrap.innerHTML = `
     <div class="install-link" onclick="shareWithFamily()">
-      <span class="install-ico" style="background:var(--mnl)">👨‍👩‍👧</span>
+      <span class="install-ico" style="background:var(--mnl)"><span class="icon icon-sm" translate="no" aria-hidden="true">diversity_3</span></span>
       <div class="install-txt">
         <div class="install-title">배우자와 함께 쓰기</div>
         <div class="install-sub">같은 계정으로 로그인하면 실시간으로 공유돼요</div>
@@ -60,7 +61,7 @@ export function renderFamilyShareLink() {
       <span class="install-arrow">›</span>
     </div>
     <div class="install-link" style="margin-top:8px" onclick="openFamilyGroupModal()">
-      <span class="install-ico" style="background:var(--pul)">👪</span>
+      <span class="install-ico" style="background:var(--pul)"><span class="icon icon-sm" translate="no" aria-hidden="true">family_restroom</span></span>
       <div class="install-txt">
         <div class="install-title">가족 그룹으로 공유 (베타)</div>
         <div class="install-sub">각자 자기 계정으로 로그인해도 함께 볼 수 있어요</div>
@@ -71,21 +72,21 @@ export function renderFamilyShareLink() {
 
 /** 가족 그룹 만들기/참여하기 모달 */
 function openFamilyGroupModal() {
-  showModal('👪 가족 그룹으로 공유 (베타)', `
+  showModal('가족 그룹으로 공유 (베타)', `
     <p style="font-size:.8rem;color:var(--txl);font-weight:700;line-height:1.7;margin-bottom:14px">
       각자 자기 계정으로 로그인한 채로 같은 캘린더·체크리스트·성장 기록을 실시간으로
       함께 볼 수 있어요. 가족 그룹에 들어가면
       <span style="color:var(--pkd)">지금 이 계정에 있던 데이터 대신 가족 그룹의 데이터가 보여요</span>
       (그룹에서 나가면 원래 내 데이터로 다시 돌아와요).
     </p>
-    <button class="btn bpk" style="width:100%" onclick="createFamilyGroup()">✨ 새 가족 그룹 만들기</button>
+    <button class="btn bpk" style="width:100%" onclick="createFamilyGroup()"><span class="icon icon-sm" translate="no" aria-hidden="true">add_circle</span> 새 가족 그룹 만들기</button>
     <div style="text-align:center;font-size:.72rem;color:var(--txl);font-weight:800;margin:14px 0">또는</div>
     <div class="fg" style="margin:0">
       <label>초대 코드 입력</label>
       <input id="familyJoinCode" placeholder="예) AB3D9F2K" style="text-transform:uppercase">
     </div>
     <button class="btn" style="width:100%;margin-top:10px;background:var(--pul);color:#4A148C;box-shadow:none"
-            onclick="joinFamilyGroup()">🔑 코드로 참여하기</button>
+            onclick="joinFamilyGroup()"><span class="icon icon-sm" translate="no" aria-hidden="true">key</span> 코드로 참여하기</button>
   `);
 }
 
@@ -135,7 +136,7 @@ async function shareWithFamily() {
 
   if (navigator.share) {
     try {
-      await navigator.share({ title: '맘캘 MomCal 👨‍👩‍👧', text, url: APP_URL });
+      await navigator.share({ title: '맘캘 MomCal', text, url: APP_URL });
     } catch (e) {
       // 사용자가 공유 시트를 취소한 경우 등 — 별도 처리 불필요
     }
@@ -144,16 +145,16 @@ async function shareWithFamily() {
 
   try {
     await navigator.clipboard.writeText(text);
-    showModal('👨‍👩‍👧 배우자와 함께 쓰기', `
+    showModal('배우자와 함께 쓰기', `
       <p style="font-size:.86rem;font-weight:700;color:var(--tx);line-height:1.7">
         공유 문구가 클립보드에 복사됐어요!<br>
-        카카오톡·문자 등에 붙여넣어 배우자에게 보내주세요 👨‍👩‍👧
+        카카오톡·문자 등에 붙여넣어 배우자에게 보내주세요
       </p>
       <button class="btn bpk" style="width:100%;margin-top:16px" onclick="cm()">확인했어요</button>
     `);
   } catch (e) {
     // 클립보드 접근도 막힌 환경 — 직접 복사할 수 있도록 텍스트 노출
-    showModal('👨‍👩‍👧 배우자와 함께 쓰기', `
+    showModal('배우자와 함께 쓰기', `
       <p style="font-size:.86rem;font-weight:700;color:var(--tx);line-height:1.7">
         아래 문구를 배우자에게 직접 전달해주세요.
       </p>

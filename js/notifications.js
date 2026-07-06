@@ -131,7 +131,7 @@ export function renderNotificationSettings() {
     if (isNotifEnabled()) {
       wrap.innerHTML = `
         <div class="install-link" style="cursor:default">
-          <span class="install-ico" style="background:var(--mnl)">🔔</span>
+          <span class="install-ico" style="background:var(--mnl)"><span class="icon icon-sm" translate="no" aria-hidden="true">notifications_active</span></span>
           <div class="install-txt">
             <div class="install-title">알림 켜짐</div>
             <div class="install-sub">오늘 일정·마감 임박 알림을 받아요 (앱을 열었을 때 확인)</div>
@@ -143,7 +143,7 @@ export function renderNotificationSettings() {
     } else {
       wrap.innerHTML = `
         <div class="install-link" style="cursor:default;opacity:.7">
-          <span class="install-ico">🔕</span>
+          <span class="install-ico"><span class="icon icon-sm" translate="no" aria-hidden="true">notifications_off</span></span>
           <div class="install-txt">
             <div class="install-title">알림 꺼짐</div>
             <div class="install-sub">앱에서 알림을 받지 않아요. 다시 켜면 오늘 일정을 알려드려요</div>
@@ -157,7 +157,7 @@ export function renderNotificationSettings() {
   if (perm === 'denied') {
     wrap.innerHTML = `
       <div class="install-link" style="cursor:default;opacity:.7">
-        <span class="install-ico">🔕</span>
+        <span class="install-ico"><span class="icon icon-sm" translate="no" aria-hidden="true">notifications_off</span></span>
         <div class="install-txt">
           <div class="install-title">알림이 차단되어 있어요</div>
           <div class="install-sub">브라우저·기기 설정에서 맘캘 알림 권한을 허용해주세요</div>
@@ -168,7 +168,7 @@ export function renderNotificationSettings() {
 
   wrap.innerHTML = `
     <div class="install-link" onclick="requestNotificationPermission()">
-      <span class="install-ico">🔔</span>
+      <span class="install-ico"><span class="icon icon-sm" translate="no" aria-hidden="true">notifications</span></span>
       <div class="install-txt">
         <div class="install-title">알림 받기</div>
         <div class="install-sub">오늘 일정·정부지원 마감을 놓치지 않게 알려드려요</div>

@@ -138,7 +138,7 @@ export function renderGrowthPage() {
   const empty = document.getElementById('growthEmptyMsg');
 
   if (!child) {
-    empty.innerHTML = `<p style="color:var(--txl);text-align:center;padding:30px 10px">👶 아이를 먼저 등록해주세요!</p>`;
+    empty.innerHTML = `<p style="color:var(--txl);text-align:center;padding:30px 10px"><span class="icon icon-sm" translate="no" aria-hidden="true">child_care</span> 아이를 먼저 등록해주세요!</p>`;
     document.getElementById('growthSummaryGrid').innerHTML = '';
     document.getElementById('growthChartWrap').style.display = 'none';
     document.getElementById('growthRecordList').innerHTML = '';
@@ -147,7 +147,7 @@ export function renderGrowthPage() {
   }
 
   if (child.stage === 'preg') {
-    empty.innerHTML = `<p style="color:var(--txl);text-align:center;padding:30px 10px">🤰 성장 기록은 출생 후부터 남길 수 있어요!</p>`;
+    empty.innerHTML = `<p style="color:var(--txl);text-align:center;padding:30px 10px"><span class="icon icon-sm" translate="no" aria-hidden="true">pregnant_woman</span> 성장 기록은 출생 후부터 남길 수 있어요!</p>`;
     document.getElementById('growthSummaryGrid').innerHTML = '';
     document.getElementById('growthChartWrap').style.display = 'none';
     document.getElementById('growthRecordList').innerHTML = '';
@@ -195,7 +195,7 @@ function renderSummary(child) {
   if (!latest) {
     el.innerHTML = `
       <div class="growth-pct-card growth-pct-empty" onclick="openGrowthModal()">
-        <div style="font-size:1.6rem">📈</div>
+        <div style="font-size:1.6rem"><span class="icon icon-lg" translate="no" aria-hidden="true">trending_up</span></div>
         <div style="font-weight:800;font-size:.84rem;margin-top:6px">첫 성장 기록을 남겨보세요</div>
         <div style="font-size:.72rem;color:var(--txl);margin-top:2px">탭해서 키·몸무게 입력하기</div>
       </div>`;
@@ -269,7 +269,7 @@ function renderPrediction(child) {
             </div>`;
         }).join('')}
       </div>
-      <div class="growth-disclaimer" style="margin-top:8px">📌 최근 두 기록의 증가 추세를 그대로 연장한 단순 추정치예요. 아이 성장은 시기마다 속도가 달라질 수 있어 실제와 다를 수 있으니, 참고용으로만 봐주세요. 의학적 진단이 아닙니다.</div>
+      <div class="growth-disclaimer" style="margin-top:8px"><span class="icon icon-sm" translate="no" aria-hidden="true">info</span> 최근 두 기록의 증가 추세를 그대로 연장한 단순 추정치예요. 아이 성장은 시기마다 속도가 달라질 수 있어 실제와 다를 수 있으니, 참고용으로만 봐주세요. 의학적 진단이 아닙니다.</div>
     </div>`;
 }
 
@@ -286,13 +286,13 @@ function renderChart(child, metric) {
   if (typeof Chart === 'undefined') {
     if (_chartLoadRetries < 10) {
       canvas.parentElement.innerHTML = `<canvas id="growthChartCanvas"></canvas>
-        <p style="text-align:center;color:var(--txl);font-size:.78rem;padding:20px 0;margin:0">📊 그래프를 불러오는 중...</p>`;
+        <p style="text-align:center;color:var(--txl);font-size:.78rem;padding:20px 0;margin:0"><span class="icon icon-sm" translate="no" aria-hidden="true">bar_chart</span> 그래프를 불러오는 중...</p>`;
       _chartLoadRetries++;
       setTimeout(() => renderChart(child, metric), 500);
     } else {
       canvas.parentElement.innerHTML = `
         <p style="text-align:center;color:#C62828;font-size:.8rem;padding:30px 10px;line-height:1.6">
-          📡 그래프 라이브러리를 불러오지 못했어요.<br>인터넷 연결을 확인하고 새로고침 해주세요.
+          <span class="icon icon-sm" translate="no" aria-hidden="true">wifi_off</span> 그래프 라이브러리를 불러오지 못했어요.<br>인터넷 연결을 확인하고 새로고침 해주세요.
         </p>`;
     }
     return;
@@ -457,7 +457,7 @@ function renderRecordList(child) {
           ${r.height != null ? `키 ${r.height}cm` : ''}${r.weight != null ? `　몸무게 ${r.weight}kg` : ''}${r.head != null ? `　머리둘레 ${r.head}cm` : ''}
         </div>
       </div>
-      <button onclick="deleteGrowthRecord(${r.id})" style="background:none;border:none;cursor:pointer;color:var(--txl);font-size:.9rem">🗑</button>
+      <button onclick="deleteGrowthRecord(${r.id})" style="background:none;border:none;cursor:pointer;color:var(--txl);font-size:.9rem"><span class="icon icon-sm" translate="no" aria-hidden="true">delete</span></button>
     </div>`).join('');
 }
 
