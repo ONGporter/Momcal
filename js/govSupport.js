@@ -21,10 +21,10 @@ export function renderGovChecklistTab(child) {
   sidebar.innerHTML = `
     <div class="cl-sb-hd">${icon('account_balance', { size: 'sm' })} 정부지원</div>
     <div style="padding:14px 15px;font-size:.73rem;color:var(--txl);line-height:1.7">
-      임신·출산·육아 단계별 정부지원 제도를<br>놓치지 않도록 도와드려요.<br><br>
+      임신·출산·육아 단계별 정부지원 제도를 놓치지 않도록 도와드려요.<br><br>
       항목을 탭하면 신청 상태를 바꿀 수 있어요.<br><br>
       <span style="color:var(--pkd);font-weight:800">${icon('event', { size: 'sm' })} ${GOV_INFO_BASIS}</span><br>
-      제도는 매년 바뀔 수 있으니, 정확한 금액·자격은<br>공식 사이트에서 다시 확인해주세요.
+      제도는 매년 바뀔 수 있으니, 정확한 금액·자격은 공식 사이트에서 다시 확인해주세요.
     </div>
     <div style="margin:0 15px 14px;padding:12px;background:var(--pkl);border-radius:14px">
       <div style="font-size:.68rem;font-weight:800;color:var(--pkd);margin-bottom:6px">${icon('menu_book', { size: 'sm' })} 육아정보 더 알아보기</div>

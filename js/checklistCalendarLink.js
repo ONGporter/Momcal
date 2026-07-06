@@ -14,8 +14,13 @@ import { S }          from './state.js';
 import { getAutoEvs } from './calendar.js';
 import { checklistCalendarLinks } from '../data/checklist-links.js';
 
+/**
+ * v0.0.22: 예방접종(💉)·정부지원(🟢) 이벤트 제목의 이모지 접두어를 없애면서(제목엔 더 이상
+ * 이모지가 안 붙음 — 화면 표시는 어차피 stripLeadingEmoji()로 항상 지워왔어서 시각적 변화는
+ * 없음), 이 파일의 매칭 로직도 이모지 문자열 대신 ev.type을 기준으로 바꿈.
+ */
 function calTitleFor(link) {
-  return link.type === 'vax' ? `💉 ${link.calTitle}` : link.calTitle;
+  return link.calTitle;
 }
 
 /**
@@ -28,7 +33,7 @@ export function syncChecklistToCalendar(child, itemId, checked) {
   if (!link) return false;
 
   const fullTitle = calTitleFor(link);
-  const ev = getAutoEvs(child).find(e => e.title === fullTitle);
+  const ev = getAutoEvs(child).find(e => e.title === fullTitle && e.type === link.type);
   if (!ev) return false; // 이 아이 일정에 해당 이벤트가 없음 (스킵)
 
   if (!S.eventMods) S.eventMods = {};
@@ -40,16 +45,17 @@ export function syncChecklistToCalendar(child, itemId, checked) {
 
 /**
  * 캘린더 이벤트 완료 체크/해제 → 연결된 체크리스트 항목에 반영
- * @param {string} eventTitle - ev.title (예: '💉 DTaP 1차' 또는 '영유아 건강검진 1차')
+ * @param {string} eventTitle - ev.title (예: 'DTaP 1차' 또는 '영유아 건강검진 1차', v0.0.22부터 이모지 접두어 없음)
+ * @param {string} eventType  - ev.type ('vax'|'req'|'rec' 등) — 예전엔 제목 앞 💉로 예방접종 여부를 판별했으나,
+ *                              이제 이모지가 없으므로 type으로 직접 판별함
  * @returns {boolean} 연동된 항목이 있었는지 여부
  */
-export function syncCalendarToChecklist(child, eventTitle, done) {
+export function syncCalendarToChecklist(child, eventTitle, eventType, done) {
   if (!child) return false;
-  const isVax = eventTitle.startsWith('💉');
-  const cleanTitle = isVax ? eventTitle.replace(/^💉\s*/, '') : eventTitle;
+  const isVax = eventType === 'vax';
 
   const link = checklistCalendarLinks.find(l =>
-    l.calTitle === cleanTitle && l.type === (isVax ? 'vax' : 'checkup')
+    l.calTitle === eventTitle && l.type === (isVax ? 'vax' : 'checkup')
   );
   if (!link) return false;
 

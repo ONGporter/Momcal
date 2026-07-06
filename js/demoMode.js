@@ -28,17 +28,17 @@ function seedDemoData() {
 
   const eventMods = {};
   const vax0 = toStr(addDays(birth, 0));
-  eventMods[`auto_${vax0}_💉 B형 간염 1차`] = { actualDate: vax0, hospital: '튼튼소아과', memo: '', done: true };
-  eventMods[`auto_${vax0}_💉 BCG (결핵)`]   = { actualDate: vax0, hospital: '튼튼소아과', memo: '', done: true };
+  eventMods[`auto_${vax0}_B형 간염 1차`] = { actualDate: vax0, hospital: '튼튼소아과', memo: '', done: true };
+  eventMods[`auto_${vax0}_BCG (결핵)`]   = { actualDate: vax0, hospital: '튼튼소아과', memo: '', done: true };
 
   const vax2 = toStr(addDays(birth, Math.round(2 * 30.44)));
-  eventMods[`auto_${vax2}_💉 DTaP 1차`] = { actualDate: vax2, hospital: '튼튼소아과', memo: '', done: true };
+  eventMods[`auto_${vax2}_DTaP 1차`] = { actualDate: vax2, hospital: '튼튼소아과', memo: '', done: true };
 
   const birthReport = toStr(addDays(birth, 3));
-  eventMods[`auto_${birthReport}_🟢 출생신고`] = { actualDate: birthReport, hospital: '', memo: '', done: true, govStatus: 'paid' };
+  eventMods[`auto_${birthReport}_출생신고`] = { actualDate: birthReport, hospital: '', memo: '', done: true, govStatus: 'paid' };
 
   const parentBenefit = toStr(addDays(birth, 5));
-  eventMods[`auto_${parentBenefit}_🟢 부모급여 신청`] = { actualDate: parentBenefit, hospital: '', memo: '', done: false, govStatus: 'applied' };
+  eventMods[`auto_${parentBenefit}_부모급여 신청`] = { actualDate: parentBenefit, hospital: '', memo: '', done: false, govStatus: 'applied' };
 
   const checks = {};
   try {

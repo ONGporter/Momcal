@@ -163,7 +163,7 @@ function dashChecklistCard(child) {
   const BADGE = {
     perfect: { cls: 'dash-badge-mini-perfect', iconName: 'verified',          label: 'Perfect' },
     master:  { cls: 'dash-badge-mini-master',  iconName: 'workspace_premium', label: 'Master' },
-    legend:  { cls: 'dash-badge-mini-legend',  iconName: 'auto_awesome',      label: 'Legend' },
+    legend:  { cls: 'dash-badge-mini-legend',  iconName: 'emoji_events',      label: 'Legend' },
   };
   const badge = BADGE[tier];
 
@@ -249,7 +249,7 @@ export function regChild() {
   const name = document.getElementById('rName').value.trim();
   if (!name) { alert('이름을 입력해주세요'); return; }
 
-  const av    = { m: '👦', f: '👧', u: '🍼' };
+  const av    = { m: '👦', f: '👧', u: '👶' };
   const birth = S.rStage === 'born' ? document.getElementById('rBirth').value : '';
   const due   = S.rStage === 'preg' ? document.getElementById('rDue').value   : '';
   const week  = parseInt(document.getElementById('rWeek')?.value) || 8;

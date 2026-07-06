@@ -18,9 +18,9 @@
  * - 컨텍스트 배너: 현재 주차·분기 또는 월령 표시
  * - 진행률 티어 시스템 (Sprint 7 기준):
  *     필수 미완료 = 회색 %, 배지 없음
- *     100% = 필수 완료(선택 0개) → Perfect 🏅 (금색)
- *     100~199% = 필수 완료 + 선택 일부 → Master 👑 (보라)
- *     200% = 필수 + 선택 모두 완료 → Legend 🌈 (레인보우)
+ *     100% = 필수 완료(선택 0개) → Perfect (금색, verified 아이콘)
+ *     100~199% = 필수 완료 + 선택 일부 → Master (보라, workspace_premium 아이콘)
+ *     200% = 필수 + 선택 모두 완료 → Legend (레인보우, emoji_events 트로피 아이콘 — v0.0.22)
  */
 
 import { S, debounceSave } from './state.js';
@@ -263,6 +263,26 @@ function renderContextBanner(child) {
   }
 }
 
+/* 육아 체크 "아기→어린이→다 자란 아이" 성장 단계 아이콘을 아이 성별에 맞춰 바꾸기 위한 매핑
+ * (v0.0.22) — Unicode엔 "아기 남아/여아"를 구분하는 전용 이모지가 없어서, 아기 단계도
+ * 어린이와 같은 👦/👧로 통일함(성별 미정이면 중성 이모지로 이전 단계감을 그대로 유지) */
+const GROWTH_STAGE_ICON = {
+  m18: { m: '👦', f: '👧', u: '👶' },
+  m24: { m: '👦', f: '👧', u: '🧒' },
+  m36: { m: '👦', f: '👧', u: '🧑' },
+};
+
+/** clData.born 배열의 m18/m24/m36 라벨 앞 이모지를 아이 성별에 맞게 바꿔서 새 배열로 반환
+ *  (원본 clData.born은 건드리지 않음 — guide 페이지 생성 등 다른 곳에서도 그대로 씀) */
+function applyGrowthStageGender(cats, gender) {
+  return cats.map(c => {
+    const iconMap = GROWTH_STAGE_ICON[c.key];
+    if (!iconMap) return c;
+    const icon = iconMap[gender] || iconMap.u;
+    return { ...c, label: c.label.replace(/^\S+/, icon) };
+  });
+}
+
 /* ────────────────────────────────────
  *  현재 탭의 카테고리 목록 반환
  * ──────────────────────────────────── */
@@ -275,7 +295,7 @@ export function getCats() {
     if (tab === 1) return clData.preg.filter(c => c.key === 'preg_prep');
     return []; // tab 2 = 🟢 정부지원 (getCats 대상 아님, renderGovChecklistTab 에서 별도 렌더링)
   }
-  if (tab === 0) return clData.born;
+  if (tab === 0) return applyGrowthStageGender(clData.born, child.gender);
   if (tab === 1) return clData.food;
   return []; // tab 2 = 🟢 정부지원
 }
@@ -338,7 +358,7 @@ export function renderClSidebar() {
 
     let pctHtml;
     if (tier === 'legend') {
-      pctHtml = `<span class="cl-sb-pct cl-sb-legend"><span class="icon icon-sm" translate="no" aria-hidden="true">auto_awesome</span></span>`;
+      pctHtml = `<span class="cl-sb-pct cl-sb-legend"><span class="icon icon-sm" translate="no" aria-hidden="true">emoji_events</span> 200%</span>`;
     } else if (tier === 'master') {
       pctHtml = `<span class="cl-sb-pct cl-sb-master"><span class="icon icon-sm" translate="no" aria-hidden="true">workspace_premium</span> ${score}%</span>`;
     } else if (tier === 'perfect') {
@@ -381,7 +401,7 @@ export function renderClMain() {
   // ── 배지 & 상태 텍스트 ──
   let badgeHtml;
   if (tier === 'legend') {
-    badgeHtml = `<div class="cl-badge cl-badge-legend"><span class="icon icon-sm" translate="no" aria-hidden="true">auto_awesome</span> Legend — 모두 완료!</div>`;
+    badgeHtml = `<div class="cl-badge cl-badge-legend"><span class="icon icon-sm" translate="no" aria-hidden="true">emoji_events</span> Legend — 200% 달성!</div>`;
   } else if (tier === 'master') {
     badgeHtml = `<div class="cl-badge cl-badge-master"><span class="icon icon-sm" translate="no" aria-hidden="true">workspace_premium</span> Master — ${score}% 달성</div>`;
   } else if (tier === 'perfect') {

@@ -188,7 +188,8 @@ h1, h2, h3, .sec {
   gap: 3px;
 }
 /* v0.0.20: "그라디언트 하나를 모든 강조 요소에" 쓰던 방식에서 벗어나, 활성 탭은
-   단색 핑크로 — 그라디언트는 가장 중요한 CTA(메인 버튼 .bpk)에만 남겨둠(AI 티 방지) */
+   단색 핑크로 — v0.0.22에서 마지막 남은 메인 버튼(.bpk) 그라디언트도 제거해 앱 전체가
+   전부 단색 핑크로 통일됨(AI 티 방지) */
 .np.on {
   background: var(--pk);
   color: #fff;
@@ -447,7 +448,7 @@ html[data-theme="dark"] .family-leave-btn {
   cursor: pointer; font-family: inherit; transition: all .2s; width: 100%;
 }
 .btn:hover { opacity: .87; transform: translateY(-1px); }
-.bpk { background: linear-gradient(135deg, #F06292, #9C27B0); box-shadow: 0 4px 14px rgba(200,80,180,.28); }
+.bpk { background: var(--pk); box-shadow: 0 4px 14px rgba(240,98,146,.28); }
 .bmn { background: var(--mn); box-shadow: 0 4px 14px rgba(77,182,172,.22); }
 .bpu { background: linear-gradient(135deg, #9575CD, #6A1B9A); }
 .bbl { background: linear-gradient(135deg, #64B5F6, #1976D2); }

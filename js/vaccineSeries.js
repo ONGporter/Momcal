@@ -16,7 +16,8 @@ const toStr    = (d) => d.toISOString().split('T')[0];
 const addDays  = (dateStr, days) => { const d = new Date(dateStr); d.setDate(d.getDate() + days); return toStr(d); };
 const diffDays = (a, b) => Math.round((new Date(a) - new Date(b)) / 86400000);
 
-/** 이벤트 제목에서 아이콘 접두어(💉 ) 제거 — vaccine-series.js 의 titles 는 접두어 없이 저장됨 */
+/** v0.0.22부터 예방접종 이벤트 제목엔 이모지 접두어가 안 붙지만(js/calendar.js getAutoEvs 참고),
+ *  혹시 모를 예전 형식 문자열이 섞여 들어와도 안전하도록 방어적으로 유지 */
 const stripIcon = (title) => title.replace(/^💉\s*/, '');
 
 /** 제목으로 소속 시리즈와 회차 인덱스 찾기 */
@@ -32,7 +33,7 @@ function findSeries(title) {
 /**
  * 회차 재계산 실행
  * @param {Array} autoVaxEvs   - 해당 아이의 자동 예방접종 이벤트 목록 (type:'vax', {title, _origDate, date})
- * @param {string} editedTitle - 방금 수정된 회차 제목 (💉 접두어 포함, ev.title 그대로)
+ * @param {string} editedTitle - 방금 수정된 회차 제목 (ev.title 그대로, v0.0.22부터 이모지 접두어 없음)
  * @param {string} editedActualDate - 방금 수정된 회차의 실제 접종일 (YYYY-MM-DD)
  * @returns {Array<{title:string,newDate:string}>} 자동으로 조정된 이후 회차 목록
  */
@@ -56,7 +57,7 @@ export function recalcVaccineSeries(autoVaxEvs, editedTitle, editedActualDate) {
     const ev = autoVaxEvs.find(e => stripIcon(e.title) === cleanTitle);
     if (!ev) continue; // 이 아이 스케줄에 해당 회차가 없으면 건너뜀
 
-    const key = 'auto_' + ev._origDate + '_' + ev.title; // getEventKey()와 동일한 규칙(💉 접두어 포함)
+    const key = 'auto_' + ev._origDate + '_' + ev.title; // getEventKey()와 동일한 규칙
     const existingMod = S.eventMods[key] || {};
 
     if (existingMod.done) {

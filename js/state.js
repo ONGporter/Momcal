@@ -8,6 +8,28 @@
 
 import { auth, db, doc, getDoc, setDoc, onSnapshot } from './firebase.js';
 
+/**
+ * v0.0.22: 예방접종(💉)·정부지원(🟢) 자동 일정은 예전엔 제목 앞에 이모지를 붙여서
+ * `S.eventMods`의 키(`auto_날짜_제목`)를 만들었음(js/calendar.js의 getEventKey()).
+ * 이제 제목에서 이모지를 빼고 화면엔 아이콘으로 표시하도록 바꾸면서, 기존에 저장돼있던
+ * 이모지 포함 키를 이모지 없는 새 키로 옮겨준다 — 이미 기록해둔 완료 체크·실접종일·메모 등
+ * 사용자 데이터가 조용히 안 끊기게 하기 위한 1회성 자동 이전(멱등적이라 매번 실행해도 안전).
+ */
+function migrateEventModKeys(eventMods) {
+  const MARKER_RE = /^auto_(\d{4}-\d{2}-\d{2})_(?:💉|🟢)\s*(.*)$/;
+  let changed = false;
+  const migrated = { ...eventMods };
+  Object.keys(migrated).forEach(oldKey => {
+    const m = oldKey.match(MARKER_RE);
+    if (!m) return;
+    const newKey = `auto_${m[1]}_${m[2]}`;
+    if (!(newKey in migrated)) migrated[newKey] = migrated[oldKey];
+    delete migrated[oldKey];
+    changed = true;
+  });
+  return changed ? migrated : eventMods;
+}
+
 /* ── 기본 상태 팩토리 ── */
 export function emptyState() {
   return {
@@ -272,7 +294,7 @@ export function applyData(data) {
   S.dayStickers = fresh.dayStickers || {};
   S.checks      = fresh.checks      || {};
   S.customClItems = fresh.customClItems || {};
-  S.eventMods   = fresh.eventMods   || {};
+  S.eventMods   = migrateEventModKeys(fresh.eventMods || {});
   S.growthRecords = fresh.growthRecords || [];
   S.evColors    = fresh.evColors    || {};
   S.theme       = fresh.theme       || 'rose';

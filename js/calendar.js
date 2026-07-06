@@ -331,7 +331,8 @@ export function openEvModal(idx) {
     : parseEvTitleWithTime(ev.title);
 
   const typeLabel = {
-    req: '★ 필수', rec: '✓ 추천', vax: '💉 접종', gov: '🟢 정부지원', custom: '📌 내 일정',
+    req: `${icon('star', { size: 'sm' })} 필수`, rec: `${icon('recommend', { size: 'sm' })} 추천`,
+    vax: `${icon('vaccines', { size: 'sm' })} 접종`, gov: `${icon('account_balance', { size: 'sm' })} 정부지원`, custom: `${icon('push_pin', { size: 'sm' })} 내 일정`,
   }[ev.type] || '';
 
   const govStatusOptions = [
@@ -478,7 +479,7 @@ export function saveEventMod() {
 
   // Sprint 11: 체크리스트 연동 — 예방접종·건강검진처럼 연결된 체크리스트 항목이 있으면 함께 갱신
   if (ev.auto && (ev.type === 'vax' || ev.type === 'req' || ev.type === 'rec')) {
-    window.syncCalendarToChecklist?.(S.children[S.selC], ev.title, done);
+    window.syncCalendarToChecklist?.(S.children[S.selC], ev.title, ev.type, done);
   }
 
   cm();
@@ -507,7 +508,7 @@ function showRecalcNotice(changed) {
         <div style="display:flex;justify-content:space-between;align-items:center;
                     padding:9px 13px;background:var(--pul);border-radius:11px;
                     font-size:.8rem;font-weight:800;color:#4A148C">
-          <span>💉 ${stripLeadingEmoji(c.title)}</span><span><span class="icon icon-sm" translate="no" aria-hidden="true">calendar_month</span> ${c.newDate}</span>
+          <span><span class="icon icon-sm" translate="no" aria-hidden="true">vaccines</span> ${stripLeadingEmoji(c.title)}</span><span><span class="icon icon-sm" translate="no" aria-hidden="true">calendar_month</span> ${c.newDate}</span>
         </div>`).join('')}
     </div>
     <button class="btn bpk" onclick="cm()">확인</button>
@@ -1431,7 +1432,7 @@ export function getAutoEvs(child) {
       d.setDate(d.getDate() - (40 - it.week) * 7);
       const ds = d.toISOString().split('T')[0];
       evs.push({
-        date: ds, _origDate: ds, title: `🟢 ${it.title}`, type: 'gov', auto: true,
+        date: ds, _origDate: ds, title: it.title, type: 'gov', auto: true,
         imp: it.importance, desc: it.desc, link: it.link, deadlineNote: it.deadlineNote || null,
       });
     });
@@ -1445,7 +1446,7 @@ export function getAutoEvs(child) {
       d.setDate(d.getDate() + v.m * 30.44);
       const ds = d.toISOString().split('T')[0];
       v.items.forEach(it => evs.push({
-        date: ds, _origDate: ds, title: `💉 ${it}`, type: 'vax', auto: true,
+        date: ds, _origDate: ds, title: it, type: 'vax', auto: true,
       }));
     });
 
@@ -1479,7 +1480,7 @@ export function getAutoEvs(child) {
         deadlineDate = dd.toISOString().split('T')[0];
       }
       evs.push({
-        date: ds, _origDate: ds, title: `🟢 ${it.title}`, type: 'gov', auto: true,
+        date: ds, _origDate: ds, title: it.title, type: 'gov', auto: true,
         imp: it.importance, desc: it.desc, link: it.link,
         deadlineNote: it.deadlineNote || null, deadlineDate,
       });
@@ -1491,7 +1492,7 @@ export function getAutoEvs(child) {
       d.setDate(d.getDate() + it.month * 30.44);
       const ds = d.toISOString().split('T')[0];
       evs.push({
-        date: ds, _origDate: ds, title: `🟢 ${it.title}`, type: 'gov', auto: true,
+        date: ds, _origDate: ds, title: it.title, type: 'gov', auto: true,
         imp: it.importance, desc: it.desc, link: it.link, deadlineNote: it.deadlineNote || null,
       });
     });
