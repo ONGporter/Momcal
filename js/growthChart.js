@@ -4,7 +4,8 @@
  *
  * 데이터 흐름:
  *  - 기록 저장/조회는 js/growth.js (getGrowthRecords, getLatestGrowth, openGrowthModal 등)
- *  - 백분위/또래 평균 계산은 data/who-growth.js 의 참고 테이블(근사치)을 사용
+ *  - 백분위/또래 평균 계산은 data/who-growth.js 의 WHO LMS 파라미터를 사용
+ *    (계산 방식·데이터 출처·정확도 안내는 data/who-growth.js 상단 주석 참고)
  *  - 화면에는 항상 "참고용, 의학적 진단 아님" 문구를 함께 표시
  */
 
@@ -59,25 +60,34 @@ function computeAxisMax(todayAgeDays, ageDaysList) {
 }
 
 /* ══════════════════════════════════════
- *  참고 테이블 보간 + 백분위 계산 (근사)
+ *  WHO LMS 보간 + 백분위 계산
+ *  (계산 방식 설명·데이터 출처는 data/who-growth.js 상단 주석 참고)
  * ══════════════════════════════════════ */
 
-/** 특정 개월수에서의 med/sd를 선형 보간으로 추정 */
+/** 특정 개월수에서의 LMS 파라미터(L,M,S)를 선형 보간으로 추정 */
 function interpAt(table, ageMonths) {
   const pts = table;
-  if (ageMonths <= pts[0].m) return { med: pts[0].med, sd: pts[0].sd };
+  if (ageMonths <= pts[0].m) {
+    const f = pts[0];
+    return { L: f.L, M: f.M, S: f.S };
+  }
   if (ageMonths >= pts[pts.length - 1].m) {
     const last = pts[pts.length - 1];
-    return { med: last.med, sd: last.sd };
+    return { L: last.L, M: last.M, S: last.S };
   }
   for (let i = 0; i < pts.length - 1; i++) {
     const a = pts[i], b = pts[i + 1];
     if (ageMonths >= a.m && ageMonths <= b.m) {
       const t = (ageMonths - a.m) / (b.m - a.m);
-      return { med: a.med + (b.med - a.med) * t, sd: a.sd + (b.sd - a.sd) * t };
+      return {
+        L: a.L + (b.L - a.L) * t,
+        M: a.M + (b.M - a.M) * t,
+        S: a.S + (b.S - a.S) * t,
+      };
     }
   }
-  return { med: pts[0].med, sd: pts[0].sd };
+  const f = pts[0];
+  return { L: f.L, M: f.M, S: f.S };
 }
 
 /** 표준정규분포 누적분포함수 (Abramowitz-Stegun 근사) */
@@ -88,35 +98,56 @@ function normalCdf(z) {
   return z > 0 ? 1 - p : p;
 }
 
+/** 측정값(X) → WHO LMS z-점수 */
+function lmsZ(value, L, M, S) {
+  if (!M || !S) return null;
+  // L이 0에 아주 가까우면 로그 형태로 계산(0으로 나눔 방지)
+  if (Math.abs(L) < 1e-7) return Math.log(value / M) / S;
+  return (Math.pow(value / M, L) - 1) / (L * S);
+}
+
+/** WHO LMS z-점수 → 측정값(X) — 참고 백분위 라인 계산용(LMS 역변환) */
+function lmsValue(z, L, M, S) {
+  if (Math.abs(L) < 1e-7) return M * Math.exp(S * z);
+  const base = 1 + L * S * z;
+  if (base <= 0) return M; // 극단값에서 음수 밑이 되는 경우 방어
+  return M * Math.pow(base, 1 / L);
+}
+
 /**
- * 백분위 계산 (근사치)
+ * 백분위 계산 — WHO LMS 방식
  * @returns {number|null} 1~99 사이 정수, 계산 불가 시 null
  */
 export function computePercentile(value, ageMonths, gender, metric) {
   if (value == null || isNaN(value)) return null;
   const table = refTableFor(gender)[metric];
-  const { med, sd } = interpAt(table, ageMonths);
-  if (!sd) return null;
-  const z = (value - med) / sd;
+  const { L, M, S } = interpAt(table, ageMonths);
+  const z = lmsZ(value, L, M, S);
+  if (z == null || isNaN(z)) return null;
   const pct = Math.round(normalCdf(z) * 100);
   return Math.min(99, Math.max(1, pct));
 }
 
-/** 특정 개월수에서의 또래 평균(중앙값) 값 */
+/** 특정 개월수에서의 또래 중앙값(P50 = M) */
 export function referenceMedianAt(ageMonths, gender, metric) {
   const table = refTableFor(gender)[metric];
-  return interpAt(table, ageMonths).med;
+  return interpAt(table, ageMonths).M;
 }
 
-/* Sprint 9: 상위/하위 10% 참고선 — 표준정규분포 근사 z-score 상수 */
-const Z_P10 = -1.2816; // 하위 10%
-const Z_P90 = 1.2816;  // 상위 10%
+/**
+ * WHO 표준 백분위 라인용 z-점수 상수.
+ * 임상 성장도표(소아 성장도표)에서 통용되는 3·15·50·85·97 백분위 라인에 맞춘 값.
+ */
+const Z_P03 = -1.88079; // 하위 3%
+const Z_P15 = -1.03643; // 하위 15%
+const Z_P85 =  1.03643; // 상위 15%(=85 백분위)
+const Z_P97 =  1.88079; // 상위 3%(=97 백분위)
 
-/** 특정 개월수·z-score에서의 참고값 (med + z*sd) — P10/P90 라인 계산용 */
+/** 특정 개월수·z-score에서의 참고값 — LMS 역변환으로 계산 */
 export function referencePercentileAt(ageMonths, gender, metric, z) {
   const table = refTableFor(gender)[metric];
-  const { med, sd } = interpAt(table, ageMonths);
-  return med + z * sd;
+  const { L, M, S } = interpAt(table, ageMonths);
+  return lmsValue(z, L, M, S);
 }
 
 /* ══════════════════════════════════════
@@ -489,13 +520,17 @@ function renderChart(child, metric) {
 
   const myPoints = records.map((r, i) => ({ x: ageDaysList[i], y: r[metric] }));
 
-  // 또래 평균/P90/P10 참고선은 기록 유무와 무관하게 0~axisMax 전체를 매끄러운 곡선으로 생성
-  const refPoints = [], p90Points = [], p10Points = [];
+  // WHO 표준 백분위 참고선(P3/P15/P50/P85/P97)은 기록 유무와 무관하게
+  // 0~axisMax 전체를 매끄러운 곡선으로 생성
+  const p50Points = [], p85Points = [], p15Points = [], p97Points = [], p03Points = [];
   for (let d = 0; d <= axisMax; d += refStep) {
     const ageM = d / 30.44;
-    refPoints.push({ x: d, y: +referenceMedianAt(ageM, child.gender, metric).toFixed(1) });
-    p90Points.push({ x: d, y: +referencePercentileAt(ageM, child.gender, metric, Z_P90).toFixed(1) });
-    p10Points.push({ x: d, y: +referencePercentileAt(ageM, child.gender, metric, Z_P10).toFixed(1) });
+    const g = child.gender;
+    p50Points.push({ x: d, y: +referenceMedianAt(ageM, g, metric).toFixed(1) });
+    p85Points.push({ x: d, y: +referencePercentileAt(ageM, g, metric, Z_P85).toFixed(1) });
+    p15Points.push({ x: d, y: +referencePercentileAt(ageM, g, metric, Z_P15).toFixed(1) });
+    p97Points.push({ x: d, y: +referencePercentileAt(ageM, g, metric, Z_P97).toFixed(1) });
+    p03Points.push({ x: d, y: +referencePercentileAt(ageM, g, metric, Z_P03).toFixed(1) });
   }
 
   if (_chart) { _chart.destroy(); _chart = null; }
@@ -509,7 +544,18 @@ function renderChart(child, metric) {
     return;
   }
 
-  // v0.0.2: "은유 키" 실측 데이터 영역 채우기(fill) 제거 — 실선/점선과 색상만으로 구분하도록 정리
+  // 실측(우리 아이)은 진한 분홍 실선, WHO 참고 백분위선은 얇은 회색·점선 계열로 표시.
+  // 바깥쪽(P3/P97)일수록 더 흐리게 해서 중앙(P50)이 시각적으로 강조되도록 함.
+  const bandStyle = (label, data, opts) => ({
+    label, data,
+    borderColor: opts.color,
+    borderDash: opts.dash,
+    borderWidth: opts.width,
+    pointRadius: 0,
+    tension: .3,
+    fill: false,
+  });
+
   const datasets = [
     {
       label: `${child.name} ${label}`,
@@ -521,38 +567,11 @@ function renderChart(child, metric) {
       tension: .3,
       fill: false,
     },
-    {
-      label: '또래 평균 (P50)',
-      data: refPoints,
-      borderColor: '#B0A8C0',
-      borderDash: [5, 4],
-      borderWidth: 1.5,
-      pointRadius: 0,
-      tension: .3,
-      fill: false,
-    },
-    {
-      label: '상위 10% (P90)',
-      data: p90Points,
-      borderColor: '#FFB74D',
-      borderDash: [3, 3],
-      borderWidth: 1.2,
-      pointRadius: 0,
-      tension: .3,
-      fill: false,
-    },
-    {
-      // v0.0.2: P90과 같은 색이라 구별이 안 되고, 그 사이 음영 채우기도 헷갈린다는 피드백 —
-      // 채우기 제거하고 민트 계열 색으로 바꿔서 상위/하위 참고선을 색으로 구분되게 함
-      label: '하위 10% (P10)',
-      data: p10Points,
-      borderColor: '#4DB6AC',
-      borderDash: [3, 3],
-      borderWidth: 1.2,
-      pointRadius: 0,
-      tension: .3,
-      fill: false,
-    },
+    bandStyle('상위 3% (P97)',  p97Points, { color: '#E0C9A6', dash: [2, 3], width: 1 }),
+    bandStyle('상위 15% (P85)', p85Points, { color: '#F2B872', dash: [3, 3], width: 1.1 }),
+    bandStyle('또래 평균 (P50)', p50Points, { color: '#9E96B0', dash: [5, 4], width: 1.6 }),
+    bandStyle('하위 15% (P15)', p15Points, { color: '#7FC6BD', dash: [3, 3], width: 1.1 }),
+    bandStyle('하위 3% (P3)',   p03Points, { color: '#AFDAD3', dash: [2, 3], width: 1 }),
   ];
 
   if (predictionLine) {

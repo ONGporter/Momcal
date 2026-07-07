@@ -1206,6 +1206,7 @@ export function showDayPanel(ds) {
   const stickers = S.dayStickers[ds] || [];
   const panel    = document.getElementById('dayPanel');
   const dow      = ['일', '월', '화', '수', '목', '금', '토'][new Date(ds).getDay()];
+  const holiday  = getHoliday(ds); // v0.0.24: 공휴일이면 세부일정 상단에 이름 표시
 
   panel.style.display = 'block';
   panel.innerHTML = `
@@ -1213,6 +1214,15 @@ export function showDayPanel(ds) {
       <div class="dp-date" style="color:var(--pkd)">
         <span class="icon icon-sm" translate="no" aria-hidden="true">calendar_month</span> ${ds} <span style="font-size:.74rem;color:var(--txl);font-weight:500">${dow}요일</span>
       </div>
+
+      ${holiday
+        ? `<div class="dp-holiday" style="display:flex;align-items:center;gap:6px;margin-bottom:12px;
+                   padding:8px 12px;border-radius:12px;background:var(--pkl);
+                   border:1.5px solid var(--holiday-red);color:var(--holiday-red);
+                   font-size:.82rem;font-weight:800">
+             <span class="icon icon-sm" translate="no" aria-hidden="true">celebration</span> ${holiday}
+           </div>`
+        : ''}
 
       ${stickers.length
         ? `<div style="margin-bottom:14px">
