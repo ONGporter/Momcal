@@ -100,7 +100,8 @@ export function renderChecklist() {
   const tabDefs = child
     ? (child.stage === 'preg'
         ? [{ label: '<span class="icon icon-sm" translate="no" aria-hidden="true">pregnant_woman</span> 임신 체크', key: 'preg' }, { label: '<span class="icon icon-sm" translate="no" aria-hidden="true">inventory_2</span> 출산 준비물', key: 'prep' }, { label: '<span class="icon icon-sm" translate="no" aria-hidden="true">account_balance</span> 정부지원', key: 'gov' }]
-        : [{ label: '<span class="icon icon-sm" translate="no" aria-hidden="true">child_care</span> 육아 체크', key: 'born' }, { label: '<span class="icon icon-sm" translate="no" aria-hidden="true">restaurant</span> 이유식', key: 'food' }, { label: '<span class="icon icon-sm" translate="no" aria-hidden="true">account_balance</span> 정부지원', key: 'gov' }])
+        // v0.0.30: "육아 체크" 한 탭에 접종·건강검진·발달이 뒤섞여 있던 걸 예방접종/발달 두 탭으로 분리
+        : [{ label: '<span class="icon icon-sm" translate="no" aria-hidden="true">vaccines</span> 예방접종', key: 'vax' }, { label: '<span class="icon icon-sm" translate="no" aria-hidden="true">child_care</span> 발달', key: 'dev' }, { label: '<span class="icon icon-sm" translate="no" aria-hidden="true">restaurant</span> 이유식', key: 'food' }, { label: '<span class="icon icon-sm" translate="no" aria-hidden="true">account_balance</span> 정부지원', key: 'gov' }])
     : [];
 
   // Sprint 3: 현재 주차/월령에 맞는 카테고리 자동 선택
@@ -153,7 +154,9 @@ function autoSelectCat(child) {
     const idx = cats.findIndex(c => c.key === weekKey);
     if (idx >= 0) S.selClCat = idx;
 
-  } else if (child.stage === 'born' && S.clTab === 0 && child.birth) {
+    // v0.0.30: 육아 체크가 예방접종/발달 두 탭으로 나뉘었지만 월령→카테고리 매핑(milestones)은
+    // 동일한 catKey를 공유하므로, 두 탭 모두에서 같은 자동 선택 로직을 적용
+  } else if (child.stage === 'born' && (S.clTab === 0 || S.clTab === 1) && child.birth) {
     const ageMonths = Math.floor(
       (new Date(today()).getTime() - new Date(child.birth).getTime()) / (30.44 * 24 * 60 * 60 * 1000)
     );
@@ -176,9 +179,15 @@ function autoSelectCat(child) {
 export function getTodayCategoryInfo(child) {
   if (!child) return null;
 
+  // v0.0.30: 육아 체크가 예방접종/발달 두 탭으로 나뉘었지만, 홈 대시보드 카드는 예전처럼
+  // "이번 달 육아체크 전체 진행 상황"을 한 번에 보여줘야 하므로 두 탭을 합쳐서 계산함.
+  // 두 배열은 같은 catKey를 공유해서(S.checks 저장 키도 공유) 그냥 items만 이어붙이면 됨.
   const cats = child.stage === 'preg'
     ? clData.preg.filter(c => c.key !== 'preg_prep')
-    : clData.born;
+    : clData.born_vax.map((vaxCat, i) => {
+        const devCat = clData.born_dev[i];
+        return { key: vaxCat.key, label: vaxCat.label, items: [...vaxCat.items, ...(devCat ? devCat.items : [])] };
+      });
   if (!cats.length) return null;
 
   let idx = 0;
@@ -249,7 +258,7 @@ function renderContextBanner(child) {
       <span class="icon icon-sm" translate="no" aria-hidden="true">pregnant_woman</span> 현재 <strong>${week}주차</strong> · ${trimester}
       <span style="color:var(--txl);font-weight:700;margin-left:auto;font-size:.76rem">출산까지 약 ${weeksLeft}주</span>`;
 
-  } else if (child.stage === 'born' && S.clTab === 0 && child.birth) {
+  } else if (child.stage === 'born' && (S.clTab === 0 || S.clTab === 1) && child.birth) {
     const ageMs     = new Date(today()).getTime() - new Date(child.birth).getTime();
     const ageMonths = Math.floor(ageMs / (30.44 * 24 * 60 * 60 * 1000));
     const ageWeeks  = Math.floor(ageMs  / (7 * 24 * 60 * 60 * 1000));
@@ -272,8 +281,8 @@ const GROWTH_STAGE_ICON = {
   m36: { m: '👦', f: '👧', u: '🧑' },
 };
 
-/** clData.born 배열의 m18/m24/m36 라벨 앞 이모지를 아이 성별에 맞게 바꿔서 새 배열로 반환
- *  (원본 clData.born은 건드리지 않음 — guide 페이지 생성 등 다른 곳에서도 그대로 씀) */
+/** clData.born_vax/born_dev 배열의 m18/m24/m36 라벨 앞 이모지를 아이 성별에 맞게 바꿔서 새 배열로 반환
+ *  (원본 clData.born_vax/born_dev는 건드리지 않음 — guide 페이지 생성 등 다른 곳에서도 그대로 씀) */
 function applyGrowthStageGender(cats, gender) {
   return cats.map(c => {
     const iconMap = GROWTH_STAGE_ICON[c.key];
@@ -295,9 +304,11 @@ export function getCats() {
     if (tab === 1) return clData.preg.filter(c => c.key === 'preg_prep');
     return []; // tab 2 = 🟢 정부지원 (getCats 대상 아님, renderGovChecklistTab 에서 별도 렌더링)
   }
-  if (tab === 0) return applyGrowthStageGender(clData.born, child.gender);
-  if (tab === 1) return clData.food;
-  return []; // tab 2 = 🟢 정부지원
+  // v0.0.30: 육아 체크 탭이 예방접종(0)/발달(1)/이유식(2)/정부지원(3) 4개로 늘어남
+  if (tab === 0) return applyGrowthStageGender(clData.born_vax, child.gender);
+  if (tab === 1) return applyGrowthStageGender(clData.born_dev, child.gender);
+  if (tab === 2) return clData.food;
+  return []; // tab 3 = 🟢 정부지원
 }
 
 /**
@@ -342,8 +353,10 @@ export function renderClSidebar() {
     return;
   }
 
-  // Sprint 6: 정부지원 탭(항상 마지막, index 2)은 별도 모듈에서 렌더링
-  if ((S.clTab || 0) === 2) {
+  // Sprint 6, v0.0.30 수정: 정부지원 탭은 항상 마지막 탭 — 임신(3탭)은 index 2, 육아(4탭,
+  // v0.0.30부터 예방접종/발달 분리)는 index 3으로 서로 다름. 별도 모듈에서 렌더링.
+  const govIdx = child.stage === 'preg' ? 2 : 3;
+  if ((S.clTab || 0) === govIdx) {
     renderGovChecklistTab(child);
     return;
   }

@@ -30,7 +30,7 @@ const GUIDE = join(ROOT, 'guide');
 const SITE  = 'https://momcal.app';
 /* v0.0.2: 앱 본체(index.html 최하단)와 반드시 같은 값으로 유지 — 버전을 올릴 땐 이 값과
    index.html의 .site-footer-version 텍스트를 함께 수정해야 함 (docs/PROJECT_SPEC.md 버전 관리 정책 참고) */
-const APP_VERSION = 'v0.0.29';
+const APP_VERSION = 'v0.0.30';
 
 /* 정부지원 데이터는 {preg, postpartum, parenting} 키의 배열이라 체크리스트와 형태가 달라
    가이드 페이지용 카테고리 배열로 한 번 변환해준다. */
@@ -42,6 +42,16 @@ const govCatLabels = {
 const govCats = Object.entries(govSupportSchedule).map(([key, items]) => ({
   key, label: govCatLabels[key] || key, items,
 }));
+
+/* v0.0.30: 앱의 "육아 체크" 탭이 예방접종(clData.born_vax)/발달(clData.born_dev) 두 갈래로
+   나뉘었지만, 육아정보 페이지(guide/parenting.html)는 예전처럼 한 페이지에서 월령별로
+   모아 보여줌 — 임신 가이드 페이지가 clData.preg의 "임신 체크"/"출산 준비물" 두 탭도
+   구분 없이 한 페이지에 모아 보여주는 것과 같은 방식(기존 관례 유지).
+   두 배열은 같은 catKey를 공유하므로 그냥 items만 이어붙이면 된다. */
+const bornMerged = clData.born_vax.map((vaxCat, i) => {
+  const devCat = clData.born_dev[i];
+  return { key: vaxCat.key, label: vaxCat.label, items: [...vaxCat.items, ...(devCat ? devCat.items : [])] };
+});
 
 /**
  * 육아정보 4개 페이지 전체 항목을 하나의 검색 인덱스로 평탄화 (Sprint 21)
@@ -55,7 +65,7 @@ function buildSearchIndex() {
       id: it.id, title: it.t, desc: it.dd || it.d || '', page, cat: cat.label,
     })));
   addCl(clData.preg, 'pregnancy.html');
-  addCl(clData.born, 'parenting.html');
+  addCl(bornMerged, 'parenting.html');
   addCl(clData.food, 'food.html');
   govCats.forEach(cat => cat.items.forEach(it => idx.push({
     id: it.key, title: it.title, desc: it.desc || '', page: 'government-support.html', cat: cat.label,
@@ -412,7 +422,7 @@ const parentingHtml = page({
   heroTitle: '<span class="icon icon-sm" translate="no" aria-hidden="true">child_care</span> 월령별 예방접종 · 건강검진 가이드',
   heroDesc: '0개월부터 5세까지, 예방접종 차수·간격과 국가건강검진 일정을 정리했어요',
   intro: '신생아부터 5세까지 맞아야 하는 예방접종은 종류도 많고 차수도 헷갈리기 쉬워요. 아래는 월령별로 정리한 예방접종·건강검진·발달 체크 가이드예요. 각 백신이 무엇을 예방하는지, 총 몇 차수인지, 다음 접종까지 간격이 얼마나 되는지 자세히 적어뒀어요. 맘캘 앱에서는 실제 접종한 날짜를 입력하면 이후 회차 일정이 자동으로 재계산돼요.',
-  cats: clData.born,
+  cats: bornMerged,
   ctaText: '우리 아이 접종 일정, 자동으로 계산해드릴까요?',
   disclaimer: '이 페이지의 예방접종·발달 정보는 일반적인 참고용 요약이며, 병원의 공식 안내를 대체하지 않습니다. 정확한 접종 일정과 개별 건강 상태는 반드시 소아과와 상담해주세요.',
   questionFn: (it) => `${it.t}, 언제 어떻게 해야 하나요?`,
@@ -545,7 +555,7 @@ ${header()}
     <a class="g-cat-card" href="./parenting.html">
       <div class="ico"><span class="icon icon-lg" translate="no" aria-hidden="true">child_care</span></div>
       <h2>월령별 예방접종·건강검진</h2>
-      <p>0~5세 접종 일정과 발달 체크 (${countItems(clData.born)}개 항목)</p>
+      <p>0~5세 접종 일정과 발달 체크 (${countItems(bornMerged)}개 항목)</p>
     </a>
     <a class="g-cat-card" href="./food.html">
       <div class="ico"><span class="icon icon-lg" translate="no" aria-hidden="true">restaurant</span></div>
@@ -575,6 +585,6 @@ writeFileSync(join(GUIDE, 'index.html'), hubHtml);
 console.log('guide 페이지 생성 완료');
 console.log('  - guide/index.html');
 console.log('  - guide/pregnancy.html          (', countItems(clData.preg), '개 항목)');
-console.log('  - guide/parenting.html         (', countItems(clData.born), '개 항목)');
+console.log('  - guide/parenting.html         (', countItems(bornMerged), '개 항목)');
 console.log('  - guide/food.html               (', countItems(clData.food), '개 항목)');
 console.log('  - guide/government-support.html (', countItems(govCats), '개 항목)');

@@ -42,7 +42,7 @@ function seedDemoData() {
 
   const checks = {};
   try {
-    const cat0 = clData.born[0];
+    const cat0 = clData.born_vax[0];
     if (cat0) {
       const key = `${childId}_${cat0.key}`;
       checks[key] = {};
