@@ -183,8 +183,12 @@ export function renderGrowthPage() {
     return;
   }
 
+  // v0.0.25: 태아 화면에서 출생 후 화면으로 전환할 때 이전 내용을 모두 지우고 시작
   empty.innerHTML = '';
   document.getElementById('growthChartWrap').style.display = 'block';
+  document.getElementById('growthSummaryGrid').innerHTML   = ''; // 태아 요약 카드 잔존 방지
+  document.getElementById('growthRecordList').innerHTML    = ''; // 태아 기록 목록 잔존 방지
+  document.getElementById('growthMetricToggle').innerHTML = ''; // 태아 메트릭 토글 잔존 방지
 
   renderSummary(child);
   renderMetricToggle();
@@ -202,9 +206,13 @@ export function renderGrowthPage() {
  *  - "한 달 뒤 예상" 예측 카드도 표시하지 않음(같은 이유)
  */
 function renderFetalGrowthPage(child) {
+  // v0.0.25: 출생 후 화면에서 태아 화면으로 전환할 때 이전 내용을 모두 지우고 시작
   document.getElementById('growthEmptyMsg').innerHTML = '';
   document.getElementById('growthChartWrap').style.display = 'block';
   document.getElementById('growthPredictionCard').innerHTML = '';
+  document.getElementById('growthSummaryGrid').innerHTML   = ''; // 출생 후 백분위 카드 잔존 방지
+  document.getElementById('growthRecordList').innerHTML    = ''; // 출생 후 기록 목록 잔존 방지
+  document.getElementById('growthMetricToggle').innerHTML = ''; // 출생 후 메트릭 토글 잔존 방지
 
   renderFetalSummary(child);
   renderFetalMetricToggle();

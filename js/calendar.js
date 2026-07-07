@@ -668,12 +668,21 @@ export function setCalView(v, btn) {
   document.querySelectorAll('.cvt').forEach(b => b.classList.remove('on'));
   btn.classList.add('on');
   if (v === 'week') {
-    // 월간 뷰에서 보고 있던 달(또는 그 달 안에서 선택한 날짜) 기준으로 주 기준일을 새로 맞춤
-    // — 이후엔 calMove()가 이 기준일을 주 단위로 옮겨가며 이어서 탐색함
+    // v0.0.25: 주간 뷰로 전환할 때 "오늘"이 현재 보이는 달 안에 있으면 오늘 기준,
+    // 없으면 선택된 날짜, 그도 없으면 해당 달 1일 순으로 기준일을 결정.
+    // 예전엔 선택된 날짜가 없으면 무조건 1일로 이동해서 항상 첫 주부터 시작하는 문제가 있었음.
     const curMonthPrefix = `${S.calY}-${String(S.calM + 1).padStart(2, '0')}`;
-    S.calWeekRef = (S.selDate && S.selDate.startsWith(curMonthPrefix))
-      ? S.selDate
-      : `${curMonthPrefix}-01`;
+    const td = today();
+    if (td.startsWith(curMonthPrefix)) {
+      // 보고 있는 달에 오늘이 있으면 오늘 기준으로 주 기준일 설정
+      S.calWeekRef = td;
+    } else if (S.selDate && S.selDate.startsWith(curMonthPrefix)) {
+      // 선택된 날짜가 그 달 안이면 그 날 기준
+      S.calWeekRef = S.selDate;
+    } else {
+      // 그 외에는 그 달 1일(이전 동작 유지)
+      S.calWeekRef = `${curMonthPrefix}-01`;
+    }
   }
   renderCal();
 }

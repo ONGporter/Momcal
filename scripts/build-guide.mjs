@@ -30,7 +30,7 @@ const GUIDE = join(ROOT, 'guide');
 const SITE  = 'https://momcal.app';
 /* v0.0.2: 앱 본체(index.html 최하단)와 반드시 같은 값으로 유지 — 버전을 올릴 땐 이 값과
    index.html의 .site-footer-version 텍스트를 함께 수정해야 함 (docs/PROJECT_SPEC.md 버전 관리 정책 참고) */
-const APP_VERSION = 'v0.0.24';
+const APP_VERSION = 'v0.0.25';
 
 /* 정부지원 데이터는 {preg, postpartum, parenting} 키의 배열이라 체크리스트와 형태가 달라
    가이드 페이지용 카테고리 배열로 한 번 변환해준다. */
@@ -125,7 +125,7 @@ function faqJsonLd(cats, questionFn, answerFn) {
 function header() {
   return `<header class="g-header">
   <a class="g-logo" href="./index.html">맘캘 <img src="${SITE}/icons/logo-mark.png" alt="" class="brand-mark"></a>
-  <a class="g-cta js-cta" href="${SITE}/"><span class="icon icon-sm" translate="no" aria-hidden="true">calendar_month</span> 맘캘 앱 무료로 쓰기</a>
+  <a class="g-cta js-cta" href="${SITE}/"><span class="icon icon-sm" translate="no" aria-hidden="true">calendar_month</span> 맘캘 앱 열기</a>
 </header>`;
 }
 
@@ -136,7 +136,6 @@ function footer() {
     <a href="../privacy.html"><span class="icon icon-sm" translate="no" aria-hidden="true">lock</span> 개인정보처리방침</a>
     <a href="../terms.html"><span class="icon icon-sm" translate="no" aria-hidden="true">description</span> 이용약관</a>
     <a href="../contact.html"><span class="icon icon-sm" translate="no" aria-hidden="true">mail</span> 문의</a>
-    <a href="${SITE}/"><span class="icon icon-sm" translate="no" aria-hidden="true">home</span> 앱으로</a>
   </div>
   <div class="site-footer-version">맘캘 MomCal ${APP_VERSION}</div>
 </footer>
@@ -168,7 +167,7 @@ function returningUserScript() {
     document.querySelectorAll('.js-cta').forEach(function(el){ el.textContent = '맘캘 앱으로 돌아가기'; });
     document.querySelectorAll('.js-cta-banner-title').forEach(function(el){ el.textContent = '이 정보, 맘캘 앱에서 이어보기'; });
     document.querySelectorAll('.js-cta-banner-desc').forEach(function(el){ el.textContent = '이미 맘캘을 쓰고 계시네요! 앱으로 돌아가서 이어서 확인해보세요.'; });
-    document.querySelectorAll('.js-cta-banner-btn').forEach(function(el){ el.textContent = '앱으로 돌아가기 →'; });
+    document.querySelectorAll('.js-cta-banner-btn').forEach(function(el){ el.textContent = '맘캘 앱으로 →'; });
   } catch (e) {}
 })();
 </script>`;
@@ -214,7 +213,7 @@ function ctaBanner(text) {
   return `<div class="g-cta-banner">
   <h2 class="js-cta-banner-title"><span class="icon icon-sm" translate="no" aria-hidden="true">calendar_month</span> ${text}</h2>
   <p class="js-cta-banner-desc">맘캘에 등록하면 오늘 날짜 기준으로 일정이 자동으로 정리돼요. 로그인 없이도 바로 써볼 수 있어요.</p>
-  <a class="js-cta-banner-btn" href="${SITE}/">지금 무료로 시작하기 →</a>
+  <a class="js-cta-banner-btn" href="${SITE}/">맘캘 앱으로 →</a>
 </div>`;
 }
 
@@ -351,9 +350,9 @@ function pageSearchBox() {
  */
 function pageNavLinks(activePath) {
   const pages = [
-    { href: './pregnancy.html',           label: '<span class="icon icon-sm" translate="no" aria-hidden="true">pregnant_woman</span> 임신 체크리스트' },
-    { href: './parenting.html',           label: '<span class="icon icon-sm" translate="no" aria-hidden="true">child_care</span> 예방접종·건강검진' },
-    { href: './food.html',                label: '<span class="icon icon-sm" translate="no" aria-hidden="true">restaurant</span> 이유식 가이드' },
+    { href: './pregnancy.html',           label: '<span class="icon icon-sm" translate="no" aria-hidden="true">pregnant_woman</span>  임신' },
+    { href: './parenting.html',           label: '<span class="icon icon-sm" translate="no" aria-hidden="true">child_care</span> 예방접종' },
+    { href: './food.html',                label: '<span class="icon icon-sm" translate="no" aria-hidden="true">restaurant</span> 이유식' },
     { href: './government-support.html',  label: '<span class="icon icon-sm" translate="no" aria-hidden="true">account_balance</span> 정부지원금' },
   ];
   return `<div class="g-page-nav" id="pageNav">
@@ -392,7 +391,7 @@ ${footer()}
 
 /* ── 1. 임신 가이드 ── */
 const pregHtml = page({
-  title: '임신 주차별 체크리스트 총정리 (4주~40주) | 맘캘 육아정보',
+  title: '임신 주차별 체크리스트 총정리 (4주~40주) | 맘캘 MomCal',
   desc: '임신 4주부터 40주까지 산부인과 검사, 영양제, 출산 준비물을 주차별로 정리했어요. 엽산·철분 복용 시기부터 기형아 검사 일정까지 한눈에 확인하세요.',
   path: '/guide/pregnancy.html',
   heroTitle: '<span class="icon icon-sm" translate="no" aria-hidden="true">pregnant_woman</span> 임신 주차별 체크리스트',
@@ -407,7 +406,7 @@ const pregHtml = page({
 
 /* ── 2. 육아(예방접종·건강검진) 가이드 ── */
 const parentingHtml = page({
-  title: '월령별 예방접종 · 국가건강검진 완벽 가이드 (0~5세) | 맘캘 육아정보',
+  title: '월령별 예방접종 · 국가건강검진 완벽 가이드 (0~5세) | 맘캘 MomCal',
   desc: 'DTaP, MMR, 폐구균 등 국가필수예방접종을 월령별로 정리했어요. 각 백신이 무엇을 예방하는지, 총 몇 차수를 언제 맞아야 하는지, 국가건강검진 일정까지 한눈에 확인하세요.',
   path: '/guide/parenting.html',
   heroTitle: '<span class="icon icon-sm" translate="no" aria-hidden="true">child_care</span> 월령별 예방접종 · 건강검진 가이드',
@@ -422,7 +421,7 @@ const parentingHtml = page({
 
 /* ── 3. 이유식 가이드 ── */
 const foodHtml = page({
-  title: '이유식 단계별 시작 가이드 (초기~유아식) | 맘캘 육아정보',
+  title: '이유식 단계별 시작 가이드 (초기~유아식) | 맘캘 MomCal',
   desc: '쌀미음부터 유아식까지, 이유식을 단계별로 언제 어떻게 시작해야 하는지 정리했어요. 재료별 효과, 알레르기 체크 방법, 소금·설탕 없이 조리하는 법까지 확인하세요.',
   path: '/guide/food.html',
   heroTitle: '<span class="icon icon-sm" translate="no" aria-hidden="true">restaurant</span> 이유식 단계별 시작 가이드',
@@ -437,7 +436,7 @@ const foodHtml = page({
 
 /* ── 4. 정부지원금 가이드 ── */
 const govHtml = page({
-  title: '임신·출산·육아 정부지원금 총정리 | 맘캘 육아정보',
+  title: '임신·출산·육아 정부지원금 총정리 | 맘캘 MomCal',
   desc: '국민행복카드, 부모급여, 아동수당, 첫만남이용권 등 임신부터 육아까지 받을 수 있는 정부지원 제도를 시기별로 정리했어요. 신청 마감 기한까지 한눈에 확인하세요.',
   path: '/guide/government-support.html',
   heroTitle: '<span class="icon icon-sm" translate="no" aria-hidden="true">account_balance</span> 정부지원금 가이드',
@@ -520,15 +519,15 @@ const hubHtml = `<!DOCTYPE html>
 <html lang="ko">
 <head>
 ${head(
-  '맘캘 육아정보 — 임신부터 이유식까지 | 맘캘 MomCal',
-  '임신 주차별 체크리스트, 월령별 예방접종·건강검진, 이유식 단계별 가이드를 무료로 확인하세요. 맘캘이 정리한 육아 정보를 로그인 없이 바로 볼 수 있어요.',
+  '육아정보 — 임신부터 이유식까지 | 맘캘 MomCal',
+  '임신 주차별 체크리스트, 월령별 예방접종·건강검진, 이유식 단계별 가이드를 한눈에 확인하세요. 로그인 없이 누구나 볼 수 있어요.',
   '/guide/index.html'
 )}
 </head>
 <body>
 ${header()}
 <div class="g-hero">
-  <h1><span class="icon icon-sm" translate="no" aria-hidden="true">menu_book</span> 맘캘 육아정보</h1>
+  <h1><span class="icon icon-sm" translate="no" aria-hidden="true">menu_book</span> 육아정보</h1>
   <p>임신부터 육아까지, 꼭 필요한 정보만 모았어요.<br>로그인 없이 누구나 볼 수 있어요.</p>
 </div>
 <div class="g-wrap">

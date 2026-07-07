@@ -89,7 +89,13 @@ function onDataLoaded(data, hasPendingWrites) {
   }
 
   if (document.getElementById('pg-growth').classList.contains('on')) {
-    renderGrowthPage();
+    // v0.0.25: 체크리스트와 동일한 hasPendingWrites 가드 적용.
+    // hasPendingWrites===true는 debounceSave()가 Firestore에 쓴 내용이 로컬 캐시에서
+    // 되돌아온 에코일 뿐 — 성장 기록 추가 직후 renderGrowthPage()가 이미 호출됐으므로
+    // 여기서 또 그리면 그래프가 두 번 깜빡임. 서버 확정 변경(다른 기기 동기화)에만 반응.
+    if (_firstLoad || !hasPendingWrites) {
+      renderGrowthPage();
+    }
   }
 
   _firstLoad = false;
