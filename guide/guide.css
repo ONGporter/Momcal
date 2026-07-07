@@ -293,14 +293,6 @@ a:hover { text-decoration: underline; }
   background: var(--pkl); color: var(--pkd); padding: 10px 20px; border-radius: 40px;
 }
 
-/* ── 하단 네비게이션 (허브로) ── */
-.g-nav-links { display: flex; flex-wrap: wrap; gap: 8px; margin: 30px 0; }
-.g-nav-links a {
-  background: #EEE5F4; color: var(--txl); font-size: .76rem; font-weight: 800;
-  padding: 8px 14px; border-radius: 40px;
-}
-.g-nav-links a:hover { background: var(--pkl); color: var(--pkd); text-decoration: none; }
-
 /* ── 하단 CTA 배너 — 히어로와 동일한 그라디언트로 브랜드 통일(v0.0.27) ── */
 .g-cta-banner {
   background: linear-gradient(135deg, #F8BBD0 0%, #F06292 100%); color: #fff;
@@ -373,7 +365,6 @@ html[data-theme="dark"] body { background: var(--bg); color: var(--tx); }
 html[data-theme="dark"] .g-header { background: rgba(30,27,38,.95); border-bottom-color: rgba(255,255,255,.08); }
 html[data-theme="dark"] .g-cat-tab,
 html[data-theme="dark"] .g-search-input { border-color: rgba(255,255,255,.1); background: var(--card); color: var(--tx); }
-html[data-theme="dark"] .g-nav-links a { background: #2A2733; }
 html[data-theme="dark"] .g-disclaimer { background: #241F2C; }
 html[data-theme="dark"] .g-item .req { background: #3A2323; color: #EF9A9A; }
 html[data-theme="dark"] .g-item .opt { color: #80CBC4; }
