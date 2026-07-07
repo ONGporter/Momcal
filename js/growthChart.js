@@ -156,6 +156,21 @@ export function referencePercentileAt(ageMonths, gender, metric, z) {
 
 let _chart = null; // Chart.js 인스턴스 (탭 재진입 시 재사용/파괴)
 
+/**
+ * v0.0.29 버그 수정: 차트를 감싸는 wrap div가 `height:220px`로 고정돼 있는데,
+ * 기록이 없을 때 보여주는 안내 문구(특히 태아용 문구·큰 글자 크기 설정)가 길어지면
+ * 이 고정 높이를 넘어서 바로 아래 `.growth-disclaimer` 안내문과 겹쳐 보이는 버그가 있었음.
+ * → 문구만 보여줄 땐 높이를 유동적으로 풀고, 실제 Chart.js 그래프를 그릴 땐 다시 고정 높이로 되돌림
+ *   (Chart.js는 `responsive:true`+`maintainAspectRatio:false` 조합에서 부모에 명시적 높이가 있어야
+ *   캔버스 크기를 잡을 수 있어서, 그래프를 그릴 땐 고정 높이가 계속 필요함)
+ */
+function setChartWrapAutoHeight(canvas, isAuto) {
+  const wrap = canvas && canvas.parentElement;
+  if (!wrap) return;
+  wrap.style.height = isAuto ? 'auto' : '220px';
+  wrap.style.minHeight = isAuto ? '220px' : '';
+}
+
 export function renderGrowthPage() {
   renderAdSlot('adSlotGrowth', 'growth'); // 성장 페이지 하단 — 아이 등록 여부와 무관하게 항상 표시
 
@@ -189,6 +204,9 @@ export function renderGrowthPage() {
   document.getElementById('growthSummaryGrid').innerHTML   = ''; // 태아 요약 카드 잔존 방지
   document.getElementById('growthRecordList').innerHTML    = ''; // 태아 기록 목록 잔존 방지
   document.getElementById('growthMetricToggle').innerHTML = ''; // 태아 메트릭 토글 잔존 방지
+  // v0.0.29 버그 수정: 태아 화면에서 숨겼던 WHO 백분위 안내문을 출생 후 화면에서는 다시 표시
+  const mainDisclaimer = document.getElementById('growthMainDisclaimer');
+  if (mainDisclaimer) mainDisclaimer.style.display = '';
 
   renderSummary(child);
   renderMetricToggle();
@@ -213,6 +231,11 @@ function renderFetalGrowthPage(child) {
   document.getElementById('growthSummaryGrid').innerHTML   = ''; // 출생 후 백분위 카드 잔존 방지
   document.getElementById('growthRecordList').innerHTML    = ''; // 출생 후 기록 목록 잔존 방지
   document.getElementById('growthMetricToggle').innerHTML = ''; // 출생 후 메트릭 토글 잔존 방지
+  // v0.0.29 버그 수정: 출생 후 전용 WHO 백분위 안내문(.growth-disclaimer, 정적 index.html 요소)이
+  // 태아 화면 전환 시에도 지워지지 않고 그대로 남아있던 문제 — 태아 화면은 원래 설계상
+  // WHO 백분위 비교를 하지 않으므로(TODO.md 참고) 이 안내문 자체를 숨김
+  const mainDisclaimer = document.getElementById('growthMainDisclaimer');
+  if (mainDisclaimer) mainDisclaimer.style.display = 'none';
 
   renderFetalSummary(child);
   renderFetalMetricToggle();
@@ -267,11 +290,13 @@ function renderFetalChart(child, metric) {
 
   if (typeof Chart === 'undefined') {
     if (_chartLoadRetries < 10) {
+      setChartWrapAutoHeight(canvas, true);
       canvas.parentElement.innerHTML = `<canvas id="growthChartCanvas"></canvas>
         <p style="text-align:center;color:var(--txl);font-size:.78rem;padding:20px 0;margin:0"><span class="icon icon-sm" translate="no" aria-hidden="true">bar_chart</span> 그래프를 불러오는 중...</p>`;
       _chartLoadRetries++;
       setTimeout(() => renderFetalChart(child, metric), 500);
     } else {
+      setChartWrapAutoHeight(canvas, true);
       canvas.parentElement.innerHTML = `
         <p style="text-align:center;color:#C62828;font-size:.8rem;padding:30px 10px;line-height:1.6">
           <span class="icon icon-sm" translate="no" aria-hidden="true">wifi_off</span> 그래프 라이브러리를 불러오지 못했어요.<br>인터넷 연결을 확인하고 새로고침 해주세요.
@@ -290,12 +315,15 @@ function renderFetalChart(child, metric) {
   if (_chart) { _chart.destroy(); _chart = null; }
 
   if (records.length < 1) {
+    setChartWrapAutoHeight(canvas, true);
     canvas.parentElement.innerHTML = `<canvas id="growthChartCanvas"></canvas>
       <p style="text-align:center;color:var(--txl);font-size:.8rem;padding:30px 10px;line-height:1.6">
         ${icon(iconName, { size: 'sm' })} ${label} 기록이 아직 없어요.<br>아래 "＋ 성장 기록 추가"에서 임신 주수와 ${label}를 입력해보세요.
       </p>`;
     return;
   }
+
+  setChartWrapAutoHeight(canvas, false);
 
   const points = records.map(r => ({ x: r.week, y: r[metric] }));
   const weekMax = Math.max(40, ...points.map(p => p.x)) + 2;
@@ -483,11 +511,13 @@ function renderChart(child, metric) {
   // → 로딩 중이면 안내 문구를 보여주고 최대 10회(약 5초) 재시도, 그래도 실패하면 에러 메시지 표시.
   if (typeof Chart === 'undefined') {
     if (_chartLoadRetries < 10) {
+      setChartWrapAutoHeight(canvas, true);
       canvas.parentElement.innerHTML = `<canvas id="growthChartCanvas"></canvas>
         <p style="text-align:center;color:var(--txl);font-size:.78rem;padding:20px 0;margin:0"><span class="icon icon-sm" translate="no" aria-hidden="true">bar_chart</span> 그래프를 불러오는 중...</p>`;
       _chartLoadRetries++;
       setTimeout(() => renderChart(child, metric), 500);
     } else {
+      setChartWrapAutoHeight(canvas, true);
       canvas.parentElement.innerHTML = `
         <p style="text-align:center;color:#C62828;font-size:.8rem;padding:30px 10px;line-height:1.6">
           <span class="icon icon-sm" translate="no" aria-hidden="true">wifi_off</span> 그래프 라이브러리를 불러오지 못했어요.<br>인터넷 연결을 확인하고 새로고침 해주세요.
@@ -545,12 +575,15 @@ function renderChart(child, metric) {
 
   if (records.length < 1) {
     const { icon: iconName } = growthMetricLabel[metric];
+    setChartWrapAutoHeight(canvas, true);
     canvas.parentElement.innerHTML = `<canvas id="growthChartCanvas"></canvas>
       <p style="text-align:center;color:var(--txl);font-size:.8rem;padding:30px 10px;line-height:1.6">
         ${icon(iconName, { size: 'sm' })} ${label} 기록이 아직 없어요.<br>아래 "＋ 성장 기록 추가"에서 ${label}를 입력해보세요.
       </p>`;
     return;
   }
+
+  setChartWrapAutoHeight(canvas, false);
 
   // 실측(우리 아이)은 진한 분홍 실선, WHO 참고 백분위선은 얇은 회색·점선 계열로 표시.
   // 바깥쪽(P3/P97)일수록 더 흐리게 해서 중앙(P50)이 시각적으로 강조되도록 함.

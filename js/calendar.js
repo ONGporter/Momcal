@@ -1257,6 +1257,7 @@ export function showDayPanel(ds) {
                 <div class="dp-ev" style="background:${bg};flex-direction:column;align-items:stretch">
                   <div class="dp-ev-title" style="margin-bottom:8px">
                     ${stripLeadingEmoji(e.title)}
+                    <span class="badge-r" style="margin-left:5px">필수</span>
                     ${e.done ? '<span style="color:var(--mn);margin-left:5px"><span class="icon icon-sm" translate="no" aria-hidden="true">check_circle</span> 모두 완료</span>' : ''}
                   </div>
                   <div style="display:flex;flex-direction:column;gap:6px">
@@ -1276,8 +1277,10 @@ export function showDayPanel(ds) {
                 </div>`;
             }
 
-            const govLbl = e.govStatus === 'paid' ? '✅지급완료' : e.govStatus === 'applied' ? '🔵신청완료' : '🟢정부지원';
-            const lbl = e.type === 'req' ? '★필수'  : e.type === 'rec' ? '추천'    : e.type === 'vax' ? '접종'    : e.type === 'gov' ? govLbl : '내일정';
+            // v0.0.29: 체크리스트 정부지원 탭(js/govSupport.js)과 동일한 문구로 통일(이모지 제거)
+            const govLbl = e.govStatus === 'paid' ? '지급 완료' : e.govStatus === 'applied' ? '신청 완료' : '신청 전';
+            // v0.0.29 버그 수정: 접종도 필수 항목인데 배지가 "접종"으로만 나와 필수 여부가 안 보이던 문제 → 필수로 통일
+            const lbl = e.type === 'req' ? '★필수'  : e.type === 'rec' ? '추천'    : e.type === 'vax' ? '★필수'    : e.type === 'gov' ? govLbl : '내일정';
             const urgent = isGovDeadlineSoon(e);
             const dLeft = urgent ? daysUntil(e.deadlineDate) : null;
             const urgentText = dLeft === null ? '' : dLeft < 0 ? '(마감 지남)' : dLeft === 0 ? '(오늘 마감)' : `(D-${dLeft})`;
