@@ -135,7 +135,7 @@
     <a href="../contact.html"><span class="icon icon-sm" translate="no" aria-hidden="true">mail</span> 문의</a>
     <a href="https://momcal.app/"><span class="icon icon-sm" translate="no" aria-hidden="true">home</span> 앱으로</a>
   </div>
-  <div class="site-footer-version">맘캘 MomCal v0.0.22</div>
+  <div class="site-footer-version">맘캘 MomCal v0.0.23</div>
 </footer>
 <a href="#" class="g-top-btn" aria-label="맨 위로">↑</a>
 <script>
@@ -154,6 +154,33 @@
     document.querySelectorAll('.js-cta-banner-desc').forEach(function(el){ el.textContent = '이미 맘캘을 쓰고 계시네요! 앱으로 돌아가서 이어서 확인해보세요.'; });
     document.querySelectorAll('.js-cta-banner-btn').forEach(function(el){ el.textContent = '앱으로 돌아가기 →'; });
   } catch (e) {}
+})();
+</script>
+<script>
+(function(){
+  var KEY = 'momcal_item_feedback_v1';
+  function load(){ try { return JSON.parse(localStorage.getItem(KEY) || '{}'); } catch(e){ return {}; } }
+  function save(data){ try { localStorage.setItem(KEY, JSON.stringify(data)); } catch(e){} }
+  function paint(box, value){
+    box.querySelectorAll('.g-feedback-btn').forEach(function(btn){
+      btn.classList.toggle('on-up',   value === 'up'   && btn.dataset.fb === 'up');
+      btn.classList.toggle('on-down', value === 'down' && btn.dataset.fb === 'down');
+    });
+  }
+  var data = load();
+  document.querySelectorAll('.g-feedback').forEach(function(box){
+    var id = box.dataset.itemId;
+    paint(box, data[id]);
+    box.querySelectorAll('.g-feedback-btn').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var v = btn.dataset.fb;
+        data[id] = data[id] === v ? undefined : v;
+        if (data[id] === undefined) delete data[id];
+        save(data);
+        paint(box, data[id]);
+      });
+    });
+  });
 })();
 </script>
 </body>

@@ -26,6 +26,7 @@
 - **기준 글자 크기**: `html { font-size: 19px }` — 앱 전체 `rem` 기반 글자가 이 값에 비례해서 커짐. 단, 캘린더 셀 안 이벤트 텍스트(`.ev-line`/`.ev-more`/`.week-ev-block`, `css/calendar.css`)는 셀 공간이 빠듯해 의도적으로 `px`로 고정해 이 확대에서 제외됨 — **새로 만드는 캘린더 셀 안 텍스트도 이 규칙을 따를지 검토할 것**. 설정 탭에서 사용자가 5단계로 직접 조절 가능(`html[data-fontsize]`, `js/fontSize.js`); 캘린더 안 글자만 따로 조절하는 설정도 별도로 있음(`html[data-cal-fontsize]`, `js/calFontSize.js`)
 - **아이콘**: 이모지 전용 (외부 아이콘 라이브러리 없음)
 - **차트**: Chart.js (CDN, jsDelivr 폴백)
+- **DOM→이미지 캡처**: html2canvas (CDN, jsDelivr 폴백 — v0.0.23, 체크리스트 이미지 공유 전용)
 - **PWA**: `manifest.json` + `sw.js` (홈 화면 설치·오프라인 앱 셸 캐싱)
 
 ---
@@ -164,7 +165,8 @@ momcal/
 | `dayStickers` | Object | ✅ | 날짜별 스티커 배열 |
 | `checks` | Object | ✅ | 체크리스트 완료 상태 |
 | `eventMods` | Object | ✅ | 자동 일정의 실제일·완료·메모 등 수정 사항 (Sprint 2) |
-| `growthRecords` | Array | ✅ | 성장 기록 목록 (Sprint 4) |
+| `growthRecords` | Array | ✅ | 성장 기록 목록 (Sprint 4). v0.0.23부터 `week`(임신 주수)·`isFetal`(태아 기록 여부) 필드 추가 — 임신 중 아이는 태아 기록(g/cm)도 여기 함께 저장됨 |
+| `itemFeedback` | Object | ✅ | v0.0.23: `{ itemId: 'up'\|'down' }` — 체크리스트 항목 "도움돼요/아쉬워요" 개인 반응 |
 | `evColors` | Object | ✅ | 사용자 지정 카테고리 공통 색상 `{req, rec, food, vax, gov}` — 없으면 기본색 사용 (Sprint 21). v0.0.16부터 `custom`은 범례에서 빠지고 일정별 `color` 필드로 대체됨(범례로는 더 이상 못 바꿈, 기존에 저장된 `evColors.custom` 값은 그대로 남아있지만 이제 쓰이지 않음) |
 | `theme` | String | ✅ | 캘린더 테마 (rose/mint/sunny/lavender/peach) |
 | `selC` | Number | ✅ | 현재 선택된 아이 인덱스 |

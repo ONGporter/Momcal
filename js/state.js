@@ -39,7 +39,8 @@ export function emptyState() {
     checks:      {},   // { 'childId_catKey': { itemId: true } }
     customClItems: {}, // v0.0.14: { 'childId_catKey': [{ id, t, r }] } — 사용자가 직접 추가한 체크리스트 항목
     eventMods:   {},   // { 'eventKey': { actualDate, hospital, memo, done } }
-    growthRecords: [], // [{ id, childId, date, height, weight, head }] — 성장 기록 (Sprint 4)
+    growthRecords: [], // [{ id, childId, date, height, weight, head, isFetal }] — 성장 기록 (Sprint 4, v0.0.23부터 태아 기록도 포함)
+    itemFeedback: {},  // v0.0.23: { itemId: 'up'|'down' } — 체크리스트 항목 "도움돼요/아쉬워요" 개인 반응
     evColors:    {},   // { req, rec, food, vax, gov, custom } — 사용자 지정 일정 색상 (Sprint 21, 없으면 기본색)
     theme:       'rose',
     selC:        0,    // 현재 선택된 아이 인덱스
@@ -116,6 +117,7 @@ export async function saveState() {
       customClItems: S.customClItems || {},
       eventMods:   S.eventMods || {},
       growthRecords: S.growthRecords || [],
+      itemFeedback: S.itemFeedback || {},
       evColors:    S.evColors || {},
       theme:       S.theme,
       selC:        S.selC,
@@ -243,6 +245,7 @@ export async function createFamily() {
     customClItems: S.customClItems || {},
     eventMods:   S.eventMods || {},
     growthRecords: S.growthRecords || [],
+    itemFeedback: S.itemFeedback || {},
     evColors:    S.evColors || {},
     theme:       S.theme,
     selC:        S.selC,
@@ -296,6 +299,7 @@ export function applyData(data) {
   S.customClItems = fresh.customClItems || {};
   S.eventMods   = migrateEventModKeys(fresh.eventMods || {});
   S.growthRecords = fresh.growthRecords || [];
+  S.itemFeedback = fresh.itemFeedback || {};
   S.evColors    = fresh.evColors    || {};
   S.theme       = fresh.theme       || 'rose';
   // selC 범위 보정

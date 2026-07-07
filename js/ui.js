@@ -181,13 +181,30 @@ function dashChecklistCard(child) {
 /** 성장 기록 (+ Sprint 11: 30일 이상 기록 없으면 리마인더) */
 function dashGrowthCard(child) {
   const { latest, prev } = getLatestGrowth(child.id);
+  const isPreg = child.stage === 'preg';
+  const label = isPreg ? '태아 기록' : '성장 기록';
+
   if (!latest) {
-    return dashCard('trending_up', '성장 기록', '아직 기록 없어요', '탭해서 첫 기록 남기기', 'openGrowthModal()');
+    return dashCard('trending_up', label, '아직 기록 없어요', '탭해서 첫 기록 남기기', 'openGrowthModal()');
   }
 
   const daysSince = Math.floor((new Date(today()) - new Date(latest.date)) / 86400000);
   if (daysSince >= 30) {
-    return dashCard('trending_up', '성장 기록', `마지막 기록 ${daysSince}일 전`, '탭해서 새 기록 남기기', 'openGrowthModal()');
+    return dashCard('trending_up', label, `마지막 기록 ${daysSince}일 전`, '탭해서 새 기록 남기기', 'openGrowthModal()');
+  }
+
+  if (isPreg) {
+    const parts = [];
+    if (latest.weight != null) {
+      const d = prev?.weight != null ? latest.weight - prev.weight : null;
+      parts.push(`체중 ${latest.weight}g${d != null ? ` (${d >= 0 ? '+' : ''}${d})` : ''}`);
+    }
+    if (latest.height != null) {
+      const d = prev?.height != null ? latest.height - prev.height : null;
+      parts.push(`길이 ${latest.height}cm${d != null ? ` (${d >= 0 ? '+' : ''}${d.toFixed(1)})` : ''}`);
+    }
+    const sub = latest.week != null ? `임신 ${latest.week}주차` : `${latest.date} 기록`;
+    return dashCard('trending_up', label, parts[0] || '-', parts[1] ? `${parts[1]} · ${sub}` : sub, 'openGrowthModal()');
   }
 
   const parts = [];
@@ -199,7 +216,7 @@ function dashGrowthCard(child) {
     const d = prev?.weight != null ? latest.weight - prev.weight : null;
     parts.push(`몸무게 ${latest.weight}kg${d != null ? ` (${d >= 0 ? '+' : ''}${d.toFixed(1)})` : ''}`);
   }
-  return dashCard('trending_up', '성장 기록', parts[0] || '-', parts[1] || `${latest.date} 기록`, 'openGrowthModal()');
+  return dashCard('trending_up', label, parts[0] || '-', parts[1] || `${latest.date} 기록`, 'openGrowthModal()');
 }
 
 /** 오늘의 육아 팁 */

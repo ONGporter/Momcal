@@ -304,13 +304,15 @@ export function getCats() {
  * 체크리스트 사이드바 하단 — 육아정보 검색 (Sprint 29)
  * 체크리스트 항목의 짧은 설명만으론 부족할 때, 육아정보 페이지(guide/)의
  * 자세한 설명을 검색해서 바로 찾아볼 수 있도록 새 탭으로 연결함
+ * v0.0.23: govSupport.js도 이 함수를 그대로 가져다 씀 — 예전엔 govSupport.js가 마크업을
+ * 따로 복사해서 좌우 여백(margin)이 달라 "정부지원 탭만 상자 안에 든 것처럼" 보였음
  */
-function guideSearchBoxHtml() {
+export function guideSearchBoxHtml(placeholder = '예: 엽산, DTaP, 쌀미음') {
   return `
     <div style="margin-top:14px;padding:12px;background:var(--pkl);border-radius:14px">
       <div style="font-size:.68rem;font-weight:800;color:var(--pkd);margin-bottom:6px"><span class="icon icon-sm" translate="no" aria-hidden="true">menu_book</span> 육아정보 더 알아보기</div>
       <div style="display:flex;gap:6px">
-        <input type="text" id="clGuideSearchInput" placeholder="예: 엽산, DTaP, 쌀미음"
+        <input type="text" id="clGuideSearchInput" placeholder="${placeholder}"
                style="flex:1;min-width:0;padding:7px 10px;border:1.5px solid #F0D8E4;border-radius:9px;font-size:.74rem;font-family:inherit"
                onkeydown="if(event.key==='Enter')openGuideSearch()">
         <button onclick="openGuideSearch()"
@@ -417,13 +419,18 @@ export function renderClMain() {
   document.getElementById('clMain').innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px">
       <h3 style="font-size:.93rem;font-weight:900;color:var(--tx)">${cat.label}</h3>
-      ${badgeHtml}
+      <div style="display:flex;align-items:center;gap:6px">
+        ${badgeHtml}
+        <button type="button" class="cl-share-btn" title="이미지로 저장·공유" onclick="shareChecklistImage()">
+          <span class="icon icon-sm" translate="no" aria-hidden="true">share</span>
+        </button>
+      </div>
     </div>
     <div class="progress-bar">
       <div class="progress-fill${barClass ? ' ' + barClass : ''}" style="width:${barWidth}%"></div>
     </div>
     ${tier === null
-      ? `<div style="font-size:.68rem;color:var(--txl);font-weight:700;margin:-10px 0 14px">필수 항목을 먼저 모두 체크하면 선택 항목이 점수에 반영돼요 (필수 완료 시 🏅 Perfect 배지 획득!)</div>`
+      ? `<div style="font-size:.68rem;color:var(--txl);font-weight:700;margin:-10px 0 14px">필수 항목을 먼저 모두 체크하면 선택 항목이 점수에 반영돼요 (필수 완료 시 <span class="icon icon-sm" translate="no" aria-hidden="true">verified</span> Perfect 배지 획득!)</div>`
       : tier === 'perfect' && optTotal > 0
       ? `<div style="font-size:.68rem;color:#5B4FCF;font-weight:700;margin:-10px 0 14px"><span class="icon icon-sm" translate="no" aria-hidden="true">star</span> 선택 항목까지 체크하면 최대 200%까지 올라가요!</div>`
       : ''
@@ -453,7 +460,20 @@ export function renderClMain() {
             <span class="ci-expand-arrow">▾</span>
           </button>` : ''}
         </div>
-        ${it.dd ? `<div class="ci-detail"><span class="icon icon-sm" translate="no" aria-hidden="true">menu_book</span> ${it.dd}</div>` : ''}
+        ${it.dd ? `<div class="ci-detail">
+          <span class="icon icon-sm" translate="no" aria-hidden="true">menu_book</span> ${it.dd}
+          <div class="ci-feedback">
+            <span class="ci-feedback-label">이 설명이 도움이 됐나요?</span>
+            <button type="button" class="ci-feedback-btn ${S.itemFeedback?.[it.id] === 'up' ? 'on-up' : ''}"
+                    onclick="event.stopPropagation();setItemFeedback('${it.id}','up')">
+              <span class="icon icon-sm" translate="no" aria-hidden="true">thumb_up</span> 도움돼요
+            </button>
+            <button type="button" class="ci-feedback-btn ${S.itemFeedback?.[it.id] === 'down' ? 'on-down' : ''}"
+                    onclick="event.stopPropagation();setItemFeedback('${it.id}','down')">
+              <span class="icon icon-sm" translate="no" aria-hidden="true">thumb_down</span> 아쉬워요
+            </button>
+          </div>
+        </div>` : ''}
       </div>`;
     }).join('')}
     <button type="button" class="cl-add-item-btn" onclick="openAddClItemModal('${key}')">
@@ -517,6 +537,20 @@ export function toggleCiDetail(uid) {
 }
 
 /**
+ * v0.0.23: 체크리스트 항목 "도움돼요/아쉬워요" 개인 반응 — 같은 값을 다시 누르면 취소(토글).
+ * 다른 사용자와 집계되는 공개 투표가 아니라 내 계정에만 저장되는 개인 표시임(로그인 시 기기 간 동기화됨).
+ * 육아정보 페이지(guide/)에도 같은 버튼이 있지만, 그쪽은 로그인이 없는 정적 페이지라
+ * 브라우저 localStorage에 따로 저장됨(서로 연동되진 않지만 같은 UI·조작 방식을 공유함).
+ */
+export function setItemFeedback(itemId, value) {
+  if (!S.itemFeedback) S.itemFeedback = {};
+  S.itemFeedback[itemId] = S.itemFeedback[itemId] === value ? undefined : value;
+  if (S.itemFeedback[itemId] === undefined) delete S.itemFeedback[itemId];
+  debounceSave();
+  renderClMain();
+}
+
+/**
  * 체크 토글
  * Bug fix: 기존엔 renderClMain()을 먼저 호출한 뒤 renderClSidebar()가 내부에서
  * renderClMain()을 또 호출해 메인 영역이 두 번 렌더링되어 배지가 두 번 깜빡였음.
@@ -539,6 +573,99 @@ export function tgCk(key, id) {
   debounceSave();
 }
 
+/**
+ * v0.0.23: 체크리스트를 이미지로 저장·공유하는 기능 — 사람들이 공유하면서 앱 유입이
+ * 늘어나길 바라는 목적으로 추가함.
+ * 실제 체크박스·버튼이 있는 화면을 그대로 캡처하지 않고, 공유용으로 깔끔하게 정리된
+ * 전용 카드를 화면 밖(왼쪽 -9999px)에 잠깐 만들어서 그걸 캡처함 — 그래야 공유 이미지에
+ * 인터랙션 요소 없이 결과만 깨끗하게 나오고, 맘캘 브랜드 표시(앱 유입 목적)도 넣을 수 있음.
+ * html2canvas(index.html에 CDN으로 로드됨)로 그 카드를 캡처한 뒤, 모바일에서 공유 시트를
+ * 지원하면(navigator.share + canShare) 바로 공유하고, 아니면 이미지 파일 다운로드로 대체함.
+ */
+export async function shareChecklistImage() {
+  const child = S.children[S.selC];
+  if (!child) { alert('먼저 아이를 등록해주세요'); return; }
+  if (typeof html2canvas === 'undefined') {
+    alert('이미지 생성 기능을 불러오는 중이에요. 잠시 후 다시 시도해주세요.');
+    return;
+  }
+
+  const cats = getCats();
+  const cat = cats[S.selClCat];
+  if (!cat) return;
+  const key = `${child.id}_${cat.key}`;
+  if (!S.checks[key]) S.checks[key] = {};
+  const { basePct, reqDone, reqTotal, optDone, optTotal } = calcScore(cat, S.checks[key], key);
+  const tier = getTier(reqDone, reqTotal, optDone, optTotal);
+
+  const TIER_BADGE = {
+    legend:  { emoji: '🏆', text: 'Legend · 200% 달성!', bg: 'linear-gradient(135deg,#FCE4EC,#F3E5F5,#E3F2FD)', color: '#C2185B' },
+    master:  { emoji: '👑', text: `Master · ${basePct}% 달성`, bg: 'linear-gradient(135deg,#EDE7F6,#D1C4E9)', color: '#4A148C' },
+    perfect: { emoji: '✅', text: 'Perfect · 필수 100%', bg: 'linear-gradient(135deg,#FFF8E1,#FFF3CD)', color: '#7B5800' },
+  };
+  const badge = TIER_BADGE[tier];
+
+  const doneItems = getCatItems(cat, key).filter(it => S.checks[key][it.id]);
+  const totalItems = getCatItems(cat, key).length;
+
+  const card = document.createElement('div');
+  card.style.cssText = 'position:fixed;left:-9999px;top:0;width:380px;padding:32px 26px;background:linear-gradient(180deg,#ffffff,#FFF7FA);font-family:"OwnglyphParkDahyun","Apple SD Gothic Neo",sans-serif;border-radius:24px;box-sizing:border-box;';
+  card.innerHTML = `
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="font-size:1.25rem;font-weight:900;color:#F06292">맘캘 <span style="font-size:.82rem;color:#8A849A;font-weight:700">MomCal</span></div>
+    </div>
+    <div style="text-align:center;font-size:.8rem;color:#8A849A;font-weight:700;margin-bottom:4px">${child.name}의 체크리스트</div>
+    <div style="text-align:center;font-size:1.15rem;font-weight:900;color:#2D2D3A;margin-bottom:18px">${cat.label}</div>
+    <div style="text-align:center;margin-bottom:14px">
+      <div style="display:inline-block;padding:14px 30px;border-radius:20px;background:#FFF0F5;font-size:2rem;font-weight:900;color:#F06292">${basePct}%</div>
+    </div>
+    <div style="text-align:center;font-size:.82rem;color:#2D2D3A;font-weight:700;margin-bottom:16px">
+      필수 ${reqDone}/${reqTotal} 완료${optTotal ? ` · 선택 ${optDone}/${optTotal}` : ''}
+    </div>
+    ${badge ? `
+    <div style="text-align:center;margin-bottom:18px">
+      <span style="display:inline-block;padding:8px 18px;border-radius:14px;background:${badge.bg};color:${badge.color};font-weight:900;font-size:.85rem">${badge.emoji} ${badge.text}</span>
+    </div>` : ''}
+    <div style="border-top:1.5px dashed #F0D8E4;padding-top:14px;margin-top:6px">
+      ${doneItems.slice(0, 8).map(it => `<div style="font-size:.76rem;color:#2D2D3A;padding:3px 0">✅ ${it.t}</div>`).join('')}
+      ${doneItems.length > 8 ? `<div style="font-size:.72rem;color:#8A849A;padding:3px 0">그 외 ${doneItems.length - 8}개 더 완료 (전체 ${totalItems}개 중 ${doneItems.length}개 완료)</div>` : ''}
+    </div>
+    <div style="text-align:center;font-size:.66rem;color:#B0A8C0;margin-top:20px">momcal.app · 임신·육아 캘린더 앱</div>
+  `;
+  document.body.appendChild(card);
+
+  try {
+    const canvas = await html2canvas(card, { scale: 2, backgroundColor: '#ffffff' });
+    document.body.removeChild(card);
+
+    canvas.toBlob(async (blob) => {
+      if (!blob) { alert('이미지 생성에 실패했어요. 다시 시도해주세요.'); return; }
+      const fileName = `맘캘_${child.name}_체크리스트.png`;
+      const file = new File([blob], fileName, { type: 'image/png' });
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], title: '맘캘 체크리스트', text: `${child.name}의 체크리스트 진행 상황이에요!` });
+          return;
+        } catch (e) {
+          if (e?.name === 'AbortError') return; // 사용자가 공유 취소 — 에러 아님
+          // 공유 실패 시 다운로드로 대체
+        }
+      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 'image/png');
+  } catch (e) {
+    if (card.parentElement) document.body.removeChild(card);
+    alert('이미지 생성에 실패했어요. 다시 시도해주세요.');
+  }
+}
+
 // window 노출
 window.renderChecklist = renderChecklist;
 window.renderClSidebar = renderClSidebar;
@@ -546,6 +673,8 @@ window.renderClMain    = renderClMain;
 window.tgCk            = tgCk;
 window.switchClTab     = switchClTab;
 window.toggleCiDetail  = toggleCiDetail;
+window.setItemFeedback = setItemFeedback;
+window.shareChecklistImage = shareChecklistImage;
 window.openAddClItemModal = openAddClItemModal;
 window.submitAddClItem    = submitAddClItem;
 window.deleteCustomClItem = deleteCustomClItem;

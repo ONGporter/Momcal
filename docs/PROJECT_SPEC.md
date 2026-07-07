@@ -91,8 +91,10 @@
     }
   },
   "growthRecords": [
-    { "id": 1234567890, "childId": 1234567890, "date": "2024-07-01", "height": 65, "weight": 7, "head": 42 }
+    { "id": 1234567890, "childId": 1234567890, "date": "2024-07-01", "height": 65, "weight": 7, "head": 42, "isFetal": false },
+    { "id": 1234567891, "childId": 9876543210, "date": "2024-03-01", "week": 20, "height": 25.7, "weight": 330, "head": null, "isFetal": true }
   ],
+  "itemFeedback": { "b0_1": "up" },
   "evColors": { "food": "#E53935", "vax": "#9575CD" },
   "theme": "rose",
   "selC": 0,
@@ -100,8 +102,9 @@
 }
 ```
 
-- `eventMods`의 키는 자동 일정이면 `auto_{원본날짜}_{제목}`, 커스텀 일정이면 `custom_{_id}` 형식 (`js/calendar.js`의 `getEventKey()` 참고)
-- `growthRecords`는 Sprint 4에서 추가, `checks`/`eventMods`는 Sprint 2~6 사이 단계적으로 추가됨 — 전부 하위 호환 유지(과거 데이터에 필드가 없으면 빈 배열/객체로 처리)
+- `eventMods`의 키는 자동 일정이면 `auto_{원본날짜}_{제목}`, 커스텀 일정이면 `custom_{_id}` 형식 (`js/calendar.js`의 `getEventKey()` 참고) — v0.0.22부터 제목에 이모지 접두어가 안 붙음(예전 형식 키는 `js/state.js`의 `migrateEventModKeys()`가 로드 시 자동 이전)
+- `growthRecords`는 Sprint 4에서 추가, `checks`/`eventMods`는 Sprint 2~6 사이 단계적으로 추가됨 — 전부 하위 호환 유지(과거 데이터에 필드가 없으면 빈 배열/객체로 처리). v0.0.23부터 `week`(임신 주수)·`isFetal`(태아 기록 여부) 필드 추가 — 둘 다 없으면(과거 데이터) 출생 후 기록으로 취급됨
+- `itemFeedback`은 v0.0.23에서 추가 — 체크리스트 항목별 "도움돼요/아쉬워요" 개인 반응(다른 사용자와 집계되는 공개 투표 아님)
 
 ---
 

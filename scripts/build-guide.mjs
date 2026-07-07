@@ -30,7 +30,7 @@ const GUIDE = join(ROOT, 'guide');
 const SITE  = 'https://momcal.app';
 /* v0.0.2: 앱 본체(index.html 최하단)와 반드시 같은 값으로 유지 — 버전을 올릴 땐 이 값과
    index.html의 .site-footer-version 텍스트를 함께 수정해야 함 (docs/PROJECT_SPEC.md 버전 관리 정책 참고) */
-const APP_VERSION = 'v0.0.22';
+const APP_VERSION = 'v0.0.23';
 
 /* 정부지원 데이터는 {preg, postpartum, parenting} 키의 배열이라 체크리스트와 형태가 달라
    가이드 페이지용 카테고리 배열로 한 번 변환해준다. */
@@ -141,7 +141,8 @@ function footer() {
   <div class="site-footer-version">맘캘 MomCal ${APP_VERSION}</div>
 </footer>
 <a href="#" class="g-top-btn" aria-label="맨 위로">↑</a>
-${returningUserScript()}`;
+${returningUserScript()}
+${itemFeedbackScript()}`;
 }
 
 /**
@@ -173,6 +174,42 @@ function returningUserScript() {
 </script>`;
 }
 
+/**
+ * v0.0.23: 항목별 "도움돼요/아쉬워요" 버튼 동작 — 앱 체크리스트의 개인 반응 기능과 같은 UI를
+ * 육아정보(guide/) 페이지에도 넣어서, 로그인 없이 보는 방문객도 피드백을 남길 수 있게 함.
+ * 이 페이지는 로그인이 없는 정적 페이지라 앱의 Firestore(S.itemFeedback)와는 연동되지 않고,
+ * 이 브라우저의 localStorage에만 따로 저장됨(같은 UI·조작 방식을 공유하는 정도의 연동).
+ */
+function itemFeedbackScript() {
+  return `<script>
+(function(){
+  var KEY = 'momcal_item_feedback_v1';
+  function load(){ try { return JSON.parse(localStorage.getItem(KEY) || '{}'); } catch(e){ return {}; } }
+  function save(data){ try { localStorage.setItem(KEY, JSON.stringify(data)); } catch(e){} }
+  function paint(box, value){
+    box.querySelectorAll('.g-feedback-btn').forEach(function(btn){
+      btn.classList.toggle('on-up',   value === 'up'   && btn.dataset.fb === 'up');
+      btn.classList.toggle('on-down', value === 'down' && btn.dataset.fb === 'down');
+    });
+  }
+  var data = load();
+  document.querySelectorAll('.g-feedback').forEach(function(box){
+    var id = box.dataset.itemId;
+    paint(box, data[id]);
+    box.querySelectorAll('.g-feedback-btn').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var v = btn.dataset.fb;
+        data[id] = data[id] === v ? undefined : v;
+        if (data[id] === undefined) delete data[id];
+        save(data);
+        paint(box, data[id]);
+      });
+    });
+  });
+})();
+</script>`;
+}
+
 function ctaBanner(text) {
   return `<div class="g-cta-banner">
   <h2 class="js-cta-banner-title"><span class="icon icon-sm" translate="no" aria-hidden="true">calendar_month</span> ${text}</h2>
@@ -181,12 +218,23 @@ function ctaBanner(text) {
 </div>`;
 }
 
+/* ── 항목 "도움돼요/아쉬워요" 버튼 (v0.0.23 — 앱 체크리스트와 같은 UI, 저장은 localStorage로 별도) ── */
+function feedbackButtonsHtml(itemId) {
+  return `
+    <div class="g-feedback" data-item-id="${itemId}">
+      <span class="g-feedback-label">이 설명이 도움이 됐나요?</span>
+      <button type="button" class="g-feedback-btn" data-fb="up"><span class="icon icon-sm" translate="no" aria-hidden="true">thumb_up</span> 도움돼요</button>
+      <button type="button" class="g-feedback-btn" data-fb="down"><span class="icon icon-sm" translate="no" aria-hidden="true">thumb_down</span> 아쉬워요</button>
+    </div>`;
+}
+
 /* ── 카테고리 섹션 HTML 생성 (체크리스트형: t/d/dd/r) ── */
 function renderSection(cat) {
   const items = cat.items.map(it => `
     <div class="g-item" id="${it.id}">
       <h3>${it.t} ${it.r ? '<span class="req">필수</span>' : '<span class="opt">선택</span>'}</h3>
       <p>${it.dd || it.d || ''}</p>
+      ${feedbackButtonsHtml(it.id)}
     </div>`).join('');
   return `<section class="g-section" id="${cat.key}">
     <h2>${cat.label}</h2>
@@ -198,7 +246,7 @@ function renderSection(cat) {
 function renderGovSection(cat) {
   const items = cat.items.map(it => {
     const deadline = it.deadlineNote
-      ? `<p style="margin-top:6px;font-size:.76rem;color:var(--pkd);font-weight:800">⏰ ${it.deadlineNote}</p>`
+      ? `<p style="margin-top:6px;font-size:.76rem;color:var(--pkd);font-weight:800"><span class="icon icon-sm" translate="no" aria-hidden="true">schedule</span> ${it.deadlineNote}</p>`
       : '';
     return `
     <div class="g-item" id="${it.key}">
@@ -206,6 +254,7 @@ function renderGovSection(cat) {
       <p>${it.desc}</p>
       ${deadline}
       <p style="margin-top:6px"><a href="${it.link}" target="_blank" rel="noopener nofollow">공식 사이트 바로가기 →</a></p>
+      ${feedbackButtonsHtml(it.key)}
     </div>`;
   }).join('');
   return `<section class="g-section" id="${cat.key}">

@@ -128,7 +128,13 @@ export function refTableFor(gender) {
 }
 
 export const growthMetricLabel = {
-  height: { label: '키',     unit: 'cm', icon: '📏' },
-  weight: { label: '몸무게', unit: 'kg', icon: '⚖️' },
-  head:   { label: '머리둘레', unit: 'cm', icon: '📐' },
+  height: { label: '키',     unit: 'cm', icon: 'straighten' },
+  weight: { label: '몸무게', unit: 'kg', icon: 'monitor_weight' },
+  head:   { label: '머리둘레', unit: 'cm', icon: 'panorama_horizontal' },
+};
+
+/** v0.0.23: 임신 중(태아) 성장 기록 전용 지표 라벨 — 단위가 다름(g/cm, kg 아님) */
+export const fetalMetricLabel = {
+  weight: { label: '추정 체중', unit: 'g', icon: 'monitor_weight' },
+  height: { label: '태아 길이', unit: 'cm', icon: 'straighten' },
 };

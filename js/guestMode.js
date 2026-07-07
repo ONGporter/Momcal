@@ -57,6 +57,7 @@ export function saveGuestData() {
       checks:        S.checks,
       eventMods:     S.eventMods || {},
       growthRecords: S.growthRecords || [],
+      itemFeedback:  S.itemFeedback || {},
       evColors:      S.evColors || {},
       theme:         S.theme,
       selC:          S.selC,

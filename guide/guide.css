@@ -225,6 +225,19 @@ a:hover { text-decoration: underline; }
   font-family: 'OmyuPretty', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif; /* v0.0.5: Pretendard→오뮤 다예쁨체 */
 }
 
+/* v0.0.23: 항목 "도움돼요/아쉬워요" 버튼(js/checklist.js의 앱 내 버튼과 같은 디자인) */
+.g-feedback { display: flex; align-items: center; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+.g-feedback-label { font-size: .68rem; color: var(--txl); font-weight: 700; }
+.g-feedback-btn {
+  display: inline-flex; align-items: center; gap: 3px;
+  background: var(--gray-100); color: var(--txl); border: none; border-radius: 20px;
+  padding: 4px 10px; font-size: .68rem; font-weight: 700; cursor: pointer; font-family: inherit;
+  transition: all .15s;
+}
+.g-feedback-btn:hover { background: var(--pkl); color: var(--pkd); }
+.g-feedback-btn.on-up   { background: var(--mnl); color: #2E7D32; }
+.g-feedback-btn.on-down { background: #FFF0F0; color: #C62828; }
+
 /* ── Sprint 21: 검색창 (허브 페이지 전체 검색 / 카테고리 페이지 내 검색 공용) ── */
 .g-search { position: relative; margin-bottom: 22px; }
 .g-search-input {

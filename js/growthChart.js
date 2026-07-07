@@ -11,8 +11,9 @@
 import { S, debounceSave }               from './state.js';
 import { showModal, cm }                 from './modal.js';
 import { getGrowthRecords, getLatestGrowth, openGrowthModal } from './growth.js';
-import { refTableFor, growthMetricLabel } from '../data/who-growth.js';
+import { refTableFor, growthMetricLabel, fetalMetricLabel } from '../data/who-growth.js';
 import { renderAdSlot } from './adSlot.js';
+import { icon } from './utils.js';
 
 /* ══════════════════════════════════════
  *  나이(개월) 계산
@@ -147,11 +148,7 @@ export function renderGrowthPage() {
   }
 
   if (child.stage === 'preg') {
-    empty.innerHTML = `<p style="color:var(--txl);text-align:center;padding:30px 10px"><span class="icon icon-sm" translate="no" aria-hidden="true">pregnant_woman</span> 성장 기록은 출생 후부터 남길 수 있어요!</p>`;
-    document.getElementById('growthSummaryGrid').innerHTML = '';
-    document.getElementById('growthChartWrap').style.display = 'none';
-    document.getElementById('growthRecordList').innerHTML = '';
-    document.getElementById('growthPredictionCard').innerHTML = '';
+    renderFetalGrowthPage(child);
     return;
   }
 
@@ -165,6 +162,162 @@ export function renderGrowthPage() {
   renderPrediction(child);
 }
 
+/**
+ * v0.0.23: 임신 중(태아) 성장 기록 화면 — "임산부도 실제 태아 크기를 기록하고 싶다"는 요청으로 추가.
+ * 출생 후 화면과 컨테이너(growthSummaryGrid/growthChartWrap/growthRecordList/growthPredictionCard)를
+ * 그대로 재사용하되, 내용은 완전히 다르게 그림:
+ *  - WHO 또래 백분위 비교는 하지 않음(태아 백분위 참고 자료마다 수치가 크게 달라 정확성을 보장하기
+ *    어려움 — 검증된 WHO 표가 있는 출생 후 성장과 달리, 여기서는 우리 아이 자신의 기록 추이만 보여줌)
+ *  - "한 달 뒤 예상" 예측 카드도 표시하지 않음(같은 이유)
+ */
+function renderFetalGrowthPage(child) {
+  document.getElementById('growthEmptyMsg').innerHTML = '';
+  document.getElementById('growthChartWrap').style.display = 'block';
+  document.getElementById('growthPredictionCard').innerHTML = '';
+
+  renderFetalSummary(child);
+  renderFetalMetricToggle();
+  const metric = (S.growthMetric === 'weight' || S.growthMetric === 'height') ? S.growthMetric : 'weight';
+  S.growthMetric = metric;
+  renderFetalChart(child, metric);
+  renderFetalRecordList(child);
+}
+
+function renderFetalMetricToggle() {
+  const cur = S.growthMetric || 'weight';
+  document.getElementById('growthMetricToggle').innerHTML = Object.keys(fetalMetricLabel).map(m => {
+    const { label, icon: iconName } = fetalMetricLabel[m];
+    return `<button class="cvt ${m === cur ? 'on' : ''}" onclick="switchGrowthMetric('${m}')">${icon(iconName, { size: 'sm' })} ${label}</button>`;
+  }).join('');
+}
+
+function renderFetalSummary(child) {
+  const { latest } = getLatestGrowth(child.id);
+  const el = document.getElementById('growthSummaryGrid');
+
+  if (!latest) {
+    el.innerHTML = `
+      <div class="growth-pct-card growth-pct-empty" onclick="openGrowthModal()">
+        <div style="font-size:1.6rem"><span class="icon icon-lg" translate="no" aria-hidden="true">pregnant_woman</span></div>
+        <div style="font-weight:800;font-size:.84rem;margin-top:6px">첫 태아 기록을 남겨보세요</div>
+        <div style="font-size:.72rem;color:var(--txl);margin-top:2px">탭해서 임신 주수·추정 체중 입력하기</div>
+      </div>`;
+    return;
+  }
+
+  el.innerHTML = ['weight', 'height'].map(metric => {
+    const { label, unit, icon: iconName } = fetalMetricLabel[metric];
+    const value = latest[metric];
+    if (value == null) {
+      return `<div class="growth-pct-card"><div class="growth-pct-icon">${icon(iconName)}</div><div class="growth-pct-label">${label}</div><div class="growth-pct-value" style="color:var(--txl);font-size:.78rem">기록 없음</div></div>`;
+    }
+    return `
+      <div class="growth-pct-card">
+        <div class="growth-pct-icon">${icon(iconName)}</div>
+        <div class="growth-pct-label">${label}</div>
+        <div class="growth-pct-value">${value}${unit}</div>
+      </div>`;
+  }).join('') + (latest.week != null
+    ? `<div class="growth-pct-card"><div class="growth-pct-icon">${icon('event')}</div><div class="growth-pct-label">임신 주수</div><div class="growth-pct-value">${latest.week}주차</div></div>`
+    : '');
+}
+
+function renderFetalChart(child, metric) {
+  const canvas = document.getElementById('growthChartCanvas');
+  if (!canvas) return;
+
+  if (typeof Chart === 'undefined') {
+    if (_chartLoadRetries < 10) {
+      canvas.parentElement.innerHTML = `<canvas id="growthChartCanvas"></canvas>
+        <p style="text-align:center;color:var(--txl);font-size:.78rem;padding:20px 0;margin:0"><span class="icon icon-sm" translate="no" aria-hidden="true">bar_chart</span> 그래프를 불러오는 중...</p>`;
+      _chartLoadRetries++;
+      setTimeout(() => renderFetalChart(child, metric), 500);
+    } else {
+      canvas.parentElement.innerHTML = `
+        <p style="text-align:center;color:#C62828;font-size:.8rem;padding:30px 10px;line-height:1.6">
+          <span class="icon icon-sm" translate="no" aria-hidden="true">wifi_off</span> 그래프 라이브러리를 불러오지 못했어요.<br>인터넷 연결을 확인하고 새로고침 해주세요.
+        </p>`;
+    }
+    return;
+  }
+  _chartLoadRetries = 0;
+
+  const records = getGrowthRecords(child.id)
+    .filter(r => r[metric] != null && r.week != null)
+    .sort((a, b) => a.week - b.week);
+
+  const { label, unit, icon: iconName } = fetalMetricLabel[metric];
+
+  if (_chart) { _chart.destroy(); _chart = null; }
+
+  if (records.length < 1) {
+    canvas.parentElement.innerHTML = `<canvas id="growthChartCanvas"></canvas>
+      <p style="text-align:center;color:var(--txl);font-size:.8rem;padding:30px 10px;line-height:1.6">
+        ${icon(iconName, { size: 'sm' })} ${label} 기록이 아직 없어요.<br>아래 "＋ 성장 기록 추가"에서 임신 주수와 ${label}를 입력해보세요.
+      </p>`;
+    return;
+  }
+
+  const points = records.map(r => ({ x: r.week, y: r[metric] }));
+  const weekMax = Math.max(40, ...points.map(p => p.x)) + 2;
+
+  _chart = new Chart(canvas.getContext('2d'), {
+    type: 'line',
+    data: {
+      datasets: [{
+        label: `${child.name} ${label}`,
+        data: points,
+        borderColor: '#F06292',
+        borderWidth: 2.5,
+        pointRadius: 4,
+        pointBackgroundColor: '#F06292',
+        tension: .3,
+        fill: false,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 11, family: 'OwnglyphParkDahyun' }, boxWidth: 12 } },
+        tooltip: {
+          callbacks: {
+            title: (items) => `임신 ${items[0]?.parsed.x ?? ''}주차`,
+            label:  (ctx)   => `${ctx.dataset.label}: ${ctx.parsed.y}${unit}`,
+          },
+        },
+      },
+      scales: {
+        x: {
+          type: 'linear',
+          min: 0,
+          max: weekMax,
+          title: { display: true, text: '임신 주수', font: { size: 10, weight: 800 }, color: '#8A849A' },
+          ticks: { stepSize: 4, font: { size: 10 } },
+        },
+        y: { ticks: { font: { size: 10 } } },
+      },
+    },
+  });
+}
+
+function renderFetalRecordList(child) {
+  const records = getGrowthRecords(child.id);
+  const el = document.getElementById('growthRecordList');
+  if (!records.length) { el.innerHTML = ''; return; }
+
+  el.innerHTML = records.map(r => `
+    <div class="growth-record-item">
+      <div style="flex:1">
+        <div style="font-weight:800;font-size:.82rem;color:var(--tx)">${r.date}${r.week != null ? ` · 임신 ${r.week}주차` : ''}</div>
+        <div style="font-size:.74rem;color:var(--txl);margin-top:2px">
+          ${r.weight != null ? `추정 체중 ${r.weight}g` : ''}${r.height != null ? `　태아 길이 ${r.height}cm` : ''}
+        </div>
+      </div>
+      <button onclick="deleteGrowthRecord(${r.id})" style="background:none;border:none;cursor:pointer;color:var(--txl);font-size:.9rem"><span class="icon icon-sm" translate="no" aria-hidden="true">delete</span></button>
+    </div>`).join('');
+}
+
 /** 아이 변경 시 (select onchange) */
 export function switchGrowthChild(i) {
   S.selC = +i;
@@ -174,16 +327,22 @@ export function switchGrowthChild(i) {
 /** 지표 토글 (키 / 몸무게 / 머리둘레) */
 export function switchGrowthMetric(metric) {
   S.growthMetric = metric;
-  renderMetricToggle();
   const child = S.children[S.selC];
-  if (child) renderChart(child, metric);
+  if (!child) return;
+  if (child.stage === 'preg') {
+    renderFetalMetricToggle();
+    renderFetalChart(child, metric);
+    return;
+  }
+  renderMetricToggle();
+  renderChart(child, metric);
 }
 
 function renderMetricToggle() {
   const cur = S.growthMetric || 'height';
   document.getElementById('growthMetricToggle').innerHTML = Object.keys(growthMetricLabel).map(m => {
-    const { label, icon } = growthMetricLabel[m];
-    return `<button class="cvt ${m === cur ? 'on' : ''}" onclick="switchGrowthMetric('${m}')">${icon} ${label}</button>`;
+    const { label, icon: iconName } = growthMetricLabel[m];
+    return `<button class="cvt ${m === cur ? 'on' : ''}" onclick="switchGrowthMetric('${m}')">${icon(iconName, { size: 'sm' })} ${label}</button>`;
   }).join('');
 }
 
@@ -206,15 +365,15 @@ function renderSummary(child) {
   const genderNote = child.gender === 'u' ? '<div class="growth-gender-note">성별 미정 — 평균 기준 백분위</div>' : '';
 
   el.innerHTML = ['height', 'weight', 'head'].map(metric => {
-    const { label, unit, icon } = growthMetricLabel[metric];
+    const { label, unit, icon: iconName } = growthMetricLabel[metric];
     const value = latest[metric];
     if (value == null) {
-      return `<div class="growth-pct-card"><div class="growth-pct-icon">${icon}</div><div class="growth-pct-label">${label}</div><div class="growth-pct-value" style="color:var(--txl);font-size:.78rem">기록 없음</div></div>`;
+      return `<div class="growth-pct-card"><div class="growth-pct-icon">${icon(iconName)}</div><div class="growth-pct-label">${label}</div><div class="growth-pct-value" style="color:var(--txl);font-size:.78rem">기록 없음</div></div>`;
     }
     const pct = computePercentile(value, ageM, child.gender, metric);
     return `
       <div class="growth-pct-card">
-        <div class="growth-pct-icon">${icon}</div>
+        <div class="growth-pct-icon">${icon(iconName)}</div>
         <div class="growth-pct-label">${label}</div>
         <div class="growth-pct-value">${value}${unit}</div>
         ${pct != null ? `<div class="growth-pct-badge">또래 상위 ${100 - pct}% · <b>${pct}%</b></div>` : ''}
@@ -259,12 +418,12 @@ function renderPrediction(child) {
       <div class="growth-predict-title">한 달 뒤 예상 (참고용)</div>
       <div class="growth-predict-rows">
         ${rows.map(({ metric, pred }) => {
-          const { label, unit, icon } = growthMetricLabel[metric];
+          const { label, unit, icon: iconName } = growthMetricLabel[metric];
           const diff = Math.round((pred.predicted - pred.current) * 10) / 10;
           const diffTxt = diff >= 0 ? `+${diff}` : `${diff}`;
           return `
             <div class="growth-predict-row">
-              <span>${icon} ${label}</span>
+              <span>${icon(iconName, { size: 'sm' })} ${label}</span>
               <span class="growth-predict-value">${pred.predicted}${unit} <small>(${diffTxt}${unit})</small></span>
             </div>`;
         }).join('')}
@@ -342,10 +501,10 @@ function renderChart(child, metric) {
   if (_chart) { _chart.destroy(); _chart = null; }
 
   if (records.length < 1) {
-    const { icon } = growthMetricLabel[metric];
+    const { icon: iconName } = growthMetricLabel[metric];
     canvas.parentElement.innerHTML = `<canvas id="growthChartCanvas"></canvas>
       <p style="text-align:center;color:var(--txl);font-size:.8rem;padding:30px 10px;line-height:1.6">
-        ${icon} ${label} 기록이 아직 없어요.<br>아래 "＋ 성장 기록 추가"에서 ${label}를 입력해보세요.
+        ${icon(iconName, { size: 'sm' })} ${label} 기록이 아직 없어요.<br>아래 "＋ 성장 기록 추가"에서 ${label}를 입력해보세요.
       </p>`;
     return;
   }

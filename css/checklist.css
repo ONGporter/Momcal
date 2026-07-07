@@ -90,6 +90,28 @@
 }
 .ci-wrap.open .ci-detail { display: block; animation: fadeUp .2s ease; }
 
+/* v0.0.23: 체크리스트 항목 "도움돼요/아쉬워요" 개인 반응 */
+.ci-feedback { display: flex; align-items: center; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.ci-feedback-label { font-size: .68rem; color: var(--txl); font-weight: 700; }
+.ci-feedback-btn {
+  display: inline-flex; align-items: center; gap: 3px;
+  background: var(--gray-100); color: var(--txl); border: none; border-radius: 20px;
+  padding: 4px 10px; font-size: .68rem; font-weight: 700; cursor: pointer; font-family: inherit;
+  transition: all .15s;
+}
+.ci-feedback-btn:hover { background: var(--pkl); color: var(--pkd); }
+.ci-feedback-btn.on-up   { background: var(--mnl); color: #2E7D32; }
+.ci-feedback-btn.on-down { background: #FFF0F0; color: #C62828; }
+
+/* v0.0.23: 체크리스트 "이미지로 저장·공유" 버튼 */
+.cl-share-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 50%; border: none;
+  background: var(--gray-100); color: var(--pkd); cursor: pointer; flex-shrink: 0;
+  transition: background .15s;
+}
+.cl-share-btn:hover { background: var(--pkl); }
+
 /* ── RESPONSIVE ── */
 @media (max-width: 640px) {
   .cl-layout  { grid-template-columns: 1fr; }
