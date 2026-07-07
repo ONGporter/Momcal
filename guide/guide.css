@@ -119,13 +119,20 @@ a:hover { text-decoration: underline; }
 }
 .g-cta:hover { opacity: .88; text-decoration: none; }
 
-/* ── 히어로 ── */
+/* ── 히어로 — 앱 홈 .home-hero와 동일한 핑크 계열 그라디언트(v0.0.27) ── */
 .g-hero {
-  background: var(--pkd);
-  color: #fff; padding: 24px 20px; text-align: center; /* v0.0.5: 배너가 너무 크다는 피드백 — 위아래 여백만 축소(40px→24px) */
+  background: linear-gradient(135deg, #F8BBD0 0%, #F06292 100%);
+  color: #fff; padding: 24px 20px; text-align: center;
+  position: relative; overflow: hidden;
 }
-.g-hero h1 { font-size: 1.5rem; font-weight: 900; margin: 0 0 8px; }
-.g-hero p  { font-size: .9rem; opacity: .95; margin: 0; max-width: 520px; margin: 0 auto; }
+.g-hero::before {
+  content: ''; position: absolute;
+  width: 160px; height: 160px;
+  background: radial-gradient(circle, rgba(255,255,255,.18), transparent);
+  border-radius: 50%; top: -55px; right: -40px;
+}
+.g-hero h1 { font-size: 1.5rem; font-weight: 900; margin: 0 0 8px; text-shadow: 0 2px 8px rgba(0,0,0,.12); position: relative; }
+.g-hero p  { font-size: .9rem; opacity: .95; margin: 0; max-width: 520px; margin: 0 auto; position: relative; }
 
 /* ── 본문 레이아웃 ── */
 .g-wrap { max-width: 720px; margin: 0 auto; padding: 28px 20px 60px; }
@@ -294,10 +301,17 @@ a:hover { text-decoration: underline; }
 }
 .g-nav-links a:hover { background: var(--pkl); color: var(--pkd); text-decoration: none; }
 
-/* ── 하단 CTA 배너 ── */
+/* ── 하단 CTA 배너 — 히어로와 동일한 그라디언트로 브랜드 통일(v0.0.27) ── */
 .g-cta-banner {
-  background: var(--pk); color: #fff;
+  background: linear-gradient(135deg, #F8BBD0 0%, #F06292 100%); color: #fff;
   border-radius: var(--radius); padding: 26px; text-align: center; margin: 30px 0;
+  position: relative; overflow: hidden;
+}
+.g-cta-banner::before {
+  content: ''; position: absolute;
+  width: 140px; height: 140px;
+  background: radial-gradient(circle, rgba(255,255,255,.16), transparent);
+  border-radius: 50%; top: -50px; right: -35px;
 }
 .g-cta-banner h2 { font-size: 1.05rem; font-weight: 900; margin: 0 0 8px; }
 .g-cta-banner p { font-size: .82rem; opacity: .92; margin: 0 0 16px; }
