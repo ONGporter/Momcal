@@ -99,7 +99,7 @@ a:hover { text-decoration: underline; }
 }
 .g-logo {
   font-size: 2.2rem; letter-spacing: -.3px; line-height: 1;
-  background: linear-gradient(135deg, #F06292, #9C27B0);
+  background: var(--pk);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
 }
 /* Sprint 24: 로고 옆 하트 이모지 대신 실제 마스코트 캐릭터 이미지
@@ -112,16 +112,16 @@ a:hover { text-decoration: underline; }
   margin-left: 2px;
 }
 .g-cta {
-  background: linear-gradient(135deg, #F06292, #9C27B0);
+  background: var(--pk);
   color: #fff; font-weight: 600; font-size: .82rem;
   padding: 9px 16px; border-radius: 40px;
-  box-shadow: 0 4px 14px rgba(200,80,180,.28);
+  box-shadow: 0 4px 14px rgba(194,24,91,.22);
 }
 .g-cta:hover { opacity: .88; text-decoration: none; }
 
 /* ── 히어로 ── */
 .g-hero {
-  background: linear-gradient(135deg, #F48FB1 0%, #CE93D8 50%, #90CAF9 100%);
+  background: var(--pkd);
   color: #fff; padding: 24px 20px; text-align: center; /* v0.0.5: 배너가 너무 크다는 피드백 — 위아래 여백만 축소(40px→24px) */
 }
 .g-hero h1 { font-size: 1.5rem; font-weight: 900; margin: 0 0 8px; }
@@ -196,7 +196,7 @@ a:hover { text-decoration: underline; }
 }
 .g-page-nav-tab:hover { text-decoration: none; opacity: .85; }
 .g-page-nav-tab.on {
-  background: linear-gradient(135deg, #F06292, #9C27B0);
+  background: var(--pk);
   color: #fff;
 }
 
@@ -204,10 +204,10 @@ a:hover { text-decoration: underline; }
 .g-top-btn {
   position: fixed; right: 18px; bottom: 22px; z-index: 20;
   width: 42px; height: 42px; border-radius: 50%;
-  background: linear-gradient(135deg, #F06292, #9C27B0);
+  background: var(--pk);
   color: #fff; font-size: 1.1rem; font-weight: 700;
   display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 4px 14px rgba(200,80,180,.35);
+  box-shadow: 0 4px 14px rgba(194,24,91,.25);
 }
 .g-top-btn:hover { text-decoration: none; opacity: .9; }
 
@@ -296,7 +296,7 @@ a:hover { text-decoration: underline; }
 
 /* ── 하단 CTA 배너 ── */
 .g-cta-banner {
-  background: linear-gradient(135deg, #F06292, #9C27B0); color: #fff;
+  background: var(--pk); color: #fff;
   border-radius: var(--radius); padding: 26px; text-align: center; margin: 30px 0;
 }
 .g-cta-banner h2 { font-size: 1.05rem; font-weight: 900; margin: 0 0 8px; }
@@ -363,3 +363,14 @@ html[data-theme="dark"] .g-nav-links a { background: #2A2733; }
 html[data-theme="dark"] .g-disclaimer { background: #241F2C; }
 html[data-theme="dark"] .g-item .req { background: #3A2323; color: #EF9A9A; }
 html[data-theme="dark"] .g-item .opt { color: #80CBC4; }
+
+/* ── v0.0.26: 정책 페이지(privacy/terms/contact)의 .g-footer를 .site-footer와 동일한 스타일로 통일 */
+.g-footer {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 20px 20px 40px;
+  text-align: center;
+  font-size: .72rem;
+  color: var(--txl);
+}
+.g-footer a { color: var(--txl); }
