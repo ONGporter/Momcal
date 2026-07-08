@@ -26,7 +26,6 @@ export const checkEvs = [
     { t: '영유아 건강검진 2차', r: true },
   ]},
   { m: 6,  items: [
-    { t: '이유식 시작! (쌀미음)', r: true },
     { t: '영유아 건강검진 3차',   r: true },
   ]},
   { m: 9,  items: [
@@ -50,29 +49,7 @@ export const checkEvs = [
 ];
 
 /**
- * 이유식 단계별 자동 일정
- * @type {Array<{m: number, day: number, t: string, r: boolean}>}
+ * v0.0.31: 이유식 자동 일정 데이터(foodEvs)는 제거함 — 이유식은 이제 캘린더 스티커로
+ * 사용자가 직접 기록하는 방식으로 바뀜(js/calendar.js의 placeSticker 참고).
+ * 이전 데이터가 필요하면 git 이력에서 확인 가능.
  */
-export const foodEvs = [
-  { m: 6,  day: 1,  t: '🥣 쌀미음 시작!',                 r: true  },
-  { m: 6,  day: 6,  t: '🥕 당근 미음 시도',               r: false },
-  { m: 6,  day: 12, t: '🌽 단호박 미음 시도',             r: false },
-  { m: 6,  day: 18, t: '🥔 감자 미음 시도',               r: false },
-  { m: 6,  day: 24, t: '🍠 고구마 미음 시도',             r: false },
-  { m: 8,  day: 1,  t: '🍲 이유식 하루 2회 시작 (7배죽)', r: true  },
-  { m: 8,  day: 5,  t: '🐔 닭안심 미음 시도',             r: false },
-  { m: 8,  day: 12, t: '🐟 흰살생선 시도',                r: false },
-  { m: 8,  day: 18, t: '🥦 브로콜리·시금치 추가',         r: false },
-  { m: 8,  day: 24, t: '🫛 두부 추가',                     r: false },
-  { m: 9,  day: 1,  t: '🍌 핑거푸드 시작',                r: false },
-  { m: 10, day: 1,  t: '🍱 이유식 5배죽 — 중기!',        r: true  },
-  { m: 10, day: 3,  t: '🥩 소고기 추가 (철분)',           r: true  },
-  { m: 10, day: 10, t: '🧇 달걀 노른자 추가',             r: false },
-  { m: 10, day: 18, t: '🫐 블루베리 시도',                r: false },
-  { m: 11, day: 1,  t: '🥚 달걀 흰자 시도',               r: false },
-  { m: 12, day: 1,  t: '🍚 유아식 전환! (진밥+국+반찬)', r: true  },
-  { m: 12, day: 3,  t: '🥛 생우유 시작 가능',             r: false },
-  { m: 12, day: 10, t: '🐟 등푸른생선 시도',              r: false },
-  { m: 18, day: 1,  t: '🥘 균형 식사 3회 — 편식 주의',  r: false },
-  { m: 24, day: 1,  t: '🥘 유아식 완성! 가족 식사 함께', r: false },
-];

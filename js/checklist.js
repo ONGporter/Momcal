@@ -48,9 +48,12 @@ import { showModal, cm } from './modal.js';
  *
  * v0.0.14: 세 번째 인자 key를 넘기면 사용자가 직접 추가한 항목(S.customClItems[key])도
  * 기존 항목과 완전히 똑같은 규칙으로 필수/선택 계산에 합산된다 (getCatItems() 참고).
+ * v0.0.31: 네 번째 인자 customKey를 넘기면 직접 추가한 항목을 key와 다른 버킷에서 읽는다
+ * (예방접종/발달처럼 같은 catKey를 공유하는 카테고리에서, 직접 추가한 항목이 한쪽 탭에만
+ * 들어가도록 구분하기 위함). 생략하면 기존처럼 key와 동일하게 취급된다.
  */
-export function calcScore(cat, checks, key) {
-  const items    = key ? getCatItems(cat, key) : cat.items;
+export function calcScore(cat, checks, key, customKey) {
+  const items    = key ? getCatItems(cat, key, customKey) : cat.items;
   const reqItems = items.filter(it => it.r);
   const optItems = items.filter(it => !it.r);
   const reqDone  = reqItems.filter(it => checks[it.id]).length;
@@ -71,16 +74,28 @@ export function calcScore(cat, checks, key) {
   };
 }
 
-/** v0.0.14: 카테고리의 원래 항목 + 사용자가 직접 추가한 항목을 합친 배열 반환 */
-export function getCatItems(cat, key) {
-  const custom = (S.customClItems && S.customClItems[key]) || [];
+/** v0.0.14: 카테고리의 원래 항목 + 사용자가 직접 추가한 항목을 합친 배열 반환
+ *  v0.0.31: customKey가 key와 다르면(예: 예방접종/발달 분리) customKey 버킷에서 직접
+ *  추가한 항목을 읽고, 이 분리 이전에 key(공용 버킷)에 저장돼 있던 레거시 항목도 함께
+ *  보여준다(과거에 추가한 항목이 갑자기 안 보이는 걸 방지 — 새로 추가하는 항목부터는
+ *  customKey 버킷에만 쌓여서 한쪽 탭에만 나타난다) */
+export function getCatItems(cat, key, customKey) {
+  customKey = customKey || key;
+  const scoped = (customKey && S.customClItems && S.customClItems[customKey]) || [];
+  const legacy = (customKey !== key && S.customClItems && S.customClItems[key]) || [];
+  const custom = [...legacy, ...scoped];
   return custom.length ? [...cat.items, ...custom] : cat.items;
 }
 
 /** 점수 → 티어 (필수/선택 완료 개수 기준 — score 임계값이 아닌 실제 완료 여부로 판단) */
 function getTier(reqDone, reqTotal, optDone, optTotal) {
   if (reqTotal > 0 && reqDone < reqTotal) return null; // 필수 미완료
-  if (optTotal === 0 || optDone === 0)    return 'perfect'; // 필수만 100%
+  // v0.0.31 버그 수정: 선택 항목이 아예 없는 카테고리(예: 예방접종 대부분의 월령 카테고리)는
+  // 필수만 다 채워도 Perfect에서 영원히 멈춰있었음 — 애초에 선택 항목이 없으니 그 이상 얻을
+  // 방법이 없는데도 최고 등급(Legend)을 못 받는 게 부당하다는 피드백으로, 선택 항목 자체가
+  // 없는 카테고리는 필수 완료 = 최고 등급(Legend)으로 처리
+  if (optTotal === 0)                     return 'legend';
+  if (optDone === 0)                      return 'perfect'; // 필수만 100%
   if (optDone === optTotal)               return 'legend';  // 필수+선택 모두 완료
   return 'master';                                            // 필수 100% + 선택 일부
 }
@@ -181,12 +196,17 @@ export function getTodayCategoryInfo(child) {
 
   // v0.0.30: 육아 체크가 예방접종/발달 두 탭으로 나뉘었지만, 홈 대시보드 카드는 예전처럼
   // "이번 달 육아체크 전체 진행 상황"을 한 번에 보여줘야 하므로 두 탭을 합쳐서 계산함.
-  // 두 배열은 같은 catKey를 공유해서(S.checks 저장 키도 공유) 그냥 items만 이어붙이면 됨.
+  // 두 배열은 같은 catKey를 공유해서(S.checks 저장 키도 공유) items만 이어붙이면 됨.
+  // v0.0.31: 직접 추가한 항목도 탭별로 나뉘어 저장되므로(getCustomKey 참고), 여기서도
+  // 예방접종/발달 각각의 customKey로 조회해서 합쳐야 홈 카드 진행률에서 누락되지 않음.
   const cats = child.stage === 'preg'
     ? clData.preg.filter(c => c.key !== 'preg_prep')
     : clData.born_vax.map((vaxCat, i) => {
         const devCat = clData.born_dev[i];
-        return { key: vaxCat.key, label: vaxCat.label, items: [...vaxCat.items, ...(devCat ? devCat.items : [])] };
+        const catKey = `${child.id}_${vaxCat.key}`;
+        const vaxItems = getCatItems(vaxCat, catKey, `${catKey}__vax`);
+        const devItems = devCat ? getCatItems(devCat, catKey, `${catKey}__dev`) : [];
+        return { key: vaxCat.key, label: vaxCat.label, items: [...vaxItems, ...devItems] };
       });
   if (!cats.length) return null;
 
@@ -219,12 +239,16 @@ export function getTodayCategoryInfo(child) {
   const cat = cats[idx];
   const key = `${child.id}_${cat.key}`;
   const checks = S.checks[key] || {};
-  const { reqDone, reqTotal, optDone, optTotal } = calcScore(cat, checks, key);
+  // v0.0.31: born 단계는 cat.items에 이미 예방접종/발달(+각 탭 커스텀 항목)을 합쳐놨으므로
+  // key를 넘기지 않고 cat.items를 그대로 씀(넘기면 getCatItems가 다시 조회해 레거시 공용
+  // 버킷 항목이 중복 합산될 수 있음). preg는 기존처럼 key로 커스텀 항목을 조회함.
+  const { reqDone, reqTotal, optDone, optTotal } =
+    child.stage === 'preg' ? calcScore(cat, checks, key) : calcScore(cat, checks);
 
   // v0.0.9: 홈 대시보드 카드용 — 배지 티어 + 다음 추천 항목
   // (다른 대시보드 카드들처럼 강조색 서브 텍스트를 보여주기 위함)
   const tier = getTier(reqDone, reqTotal, optDone, optTotal);
-  const catItems = getCatItems(cat, key);
+  const catItems = child.stage === 'preg' ? getCatItems(cat, key) : cat.items;
   let nextItem = null;
   if (tier === null) {
     // 필수 미완료 → 다음 미완료 필수 항목을 추천 (배지를 얻으려면 이것부터)
@@ -341,6 +365,20 @@ function openGuideSearch() {
 }
 window.openGuideSearch = openGuideSearch;
 
+/**
+ * v0.0.31: 직접 추가한 항목(customClItems)의 저장 키.
+ * 예방접종(탭0)/발달(탭1)처럼 같은 catKey(m0, m2…)를 공유하는 카테고리에서, 직접 추가한
+ * 항목이 두 탭에 함께 보이던 문제 — 육아(born) 탭에서만 탭 구분을 키에 추가해서 분리한다.
+ * (S.checks는 그대로 공용 key를 씀 — 기존 항목 체크 상태 호환성 때문에 건드리지 않음)
+ */
+function getCustomKey(child, cat) {
+  const key = `${child.id}_${cat.key}`;
+  if (child && child.stage === 'born' && (S.clTab === 0 || S.clTab === 1)) {
+    return `${key}__${S.clTab === 0 ? 'vax' : 'dev'}`;
+  }
+  return key;
+}
+
 /* ────────────────────────────────────
  *  사이드바 렌더
  * ──────────────────────────────────── */
@@ -367,13 +405,16 @@ export function renderClSidebar() {
   document.getElementById('clSidebar').innerHTML = cats.map((cat, i) => {
     const key = `${child.id}_${cat.key}`;
     if (!S.checks[key]) S.checks[key] = {};
+    const customKey = getCustomKey(child, cat);
 
-    const { score, basePct, reqDone, reqTotal, optDone, optTotal } = calcScore(cat, S.checks[key], key);
+    const { score, basePct, reqDone, reqTotal, optDone, optTotal } = calcScore(cat, S.checks[key], key, customKey);
     const tier = getTier(reqDone, reqTotal, optDone, optTotal);
 
     let pctHtml;
     if (tier === 'legend') {
-      pctHtml = `<span class="cl-sb-pct cl-sb-legend"><span class="icon icon-sm" translate="no" aria-hidden="true">emoji_events</span> 200%</span>`;
+      // v0.0.31: 선택 항목이 원래 없어서 legend가 된 경우 "200%"라고 하면 실제보다 과장돼 보이니 100%로 표시
+      const legendPct = optTotal === 0 ? '100%' : '200%';
+      pctHtml = `<span class="cl-sb-pct cl-sb-legend"><span class="icon icon-sm" translate="no" aria-hidden="true">emoji_events</span> ${legendPct}</span>`;
     } else if (tier === 'master') {
       pctHtml = `<span class="cl-sb-pct cl-sb-master"><span class="icon icon-sm" translate="no" aria-hidden="true">workspace_premium</span> ${score}%</span>`;
     } else if (tier === 'perfect') {
@@ -409,14 +450,18 @@ export function renderClMain() {
 
   const key = `${child.id}_${cat.key}`;
   if (!S.checks[key]) S.checks[key] = {};
+  const customKey = getCustomKey(child, cat);
 
-  const { score, basePct, optDone, optTotal, reqDone, reqTotal } = calcScore(cat, S.checks[key], key);
+  const { score, basePct, optDone, optTotal, reqDone, reqTotal } = calcScore(cat, S.checks[key], key, customKey);
   const tier = getTier(reqDone, reqTotal, optDone, optTotal);
 
   // ── 배지 & 상태 텍스트 ──
   let badgeHtml;
   if (tier === 'legend') {
-    badgeHtml = `<div class="cl-badge cl-badge-legend"><span class="icon icon-sm" translate="no" aria-hidden="true">emoji_events</span> Legend — 200% 달성!</div>`;
+    // v0.0.31: 선택 항목이 원래 없어서 legend가 된 경우엔 "필수 항목만으로 달성"이라고 정확히 표시
+    badgeHtml = optTotal === 0
+      ? `<div class="cl-badge cl-badge-legend"><span class="icon icon-sm" translate="no" aria-hidden="true">emoji_events</span> Legend — 필수 100% 달성!</div>`
+      : `<div class="cl-badge cl-badge-legend"><span class="icon icon-sm" translate="no" aria-hidden="true">emoji_events</span> Legend — 200% 달성!</div>`;
   } else if (tier === 'master') {
     badgeHtml = `<div class="cl-badge cl-badge-master"><span class="icon icon-sm" translate="no" aria-hidden="true">workspace_premium</span> Master — ${score}% 달성</div>`;
   } else if (tier === 'perfect') {
@@ -448,7 +493,7 @@ export function renderClMain() {
       ? `<div style="font-size:.68rem;color:#5B4FCF;font-weight:700;margin:-10px 0 14px"><span class="icon icon-sm" translate="no" aria-hidden="true">star</span> 선택 항목까지 체크하면 최대 200%까지 올라가요!</div>`
       : ''
     }
-    ${getCatItems(cat, key).map(it => {
+    ${getCatItems(cat, key, customKey).map(it => {
       const uid      = `${key}_${it.id}`;
       const checked  = !!S.checks[key][it.id];
       const isCustom = it.id.startsWith('custom_');
@@ -465,7 +510,7 @@ export function renderClMain() {
           </div>
           ${isCustom ? `
           <button type="button" class="ci-expand-btn" aria-label="삭제"
-                  onclick="event.stopPropagation();deleteCustomClItem('${key}','${it.id}')">
+                  onclick="event.stopPropagation();deleteCustomClItem('${customKey}','${it.id}')">
             <span class="ci-expand-arrow"><span class="icon icon-sm" translate="no" aria-hidden="true">close</span></span>
           </button>` : it.dd ? `
           <button type="button" class="ci-expand-btn" aria-label="자세히 보기"
@@ -489,7 +534,7 @@ export function renderClMain() {
         </div>` : ''}
       </div>`;
     }).join('')}
-    <button type="button" class="cl-add-item-btn" onclick="openAddClItemModal('${key}')">
+    <button type="button" class="cl-add-item-btn" onclick="openAddClItemModal('${customKey}')">
       ＋ 항목 직접 추가하기
     </button>`;
 }
@@ -608,18 +653,20 @@ export async function shareChecklistImage() {
   if (!cat) return;
   const key = `${child.id}_${cat.key}`;
   if (!S.checks[key]) S.checks[key] = {};
-  const { basePct, reqDone, reqTotal, optDone, optTotal } = calcScore(cat, S.checks[key], key);
+  const customKey = getCustomKey(child, cat);
+  const { basePct, reqDone, reqTotal, optDone, optTotal } = calcScore(cat, S.checks[key], key, customKey);
   const tier = getTier(reqDone, reqTotal, optDone, optTotal);
 
   const TIER_BADGE = {
-    legend:  { emoji: '🏆', text: 'Legend · 200% 달성!', bg: 'linear-gradient(135deg,#FCE4EC,#F3E5F5,#E3F2FD)', color: '#C2185B' },
+    // v0.0.31: 선택 항목이 없어서 legend가 된 카테고리는 "200%"라고 하면 과장돼 보이니 정확히 표시
+    legend:  { emoji: '🏆', text: optTotal === 0 ? 'Legend · 필수 100% 달성!' : 'Legend · 200% 달성!', bg: 'linear-gradient(135deg,#FCE4EC,#F3E5F5,#E3F2FD)', color: '#C2185B' },
     master:  { emoji: '👑', text: `Master · ${basePct}% 달성`, bg: 'linear-gradient(135deg,#EDE7F6,#D1C4E9)', color: '#4A148C' },
     perfect: { emoji: '✅', text: 'Perfect · 필수 100%', bg: 'linear-gradient(135deg,#FFF8E1,#FFF3CD)', color: '#7B5800' },
   };
   const badge = TIER_BADGE[tier];
 
-  const doneItems = getCatItems(cat, key).filter(it => S.checks[key][it.id]);
-  const totalItems = getCatItems(cat, key).length;
+  const doneItems = getCatItems(cat, key, customKey).filter(it => S.checks[key][it.id]);
+  const totalItems = getCatItems(cat, key, customKey).length;
 
   const card = document.createElement('div');
   card.style.cssText = 'position:fixed;left:-9999px;top:0;width:380px;padding:32px 26px;background:linear-gradient(180deg,#ffffff,#FFF7FA);font-family:"OwnglyphParkDahyun","Apple SD Gothic Neo",sans-serif;border-radius:24px;box-sizing:border-box;';

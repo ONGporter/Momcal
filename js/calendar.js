@@ -14,7 +14,7 @@ import { today, daysUntil, stripLeadingEmoji, icon } from './utils.js';
 import { showModal, cm }   from './modal.js';
 import { vaxSched }        from '../data/vaccines.js';
 import { pregEvMap }       from '../data/pregnancy.js';
-import { checkEvs, foodEvs } from '../data/milestones.js';
+import { checkEvs } from '../data/milestones.js';
 import { recalcVaccineSeries } from './vaccineSeries.js';
 import { govSupportSchedule } from '../data/government-support.js';
 import { getHoliday } from '../data/kr-holidays.js';
@@ -839,8 +839,8 @@ function cellHTML(ds, d, other, evs, td, th) {
 
   // v0.0.11: 이유식 스티커는 따로 빼서 날짜 숫자 옆에 표시 — 나머지 스티커의
   // "3개 넘으면 +N" 묶음 카운트에 포함되지 않도록 완전히 독립적으로 처리
-  const foodStickers  = stickersAll.filter(s => FOOD_STICKER_SET.has(s));
-  const otherStickers = stickersAll.filter(s => !FOOD_STICKER_SET.has(s));
+  const foodStickers  = stickersAll.filter(s => isFoodSticker(s));
+  const otherStickers = stickersAll.filter(s => !isFoodSticker(s));
 
   const overflow    = Math.max(0, otherStickers.length - 3);
   const showCount   = overflow > 0 ? 3 : otherStickers.length;
@@ -858,7 +858,7 @@ function cellHTML(ds, d, other, evs, td, th) {
   const foodShow     = foodOverflow > 0 ? FOOD_MAX : foodStickers.length;
   const foodHtml     = foodStickers.length
     ? `<span class="day-food-stickers">
-        ${foodStickers.slice(0, foodShow).map(s => `<span class="food-sticker-on-cal">${s}</span>`).join('')}
+        ${foodStickers.slice(0, foodShow).map(s => `<span class="food-sticker-on-cal" title="${formatSticker(s)}">${stickerEmoji(s)}</span>`).join('')}
         ${foodOverflow > 0 ? `<span class="food-sticker-overflow">+${foodOverflow}</span>` : ''}
        </span>`
     : '';
@@ -1108,13 +1108,13 @@ function renderWeekView() {
         ${weekDays.map((d, i) => {
           const wds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
           const isRed = i === 0 || i === 6 || !!getHoliday(wds);
-          const foodStickers  = (S.dayStickers[wds] || []).filter(s => FOOD_STICKER_SET.has(s));
+          const foodStickers  = (S.dayStickers[wds] || []).filter(s => isFoodSticker(s));
           const FOOD_MAX      = 2;
           const foodOverflow  = Math.max(0, foodStickers.length - FOOD_MAX);
           const foodHtml = foodStickers.length
             ? `<div class="week-head-food-stickers" title="이유식 스티커">
                  <span class="week-head-food-label">이유식</span>
-                 ${foodStickers.slice(0, FOOD_MAX).map(s => `<span class="food-sticker-on-cal">${s}</span>`).join('')}
+                 ${foodStickers.slice(0, FOOD_MAX).map(s => `<span class="food-sticker-on-cal" title="${formatSticker(s)}">${stickerEmoji(s)}</span>`).join('')}
                  ${foodOverflow > 0 ? `<span class="food-sticker-overflow">+${foodOverflow}</span>` : ''}
                </div>`
             : '';
@@ -1131,7 +1131,7 @@ function renderWeekView() {
     const de  = groupVaxEvents(applyCalFilter(evs.filter(e => e.date === ds && !getEvTimeRangeMinutes(e))));
     const isTd = ds === td;
 
-    const otherStickers = (S.dayStickers[ds] || []).filter(s => !FOOD_STICKER_SET.has(s));
+    const otherStickers = (S.dayStickers[ds] || []).filter(s => !isFoodSticker(s));
     const stickerHtml = otherStickers.length
       ? `<div class="sticker-row" style="position:static;margin-top:2px;justify-content:flex-start">
           ${otherStickers.slice(0, 4).map(s => `<span class="sticker-on-cal">${s}</span>`).join('')}
@@ -1240,7 +1240,10 @@ export function showDayPanel(ds) {
                ${stickers.map((s, i) =>
                  `<div onclick="removeSticker('${ds}',${i})"
                        style="font-size:1.45rem;cursor:pointer;padding:5px 7px;border-radius:10px;
-                              background:var(--pkl);border:1.5px solid var(--pk)">${s}</div>`
+                              background:var(--pkl);border:1.5px solid var(--pk);display:flex;align-items:center;gap:2px">
+                       ${stickerEmoji(s)}${isFoodSticker(s) && s.includes('|')
+                         ? `<span style="font-size:.62rem;font-weight:800;color:var(--pkd)">${s.split('|')[1]}g</span>` : ''}
+                       </div>`
                ).join('')}
              </div>
            </div>`
@@ -1255,10 +1258,14 @@ export function showDayPanel(ds) {
             if (e._isVaxGroup) {
               return `
                 <div class="dp-ev" style="background:${bg};flex-direction:column;align-items:stretch">
-                  <div class="dp-ev-title" style="margin-bottom:8px">
-                    ${stripLeadingEmoji(e.title)}
-                    <span class="badge-r" style="margin-left:5px">필수</span>
-                    ${e.done ? '<span style="color:var(--mn);margin-left:5px"><span class="icon icon-sm" translate="no" aria-hidden="true">check_circle</span> 모두 완료</span>' : ''}
+                  <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px">
+                    <div class="dp-ev-main">
+                      <div class="dp-ev-title">
+                        ${stripLeadingEmoji(e.title)}
+                        ${e.done ? '<span style="color:var(--mn);margin-left:5px"><span class="icon icon-sm" translate="no" aria-hidden="true">check_circle</span> 모두 완료</span>' : ''}
+                      </div>
+                    </div>
+                    <span class="dp-ev-badge" style="background:${bc}">필수</span>
                   </div>
                   <div style="display:flex;flex-direction:column;gap:6px">
                     ${e._groupItems.map(item => `
@@ -1407,6 +1414,19 @@ export const stickerCats = [
  */
 const FOOD_STICKER_SET = new Set(stickerCats.find(c => c.key === 'food').items);
 
+/**
+ * v0.0.31: 이유식 스티커에 먹은 양(g)을 함께 기록할 수 있게 됨 — 저장 형식은
+ * "이모지|g수"(g수를 입력한 경우) 또는 그냥 "이모지"(입력 안 한 경우, 기존 데이터와 동일).
+ * 아래 두 헬퍼로 이 형식을 다루는 곳을 한 곳에 모아둠(다른 곳에서 직접 split하지 말 것).
+ */
+function stickerEmoji(s) { return s.split('|')[0]; }
+function isFoodSticker(s) { return FOOD_STICKER_SET.has(stickerEmoji(s)); }
+/** 캘린더/데이 패널에 표시할 텍스트 — g수가 있으면 "🍚(50g)", 없으면 "🍚" 그대로 */
+function formatSticker(s) {
+  const [emoji, grams] = s.split('|');
+  return grams ? `${emoji}(${grams}g)` : emoji;
+}
+
 export function renderStickerPicker() {
   document.getElementById('spTabs').innerHTML = stickerCats.map((c, i) =>
     `<button class="sp-tab ${i === S.selSCat ? 'on' : ''}" onclick="selSCat(${i})">${c.label}</button>`
@@ -1421,6 +1441,21 @@ export function selSCat(i) { S.selSCat = i; renderStickerPicker(); }
 export function placeSticker(s) {
   if (!S.selDate) { alert('먼저 날짜를 클릭해서 선택해주세요!'); return; }
   if (!S.dayStickers[S.selDate]) S.dayStickers[S.selDate] = [];
+
+  // v0.0.31: 이유식 스티커는 먹은 양(g)을 함께 기록할 수 있음(선택 사항 — 취소하거나
+  // 빈 값으로 두면 예전처럼 이모지만 붙음)
+  if (FOOD_STICKER_SET.has(s)) {
+    const input = prompt(`${s} 먹은 양을 g으로 입력해주세요 (선택 사항, 비워두면 기록 없이 붙어요)`, '');
+    if (input !== null) {
+      const g = parseInt(input.trim(), 10);
+      if (!isNaN(g) && g > 0) {
+        S.dayStickers[S.selDate].push(`${s}|${g}`);
+        renderCal(); showDayPanel(S.selDate); debounceSave();
+        return;
+      }
+    }
+  }
+
   S.dayStickers[S.selDate].push(s);
   renderCal(); showDayPanel(S.selDate); debounceSave();
 }
@@ -1482,13 +1517,11 @@ export function getAutoEvs(child) {
       }));
     });
 
-    // 이유식
-    foodEvs.forEach(ev => {
-      const d = new Date(birth);
-      d.setDate(d.getDate() + ev.m * 30.44 + ev.day);
-      const ds = d.toISOString().split('T')[0];
-      evs.push({ date: ds, _origDate: ds, title: ev.t, type: ev.r ? 'req' : 'rec', auto: true, cat: 'food' });
-    });
+    // v0.0.31: 자동 이유식 일정 생성을 없앰 — 아이마다 실제 이유식 진행 속도가 너무 달라서
+    // "정해진 날짜에 뭘 먹어야 한다"는 자동 일정이 오히려 부담스럽다는 피드백으로, 이유식은
+    // 이제 캘린더 스티커(🍚 등, g수 기록 가능)로 사용자가 직접 기록하는 방식으로 바꿈.
+    // 예전엔 여기서 data/milestones.js의 foodEvs를 순회하며 이유식 일정을 자동 생성했음
+    // (필요하면 git 이력에서 되돌릴 수 있음).
 
     // 정부지원 (출산 직후) — Sprint 6
     govSupportSchedule.postpartum.forEach(it => {
