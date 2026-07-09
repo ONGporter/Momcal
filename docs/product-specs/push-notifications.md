@@ -1,6 +1,6 @@
 # 진짜 푸시 알림 (FCM)
 
-> **상태**: 🟡 1단계(수신 인프라)+2단계(자동 발송) 코드 구현 완료(v0.0.38) · Cloud Functions 배포 및 실기기 확인은 옹짐꾼님 액션 대기 중
+> **상태**: 🟡 코드 구현 + Cloud Functions 배포 완료(`dailyPushCheck` 정상 배포됨) · "테스트 실행"으로 실제 발송 확인만 남음
 > **관련 코드**: `js/push.js`(클라이언트), `sw.js`(`push`/`notificationclick` 이벤트), `js/firebase.js`(Messaging SDK import), `functions/index.js`(예약 발송, Cloud Functions)
 
 기존 `js/notifications.js`(로컬 알림, "앱을 열었을 때"만 확인)와 별개로, 앱을 완전히 꺼도(백그라운드·종료 상태) 알림을 받을 수 있는 실제 FCM 웹 푸시. 로그인(계정) 사용자만 지원 — 게스트 모드는 토큰을 연결할 계정(uid)이 없어서 기존 로컬 알림만 계속 사용 가능.
@@ -59,9 +59,9 @@ npm run deploy        # data 동기화 + firebase deploy --only functions
 2. ~~VAPID 키(웹 푸시 인증서) 발급~~
 3. ~~`js/push.js`의 `VAPID_KEY` 상수 교체~~ (v0.0.37에서 완료)
 4. ~~Blaze(종량제) 요금제로 전환~~ (완료 — Cloud Functions는 Blaze 요금제에서만 배포 가능)
-5. **다음 확인 필요**: 위 "배포 방법"대로 `functions` 배포
-6. **실기기 확인**: 설정 탭 → "진짜 푸시 알림 켜기" → 알림 허용 → `users/{uid}` 문서에 `fcmTokens` 필드가 생기는지 Firestore 콘솔에서 확인
-7. **자동 발송 확인**: 배포 후 다음 날 오전 9시(또는 Firebase 콘솔 → Functions → `dailyPushCheck` → "테스트 실행"으로 즉시 1회 실행)에 예방접종/정부지원/오늘 일정이 있는 계정에서 실제로 알림이 오는지 확인 — 앱을 완전히 꺼둔 상태에서 확인할 것
+5. ~~`functions` 배포~~ (완료 — `dailyPushCheck` 배포 성공 확인됨)
+6. **다음 확인 필요**: 설정 탭 → "진짜 푸시 알림 켜기" → 알림 허용 → `users/{uid}` 문서에 `fcmTokens` 필드가 생기는지 Firestore 콘솔에서 확인
+7. **자동 발송 확인**: Firebase 콘솔 → Functions → `dailyPushCheck` → "테스트 실행"으로 즉시 1회 실행(스케줄 안 기다려도 됨) → 예방접종/정부지원/오늘 일정이 있는 계정에서 실제로 알림이 오는지 확인 — 앱을 완전히 꺼둔 상태에서 확인할 것
 8. Cloud Functions 로그(Firebase 콘솔 → Functions → 로그, 또는 `firebase functions:log`)로 실행 여부·에러 확인 가능
 
 ## 알아두면 좋은 것

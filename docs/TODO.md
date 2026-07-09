@@ -20,6 +20,8 @@
 - **`functions/` 디렉터리 신규** — 이 저장소에 처음 생기는 "앱 본체 외" Node 프로젝트. Vercel 자동 배포 대상이 아니라 `firebase deploy --only functions`로 별도 배포해야 함 — GitHub push만으로는 안 나감, 반드시 옹짐꾼님이 로컬에서 배포 명령을 실행해야 함
 - **`functions/data/*.js`는 생성 산출물**(`guide/*.html`과 같은 성격) — `functions/scripts/sync-data.cjs`가 배포 직전에 루트 `data/*.js`에서 복사함. 절대 직접 수정하지 말 것(다음 배포 때 사라짐)
 - 예방접종·정부지원 자동 일정 계산 로직(`js/calendar.js`의 `getAutoEvs`/`applyMods`)을 `functions/index.js`에 포팅해뒀음 — **앞으로 이 계산 로직을 고칠 땐 클라이언트/서버 두 곳 다 검토할 것**(같은 날짜를 계속 계산해야 알림과 캘린더 화면이 어긋나지 않음)
+- ✅ **`dailyPushCheck` Cloud Functions 배포 완료 확인됨**(`Deploy complete!`) — 남은 건 "테스트 실행"으로 실제 발송 확인뿐, 아래 "⚠️ 배포 필요" 섹션 참고
+- ⚠️ 배포 직후 로그인 계정에서 "아이 2명 이상 전환 안 됨·캘린더 먹통" 증상이 보고됐었는데, **코드 버그가 아니라 브라우저에 남아있던 예전 서비스워커/캐시 문제였음**(컴퓨터 재시작으로 해결됨) — 아래 "알아두면 좋은 것"에 상세 기록. 비슷한 보고가 다시 오면 코드부터 의심하지 말고 캐시 문제 가능성을 먼저 확인할 것
 - 자세한 배포 방법·구조는 `docs/product-specs/push-notifications.md` 참고 — 아래 "⚠️ 배포 필요" 섹션도 확인
 
 ### 🔧 v0.0.37 — FCM VAPID 키 반영
@@ -29,18 +31,12 @@
 
 ## ⚠️ 배포 필요 (옹짐꾼님 액션 대기 — v0.0.38 FCM 2단계)
 
-코드는 다 준비됐지만, Cloud Functions는 로컬에서 CLI로 직접 배포해야 함(Claude는 네트워크 접근이 없어서 대신 배포 못 함):
+~~코드는 다 준비됐지만, Cloud Functions는 로컬에서 CLI로 직접 배포해야 함~~ → **`dailyPushCheck` 배포 완료됨**(`Deploy complete!` 확인됨). 남은 건 실제 발송 테스트뿐:
 
-```bash
-cd functions
-npm install          # 최초 1회 (firebase-admin, firebase-functions 설치)
-npm run deploy        # data 동기화 + firebase deploy --only functions
-```
-
-1. `firebase-tools` CLI 로컬 설치 안 돼있으면: `npm install -g firebase-tools` → `firebase login`
-2. 위 배포 명령 실행 (`.firebaserc`에 프로젝트가 `momcal-fd12b`로 고정돼있어 별도 프로젝트 선택 불필요)
-3. Firebase 콘솔 → Functions에서 `dailyPushCheck`가 배포됐는지 확인
-4. **즉시 테스트**: Firebase 콘솔 → Functions → `dailyPushCheck` → "테스트 실행"으로 스케줄을 안 기다리고 바로 1회 실행 가능 — 예방접종/정부지원/오늘 일정이 있는 계정으로 로그인한 상태에서 실행해보고, 앱을 완전히 꺼둔 채로 알림이 오는지 확인
+1. ~~firebase-tools 설치, 로그인~~ (완료)
+2. ~~`npm run deploy`~~ (완료)
+3. ~~Firebase 콘솔 → Functions에서 `dailyPushCheck` 배포 확인~~ (완료)
+4. **다음 확인 필요**: Firebase 콘솔 → Functions → `dailyPushCheck` → "테스트 실행"으로 즉시 1회 실행 — 예방접종/정부지원/오늘 일정이 있는 계정으로 로그인한 상태에서 실행해보고, 앱을 완전히 꺼둔 채로 알림이 오는지 확인 (해당하는 일정이 없으면 알림이 안 오는 게 정상)
 5. 실제 스케줄(매일 09:00 Asia/Seoul)로도 며칠 지켜보면서 정상 작동하는지 확인
 6. 문제가 있으면 Firebase 콘솔 → Functions → 로그(또는 `firebase functions:log`)에서 에러 확인
 
@@ -69,6 +65,7 @@ momcal.vercel.app 접속자가 거의 없어서, 301 리다이렉트(momcal.verc
 - 캘린더 안 일정 글자(.ev-line/.week-ev-block 등, px 고정이라 앱 전체 글자 크기 설정의 영향을 안 받음)만 따로 조절하는 설정이 있음(`js/calFontSize.js`, `data-cal-fontsize` 속성) — 설정 탭 + 캘린더 툴바 설정 아이콘에서 접근 가능
 - **v0.0.18**: 저장소 문서 구조를 `AGENTS.md`/`ARCHITECTURE.md`/`docs/`로 재정비(자세한 내용은 CHANGELOG.md v0.0.18 참고). 문서를 새로 추가하고 싶을 땐 먼저 `AGENTS.md`의 "문서 간 역할 분리" 표를 확인해서 중복 문서를 만들지 말 것
 - 더 오래된 버전별 세부 변경 이력은 이 문서에서 지웠습니다 — 필요하면 `docs/CHANGELOG.md`에서 버전 번호로 찾으세요(코드 안 주석에도 대부분 남아있음)
+- **⚠️ v0.0.38 배포 직후 "아이 2명 이상일 때 전환 안 됨·캘린더 먹통·등록/삭제 안 됨" 증상 보고됨 → 원인은 코드 버그가 아니라 브라우저에 남아있던 예전 서비스워커/캐시였음**. 컴퓨터를 완전히 껐다 켜니 해결됨(하드 리프레시 `Ctrl+Shift+R`나 F12→Application→Service Workers→Unregister로도 해결 가능). 새 버전 배포 직후 "방금까지 잘 되던 기본 기능이 갑자기 안 된다"는 보고가 오면, 코드부터 의심하기 전에 캐시 문제 가능성을 먼저 안내할 것 — 특히 로그인 계정에서만 재현되고 게스트 모드는 멀쩡하다는 보고는 데이터 소스 차이(캐시된 구버전 코드가 Firestore 데이터 구조와 안 맞아서 생기는 착시)일 수 있음을 염두에 둘 것
 
 ### 계속 지켜야 할 원칙 (매번 리마인드됨)
 - 기존 기능 절대 삭제 금지, 새 프로젝트 생성 금지, Firebase 구조 유지(새 컬렉션·필드 추가는 OK, 기존 구조는 안 건드림), 기존 UI 최대한 유지, 모든 기능 모듈화, 복잡한 기능보다 사용성 우선, "부모가 매일 여는 앱" 목표
@@ -79,7 +76,7 @@ momcal.vercel.app 접속자가 거의 없어서, 301 리다이렉트(momcal.verc
 ## 현재 확인 필요 항목
 
 ### v0.0.38 (이번 버전 — FCM 2단계 자동 발송, 토큰 자동 갱신)
-- [ ] `functions` 배포가 성공적으로 끝났는지 (`cd functions && npm install && npm run deploy`)
+- [x] `functions` 배포 완료 확인됨 (`Deploy complete!`)
 - [ ] Firebase 콘솔 → Functions → `dailyPushCheck` "테스트 실행"으로 즉시 발송해보고, 앱을 완전히 꺼둔 상태에서도 알림이 오는지 확인
 - [ ] 예방접종이 내일인 아이 계정으로 테스트했을 때 "💉 내일 예방접종" 알림이 오는지 확인
 - [ ] 정부지원 마감이 3일 남은 항목이 있는 계정으로 테스트했을 때 "⏰ ... 마감이 3일 남았어요" 알림이 오는지 확인
