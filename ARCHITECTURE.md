@@ -88,7 +88,8 @@ momcal/
 | `growth.js` / `growthChart.js` | 성장 기록 CRUD / 성장그래프(Chart.js)·성장 예측 |
 | `pwaInstall.js` | "어플로 추가" 링크 (설치 프롬프트/iOS 안내) |
 | `familyShare.js` | "배우자와 함께 쓰기" / 가족 그룹 공유 — 설정 탭 |
-| `notifications.js` | 알림 기능 1차 버전(로컬 알림, FCM 백엔드 연동은 `docs/TODO.md` 참고) |
+| `notifications.js` | 알림 기능 1차 버전(로컬 알림, "앱을 열었을 때"만 확인) |
+| `push.js` | 진짜 FCM 푸시 알림 — 토큰 발급/저장, 포그라운드 수신 (v0.0.36, 자세한 구조는 `docs/product-specs/push-notifications.md`) |
 | `theme.js` | 다크 모드 토글 — 설정 탭, localStorage 저장, 앱 본체 전용 |
 | `fontSize.js` / `calFontSize.js` | 앱 전체 글자 크기 / 캘린더 전용 글자 크기 조절 |
 | `guestMode.js` | 게스트 모드 — 로그인 없이 로컬(localStorage)에 실제 데이터 저장 |

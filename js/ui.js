@@ -3,7 +3,7 @@
  * 홈 화면, 등록 기능, 네비게이션
  */
 
-import { S, debounceSave }       from './state.js';
+import { S, debounceSave, selectChild } from './state.js';
 import { ageFmt, ageD, today, icon } from './utils.js';
 import { showModal }             from './modal.js';
 import { getAllEvs }             from './calendar.js';
@@ -13,6 +13,7 @@ import { getDailyTip }           from '../data/tips.js';
 import { renderPwaInstallLink }  from './pwaInstall.js';
 import { renderFamilyShareLink } from './familyShare.js';
 import { renderNotificationSettings } from './notifications.js';
+import { renderPushSettings }    from './push.js'; // v0.0.36: FCM 진짜 푸시 알림 설정
 import { renderThemeSettings }   from './theme.js';
 import { renderFontSizeSettings } from './fontSize.js';
 import { renderCalFontSizeSettings } from './calFontSize.js';
@@ -56,6 +57,7 @@ export function renderSettings() {
   renderCalFontSizeSettings();
   renderFamilyShareLink();
   renderNotificationSettings();
+  renderPushSettings();
 }
 
 /* ════════════════════════════════════
@@ -67,7 +69,7 @@ export function renderHome() {
   // 프로필 카드
   const ps = document.getElementById('homeProfiles');
   ps.innerHTML = S.children.map((c, i) => `
-    <div class="pcard ${i == S.selC ? 'sel' : ''}" onclick="S.selC=${i};renderHome()">
+    <div class="pcard ${i == S.selC ? 'sel' : ''}" onclick="selectChild(${i});renderHome()">
       <div class="pav">${c.avatar}</div>
       <div class="pnm">${c.name}</div>
       <div class="pag">${c.stage === 'preg' ? `<span class="icon icon-sm" translate="no" aria-hidden="true">pregnant_woman</span> ${c.week}주차` : ageFmt(c.birth)}</div>

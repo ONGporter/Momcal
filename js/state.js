@@ -135,6 +135,22 @@ export function debounceSave() {
   _saveTimer = setTimeout(saveState, 600);
 }
 
+/**
+ * v0.0.36: 아이가 둘 이상일 때 마지막으로 선택한 아이를 유지하기 위한 단일 진입점.
+ * 기존엔 홈/캘린더/체크리스트/성장 화면 각각 인라인 onclick에서 "S.selC=${i}"만 하고
+ * 저장은 안 해서, 그 상태에서 아무것도 수정하지 않고 새로고침하면 항상 0번(첫째)로
+ * 돌아가버렸음(다른 데이터 변경 때 debounceSave()가 "우연히" 같이 저장해줄 때만 유지됨).
+ * 이제 아이를 선택하는 모든 곳(홈 카드, 캘린더 상단 pill, 체크리스트/성장 드롭다운)이
+ * 이 함수 하나만 거치도록 해서, 선택 즉시 debounceSave()로 저장까지 되게 한다.
+ */
+export function selectChild(i) {
+  const idx = +i;
+  if (Number.isNaN(idx) || idx === S.selC) return;
+  S.selC = idx;
+  debounceSave();
+}
+window.selectChild = selectChild;
+
 /* ── 저장 완료 배지 표시 ── */
 export function flashSave() {
   const el = document.getElementById('saveBadge');

@@ -9,7 +9,7 @@
  *  - 화면에는 항상 "참고용, 의학적 진단 아님" 문구를 함께 표시
  */
 
-import { S, debounceSave }               from './state.js';
+import { S, debounceSave, selectChild }  from './state.js';
 import { showModal, cm }                 from './modal.js';
 import { getGrowthRecords, getLatestGrowth, openGrowthModal } from './growth.js';
 import { refTableFor, growthMetricLabel, fetalMetricLabel } from '../data/who-growth.js';
@@ -387,7 +387,7 @@ function renderFetalRecordList(child) {
 
 /** 아이 변경 시 (select onchange) */
 export function switchGrowthChild(i) {
-  S.selC = +i;
+  selectChild(i); // v0.0.36: 선택한 아이를 새로고침·재접속 후에도 유지
   renderGrowthPage();
 }
 

@@ -761,7 +761,7 @@ export function selectDate(ds) {
 export function renderCal() {
   if (S.children.length) {
     document.getElementById('calChildSel').innerHTML = S.children.map((c, i) =>
-      `<button onclick="S.selC=${i};renderCal()"
+      `<button onclick="selectChild(${i});renderCal()"
         style="padding:5px 11px;border-radius:40px;
                border:1.5px solid ${i == S.selC ? 'var(--pk)' : '#EEE0F0'};
                background:${i == S.selC ? 'var(--pkl)' : 'var(--wh)'};

@@ -27,6 +27,15 @@ import {
   deleteDoc,
   onSnapshot,
 } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
+// v0.0.36: FCM 진짜 푸시 알림 — 웹 푸시 지원 여부 확인(isSupported)·토큰 발급(getToken)·
+// 포그라운드 수신(onMessage). 실제 사용 로직은 js/push.js에 있음(이 파일은 기존 관례대로
+// Firebase SDK를 직접 import하는 유일한 파일 역할만 유지)
+import {
+  getMessaging,
+  getToken,
+  onMessage,
+  isSupported as isMessagingSupported,
+} from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-messaging.js';
 
 const firebaseConfig = {
   apiKey:            'AIzaSyDKJheEl_ZALpPdDza2ytPbeGw54oJ7c-0',
@@ -43,6 +52,7 @@ const app = initializeApp(firebaseConfig);
 export const auth           = getAuth(app);
 export const db             = getFirestore(app);
 export const googleProvider = new GoogleAuthProvider();
+export const firebaseApp    = app; // v0.0.36: js/push.js에서 getMessaging(firebaseApp) 호출용
 
 export {
   onAuthStateChanged,
@@ -60,4 +70,8 @@ export {
   setDoc,
   deleteDoc,
   onSnapshot,
+  getMessaging,
+  getToken,
+  onMessage,
+  isMessagingSupported,
 };

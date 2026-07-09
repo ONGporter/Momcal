@@ -21,7 +21,7 @@
 // 종류 선택 아이콘 통일, 아이 성별 기반 성장단계 아이콘, 예방접종/정부지원 이모지 마커 제거(데이터 마이그레이션 포함)
 // v0.0.23: 정부지원 사이드바 통일, 태아 성장 기록, 체크리스트 추천/비추천(도움돼요),
 // 체크리스트 이미지 공유(html2canvas 신규 도입) 반영 — 캐시 버전 상향
-const CACHE_NAME = 'momcal-shell-v40';
+const CACHE_NAME = 'momcal-shell-v41';
 
 const APP_SHELL = [
   './',
@@ -52,6 +52,7 @@ const APP_SHELL = [
   './js/modal.js',
   './js/notifications.js',
   './js/pwaInstall.js',
+  './js/push.js',
   './js/splash.js',
   './js/state.js',
   './js/theme.js',
@@ -121,22 +122,39 @@ self.addEventListener('fetch', (event) => {
 });
 
 /**
- * Sprint 29: 향후 FCM(Firebase Cloud Messaging) 진짜 푸시를 붙일 때 쓸 기본 뼈대.
- * ⚠️ 지금은 아무도 이 서비스워커로 실제 push 메시지를 "보내주는" 서버가 없어서
- * 이 핸들러가 호출될 일이 없음 — Firebase 콘솔에서 Cloud Messaging을 설정하고
- * 서버(Cloud Functions 등)에서 실제로 push를 보내기 시작하면 그때부터 동작함.
- * 지금 알림은 js/notifications.js가 앱이 열려 있을 때 브라우저 Notification API로
- * 직접 띄우는 방식(로컬 알림)이며, 이 핸들러와는 별개로 이미 동작함.
+ * v0.0.36: 진짜 FCM 푸시 수신 핸들러 — Sprint 29 때 만들어둔 뼈대를 실제로 연결함.
+ *
+ * "브링 유어 오운 서비스워커(Bring your own service worker)" 방식: Firebase의
+ * firebase-messaging-sw.js(compat SDK) 없이, 이 sw.js가 직접 'push'/'notificationclick'을
+ * 처리함 — js/push.js의 getToken() 호출 시 serviceWorkerRegistration으로 이 sw.js의
+ * registration을 넘겨주면 Firebase가 이 핸들러로 알림을 전달해줌(공식 지원 방식).
+ * firebase-messaging-sw.js를 별도로 안 두는 이유: 이미 앱쉘 캐싱용 sw.js가 있는 상태에서
+ * 서비스워커를 2개 등록하면 스코프 충돌 위험이 있어서, Firebase 공식 문서도 기존
+ * 서비스워커가 있으면 이 방식(직접 처리)을 권장함.
+ *
+ * 페이로드 형태: Firebase 콘솔의 "Cloud Messaging → 캠페인" 화면에서 보낸 메시지는
+ * { notification: {title, body, icon}, data: {...} } 형태로 옴. data-only 메시지
+ * (Admin SDK/서버에서 notification 필드 없이 보낸 경우)는 최상위에 바로 title/body가
+ * 올 수도 있어서 두 형태 다 대응함.
+ *
+ * ⚠️ 이 핸들러는 "받는" 쪽만 담당함 — 실제로 언제·누구에게 보낼지는 Firebase 콘솔에서
+ * 수동으로 캠페인을 만들어 보내거나(코드 불필요), "예방접종 하루 전"처럼 자동화하려면
+ * 별도 서버 스케줄러(Cloud Functions + Cloud Scheduler, Blaze 요금제)가 필요함 —
+ * docs/TODO.md "FCM 2단계(자동 발송)" 참고.
  */
 self.addEventListener('push', (event) => {
   if (!event.data) return;
   let payload = {};
-  try { payload = event.data.json(); } catch (e) { payload = { title: '맘캘 MomCal', body: event.data.text() }; }
+  try { payload = event.data.json(); } catch (e) { payload = { notification: { title: '맘캘 MomCal', body: event.data.text() } }; }
+
+  const n = payload.notification || payload; // notification 필드가 없으면 data-only 메시지로 간주
+  const title = n.title || '맘캘 MomCal';
+  const body  = n.body  || '';
 
   event.waitUntil(
-    self.registration.showNotification(payload.title || '맘캘 MomCal', {
-      body: payload.body || '',
-      icon: './icons/icon-192.png',
+    self.registration.showNotification(title, {
+      body,
+      icon: n.icon || './icons/icon-192.png',
       badge: './icons/icon-192.png',
       data: payload.data || {},
     })

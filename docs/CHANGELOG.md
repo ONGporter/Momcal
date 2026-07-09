@@ -42,6 +42,7 @@
 | v0.0.33 | 체크리스트 항목 추가 모달의 "필수/선택" 라디오 버튼 글자가 세로로 깨지던 버그 수정, 이유식 필터 켰을 때 스티커가 칸 가운데부터 위아래로 고르게 채워지도록 레이아웃 수정, 캘린더의 "추천" 라벨을 체크리스트와 동일한 "선택"으로 통일, 일정 추가 폼에서 "내 일정" 선택 시 개별 색상을 다시 고를 수 있도록 복원(다른 종류 색과 안 겹치는 팔레트) |
 | v0.0.34 | 앱 자체 스플래시 화면 신규(`js/splash.js`) — `index.html` 로드 즉시 로고+로딩 애니메이션을 보여주고 로그인 확인+첫 데이터 로드가 끝나면 페이드아웃, 캐시 버전 상향(`v38`→`v39`) |
 | v0.0.35 | 스플래시 화면 다듬기 — 최소 노출 시간(1.8초) 보장, 로딩 점 애니메이션을 "우리 아이 무럭무럭!" 텍스트로 교체, 마스코트 로고 찌그러짐 버그 수정(실제 비율 유지), 캐시 버전 상향(`v39`→`v40`) |
+| v0.0.36 | 아이 여러 명일 때 마지막 선택한 아이가 새로고침·재접속 후에도 유지되도록 수정(`selectChild()` 단일 진입점), 진짜 FCM 푸시 알림 클라이언트 인프라 신규 추가(`js/push.js`, 토큰 발급/저장 + 포그라운드/백그라운드 수신) — 콘솔 설정은 옹짐꾼님 액션 필요(`docs/product-specs/push-notifications.md` 참고), 캐시 버전 상향(`v40`→`v41`) |
 
 ### Sprint 1~29 (버전 체계 도입 이전, v0.0.2 이전 기록)
 
@@ -76,6 +77,25 @@
 | 27 | PC 캘린더 글자 크기 확대, 캘린더 일정을 "형광펜" 스타일로 재개편, 폰트 Nunito로 원복 |
 | 28 | 육아정보 4개 페이지에 카테고리 탭 추가, 홈 히어로 배너 축소·모바일 대시보드 1열 변경 |
 | 29 | 폰트 전면 교체(Paperlogy+Pretendard), 캘린더 타임존 버그 수정, 생후 일수 계산 변경, 성장 예측·알림 기능 신규 |
+
+---
+
+## [v0.0.36] 2026-07-09 — 마지막 선택 아이 유지, 진짜 FCM 푸시 알림 인프라 추가
+
+### 1. 아이가 둘 이상일 때 마지막 선택한 아이 유지
+- **증상**: 홈/캘린더/체크리스트/성장 화면에서 아이를 클릭해 전환해도, 그 상태에서 아무것도 수정하지 않고 새로고침하거나 앱을 껐다 켜면 항상 첫째(0번)로 돌아감
+- **원인**: 각 화면의 아이 전환 클릭이 `S.selC=${i}`만 하고 저장(`debounceSave()`)은 안 해서, 다른 데이터를 수정할 때 "우연히" 같이 저장될 때만 유지됐음
+- **수정**: `js/state.js`에 `selectChild(i)` 단일 진입점을 추가(`S.selC` 설정 + `debounceSave()` 즉시 호출)하고, 홈 프로필 카드(`js/ui.js`)·캘린더 상단 pill(`js/calendar.js`)·체크리스트/성장 드롭다운(`index.html` onchange, `js/growthChart.js`의 `switchGrowthChild`) 전부 이 함수를 거치도록 통일
+- 게스트 모드는 기존에도 `saveGuestData()`가 `selC`를 포함해서 저장하고 있어서 별도 수정 불필요(로그인 사용자만 이 버그가 있었음)
+- 관련 파일: `js/state.js`(`selectChild` 신규), `js/ui.js`, `js/calendar.js`, `js/growthChart.js`, `index.html`(체크리스트 아이 선택 select)
+
+### 2. 진짜 FCM 푸시 알림 — 클라이언트 인프라 추가
+- 기존 로컬 알림(`js/notifications.js`, 앱을 열었을 때만 확인)과 별개로, 앱을 완전히 꺼도 알림을 받을 수 있는 FCM 웹 푸시 클라이언트 코드를 추가함(`js/push.js` 신규)
+- 로그인 사용자가 설정 탭에서 "진짜 푸시 알림 켜기"를 누르면 → 알림 권한 요청 → FCM 토큰 발급 → `users/{uid}.fcmTokens`에 저장
+- **서비스워커**: 전용 `firebase-messaging-sw.js`를 따로 두지 않고, 기존 `sw.js`가 Firebase 공식 지원 방식인 "브링 유어 오운 서비스워커"로 `push`/`notificationclick`을 직접 처리하도록 연결(Sprint 29 때 만들어둔 뼈대를 실제 FCM 페이로드 형태에 맞게 파싱 로직 수정)
+- **아직 안 되는 것**: "예방접종 하루 전"처럼 사용자별로 다른 시각에 자동 발송하는 건 이번 범위 밖 — 서버 스케줄러(Cloud Functions + Cloud Scheduler, Blaze 요금제)가 필요함. 대신 지금 상태로도 Firebase 콘솔 "Cloud Messaging → 캠페인"에서 코드 없이 전체 사용자에게 수동 발송은 바로 가능함
+- **옹짐꾼님 액션 필요**: Cloud Messaging 사용 설정 + VAPID 키 발급 후 `js/push.js`의 `VAPID_KEY` 플레이스홀더 교체가 있어야 실제로 동작함 — 자세한 절차는 `docs/product-specs/push-notifications.md` 참고
+- 관련 파일: `js/push.js`(신규), `js/firebase.js`(Messaging SDK import 추가), `sw.js`(`push` 이벤트 페이로드 파싱 수정), `js/ui.js`(설정 탭에 `renderPushSettings()` 연결), `index.html`(`#pushSettingsWrap`), `docs/product-specs/push-notifications.md`(신규 스펙 문서)
 
 ---
 

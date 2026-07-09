@@ -243,6 +243,7 @@
   <div class="sec" style="margin-top:22px"><span class="icon icon-sm" translate="no" aria-hidden="true">smartphone</span> 더 편하게 쓰기</div>
   <div id="familyShareWrap"></div>
   <div id="notifSettingsWrap" style="margin-top:10px"></div>
+  <div id="pushSettingsWrap" style="margin-top:10px"></div>
 </div>
 
 <!-- ════════════════════════════════════
@@ -371,7 +372,7 @@
   <div style="display:flex;gap:7px;margin-bottom:12px;align-items:center;flex-wrap:wrap">
     <span style="font-size:.72rem;font-weight:800;color:var(--txl)">아이:</span>
     <select id="clChildSel"
-            onchange="S.selC=this.value;S.clTab=0;S.selClCat=0;renderChecklist()"
+            onchange="selectChild(this.value);S.clTab=0;S.selClCat=0;renderChecklist()"
             style="padding:7px 12px;border:1.5px solid #EEE0F0;border-radius:11px;
                    font-family:inherit;font-size:.81rem;color:var(--tx);outline:none;
                    background:var(--wh);box-shadow:0 2px 7px rgba(160,80,140,.07)"></select>
@@ -432,7 +433,7 @@
     <a href="./terms.html"><span class="icon icon-sm" translate="no" aria-hidden="true">description</span> 이용약관</a>
     <a href="./contact.html"><span class="icon icon-sm" translate="no" aria-hidden="true">mail</span> 문의</a>
   </div>
-  <div class="site-footer-version">맘캘 MomCal v0.0.35</div>
+  <div class="site-footer-version">맘캘 MomCal v0.0.36</div>
 </footer>
 
 <!-- ════════════════════════════════════
