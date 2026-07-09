@@ -1,6 +1,6 @@
 # 진짜 푸시 알림 (FCM)
 
-> **상태**: 🟡 클라이언트 코드 구현 완료(v0.0.36) · Firebase 콘솔 설정은 옹짐꾼님 액션 대기 중 — 콘솔 설정 전까지는 이 기능만 조용히 안 켜짐(앱 사용 자체엔 지장 없음)
+> **상태**: 🟡 클라이언트 코드 + VAPID 키 설정 완료(v0.0.37) · Firestore 토큰 저장·테스트 발송 실기기 확인 대기 중
 > **관련 코드**: `js/push.js`, `sw.js`(`push`/`notificationclick` 이벤트), `js/firebase.js`(Messaging SDK import)
 
 기존 `js/notifications.js`(로컬 알림, "앱을 열었을 때"만 확인)와 별개로, 앱을 완전히 꺼도(백그라운드·종료 상태) 알림을 받을 수 있는 실제 FCM 웹 푸시. 로그인(계정) 사용자만 지원 — 게스트 모드는 토큰을 연결할 계정(uid)이 없어서 기존 로컬 알림만 계속 사용 가능.
@@ -37,9 +37,9 @@
 
 ## Firebase 콘솔에서 옹짐꾼님이 해야 할 일
 
-1. **Cloud Messaging 사용 설정**: Firebase 콘솔 → 프로젝트 설정 → Cloud Messaging 탭에서 활성화
-2. **VAPID 키(웹 푸시 인증서) 발급**: 같은 탭의 "웹 구성(Web configuration)" → "웹 푸시 인증서 키 쌍 생성" → 생성된 키를 복사
-3. **`js/push.js`의 `VAPID_KEY` 상수 교체**: 현재 `'PASTE_YOUR_VAPID_KEY_HERE'` 플레이스홀더로 되어 있는 값을 2번에서 복사한 실제 키로 바꾸고 재배포(이 부분은 코드 수정이라 Claude에게 값을 전달해주시면 대신 넣어드릴 수 있음)
-4. **실기기 확인**: 설정 탭 → "진짜 푸시 알림 켜기" 클릭 → 브라우저 알림 권한 허용 → `users/{uid}` 문서에 `fcmTokens` 필드가 생기는지 Firestore 콘솔에서 확인
+1. ~~Cloud Messaging 사용 설정~~
+2. ~~VAPID 키(웹 푸시 인증서) 발급~~
+3. ~~`js/push.js`의 `VAPID_KEY` 상수 교체~~ (v0.0.37에서 완료)
+4. **다음 확인 필요**: 설정 탭 → "진짜 푸시 알림 켜기" 클릭 → 브라우저 알림 권한 허용 → `users/{uid}` 문서에 `fcmTokens` 필드가 생기는지 Firestore 콘솔에서 확인
 5. **테스트 발송**: Cloud Messaging → 캠페인 → 새 알림 만들기 → "테스트 메시지 전송"에 4번에서 확인한 토큰을 붙여넣고 전송 → 앱을 완전히 꺼둔 상태에서도 알림이 오는지 확인
 6. (선택, 나중에) 개인화 자동 발송을 원하면 Blaze 요금제 전환 + Cloud Functions 작성 — `docs/TODO.md` "FCM 2단계" 참고

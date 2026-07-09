@@ -23,11 +23,10 @@ import {
 } from './firebase.js';
 import { getCurrentUser, userDocRef } from './state.js';
 
-// v0.0.36: 옹짐꾼님이 Firebase 콘솔 > 프로젝트 설정 > Cloud Messaging > 웹 구성(Web configuration)
-// 탭에서 "웹 푸시 인증서" 키 쌍을 생성하면 나오는 값으로 교체해야 실제로 동작함.
-// 발급 전까지는 이 값이 그대로라 enablePushNotifications()가 토큰 발급 단계에서 조용히
-// 실패함(콘솔에 경고만 남고 앱은 정상 동작 — 이 기능만 못 씀). 자세한 절차는 docs/TODO.md 참고
-const VAPID_KEY = 'PASTE_YOUR_VAPID_KEY_HERE';
+// v0.0.37: Firebase 콘솔 > 프로젝트 설정 > Cloud Messaging > 웹 구성(Web configuration)
+// 탭에서 옹짐꾼님이 발급받은 "웹 푸시 인증서" 키 쌍 값으로 교체 완료.
+// (만약 나중에 키를 재발급하면 이 값도 같이 교체해야 함 — 재발급 시 기존 토큰은 전부 무효화됨)
+const VAPID_KEY = 'BPDAP4TNZW3vHCF80G1OWRY8FvbvXKiLNcdaGzLFcNKd3cByXiacCpJ3zlCmyWf52kmKjdq3tKeDdARqphUNqFY';
 
 const PUSH_TOKEN_SAVED_KEY = 'momcal_push_token_saved'; // 이 기기·브라우저에 토큰 저장을 완료했는지(로컬 캐시, 재요청 방지용)
 
