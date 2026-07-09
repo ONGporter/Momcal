@@ -1,20 +1,18 @@
 /**
- * js/push.js (v0.0.36)
+ * js/push.js (v0.0.36, v0.0.38에서 토큰 자동 갱신 추가)
  * 진짜 FCM(Firebase Cloud Messaging) 푸시 알림 — 앱을 완전히 꺼도(백그라운드/종료 상태)
  * 알림을 받을 수 있도록 이 기기의 푸시 토큰을 발급받아 Firestore에 저장하고,
  * 앱이 열려있는 동안(포그라운드) 오는 메시지를 처리한다.
  *
- * ⚠️ 이 파일은 "받는" 쪽 인프라만 담당함. 실제로 언제·누구에게 알림을 "보낼지"는:
- *  - 지금 당장: Firebase 콘솔 "Cloud Messaging → 캠페인" 화면에서 코드 없이 수동으로
- *    전체 사용자에게 보낼 수 있음(이 인프라가 갖춰지면 바로 가능)
- *  - "예방접종 하루 전"처럼 사용자별로 다른 시각에 자동 발송하려면 별도 서버 스케줄러
- *    (Cloud Functions + Cloud Scheduler, Blaze 요금제 필요)가 있어야 함 — 이건 이번 범위 밖.
- *    자세한 다음 단계는 docs/TODO.md "FCM 2단계(자동 발송)" 참고.
+ * 실제 발송(언제·누구에게)은 두 갈래로 이뤄짐:
+ *  - 수동: Firebase 콘솔 "Cloud Messaging → 캠페인"에서 코드 없이 전체 사용자에게 발송
+ *  - 자동(v0.0.38): `functions/index.js`의 `dailyPushCheck`가 매일 09:00(Asia/Seoul)에
+ *    예방접종 하루 전 / 정부지원 마감 3일 전 / 오늘 일정을 확인해서 자동 발송함
  *
  * 로그인(계정) 사용자만 지원 — 게스트 모드는 토큰을 연결할 계정(uid)이 없어서
  * 기존 로컬 알림(js/notifications.js, 앱을 열었을 때만 확인)만 계속 사용 가능.
  * 백그라운드 수신 핸들러 자체는 sw.js의 'push' 이벤트 리스너가 처리함(이 파일은
- * 권한 요청 + 토큰 발급/저장 + 포그라운드 수신만 담당).
+ * 권한 요청 + 토큰 발급/저장/자동 갱신 + 포그라운드 수신만 담당).
  */
 
 import {
@@ -120,8 +118,30 @@ export async function enablePushNotifications() {
     : await Notification.requestPermission();
   if (perm !== 'granted') { renderPushSettings(); return; }
 
+  await fetchAndSaveToken();
+  renderPushSettings();
+}
+
+/**
+ * v0.0.38: 토큰 자동 갱신 — 앱을 열 때마다(권한이 이미 허용된 상태라면) 조용히
+ * 다시 호출됨. FCM은 별도의 "토큰이 바뀌었다" 이벤트를 안 주기 때문에(구버전 SDK의
+ * onTokenRefresh()는 모듈형 SDK에서 사라짐), 매번 getToken()을 다시 불러서 값이
+ * 바뀌었으면(브라우저가 내부적으로 재발급한 경우) 새 값을 Firestore에 반영하는 방식으로
+ * "갱신"을 대신함 — 대부분은 같은 토큰이 그대로 와서 updatedAt만 갱신되고 끝남.
+ * 만료·무효화된 예전 토큰은 서버(functions/index.js의 sendToUser)가 발송 실패 응답을
+ * 보고 자동으로 Firestore에서 지워주므로, 여기서는 "최신 토큰을 계속 보고"하는
+ * 역할만 하면 됨. 버튼을 누른 적 없는 사용자(권한 자체가 없음)에게는 아무 일도 안 함.
+ */
+export async function refreshTokenIfNeeded() {
+  if (!getCurrentUser() || !('Notification' in window)) return;
+  if (Notification.permission !== 'granted') return;
+  await fetchAndSaveToken();
+}
+
+/** getToken() 호출 + Firestore 저장 — enablePushNotifications/refreshTokenIfNeeded 공용 */
+async function fetchAndSaveToken() {
   const messaging = await getMessagingSafe();
-  if (!messaging) { renderPushSettings(); return; }
+  if (!messaging) return;
 
   try {
     // sw.js — 앱쉘 캐싱용으로 이미 등록돼있는 서비스워커를 그대로 재사용(전용
@@ -137,7 +157,6 @@ export async function enablePushNotifications() {
     // 여기로 옴 — 이 기능만 조용히 안 켜질 뿐 앱 사용에는 지장 없음
     console.warn('푸시 토큰 발급 실패(Firebase 콘솔 Cloud Messaging 설정 확인 필요):', e);
   }
-  renderPushSettings();
 }
 
 /**
@@ -172,3 +191,4 @@ bindForegroundListener();
 
 window.enablePushNotifications = enablePushNotifications;
 window.renderPushSettings      = renderPushSettings;
+window.refreshTokenIfNeeded    = refreshTokenIfNeeded;

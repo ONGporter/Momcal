@@ -44,6 +44,7 @@
 | v0.0.35 | 스플래시 화면 다듬기 — 최소 노출 시간(1.8초) 보장, 로딩 점 애니메이션을 "우리 아이 무럭무럭!" 텍스트로 교체, 마스코트 로고 찌그러짐 버그 수정(실제 비율 유지), 캐시 버전 상향(`v39`→`v40`) |
 | v0.0.36 | 아이 여러 명일 때 마지막 선택한 아이가 새로고침·재접속 후에도 유지되도록 수정(`selectChild()` 단일 진입점), 진짜 FCM 푸시 알림 클라이언트 인프라 신규 추가(`js/push.js`, 토큰 발급/저장 + 포그라운드/백그라운드 수신) — 콘솔 설정은 옹짐꾼님 액션 필요(`docs/product-specs/push-notifications.md` 참고), 캐시 버전 상향(`v40`→`v41`) |
 | v0.0.37 | 옹짐꾼님이 발급받은 VAPID 키를 `js/push.js`에 반영 — FCM 진짜 푸시 알림이 실제로 켜질 수 있는 상태가 됨(나머지 확인은 `docs/TODO.md` "⚠️ 콘솔 설정 필요" 참고), 캐시 버전 상향(`v41`→`v42`) |
+| v0.0.38 | Blaze 요금제 전환에 따라 FCM 2단계(자동 발송) 구현 — Cloud Functions `functions/index.js`의 `dailyPushCheck`가 매일 09:00(Asia/Seoul) 예방접종 하루 전·정부지원 마감 3일 전·오늘 일정을 확인해 자동 발송, 클라이언트 토큰 자동 갱신(`refreshTokenIfNeeded`) 추가, 캐시 버전 상향(`v42`→`v43`) |
 
 ### Sprint 1~29 (버전 체계 도입 이전, v0.0.2 이전 기록)
 
@@ -78,6 +79,31 @@
 | 27 | PC 캘린더 글자 크기 확대, 캘린더 일정을 "형광펜" 스타일로 재개편, 폰트 Nunito로 원복 |
 | 28 | 육아정보 4개 페이지에 카테고리 탭 추가, 홈 히어로 배너 축소·모바일 대시보드 1열 변경 |
 | 29 | 폰트 전면 교체(Paperlogy+Pretendard), 캘린더 타임존 버그 수정, 생후 일수 계산 변경, 성장 예측·알림 기능 신규 |
+
+---
+
+## [v0.0.38] 2026-07-10 — FCM 2단계: Cloud Functions 자동 발송, 토큰 자동 갱신
+
+Blaze(종량제) 요금제 전환에 따라, v0.0.36~37에서 준비해둔 수신 인프라 위에 실제 자동 발송 서버를 추가함.
+
+### 1. Cloud Functions — 매일 09:00 예약 발송 (`functions/` 신규)
+- `functions/index.js`의 `dailyPushCheck`: Cloud Scheduler가 매일 09:00(Asia/Seoul)에 트리거하는 예약 함수
+- **대상 조회**: `users` 컬렉션에서 `fcmTokens`이 있는 사용자만 골라내고, `familyId`가 있으면 `families/{familyId}`를 데이터 소스로 씀(`js/state.js`의 `dataDocRef()`와 동일한 분기) — 같은 가족 그룹 멤버 여러 명이면 가족 데이터는 한 번만 계산해서 재사용
+- **일정 계산**: `js/calendar.js`의 `getAutoEvs()`/`applyMods()`를 `functions/index.js`에 포팅(`computeAutoEvs`/`applyMods`) — 두 로직이 계속 같은 날짜를 계산하도록 앞으로 한쪽을 고치면 다른 쪽도 검토 필요. 클라이언트(`getAllEvs`)는 "선택된 아이 1명"만 계산하지만, 서버는 **등록된 아이 전원**을 대상으로 계산(선택 상태는 UI 전용 개념이라 알림 계산엔 의미 없음)
+- **알림 3종**:
+  1. 오늘 일정 — 오늘 날짜의 모든 이벤트(완료 처리 제외)
+  2. 예방접종 하루 전 — `daysUntil(date) === 1`인 `vax` 이벤트
+  3. 정부지원 마감 3일 전 — `daysUntil(deadlineDate) === 3`이고 아직 신청/지급 완료 처리 안 된 `gov` 이벤트
+  - 아이가 둘 이상이면 메시지에 아이 이름을 붙여서 구분, 하루에 여러 항목이 겹치면 알림 하나로 묶어서 발송(스팸처럼 여러 번 안 오도록)
+- **토큰 자동 정리**: 발송 실패 응답이 `messaging/registration-token-not-registered`/`messaging/invalid-registration-token`이면 그 토큰을 Firestore에서 자동 삭제 — 앱 삭제·알림 차단 등으로 죽은 토큰이 계속 쌓이는 걸 방지
+- **데이터 동기화**: Cloud Functions는 `functions/` 디렉터리만 배포 패키지에 포함돼서 루트 `data/*.js`를 직접 import할 수 없음 — `functions/scripts/sync-data.cjs`가 배포 직전(`firebase.json`의 predeploy 훅)에 필요한 데이터 파일(`vaccines.js`/`milestones.js`/`pregnancy.js`/`government-support.js`)을 `functions/data/`로 복사함. **`functions/data/*.js`는 `guide/*.html`과 같은 성격의 생성 산출물 — 직접 수정 금지**, 항상 루트 `data/*.js`를 고칠 것
+- 새 배포 설정 파일: `firebase.json`(functions predeploy 훅), `.firebaserc`(프로젝트 ID 고정), `functions/package.json`(firebase-admin/firebase-functions 의존성)
+- 배포 명령: `cd functions && npm install && npm run deploy` — Vercel과 무관한 별도 배포 경로(자세한 내용은 `docs/product-specs/push-notifications.md`)
+
+### 2. 클라이언트 — 토큰 자동 갱신
+- `js/push.js`에 `refreshTokenIfNeeded()` 추가 — 알림 권한이 이미 허용된 상태라면 앱을 열 때마다(`js/app.js`의 `onDataLoaded`) 조용히 `getToken()`을 다시 호출해 Firestore의 토큰을 최신 상태로 유지함
+- 모듈형 FCM SDK에는 구버전의 `onTokenRefresh()` 이벤트가 없어서, "앱을 열 때마다 다시 물어보고 값이 바뀌었으면 반영"하는 방식으로 대신함(대부분은 같은 토큰이 그대로 와서 `updatedAt`만 갱신되고 끝남) — 죽은 토큰 정리는 서버(`sendToUser()`)가 담당하는 구조로 역할 분리
+- `enablePushNotifications()`와 `refreshTokenIfNeeded()`가 토큰 발급/저장 로직(`fetchAndSaveToken()`)을 공유하도록 리팩터링
 
 ---
 

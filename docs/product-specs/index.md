@@ -9,6 +9,6 @@
 | [`seo-content.md`](./seo-content.md) | 공개 육아정보 페이지(`guide/`) + 정책 페이지 + SEO 현황 | ✅ 구현 완료 |
 | [`monetization.md`](./monetization.md) | 수익화 & 트래픽 전략, 광고 슬롯 | 🟡 준비 완료(AdSense 신청 전) |
 | [`account-deletion.md`](./account-deletion.md) | 계정 영구 삭제(자체 탈퇴) 흐름 | ✅ 구현 완료 |
-| [`push-notifications.md`](./push-notifications.md) | 진짜 FCM 푸시 알림 — 토큰 발급/저장, 서비스워커 수신, 발송(콘솔 수동/서버 자동) | 🟡 코드+VAPID 키 완료 · 실기기 확인 대기 |
+| [`push-notifications.md`](./push-notifications.md) | 진짜 FCM 푸시 알림 — 토큰 발급/저장/자동갱신, 서비스워커 수신, Cloud Functions 자동 발송 | 🟡 코드 구현 완료 · 배포·실기기 확인 대기 |
 
 새 기능을 설계하고 이 목록에 넣을 만한 분량이 생기면, `docs/PROJECT_SPEC.md`에 이어붙이지 말고 여기에 새 파일을 추가하고 이 표에 한 줄을 더하세요.

@@ -37,6 +37,7 @@ Vanilla JS(ES6 모듈) + Firebase(Firestore/Auth), Vercel 배포. 빌드 스텝 
 
 ### 이 저장소에서 절대 건드리면 안 되는 파일·값
 - **`guide/*.html`을 직접 열어서 고치지 마** — `scripts/build-guide.mjs`가 `data/*.js`로부터 매번 새로 생성하는 결과물이라, 직접 고쳐도 다음 재생성 때 흔적도 없이 사라짐. 내용을 바꾸려면 `data/checklist-data.js`/`data/government-support.js`를 고치고 `node scripts/build-guide.mjs`를 실행할 것
+- **`functions/data/*.js`를 직접 고치지 마** (v0.0.38 추가) — `functions/scripts/sync-data.cjs`가 배포 직전에 루트 `data/*.js`에서 복사해오는 결과물이라, `guide/*.html`과 똑같은 성격임. 예방접종·정부지원 알림 로직을 바꾸려면 루트 `data/vaccines.js` 등을 고칠 것
 - **`index.html`의 `google-site-verification`/`naver-site-verification` 메타 태그를 지우거나 값을 바꾸지 마** — Google Search Console·네이버 서치어드바이저 소유권 인증에 실제로 쓰이는 값. 지워지면 재인증 절차를 처음부터 다시 해야 함
 - **`js/firebase.js`의 Firebase 설정값(`apiKey`, 프로젝트 ID 등)을 다른 값으로 교체하지 마** — 실제 운영 중인 Firebase 프로젝트(`momcal-fd12b`)에 연결된 값. 테스트용으로라도 바꾸면 실사용자 데이터 연결이 끊김
 - **Firestore 보안 규칙을 코드로 대체하려 하지 마** — Firebase 콘솔에서만 설정 가능한 영역. 규칙이 필요하면 옹짐꾼님께 콘솔에서 직접 추가해달라고 안내할 것(`docs/product-specs/family-sharing.md` 참고)
@@ -58,16 +59,19 @@ Vanilla JS(ES6 모듈) + Firebase(Firestore/Auth), Vercel 배포. 빌드 스텝 
 ## 자주 쓰는 명령
 ```bash
 node scripts/build-guide.mjs   # 공개 SEO 페이지(guide/*.html) 재생성 — data/*.js 수정 후 필수
+cd functions && npm run deploy # Cloud Functions 배포(FCM 자동 발송) — data/*.js → functions/data/ 동기화 후 firebase deploy (v0.0.38)
 ```
 - 그 외 빌드 스텝 없음(Vanilla JS, 번들러 없음). `pip`/`npm install` 등 별도 설치 없이 정적 파일 그대로 서빙됨
 - 자동화된 테스트 없음 — Live Server 등으로 `index.html`을 열어 수동 확인 후 GitHub push → Vercel 자동 배포
+- **예외**: `functions/`만 별도 Node 프로젝트(Cloud Functions, Firebase Blaze 요금제 필요) — `functions/package.json`에 의존성이 있고 `firebase deploy --only functions`로 별도 배포됨(Vercel과 무관, GitHub push만으로는 안 나감)
 
 ## 저장소 구조 (요약 — 자세한 건 `ARCHITECTURE.md`)
 ```
 index.html, css/, js/, data/     앱 본체(SPA)
 guide/                            scripts/build-guide.mjs로 생성되는 정적 SEO 페이지 — 직접 편집 금지
 docs/                             프로젝트 문서(사양·가이드라인·할일·변경이력)
-docs/product-specs/              기능별 상세 스펙(가족공유·게스트모드·SEO·수익화·계정삭제) — 도메인별로 분리됨
+docs/product-specs/              기능별 상세 스펙(가족공유·게스트모드·SEO·수익화·계정삭제·푸시알림) — 도메인별로 분리됨
+functions/                        Cloud Functions(FCM 예약 발송, v0.0.38) — 별도 Node 프로젝트, Vercel 배포와 무관
 fonts/, icons/                    정적 리소스
 sw.js, manifest.json              PWA
 privacy.html·terms.html·contact.html, robots.txt, sitemap.xml   정책·SEO 페이지

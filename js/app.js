@@ -30,7 +30,7 @@ import './theme.js'; // v0.0.5: 다크 모드 — 설정 탭을 열지 않아도
 import './fontSize.js'; // v0.0.7: 글자 크기 조절 — 설정 탭을 열지 않아도 window.setFontSize 등록되도록 임포트
 import './calFontSize.js'; // v0.0.16: 캘린더 전용 글자 크기 조절 — 설정 탭을 열지 않아도 window.setCalFontSize 등록되도록 임포트
 import { hideSplash } from './splash.js'; // v0.0.34: 앱 자체 스플래시 — 첫 렌더 완료 시점에 닫음
-import './push.js'; // v0.0.36: FCM 진짜 푸시 알림 — 설정 탭을 열지 않아도 window.enablePushNotifications 등록되도록 임포트
+import { refreshTokenIfNeeded } from './push.js'; // v0.0.36: FCM 진짜 푸시 알림 — import 자체가 window.enablePushNotifications 등 등록, v0.0.38: 토큰 자동 갱신 함수도 여기서 사용
 
 /* ── 초기 로드 여부 플래그 ── */
 let _firstLoad = true;
@@ -65,6 +65,7 @@ function onDataLoaded(data, hasPendingWrites) {
   // v0.0.5: 알림 확인 UI를 설정 탭으로 옮기면서, 알림 자체는 탭 방문 여부와 무관하게
   // 앱을 열 때마다(데이터 로드 시) 항상 확인하도록 여기서 별도로 호출
   checkAndNotify();
+  refreshTokenIfNeeded(); // v0.0.38: 진짜 푸시 토큰도 같은 타이밍에 조용히 갱신(권한이 이미 허용된 경우만 동작)
 
   if (document.getElementById('pg-settings').classList.contains('on')) {
     renderSettings();

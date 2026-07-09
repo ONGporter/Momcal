@@ -1,0 +1,8 @@
+{
+  "functions": {
+    "source": "functions",
+    "predeploy": [
+      "node functions/scripts/sync-data.cjs"
+    ]
+  }
+}

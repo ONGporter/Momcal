@@ -20,8 +20,8 @@
 ## 기술 스택
 
 - **Frontend**: Vanilla JS (ES6 Module), HTML5, CSS3 — 프레임워크·번들러 없음
-- **Backend**: Firebase Auth + Cloud Firestore
-- **배포**: GitHub Push → Vercel 자동 배포 (빌드 스텝 없음, 정적 파일 그대로 서빙)
+- **Backend**: Firebase Auth + Cloud Firestore + Cloud Functions(v0.0.38부터, FCM 예약 발송용 — Blaze 요금제)
+- **배포**: 앱 본체는 GitHub Push → Vercel 자동 배포(빌드 스텝 없음, 정적 파일 그대로 서빙). `functions/`는 별도 경로로 `firebase deploy --only functions`(수동, Vercel과 무관 — `docs/product-specs/push-notifications.md` 참고)
 - **폰트**: "온글잎 박다현체"(Ownglyph PDH)를 기본으로 사용 — 제목·본문·버튼·로고 대부분 동일, `fonts/OwnglyphParkDahyun.ttf`를 `@font-face`로 직접 서빙(외부 CDN 아님). Regular 굵기만 있어 굵게 표시가 필요한 곳도 `font-weight: normal`로 고정. **예외**: 체크리스트 세부 설명·육아정보 항목 설명·정책 페이지 본문 등 정보 전달용 긴 글은 "오뮤 다예쁨체"(Omyu Pretty, `fonts/OmyuPretty.ttf`)로 별도 적용
 - **기준 글자 크기**: `html { font-size: 19px }` — 앱 전체 `rem` 기반 글자가 이 값에 비례해서 커짐. 단, 캘린더 셀 안 이벤트 텍스트(`.ev-line`/`.ev-more`/`.week-ev-block`, `css/calendar.css`)는 셀 공간이 빠듯해 의도적으로 `px`로 고정해 이 확대에서 제외됨 — **새로 만드는 캘린더 셀 안 텍스트도 이 규칙을 따를지 검토할 것**. 설정 탭에서 사용자가 5단계로 직접 조절 가능(`html[data-fontsize]`, `js/fontSize.js`); 캘린더 안 글자만 따로 조절하는 설정도 별도로 있음(`html[data-cal-fontsize]`, `js/calFontSize.js`)
 - **아이콘**: 이모지 전용 (외부 아이콘 라이브러리 없음)
@@ -66,7 +66,13 @@ momcal/
 │   ├── modal.css                # 모달 공통
 │   └── growth.css               # 성장그래프 페이지
 ├── js/                          # 아래 "모듈 맵" 참고
-└── data/                        # 정적 데이터(코드 아님, 콘텐츠) — 아래 "데이터 파일" 참고
+├── data/                        # 정적 데이터(코드 아님, 콘텐츠) — 아래 "데이터 파일" 참고
+├── functions/                    # Cloud Functions(FCM 예약 발송, v0.0.38) — 별도 Node 프로젝트
+│   ├── index.js                  # dailyPushCheck: 매일 09:00 Asia/Seoul 예약 발송
+│   ├── data/                     # ⚠️ 직접 편집 금지 — sync-data.cjs가 루트 data/*.js에서 복사한 산출물
+│   ├── scripts/sync-data.cjs     # predeploy 훅: data/*.js → functions/data/ 동기화
+│   └── package.json
+├── firebase.json / .firebaserc   # Cloud Functions 배포 설정(functions.predeploy, 프로젝트 ID)
 ```
 
 > ⚠️ **예방접종 데이터는 `data/vaccines.js`(vaxSched)가 유일한 소스입니다.** 캘린더에 표시되는 개별 접종 이벤트(DTaP 1차 등, v0.0.22부터 제목에 이모지 접두어 없음 — `js/utils.js`의 `icon()`으로 화면에서만 표시)는 전부 여기서 생성됩니다. `data/milestones.js`의 건강검진 마일스톤에 예방접종을 요약해서 언급하는 항목을 추가하면 같은 날짜에 두 번 표시되는 "중복" 버그가 재발합니다.

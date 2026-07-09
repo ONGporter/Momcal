@@ -12,34 +12,43 @@
 
 ---
 
-## ⚠️ 새 대화로 이어갈 때 먼저 읽어주세요 (v0.0.37 인계 노트)
+## ⚠️ 새 대화로 이어갈 때 먼저 읽어주세요 (v0.0.38 인계 노트)
 
 지금까지의 자세한 변경 이력은 CHANGELOG.md에 버전별로 다 남아있고, PROJECT_SPEC.md·UI_GUIDELINE.md는 항상 최신 상태로 맞춰뒀으니 이 파일들을 먼저 읽으면 맥락 파악이 될 거예요.
 
-### 🔧 v0.0.37 — FCM VAPID 키 반영
-- 옹짐꾼님이 발급받은 VAPID 키를 `js/push.js`에 반영 완료 — 아래 "⚠️ 콘솔 설정 필요" 체크리스트에서 남은 항목(1~2번 완료 가정, 3번부터)만 확인하면 됨
-- `js/push.js` 내용이 바뀌어서 `sw.js`의 `CACHE_NAME`도 같이 올림 — **정적 파일(js/css) 내용만 바꿔도 캐시 버전을 안 올리면 기존 사용자에게 반영 안 된다는 걸 이번에도 재확인함**
+### 🆕 v0.0.38 — FCM 2단계(Cloud Functions 자동 발송), 토큰 자동 갱신
+- **`functions/` 디렉터리 신규** — 이 저장소에 처음 생기는 "앱 본체 외" Node 프로젝트. Vercel 자동 배포 대상이 아니라 `firebase deploy --only functions`로 별도 배포해야 함 — GitHub push만으로는 안 나감, 반드시 옹짐꾼님이 로컬에서 배포 명령을 실행해야 함
+- **`functions/data/*.js`는 생성 산출물**(`guide/*.html`과 같은 성격) — `functions/scripts/sync-data.cjs`가 배포 직전에 루트 `data/*.js`에서 복사함. 절대 직접 수정하지 말 것(다음 배포 때 사라짐)
+- 예방접종·정부지원 자동 일정 계산 로직(`js/calendar.js`의 `getAutoEvs`/`applyMods`)을 `functions/index.js`에 포팅해뒀음 — **앞으로 이 계산 로직을 고칠 땐 클라이언트/서버 두 곳 다 검토할 것**(같은 날짜를 계속 계산해야 알림과 캘린더 화면이 어긋나지 않음)
+- 자세한 배포 방법·구조는 `docs/product-specs/push-notifications.md` 참고 — 아래 "⚠️ 배포 필요" 섹션도 확인
 
-### 🆕 v0.0.36 — 마지막 선택 아이 유지, 진짜 FCM 푸시 알림 인프라 추가
-- **아이 선택 유지**: 아이를 전환하는 모든 곳(홈/캘린더/체크리스트/성장)이 `js/state.js`의 `selectChild(i)` 단일 진입점을 거치도록 통일 — 이 함수가 `S.selC` 설정 + `debounceSave()`를 함께 처리하므로, 앞으로 아이 선택 관련 UI를 새로 만들 땐 `S.selC=...`를 직접 쓰지 말고 반드시 `selectChild(i)`를 거칠 것
-- **FCM 푸시 인프라**: `js/push.js` 신규 — 전용 `firebase-messaging-sw.js` 없이 기존 `sw.js`가 "브링 유어 오운 서비스워커" 방식으로 `push`/`notificationclick`을 직접 처리하도록 연결함(Firebase 공식 지원 방식)
+### 🔧 v0.0.37 — FCM VAPID 키 반영
+- 옹짐꾼님이 발급받은 VAPID 키를 `js/push.js`에 반영 완료
 
 > v0.0.15~v0.0.24 인계 노트는 CHANGELOG.md에 동일 내용이 더 자세히 남아있어 정리했습니다(버전 번호로 검색하면 찾을 수 있음).
 
-## ⚠️ 콘솔 설정 필요 (옹짐꾼님 액션 대기 — v0.0.36~37 FCM 푸시)
+## ⚠️ 배포 필요 (옹짐꾼님 액션 대기 — v0.0.38 FCM 2단계)
 
-1. ~~Firebase 콘솔 → 프로젝트 설정 → Cloud Messaging 탭에서 사용 설정~~
-2. ~~웹 구성 → 웹 푸시 인증서 키 쌍 생성 → 값 복사~~
-3. ~~복사한 값을 `js/push.js`의 `VAPID_KEY`에 반영~~ (v0.0.37에서 완료)
-4. **다음 확인 필요**: 배포 후 설정 탭 → "진짜 푸시 알림 켜기" → 브라우저 알림 허용 → Firestore 콘솔에서 `users/{uid}` 문서에 `fcmTokens` 필드가 생기는지 확인 (안 생기면 Firebase 콘솔에서 Cloud Messaging 자체가 아직 "사용 설정" 안 된 상태일 수 있음 — 1번부터 다시 확인)
-5. Cloud Messaging → 캠페인 → 새 알림 → "테스트 메시지 전송"에 4번에서 확인한 토큰을 붙여넣고 전송 → **앱을 완전히 꺼둔 상태**에서도 알림이 오는지 확인
-6. (선택, 나중에) "예방접종 하루 전"처럼 사용자별 자동 발송을 원하면 Blaze 요금제 전환 + Cloud Functions 스케줄러 필요 — 별도로 논의해서 진행
+코드는 다 준비됐지만, Cloud Functions는 로컬에서 CLI로 직접 배포해야 함(Claude는 네트워크 접근이 없어서 대신 배포 못 함):
+
+```bash
+cd functions
+npm install          # 최초 1회 (firebase-admin, firebase-functions 설치)
+npm run deploy        # data 동기화 + firebase deploy --only functions
+```
+
+1. `firebase-tools` CLI 로컬 설치 안 돼있으면: `npm install -g firebase-tools` → `firebase login`
+2. 위 배포 명령 실행 (`.firebaserc`에 프로젝트가 `momcal-fd12b`로 고정돼있어 별도 프로젝트 선택 불필요)
+3. Firebase 콘솔 → Functions에서 `dailyPushCheck`가 배포됐는지 확인
+4. **즉시 테스트**: Firebase 콘솔 → Functions → `dailyPushCheck` → "테스트 실행"으로 스케줄을 안 기다리고 바로 1회 실행 가능 — 예방접종/정부지원/오늘 일정이 있는 계정으로 로그인한 상태에서 실행해보고, 앱을 완전히 꺼둔 채로 알림이 오는지 확인
+5. 실제 스케줄(매일 09:00 Asia/Seoul)로도 며칠 지켜보면서 정상 작동하는지 확인
+6. 문제가 있으면 Firebase 콘솔 → Functions → 로그(또는 `firebase functions:log`)에서 에러 확인
 
 자세한 배경·구조는 `docs/product-specs/push-notifications.md` 참고.
 
 ### 미완성 — 다음에 이어서 해야 할 것
 1. **한국 공휴일 데이터는 2025~2028년까지만 등록됨** (`data/kr-holidays.js`) — 2029년 이후는 매년 말 다음 해 공휴일이 확정되면 추가해야 함. 2028년은 설날·추석 등 음력 날짜는 맞지만 대체공휴일 일부는 아직 확정 고시 전이라 보수적으로 비워둔 상태
-2. **FCM 진짜 푸시 알림** — 클라이언트 코드(`js/push.js`)와 VAPID 키 설정까지 완료(v0.0.36~37). 위 "⚠️ 콘솔 설정 필요" 4~5번(Firestore 토큰 저장 확인, 테스트 발송 확인)이 아직 남음. 그 이후 "예방접종 하루 전"처럼 사용자별 자동 발송까지 하려면 서버 스케줄러(Cloud Functions + Cloud Scheduler, Blaze 요금제)가 추가로 필요함
+2. **FCM 진짜 푸시 알림** — 코드는 1·2단계(수신 인프라+자동 발송) 전부 완료(v0.0.36~38). 위 "⚠️ 배포 필요" 항목만 남음
 3. **성장 예측은 아주 단순한 선형 추정**임 — WHO 성장 곡선 기반 예측처럼 정교하게 하려면 추가 작업 필요
 4. **다크 모드가 앱 전체 하드코딩 색상을 100% 커버하진 못했을 수 있음** — 매번 새로 발견되는 걸 보면 아직 못 찾은 구석이 남아있을 가능성이 높음
 5. **체크리스트 항목 전면 추가/수정 예정** — 옹짐꾼님이 세부 내용(어느 카테고리, 어떤 항목) 주시면 진행
@@ -69,13 +78,15 @@ momcal.vercel.app 접속자가 거의 없어서, 301 리다이렉트(momcal.verc
 
 ## 현재 확인 필요 항목
 
-### v0.0.37 (이번 버전 — FCM VAPID 키 반영)
-- [ ] 설정 탭 → "진짜 푸시 알림 켜기" 클릭 → 브라우저 알림 권한 허용 후, Firestore 콘솔에서 `users/{uid}` 문서에 `fcmTokens` 필드가 생기는지 확인 (자세한 절차는 위 "⚠️ 콘솔 설정 필요" 참고)
-- [ ] Cloud Messaging 캠페인에서 테스트 메시지를 보냈을 때, 앱을 완전히 꺼둔 상태에서도 알림이 오는지 확인
-- [ ] 화면 최하단 버전 표시가 "v0.0.37"로 보이는지 확인
+### v0.0.38 (이번 버전 — FCM 2단계 자동 발송, 토큰 자동 갱신)
+- [ ] `functions` 배포가 성공적으로 끝났는지 (`cd functions && npm install && npm run deploy`)
+- [ ] Firebase 콘솔 → Functions → `dailyPushCheck` "테스트 실행"으로 즉시 발송해보고, 앱을 완전히 꺼둔 상태에서도 알림이 오는지 확인
+- [ ] 예방접종이 내일인 아이 계정으로 테스트했을 때 "💉 내일 예방접종" 알림이 오는지 확인
+- [ ] 정부지원 마감이 3일 남은 항목이 있는 계정으로 테스트했을 때 "⏰ ... 마감이 3일 남았어요" 알림이 오는지 확인
+- [ ] 화면 최하단 버전 표시가 "v0.0.38"로 보이는지 확인
 
-### v0.0.36 (지난 버전 — 마지막 선택 아이 유지)
-- [ ] 아이가 둘 이상 등록된 상태에서, 아이를 클릭한 뒤 새로고침·재접속해도 그 아이가 계속 선택되어 있는지 확인 (홈/캘린더/체크리스트/성장 전부)
+### v0.0.37 (지난 버전 — FCM VAPID 키 반영)
+- [ ] 설정 탭 → "진짜 푸시 알림 켜기" → 알림 허용 후 Firestore `users/{uid}`에 `fcmTokens` 필드가 생기는지 확인
 
 ### 참고 — 알아두면 좋은 것
 - **v0.0.29부터**: "지난 버전 확인 항목"은 바로 이전 버전 것만 남기고 그 이전 버전들은 이 파일에서 지움(이미 CHANGELOG.md에 다 기록돼 있어서 중복이었음) — 새 버전이 나오면 이번 버전 항목은 위로, 그 전 "지난 버전" 항목은 지우는 방식으로 계속 유지
@@ -84,7 +95,7 @@ momcal.vercel.app 접속자가 거의 없어서, 301 리다이렉트(momcal.verc
 - **`guide/` 페이지는 `data/checklist-data.js`나 `data/government-support.js`를 수정하면 자동으로 갱신되지 않음** — `node scripts/build-guide.mjs`를 다시 실행해야 반영됨
 - **`data/government-support.js`의 `GOV_INFO_BASIS`는 제도 내용이 바뀔 때마다 함께 갱신해야 함**
 - **`data/kr-holidays.js`는 매년 말 다음 해 공휴일이 확정되면 함께 갱신해야 함**
-- **정적 파일(아이콘·CSS·JS) 내용을 바꾸면 `sw.js`의 `CACHE_NAME` 버전도 함께 올려야 기존 사용자에게 반영됨** (현재 v42) — 새 `js/` 파일을 추가할 땐 `APP_SHELL` 배열에도 추가할 것(v0.0.18에서 8개 누락분 발견·수정함)
+- **정적 파일(아이콘·CSS·JS) 내용을 바꾸면 `sw.js`의 `CACHE_NAME` 버전도 함께 올려야 기존 사용자에게 반영됨** (현재 v43) — 새 `js/` 파일을 추가할 땐 `APP_SHELL` 배열에도 추가할 것(v0.0.18에서 8개 누락분 발견·수정함)
 - **버전을 올릴 땐 `index.html`의 `.site-footer-version`과 `scripts/build-guide.mjs`의 `APP_VERSION`도 반드시 함께 올리고 `node scripts/build-guide.mjs`를 재실행할 것** (v0.0.15~16에서 빼먹었던 항목 — 자세한 사고 경위는 CHANGELOG.md v0.0.17 참고)
 - **AdSense 실제 신청·심사는 진행하지 않음** — 정책 페이지만 준비해둔 상태
 
@@ -98,7 +109,6 @@ momcal.vercel.app 접속자가 거의 없어서, 301 리다이렉트(momcal.verc
 - [ ] **이모지 대신 실제 그림 파일(이미지 에셋) 추가** — 아이 프로필 아바타(아기 남아/여아 등, 옹짐꾼님이 예시로 주신 손그림 스타일 참고), 체크리스트 성장 단계(씨앗→나무→아이) 등을 유니코드 이모지 대신 실제 PNG/SVG 일러스트로 교체. Claude에게는 이미지 생성 도구가 없어서 실제 그림 파일을 옹짐꾼님이 만들어서 주셔야 진행 가능 — 받으면 `icons/` 폴더에 정식 에셋으로 추가
 - [ ] **하드코딩된 파스텔 배경색 잔여분 그레이스케일 정리** (v0.0.20~21에서 대부분 정리했지만, 카드 hover 등 새로 발견되는 곳이 있으면 `docs/UI_GUIDELINE.md` 색상 예외 목록 기준으로 판단해서 정리)
 - [ ] **체크리스트 항목 전면 추가/수정** — 옹짐꾼님이 세부 내용 주시면 진행
-- [ ] **FCM 2단계 — 개인화 자동 발송** (v0.0.36~37에서 수신 인프라·VAPID 키 설정까지 완료, `docs/product-specs/push-notifications.md` 참고) — "예방접종 하루 전"처럼 사용자별로 다른 시각에 자동 발송하려면 Cloud Functions + Cloud Scheduler(Blaze 요금제) 서버 스케줄러가 필요함. 콘솔 쪽 실기기 테스트 발송 확인이 끝난 뒤 논의
 - [ ] 병원 방문 기록 상세 (진료과·의사 메모 등)
 - [ ] AI 육아비서 구조 (OpenAI 연결 준비)
 - [ ] 원더윅스(Wonder Weeks) 기간을 캘린더/체크리스트에 추가하는 것 고려
