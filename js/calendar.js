@@ -117,14 +117,46 @@ export function selectEvColorSwatch(inputId, color, btn) {
 }
 window.selectEvColorSwatch = selectEvColorSwatch;
 
-/** 일정 추가 폼의 색상 스와치 렌더 — renderCal()에서 캘린더 탭을 열 때마다 호출됨.
- *  이미 골라둔 색이 있으면 그대로 유지(일정을 여러 개 연달아 추가할 때 매번 다시
- *  고르지 않아도 되도록) — 없으면 첫 번째 프리셋("하늘")을 기본값으로 보여줌 */
+/**
+ * v0.0.32: "일정 직접 추가" 폼의 "종류" 버튼(내 일정/필수/추천/접종)과 "일정 색상" 스와치를
+ * 하나로 합침 — 종류마다 색이 이미 정해져 있는데 종류를 따로 고르고 색도 따로 고르는 게
+ * 중복이라는 피드백으로, 범례와 똑같은 색의 스와치를 눌러서 종류+색을 한 번에 고르게 함
+ * (getEvColor()를 그대로 써서, 범례에서 색을 바꿔둔 경우에도 항상 최신 색으로 표시됨)
+ */
+const ADDABLE_EV_TYPES = ['custom', 'req', 'rec', 'vax'];
+
+function evTypeSwatchesHtml(selectedType) {
+  const sel = selectedType || 'custom';
+  return `
+    <input type="hidden" id="evType" value="${sel}">
+    <div class="ev-type-swatches">
+      ${ADDABLE_EV_TYPES.map(cat => `
+        <button type="button" class="ev-type-swatch${cat === sel ? ' on' : ''}"
+                onclick="selectEvTypeSwatch('${cat}', this)">
+          <span class="ev-type-dot" style="background:${getEvColor(cat)}"></span>
+          <span class="ev-type-label">${EV_CATEGORY_LABELS[cat]}</span>
+        </button>
+      `).join('')}
+    </div>`;
+}
+
+/** 종류+색상 스와치 클릭 핸들러 */
+export function selectEvTypeSwatch(cat, btn) {
+  const input = document.getElementById('evType');
+  if (input) input.value = cat;
+  btn.parentElement.querySelectorAll('.ev-type-swatch').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+}
+window.selectEvTypeSwatch = selectEvTypeSwatch;
+
+/** 일정 추가 폼의 종류+색상 스와치 렌더 — renderCal()에서 캘린더 탭을 열 때마다 호출됨.
+ *  이미 골라둔 종류가 있으면 그대로 유지(일정을 여러 개 연달아 추가할 때 매번 다시
+ *  고르지 않아도 되도록) — 없으면 첫 번째("내 일정")를 기본값으로 보여줌 */
 export function renderAddEvColorSwatches() {
   const wrap = document.getElementById('evColorSwatchWrap');
   if (!wrap) return;
-  const prevColor = document.getElementById('evColor')?.value;
-  wrap.innerHTML = colorSwatchesHtml('evColor', prevColor || CUSTOM_EV_COLOR_PRESETS[0].color);
+  const prevType = document.getElementById('evType')?.value;
+  wrap.innerHTML = evTypeSwatchesHtml(prevType || 'custom');
 }
 
 /** 사용자가 특정 카테고리 색상을 직접 지정 */
@@ -694,15 +726,6 @@ export function selectDate(ds) {
   showDayPanel(ds);
 }
 
-export function setEvType(t, btn) {
-  S.evType = t;
-  document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('on'));
-  btn.classList.add('on');
-  // v0.0.16: "내 일정"일 때만 색상 선택 필드를 보여줌(그 외 종류는 범례의 공통 색을 그대로 씀)
-  const colorGroup = document.getElementById('evColorGroup');
-  if (colorGroup) colorGroup.style.display = t === 'custom' ? 'block' : 'none';
-}
-
 /* ══════════════════════════════════════
  *  캘린더 렌더링
  * ══════════════════════════════════════ */
@@ -769,23 +792,31 @@ function renderMonthView() {
 
 /**
  * Sprint 11: 캘린더 타입 필터 — 이유식/예방접종/정부지원
- * S.calFilter의 값이 모두 false면 전체 표시, 하나라도 true면 선택된 타입만 표시.
+ * v0.0.32: 필터는 한 번에 하나만 켤 수 있음(중복 선택 시 기존 일정과 이유식 강조가 뒤섞여
+ * 보이는 문제로, 서로 배타적인 라디오 버튼처럼 동작하도록 변경 — toggleCalFilter 참고)
+ * 이유식 필터는 더 이상 "이벤트"를 거르는 게 아니라(이유식은 스티커로만 기록되므로) 셀
+ * 가운데에 스티커를 크게 보여주는 방식으로 동작함(cellHTML 참고) — 그래서 이유식 필터가
+ * 켜져 있을 땐 이벤트를 전부 숨김(스티커 강조와 뒤섞이지 않도록)
  */
 function applyCalFilter(dayEvs) {
   const f = S.calFilter;
   if (!f || (!f.food && !f.vax && !f.gov)) return dayEvs;
+  if (f.food) return [];
   return dayEvs.filter(e =>
-    (f.vax  && e.type === 'vax') ||
-    (f.gov  && e.type === 'gov') ||
-    (f.food && e.cat  === 'food')
+    (f.vax && e.type === 'vax') ||
+    (f.gov && e.type === 'gov')
   );
 }
 
-/** 필터 버튼 클릭 */
+/** 필터 버튼 클릭 — v0.0.32: 한 번에 하나만 켤 수 있도록 배타적으로 동작(같은 걸 다시 누르면 꺼짐) */
 export function toggleCalFilter(type, btn) {
   if (!S.calFilter) S.calFilter = { food: false, vax: false, gov: false };
-  S.calFilter[type] = !S.calFilter[type];
-  if (btn) btn.classList.toggle('on', S.calFilter[type]);
+  const wasOn = !!S.calFilter[type];
+  S.calFilter = { food: false, vax: false, gov: false };
+  S.calFilter[type] = !wasOn;
+  document.querySelectorAll('.cal-filter-btn').forEach(b =>
+    b.classList.toggle('on', b.dataset.filter === type && !wasOn)
+  );
   renderCal();
   if (S.selDate) showDayPanel(S.selDate);
 }
@@ -829,6 +860,10 @@ function groupVaxEvents(dayEvs) {
  * - 이벤트 필: 드래그 가능, 클릭 → 수정 Modal, ✅ 완료 표시
  */
 function cellHTML(ds, d, other, evs, td, th) {
+  // v0.0.32: 이유식 필터가 켜져 있으면 칸 가운데에 이유식 스티커(g수 포함)를 크게 보여주고
+  // 나머지 일정·스티커는 숨김 — 필터를 눌렀을 때 실제로 뭔가 달라지게 하기 위함
+  // (이유식은 더 이상 자동 일정이 아니라 스티커로만 기록되므로, 이벤트 필터와는 다르게 다룸)
+  const isFoodFilterOn = !!(S.calFilter && S.calFilter.food);
   const de           = groupVaxEvents(applyCalFilter(evs.filter(e => e.date === ds)));
   const stickersAll  = S.dayStickers[ds] || [];
 
@@ -863,6 +898,13 @@ function cellHTML(ds, d, other, evs, td, th) {
        </span>`
     : '';
 
+  // 이유식 필터 켜졌을 때: 칸 가운데에 "🍚 50g" 형태로 세로로 크게 나열
+  const foodCenterHtml = foodStickers.length
+    ? `<div class="day-food-center">
+        ${foodStickers.map(s => `<span class="food-center-item">${formatSticker(s)}</span>`).join('')}
+       </div>`
+    : '';
+
   const evsHtml = renderCellEvents(de);
 
   // 오늘 날짜면 기존처럼 원형 강조가 우선, 아니면 주말/공휴일 여부에 따라 붉은 글자색만 적용
@@ -880,10 +922,11 @@ function cellHTML(ds, d, other, evs, td, th) {
          style="${isSel ? `background:${th.cell};border:1.5px solid var(--pk)` : ''}">
       <div class="day-num-row">
         <div class="day-num" style="${dayNumStyle}">${d}</div>
-        ${foodHtml}
+        ${isFoodFilterOn ? '' : foodHtml}
       </div>
-      ${evsHtml}
-      ${stickerHtml}
+      ${isFoodFilterOn
+        ? foodCenterHtml
+        : `${evsHtml}${stickerHtml}`}
     </div>`;
 }
 
@@ -1125,6 +1168,7 @@ function renderWeekView() {
                    grid-template-rows:auto repeat(${WEEK_HOUR_SLOTS.length},${WEEK_ROW_H}px)">`;
 
   // ── "종일" 행 (1행) — 시간 없는 일정 + 일반 스티커 (이유식 스티커는 위 헤더로 이동) ──
+  const isFoodFilterOn = !!(S.calFilter && S.calFilter.food);
   html += `<div class="week-grid-line" style="grid-column:1;grid-row:1;font-size:.62rem;color:var(--txl);font-weight:700;padding:10px 4px;text-align:right;border-bottom:1px solid #F5EEF8">종일</div>`;
   weekDays.forEach((d, di) => {
     const ds  = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -1136,6 +1180,14 @@ function renderWeekView() {
       ? `<div class="sticker-row" style="position:static;margin-top:2px;justify-content:flex-start">
           ${otherStickers.slice(0, 4).map(s => `<span class="sticker-on-cal">${s}</span>`).join('')}
           ${otherStickers.length > 4 ? `<span class="sticker-overflow">+${otherStickers.length - 4}</span>` : ''}
+         </div>`
+      : '';
+
+    // v0.0.32: 이유식 필터가 켜져 있으면 "종일" 행에 이유식 스티커(g수 포함)를 강조해서 보여줌
+    const wdFoodStickers = (S.dayStickers[ds] || []).filter(s => isFoodSticker(s));
+    const foodCenterHtml = wdFoodStickers.length
+      ? `<div class="day-food-center">
+          ${wdFoodStickers.map(s => `<span class="food-center-item">${formatSticker(s)}</span>`).join('')}
          </div>`
       : '';
 
@@ -1151,8 +1203,7 @@ function renderWeekView() {
            ondrop="onDrop(event,'${ds}')"
            onmouseover="this.style.background='var(--pkl)'"
            onmouseout="this.style.background='${isTd ? th.cell : 'var(--wh)'}'">
-        ${renderCellEvents(de)}
-        ${stickerHtml}
+        ${isFoodFilterOn ? foodCenterHtml : `${renderCellEvents(de)}${stickerHtml}`}
       </div>`;
   });
 
@@ -1255,17 +1306,14 @@ export function showDayPanel(ds) {
             const bg  = bc + '1A'; // 배경은 포인트 색의 옅은 톤(약 10% 불투명도)
 
             // Sprint 10: 예방접종 그룹 카드 — 회차별 개별 항목을 리스트로 펼쳐 보여줌
+            // v0.0.32: 캘린더에 뜨는 건 어차피 다 필수 성격이라 "필수" 배지가 불필요한 정보라는
+            // 피드백으로, 묶음 카드 헤더의 배지를 없애고 단순 제목 한 줄로 정리
             if (e._isVaxGroup) {
               return `
                 <div class="dp-ev" style="background:${bg};flex-direction:column;align-items:stretch">
-                  <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px">
-                    <div class="dp-ev-main">
-                      <div class="dp-ev-title">
-                        ${stripLeadingEmoji(e.title)}
-                        ${e.done ? '<span style="color:var(--mn);margin-left:5px"><span class="icon icon-sm" translate="no" aria-hidden="true">check_circle</span> 모두 완료</span>' : ''}
-                      </div>
-                    </div>
-                    <span class="dp-ev-badge" style="background:${bc}">필수</span>
+                  <div class="dp-ev-title" style="margin-bottom:8px">
+                    ${stripLeadingEmoji(e.title)}
+                    ${e.done ? '<span style="color:var(--mn);margin-left:5px"><span class="icon icon-sm" translate="no" aria-hidden="true">check_circle</span> 모두 완료</span>' : ''}
                   </div>
                   <div style="display:flex;flex-direction:column;gap:6px">
                     ${e._groupItems.map(item => `
@@ -1284,10 +1332,6 @@ export function showDayPanel(ds) {
                 </div>`;
             }
 
-            // v0.0.29: 체크리스트 정부지원 탭(js/govSupport.js)과 동일한 문구로 통일(이모지 제거)
-            const govLbl = e.govStatus === 'paid' ? '지급 완료' : e.govStatus === 'applied' ? '신청 완료' : '신청 전';
-            // v0.0.29 버그 수정: 접종도 필수 항목인데 배지가 "접종"으로만 나와 필수 여부가 안 보이던 문제 → 필수로 통일
-            const lbl = e.type === 'req' ? '★필수'  : e.type === 'rec' ? '추천'    : e.type === 'vax' ? '★필수'    : e.type === 'gov' ? govLbl : '내일정';
             const urgent = isGovDeadlineSoon(e);
             const dLeft = urgent ? daysUntil(e.deadlineDate) : null;
             const urgentText = dLeft === null ? '' : dLeft < 0 ? '(마감 지남)' : dLeft === 0 ? '(오늘 마감)' : `(D-${dLeft})`;
@@ -1297,7 +1341,6 @@ export function showDayPanel(ds) {
                   <div class="dp-ev-title">
                     ${stripLeadingEmoji(e.title)}
                     ${e.done ? '<span style="color:var(--mn);margin-left:5px"><span class="icon icon-sm" translate="no" aria-hidden="true">check_circle</span></span>' : ''}
-                    ${e.type === 'gov' && e.imp === 'req' ? '<span class="badge-r" style="margin-left:5px">필수</span>' : ''}
                     ${e.type === 'gov' && e.imp === 'rec' ? '<span class="badge-o" style="margin-left:5px">해당자</span>' : ''}
                     ${urgent ? `<span class="badge-r" style="margin-left:5px"><span class="icon icon-sm" translate="no" aria-hidden="true">schedule</span> 마감임박</span>` : ''}
                   </div>
@@ -1314,13 +1357,10 @@ export function showDayPanel(ds) {
                   ${e.type === 'gov' && e.link
                     ? `<a href="${e.link}" target="_blank" rel="noopener" style="font-size:.72rem;color:var(--bl);font-weight:800;text-decoration:underline"><span class="icon icon-sm" translate="no" aria-hidden="true">open_in_new</span> 관련 기관 바로가기</a>` : ''}
                 </div>
-                <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;flex-shrink:0">
-                  <span class="dp-ev-badge" style="background:${bc}">${lbl}</span>
-                  <button onclick="openEvModal(${e._idx})"
-                          style="background:none;border:1px solid #EEE0F0;border-radius:8px;
-                                 padding:3px 8px;font-size:.65rem;font-weight:800;
-                                 color:var(--txl);cursor:pointer;font-family:inherit"><span class="icon icon-sm" translate="no" aria-hidden="true">edit</span> 수정</button>
-                </div>
+                <button onclick="openEvModal(${e._idx})"
+                        style="background:none;border:1px solid #EEE0F0;border-radius:8px;flex-shrink:0;
+                               padding:3px 8px;font-size:.65rem;font-weight:800;
+                               color:var(--txl);cursor:pointer;font-family:inherit"><span class="icon icon-sm" translate="no" aria-hidden="true">edit</span> 수정</button>
               </div>`;
           }).join('')
         : '<p style="color:var(--txl);font-size:.82rem;text-align:center;padding:14px">이 날은 일정이 없어요<br><span style="font-size:.74rem">아래에서 일정이나 스티커를 추가해보세요!</span></p>'}
@@ -1364,16 +1404,16 @@ export function addCustomEv() {
     return;
   }
 
-  // v0.0.16: "내 일정"으로 추가할 때는 직접 고른 색을 이 일정에만 저장(color 필드) —
-  // 필수/추천/접종으로 추가하면 기존처럼 카테고리 공통 색을 그대로 씀
-  const color = S.evType === 'custom' ? (document.getElementById('evColor')?.value || '') : '';
+  // v0.0.32: "종류" 버튼을 없애고 색상 스와치가 종류를 겸함(evTypeSwatchesHtml 참고) —
+  // 색을 개별 저장하지 않고 항상 범례의 카테고리 공통 색을 그대로 씀(getEvDisplayColor가
+  // e.color가 없으면 자동으로 그렇게 처리함)
+  const type = document.getElementById('evType')?.value || 'custom';
 
   S.customEvs.push({
     date,
     title: buildEvTitleWithTime(time, endTime, title),
     note,
-    type: S.evType,
-    ...(color ? { color } : {}),
+    type,
     auto: false,
     _id:  Date.now(),
   });
@@ -1564,7 +1604,6 @@ window.setCalView          = setCalView;
 window.setTheme            = setTheme;
 window.selectDate          = selectDate;
 window.showDayPanel        = showDayPanel;
-window.setEvType           = setEvType;
 window.addCustomEv         = addCustomEv;
 window.delCustomEv         = delCustomEv;
 window.renderStickerPicker = renderStickerPicker;

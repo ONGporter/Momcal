@@ -21,7 +21,7 @@
 // 종류 선택 아이콘 통일, 아이 성별 기반 성장단계 아이콘, 예방접종/정부지원 이모지 마커 제거(데이터 마이그레이션 포함)
 // v0.0.23: 정부지원 사이드바 통일, 태아 성장 기록, 체크리스트 추천/비추천(도움돼요),
 // 체크리스트 이미지 공유(html2canvas 신규 도입) 반영 — 캐시 버전 상향
-const CACHE_NAME = 'momcal-shell-v36';
+const CACHE_NAME = 'momcal-shell-v37';
 
 const APP_SHELL = [
   './',

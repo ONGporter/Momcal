@@ -72,6 +72,16 @@
   border-radius: 4px; padding: 1px 3px; font-weight: 800; line-height: 1.3;
 }
 
+/* ── v0.0.32: 이유식 필터 켜졌을 때 칸 가운데에 크게 보여주는 스타일 ── */
+.day-food-center {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px; height: 100%; min-height: 56px; text-align: center;
+}
+.food-center-item {
+  font-size: .72rem; font-weight: 800; color: var(--pkd, #C2185B);
+  background: var(--pkl); border-radius: 8px; padding: 2px 6px; line-height: 1.5;
+}
+
 /* ── EVENT LINES (Sprint 26, 형광펜 스타일로 개편 Sprint 27) ── */
 /* Sprint 26에서 배경을 아예 없앴더니 예쁘지 않다는 피드백 — 대신 형광펜으로 칠한 것처럼
    글자 뒤에 옅은 색 배경을 살짝만 깔아서, 박스 여백 때문에 공간이 줄어드는 문제 없이도
@@ -173,7 +183,8 @@ html[data-cal-fontsize="xl"] .ev-more { font-size: 11px; }
 }
 .type-btn.on { border-color: var(--pk); background: var(--pkl); color: var(--pkd); }
 
-/* v0.0.17: "내 일정" 색상 스와치 — 자유 색상 피커 대신 파스텔 톤 7개 중 고르는 방식 */
+/* v0.0.17: "내 일정" 색상 스와치 — 자유 색상 피커 대신 파스텔 톤 7개 중 고르는 방식
+   (일정 수정 Modal에서 개별 커스텀 일정 색을 다시 고를 때 씀) */
 .ev-color-swatches { display: flex; gap: 8px; flex-wrap: wrap; padding-top: 2px; }
 .ev-color-swatch {
   width: 30px; height: 30px; border-radius: 50%; cursor: pointer;
@@ -182,6 +193,20 @@ html[data-cal-fontsize="xl"] .ev-more { font-size: 11px; }
 }
 .ev-color-swatch:hover { transform: scale(1.12); }
 .ev-color-swatch.on { border-color: var(--tx); transform: scale(1.12); }
+
+/* v0.0.32: "일정 직접 추가" 폼의 종류+색상 통합 스와치 — 범례와 같은 색의 동그라미 + 이름을
+   나란히 보여주는 필 버튼. 눌러서 종류(=색)를 한 번에 고름(호버 툴팁에 의존하지 않도록
+   이름을 항상 보이게 함 — 이 앱은 모바일 위주라 터치에서는 title 툴팁이 안 보임) */
+.ev-type-swatches { display: flex; gap: 8px; flex-wrap: wrap; padding-top: 2px; }
+.ev-type-swatch {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 12px; border-radius: 40px; cursor: pointer;
+  border: 1.5px solid #EEE0F0; background: var(--wh); font-family: inherit;
+  font-size: .74rem; font-weight: 800; color: var(--tx); transition: all .18s;
+}
+.ev-type-swatch:hover { border-color: var(--pk); }
+.ev-type-swatch.on { border-color: transparent; background: var(--pkl); box-shadow: 0 2px 8px rgba(200,80,180,.16); }
+.ev-type-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
 
 /* ── RESPONSIVE ── */
 @media (max-width: 640px) {

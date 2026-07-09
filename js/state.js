@@ -57,7 +57,6 @@ export const S = Object.assign(emptyState(), {
   calView:  'month',
   calWeekRef: null,      // v0.0.11: 주간 뷰 전용 기준일(YYYY-MM-DD) — calMove()가 7일 단위로 이동
   selDate:  null,
-  evType:   'custom',
   selSCat:  0,           // 선택된 스티커 카테고리 인덱스
   clTab:    0,           // 체크리스트 탭 인덱스
   selClCat: 0,           // 체크리스트 선택된 사이드바 항목

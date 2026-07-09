@@ -288,7 +288,7 @@
   <!-- Sprint 11: 캘린더 필터 -->
   <div style="display:flex;gap:6px;margin-bottom:12px;align-items:center;flex-wrap:wrap">
     <span style="font-size:.72rem;font-weight:800;color:var(--txl)"><span class="icon icon-sm" translate="no" aria-hidden="true">filter_alt</span> 필터:</span>
-    <button class="cal-filter-btn" data-filter="food" onclick="toggleCalFilter('food',this)" title="이유식" aria-label="이유식 필터"><span class="icon icon-sm" translate="no" aria-hidden="true">restaurant</span></button>
+    <button class="cal-filter-btn" data-filter="food" onclick="toggleCalFilter('food',this)"><span class="icon icon-sm" translate="no" aria-hidden="true">restaurant</span> 이유식</button>
     <button class="cal-filter-btn" data-filter="vax"  onclick="toggleCalFilter('vax',this)"><span class="icon icon-sm" translate="no" aria-hidden="true">vaccines</span> 예방접종</button>
     <button class="cal-filter-btn" data-filter="gov"  onclick="toggleCalFilter('gov',this)"><span class="icon icon-sm" translate="no" aria-hidden="true">account_balance</span> 정부지원</button>
   </div>
@@ -339,15 +339,6 @@
     <div class="fg">
       <label>메모</label>
       <input id="evNote" placeholder="추가 메모 (선택)"/>
-    </div>
-    <div class="fg">
-      <label>종류</label>
-      <div class="type-row">
-        <button class="type-btn on" onclick="setEvType('custom',this)"><span class="icon icon-sm" translate="no" aria-hidden="true">push_pin</span> 내 일정</button>
-        <button class="type-btn"    onclick="setEvType('req',this)"><span class="icon icon-sm" translate="no" aria-hidden="true">star</span> 필수</button>
-        <button class="type-btn"    onclick="setEvType('rec',this)"><span class="icon icon-sm" translate="no" aria-hidden="true">recommend</span> 추천</button>
-        <button class="type-btn"    onclick="setEvType('vax',this)"><span class="icon icon-sm" translate="no" aria-hidden="true">vaccines</span> 접종</button>
-      </div>
     </div>
     <div class="fg" id="evColorGroup">
       <label><span class="icon icon-sm" translate="no" aria-hidden="true">palette</span> 일정 색상</label>
@@ -428,7 +419,7 @@
     <a href="./terms.html"><span class="icon icon-sm" translate="no" aria-hidden="true">description</span> 이용약관</a>
     <a href="./contact.html"><span class="icon icon-sm" translate="no" aria-hidden="true">mail</span> 문의</a>
   </div>
-  <div class="site-footer-version">맘캘 MomCal v0.0.31</div>
+  <div class="site-footer-version">맘캘 MomCal v0.0.32</div>
 </footer>
 
 <!-- ════════════════════════════════════
