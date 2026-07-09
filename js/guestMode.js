@@ -18,6 +18,7 @@
  */
 
 import { S, applyData, emptyState } from './state.js';
+import { hideSplash } from './splash.js'; // v0.0.34: 앱 자체 스플래시 — 게스트 모드 첫 렌더 완료 시점에 닫음
 
 const GUEST_KEY = 'momcal_guest_v1';
 
@@ -100,6 +101,7 @@ export function enterGuestMode() {
   if (document.getElementById('pg-growth')?.classList.contains('on')) {
     window.renderGrowthPage?.();
   }
+  hideSplash();
 }
 
 // window 노출 — state.js에서 순환 import 없이 호출하기 위해 (기존 프로젝트 패턴과 동일)

@@ -97,6 +97,7 @@ momcal/
 | `demoMode.js` | 예시 데이터로 둘러보기 (샘플 데이터, 저장 안 함 — 게스트 모드와 별개) |
 | `modal.js` | `showModal()`, `cm()` |
 | `utils.js` | `today()`(KST 기준), `ageD()`, `ageFmt()` 등 유틸 |
+| `splash.js` | 앱 자체 스플래시 화면 — `hideSplash()`, 최대 4초 안전장치 타임아웃 포함 (v0.0.34) |
 
 ### 데이터 파일 (`data/`)
 
