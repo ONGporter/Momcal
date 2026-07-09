@@ -554,10 +554,10 @@ function openAddClItemModal(key) {
     <div class="fg" style="margin-top:10px">
       <label>필수 여부</label>
       <div style="display:flex;gap:8px;margin-top:4px">
-        <label style="display:flex;align-items:center;gap:5px;font-size:.8rem;font-weight:700;color:var(--tx);cursor:pointer">
+        <label style="display:flex;align-items:center;gap:5px;font-size:.8rem;font-weight:700;color:var(--tx);cursor:pointer;white-space:nowrap;flex-shrink:0">
           <input type="radio" name="clNewItemReq" value="1" checked> 필수
         </label>
-        <label style="display:flex;align-items:center;gap:5px;font-size:.8rem;font-weight:700;color:var(--tx);cursor:pointer">
+        <label style="display:flex;align-items:center;gap:5px;font-size:.8rem;font-weight:700;color:var(--tx);cursor:pointer;white-space:nowrap;flex-shrink:0">
           <input type="radio" name="clNewItemReq" value="0"> 선택
         </label>
       </div>

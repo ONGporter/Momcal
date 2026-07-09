@@ -43,7 +43,7 @@ export function isGovDeadlineSoon(e) {
  */
 export const DEFAULT_EV_COLORS = {
   req:    '#F06292', // 필수
-  rec:    '#26A69A', // 추천
+  rec:    '#26A69A', // 선택
   food:   '#E53935', // 이유식
   vax:    '#9575CD', // 접종
   gov:    '#43A047', // 정부지원
@@ -51,7 +51,9 @@ export const DEFAULT_EV_COLORS = {
 };
 
 export const EV_CATEGORY_LABELS = {
-  req: '필수', rec: '추천', food: '이유식', vax: '접종', gov: '정부지원', custom: '내 일정',
+  // v0.0.33: 체크리스트에서는 선택 항목을 "선택"이라고 부르는데(항목 추가 모달의 "필수/선택"
+  // 참고) 캘린더 연동 일정만 "추천"이라고 따로 불러서 용어가 안 맞았음 — "선택"으로 통일
+  req: '필수', rec: '선택', food: '이유식', vax: '접종', gov: '정부지원', custom: '내 일정',
 };
 
 export const EV_CATEGORY_ORDER = ['req', 'rec', 'food', 'vax', 'gov', 'custom'];
@@ -69,7 +71,7 @@ export function getEvColor(cat) {
 /**
  * v0.0.16: 일정 1건의 실제 표시 색상.
  * "내 일정"(custom)으로 직접 추가한 일정은 추가할 때 고른 색(e.color)을 그대로 쓰고,
- * 그 외(필수/추천/접종/정부지원 등)는 기존처럼 카테고리 공통 색(범례에서 바꿀 수 있음)을 쓴다.
+ * 그 외(필수/선택/접종/정부지원 등)는 기존처럼 카테고리 공통 색(범례에서 바꿀 수 있음)을 쓴다.
  * "내 일정"을 카테고리 공통 색 하나로 묶어두면 여러 개인 일정을 구분하기 어렵다는
  * 피드백으로, "내 일정"만 일정 추가 시 직접 색을 고르는 방식으로 바꿈(범례에서는 제외됨).
  */
@@ -92,6 +94,17 @@ export const CUSTOM_EV_COLOR_PRESETS = [
   { name: '레몬',   color: '#FFE082' },
   { name: '그레이', color: '#B0BEC5' },
 ];
+
+/**
+ * v0.0.33: "일정 직접 추가" 폼에서 "내 일정" 스와치를 고르면 나오는 개별 색상 선택지 —
+ * 민트/라벤더/로즈는 각각 선택(#26A69A)/접종(#9575CD)/필수(#F06292)와 톤이 비슷해서
+ * 헷갈릴 수 있어 제외하고, 뚜렷이 구분되는 색만 남김(하늘/피치/레몬/그레이).
+ * 수정 Modal의 색상 스와치(이미 만들어둔 "내 일정"의 색을 다시 바꿀 때)는 원래 7색 전부
+ * 그대로 씀 — 거긴 종류 선택과 무관해서 헷갈릴 상황이 아님.
+ */
+export const CUSTOM_EV_COLOR_PRESETS_FOR_ADD = CUSTOM_EV_COLOR_PRESETS.filter(p =>
+  !['민트', '라벤더', '로즈'].includes(p.name)
+);
 
 /** 색상 스와치 UI(숨김 input + 동그란 버튼들) HTML — 일정 추가 폼·수정 모달에서 공용으로 씀 */
 function colorSwatchesHtml(hiddenInputId, selectedColor) {
@@ -118,15 +131,18 @@ export function selectEvColorSwatch(inputId, color, btn) {
 window.selectEvColorSwatch = selectEvColorSwatch;
 
 /**
- * v0.0.32: "일정 직접 추가" 폼의 "종류" 버튼(내 일정/필수/추천/접종)과 "일정 색상" 스와치를
- * 하나로 합침 — 종류마다 색이 이미 정해져 있는데 종류를 따로 고르고 색도 따로 고르는 게
- * 중복이라는 피드백으로, 범례와 똑같은 색의 스와치를 눌러서 종류+색을 한 번에 고르게 함
+ * v0.0.32: "일정 직접 추가" 폼의 "종류" 버튼(내 일정/필수/선택/접종)과 "일정 색상" 스와치를
+ * 하나로 합침 — 종류마다 색이 이미 정해져 있는데 색을 또 따로 고르는 게 중복이라는 피드백으로,
+ * 범례와 똑같은 색의 스와치를 눌러서 종류+색을 한 번에 고르게 함
  * (getEvColor()를 그대로 써서, 범례에서 색을 바꿔둔 경우에도 항상 최신 색으로 표시됨)
+ * v0.0.33: 다만 "내 일정"은 원래 일정마다 다른 색으로 구분해서 쓰던 용도라, "내 일정"을
+ * 고르면 아래에 개별 색상 선택지가 추가로 나타남(다른 종류 색과 안 겹치는 팔레트만 제공).
  */
 const ADDABLE_EV_TYPES = ['custom', 'req', 'rec', 'vax'];
 
-function evTypeSwatchesHtml(selectedType) {
+function evTypeSwatchesHtml(selectedType, selectedCustomColor) {
   const sel = selectedType || 'custom';
+  const customColor = (selectedCustomColor || CUSTOM_EV_COLOR_PRESETS_FOR_ADD[0].color).toLowerCase();
   return `
     <input type="hidden" id="evType" value="${sel}">
     <div class="ev-type-swatches">
@@ -137,26 +153,38 @@ function evTypeSwatchesHtml(selectedType) {
           <span class="ev-type-label">${EV_CATEGORY_LABELS[cat]}</span>
         </button>
       `).join('')}
+    </div>
+    <div id="evCustomColorPicker" style="display:${sel === 'custom' ? 'flex' : 'none'};gap:8px;flex-wrap:wrap;margin-top:8px">
+      <input type="hidden" id="evColor" value="${customColor}">
+      ${CUSTOM_EV_COLOR_PRESETS_FOR_ADD.map(p => `
+        <button type="button"
+                class="ev-color-swatch${p.color.toLowerCase() === customColor ? ' on' : ''}"
+                style="background:${p.color}" title="${p.name}"
+                onclick="selectEvColorSwatch('evColor', '${p.color}', this)"></button>
+      `).join('')}
     </div>`;
 }
 
-/** 종류+색상 스와치 클릭 핸들러 */
+/** 종류+색상 스와치 클릭 핸들러 — "내 일정"을 고르면 개별 색상 선택지를 함께 보여줌 */
 export function selectEvTypeSwatch(cat, btn) {
   const input = document.getElementById('evType');
   if (input) input.value = cat;
   btn.parentElement.querySelectorAll('.ev-type-swatch').forEach(b => b.classList.remove('on'));
   btn.classList.add('on');
+  const picker = document.getElementById('evCustomColorPicker');
+  if (picker) picker.style.display = cat === 'custom' ? 'flex' : 'none';
 }
 window.selectEvTypeSwatch = selectEvTypeSwatch;
 
 /** 일정 추가 폼의 종류+색상 스와치 렌더 — renderCal()에서 캘린더 탭을 열 때마다 호출됨.
- *  이미 골라둔 종류가 있으면 그대로 유지(일정을 여러 개 연달아 추가할 때 매번 다시
+ *  이미 골라둔 종류·개별 색이 있으면 그대로 유지(일정을 여러 개 연달아 추가할 때 매번 다시
  *  고르지 않아도 되도록) — 없으면 첫 번째("내 일정")를 기본값으로 보여줌 */
 export function renderAddEvColorSwatches() {
   const wrap = document.getElementById('evColorSwatchWrap');
   if (!wrap) return;
-  const prevType = document.getElementById('evType')?.value;
-  wrap.innerHTML = evTypeSwatchesHtml(prevType || 'custom');
+  const prevType  = document.getElementById('evType')?.value;
+  const prevColor = document.getElementById('evColor')?.value;
+  wrap.innerHTML = evTypeSwatchesHtml(prevType || 'custom', prevColor);
 }
 
 /** 사용자가 특정 카테고리 색상을 직접 지정 */
@@ -363,7 +391,7 @@ export function openEvModal(idx) {
     : parseEvTitleWithTime(ev.title);
 
   const typeLabel = {
-    req: `${icon('star', { size: 'sm' })} 필수`, rec: `${icon('recommend', { size: 'sm' })} 추천`,
+    req: `${icon('star', { size: 'sm' })} 필수`, rec: `${icon('recommend', { size: 'sm' })} 선택`,
     vax: `${icon('vaccines', { size: 'sm' })} 접종`, gov: `${icon('account_balance', { size: 'sm' })} 정부지원`, custom: `${icon('push_pin', { size: 'sm' })} 내 일정`,
   }[ev.type] || '';
 
@@ -1195,7 +1223,7 @@ function renderWeekView() {
       <div onclick="selectDate('${ds}')"
            data-date="${ds}"
            class="week-grid-line${isTd ? ' week-today-cell' : ''}"
-           style="grid-column:${di + 2};grid-row:1;min-height:56px;
+           style="grid-column:${di + 2};grid-row:1;min-height:56px;display:flex;flex-direction:column;
                   border-left:1px solid #F5EEF8;border-bottom:1px solid #F5EEF8;
                   padding:4px;cursor:pointer;background:${isTd ? th.cell : 'var(--wh)'};transition:background .14s"
            ondragover="onDragOver(event)"
@@ -1405,15 +1433,19 @@ export function addCustomEv() {
   }
 
   // v0.0.32: "종류" 버튼을 없애고 색상 스와치가 종류를 겸함(evTypeSwatchesHtml 참고) —
-  // 색을 개별 저장하지 않고 항상 범례의 카테고리 공통 색을 그대로 씀(getEvDisplayColor가
-  // e.color가 없으면 자동으로 그렇게 처리함)
-  const type = document.getElementById('evType')?.value || 'custom';
+  // 필수/선택/접종은 항상 범례의 카테고리 공통 색을 그대로 씀(getEvDisplayColor가 e.color가
+  // 없으면 자동으로 그렇게 처리함)
+  // v0.0.33: "내 일정"만은 원래대로 일정별 개별 색을 저장함(다른 종류 색과 안 겹치는
+  // 팔레트 — CUSTOM_EV_COLOR_PRESETS_FOR_ADD 참고)
+  const type  = document.getElementById('evType')?.value || 'custom';
+  const color = type === 'custom' ? (document.getElementById('evColor')?.value || '') : '';
 
   S.customEvs.push({
     date,
     title: buildEvTitleWithTime(time, endTime, title),
     note,
     type,
+    ...(color ? { color } : {}),
     auto: false,
     _id:  Date.now(),
   });
