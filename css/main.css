@@ -96,9 +96,8 @@ body {
 }
 #appSplash.out { opacity: 0; pointer-events: none; }
 #appSplash .splash-logo {
-  width: 88px;
   height: 88px;
-  border-radius: 24px;
+  width: auto;
   animation: splashPulse 1.6s ease-in-out infinite;
 }
 #appSplash .splash-word {
@@ -106,28 +105,22 @@ body {
   color: var(--pk);
   letter-spacing: .02em;
 }
-#appSplash .splash-dots { display: flex; gap: 6px; }
-#appSplash .splash-dots span {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--pk);
-  opacity: .35;
-  animation: splashDot 1.2s ease-in-out infinite;
+#appSplash .splash-loading-text {
+  font-size: .95rem;
+  color: var(--txl);
+  animation: splashTextFade 1.6s ease-in-out infinite;
 }
-#appSplash .splash-dots span:nth-child(2) { animation-delay: .15s; }
-#appSplash .splash-dots span:nth-child(3) { animation-delay: .3s; }
 @keyframes splashPulse {
   0%, 100% { transform: scale(1); opacity: 1; }
   50% { transform: scale(1.06); opacity: .88; }
 }
-@keyframes splashDot {
-  0%, 100% { opacity: .35; transform: translateY(0); }
-  50% { opacity: 1; transform: translateY(-3px); }
+@keyframes splashTextFade {
+  0%, 100% { opacity: .5; }
+  50% { opacity: 1; }
 }
 @media (prefers-reduced-motion: reduce) {
   #appSplash .splash-logo,
-  #appSplash .splash-dots span { animation: none; }
+  #appSplash .splash-loading-text { animation: none; }
 }
 
 /* v0.0.3: 제목·로고·버튼 전부 같은 손글씨 폰트로 통일 (Bold 파일이 없어 font-weight는 normal 고정) */
