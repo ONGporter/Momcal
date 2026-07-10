@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- v0.0.7: 설정 탭에서 고른 글자 크기를 CSS 로드 전에 미리 적용 / v0.0.8: 다크 모드도 추가 -->
+<script>
+  try {
+    if (localStorage.getItem('momcal_theme') === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+    var fs = localStorage.getItem('momcal_fontsize');
+    if (fs && fs !== 'md') document.documentElement.setAttribute('data-fontsize', fs);
+  } catch (e) {}
+</script>
+<title>관리자 | 맘캘 MomCal</title>
+<!-- 내부 운영 도구 페이지 — 검색엔진 노출 대상 아님 -->
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="https://momcal.app/icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0&display=block" rel="stylesheet">
+<link rel="stylesheet" href="./css/main.css">
+<link rel="stylesheet" href="./css/admin.css">
+</head>
+<body class="admin-body">
+
+<div class="admin-wrap">
+
+  <!-- ── 로그인 전 ── -->
+  <div id="adminLoginScreen" class="admin-gate">
+    <h2><span class="icon icon-sm" translate="no" aria-hidden="true">admin_panel_settings</span> 관리자 로그인</h2>
+    <p>맘캘 관리자 계정으로 로그인해주세요</p>
+    <div class="fg">
+      <label>이메일</label>
+      <input type="email" id="adminEmail" placeholder="admin@example.com" autocomplete="username">
+    </div>
+    <div class="fg">
+      <label>비밀번호</label>
+      <input type="password" id="adminPw" placeholder="비밀번호" autocomplete="current-password">
+    </div>
+    <div class="admin-msg err" id="adminLoginErr"></div>
+    <button class="btn bpk" id="adminLoginBtn" onclick="adminLogin()">로그인</button>
+  </div>
+
+  <!-- ── 로그인은 했지만 관리자 아님 ── -->
+  <div id="adminNoAccessScreen" class="admin-gate" style="display:none">
+    <h2><span class="icon icon-sm" translate="no" aria-hidden="true">block</span> 접근 권한이 없어요</h2>
+    <p>이 계정은 관리자로 등록되어 있지 않아요.<br>관리자 권한이 필요하면 개발팀에 문의해주세요.</p>
+    <button class="btn bmn" onclick="adminLogout()">다른 계정으로 로그인</button>
+  </div>
+
+  <!-- ── 관리자 패널 ── -->
+  <div id="adminPanel" style="display:none">
+    <div class="admin-header">
+      <h1><span class="icon" translate="no" aria-hidden="true">campaign</span> 관리자 푸시 발송</h1>
+      <div class="admin-user">
+        <span id="adminUserLabel"></span>
+        <button onclick="adminLogout()">로그아웃</button>
+      </div>
+    </div>
+
+    <div class="admin-card">
+      <h2><span class="icon icon-sm" translate="no" aria-hidden="true">edit_note</span> 새 발송</h2>
+
+      <div class="fg">
+        <label>제목</label>
+        <input type="text" id="bcTitle" placeholder="예: 맘캘 새 소식">
+      </div>
+      <div class="fg">
+        <label>내용</label>
+        <textarea id="bcBody" rows="3" placeholder="발송할 알림 내용을 입력하세요"></textarea>
+      </div>
+      <div class="fg">
+        <label>대상</label>
+        <select id="bcTarget" onchange="onBcTargetChange()">
+          <option value="all">전체 사용자</option>
+          <option value="pregnant">임산부</option>
+          <option value="ageRange">연령별 (개월 수 기준)</option>
+          <option value="uid">특정 사용자 (UID)</option>
+        </select>
+      </div>
+      <div class="fg2" id="bcAgeFields" style="display:none">
+        <div class="fg"><label>최소 개월</label><input type="number" id="bcMinMonth" min="0" placeholder="0"></div>
+        <div class="fg"><label>최대 개월</label><input type="number" id="bcMaxMonth" min="0" placeholder="36"></div>
+      </div>
+      <div class="fg" id="bcUidFields" style="display:none">
+        <label>대상 UID (쉼표 또는 줄바꿈으로 구분)</label>
+        <textarea id="bcUids" rows="2" placeholder="uid1, uid2, uid3"></textarea>
+      </div>
+      <div class="fg">
+        <label>예약 발송 시각 (비워두면 즉시 발송)</label>
+        <input type="datetime-local" id="bcSchedule">
+      </div>
+
+      <button class="btn bpk" id="bcSubmitBtn" onclick="submitBroadcast()">발송</button>
+      <div class="admin-msg" id="bcMsg"></div>
+    </div>
+
+    <div class="admin-card">
+      <div class="admin-history-head">
+        <h2><span class="icon icon-sm" translate="no" aria-hidden="true">history</span> 발송 이력</h2>
+        <button class="admin-refresh-btn" onclick="refreshBcHistory()">새로고침</button>
+      </div>
+      <div id="bcHistory"><div class="admin-empty">불러오는 중…</div></div>
+    </div>
+  </div>
+
+</div>
+
+<script type="module" src="./js/admin.js"></script>
+</body>
+</html>

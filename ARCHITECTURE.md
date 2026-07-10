@@ -44,6 +44,7 @@ momcal/
 │   └── CHANGELOG.md           # 버전별 변경 이력 + 완료 기능 요약 표
 ├── index.html                # 앱 진입점 (SEO 메타·OG 태그·PWA 메타 포함)
 ├── privacy.html / terms.html / contact.html   # 정책 페이지 (로그인 불필요)
+├── admin.html                 # 관리자 전용 푸시 발송 페이지 (v0.0.39, admin 커스텀 클레임 필요, SPA 밖 독립 진입점)
 ├── manifest.json             # PWA 매니페스트
 ├── sw.js                      # 서비스 워커 (정적 파일 캐싱)
 ├── robots.txt / sitemap.xml   # 검색엔진 크롤링·사이트맵
@@ -64,13 +65,15 @@ momcal/
 │   ├── calendar.css            # 캘린더 그리드, 이벤트 필, 필터, 주간뷰 시간대 그리드
 │   ├── checklist.css           # 체크리스트 레이아웃, 상세 설명 아코디언
 │   ├── modal.css                # 모달 공통
-│   └── growth.css               # 성장그래프 페이지
+│   ├── growth.css               # 성장그래프 페이지
+│   └── admin.css                # admin.html 전용 (v0.0.39)
 ├── js/                          # 아래 "모듈 맵" 참고
 ├── data/                        # 정적 데이터(코드 아님, 콘텐츠) — 아래 "데이터 파일" 참고
 ├── functions/                    # Cloud Functions(FCM 예약 발송, v0.0.38) — 별도 Node 프로젝트
-│   ├── index.js                  # dailyPushCheck: 매일 09:00 Asia/Seoul 예약 발송
+│   ├── index.js                  # dailyPushCheck(매일 09:00) + onBroadcastCreated/processScheduledBroadcasts(관리자 발송, v0.0.39)
 │   ├── data/                     # ⚠️ 직접 편집 금지 — sync-data.cjs가 루트 data/*.js에서 복사한 산출물
 │   ├── scripts/sync-data.cjs     # predeploy 훅: data/*.js → functions/data/ 동기화
+│   ├── scripts/set-admin-claim.cjs  # 관리자 커스텀 클레임 부여/해제 (로컬 1회성 실행, v0.0.39)
 │   └── package.json
 ├── firebase.json / .firebaserc   # Cloud Functions 배포 설정(functions.predeploy, 프로젝트 ID)
 ```
@@ -87,8 +90,9 @@ momcal/
 | `auth.js` | 로그인·회원가입·Google·로그아웃 |
 | `ui.js` | 홈 대시보드·아이 등록·네비게이션(`gp()`)·설정 탭 조립 |
 | `calendar.js` | 캘린더 렌더(월/주간)·자동일정·드래그·필터·색상 시스템·일정 수정 모달 |
-| `checklist.js` | 체크리스트 렌더·토글·점수 계산·상세 설명 아코디언 |
-| `checklistCalendarLink.js` | 체크리스트 ↔ 캘린더 완료 상태 양방향 연동 |
+| `checklist.js` | 체크리스트 렌더·토글·점수 계산·상세 설명 아코디언·탭 레지스트리(v0.0.40, `getVisibleTabDefs` — key 기반 탭 판별) |
+| `checklistSettings.js` | 설정 탭 "체크리스트 관리" — 탭 표시/숨김, 예방접종·발달 캘린더 연동 켜기/끄기, 사용자 정의 체크리스트 만들기/삭제 (v0.0.40) |
+| `checklistCalendarLink.js` | 체크리스트 ↔ 캘린더 완료 상태 양방향 연동 (v0.0.40: `S.clSettings.calendarSync`로 탭별 끄기 가능) |
 | `vaccineSeries.js` | 예방접종 실접종일 기준 이후 회차 자동 재계산 |
 | `govSupport.js` | 정부지원 체크리스트 탭 |
 | `growth.js` / `growthChart.js` | 성장 기록 CRUD / 성장그래프(Chart.js)·성장 예측 |
@@ -105,6 +109,7 @@ momcal/
 | `modal.js` | `showModal()`, `cm()` |
 | `utils.js` | `today()`(KST 기준), `ageD()`, `ageFmt()` 등 유틸 |
 | `splash.js` | 앱 자체 스플래시 화면 — `hideSplash()`, 최대 4초 안전장치 타임아웃 포함 (v0.0.34) |
+| `admin.js` | `admin.html` 전용 — 로그인 게이트(admin 커스텀 클레임 확인)·발송 폼·발송 이력 (v0.0.39, 앱 본체 SPA와 별개 진입점이라 `app.js`가 import하지 않음, `sw.js` 앱쉘 캐시 대상 아님 — `docs/product-specs/admin-push.md` 참고) |
 
 ### 데이터 파일 (`data/`)
 
@@ -115,6 +120,7 @@ momcal/
 | `pregnancy.js` | 임신 주차별 자동 일정 |
 | `milestones.js` | 건강검진·발달·이유식 마일스톤 (예방접종은 다루지 않음) |
 | `checklist-data.js` | 체크리스트 전체 데이터 (항목별 상세 설명 포함) |
+| `checklist-packs.js` | 준비물형(플랫) 체크리스트 팩 — 외출 준비물·100일 준비·돌 준비·돌사진 준비 (v0.0.40) |
 | `checklist-links.js` | 체크리스트 ↔ 캘린더 일정 매핑 |
 | `government-support.js` | 정부지원금 스케줄·안내 |
 | `kr-holidays.js` | 한국 공휴일 데이터 (캘린더 날짜 판별용) |

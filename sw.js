@@ -21,7 +21,13 @@
 // 종류 선택 아이콘 통일, 아이 성별 기반 성장단계 아이콘, 예방접종/정부지원 이모지 마커 제거(데이터 마이그레이션 포함)
 // v0.0.23: 정부지원 사이드바 통일, 태아 성장 기록, 체크리스트 추천/비추천(도움돼요),
 // 체크리스트 이미지 공유(html2canvas 신규 도입) 반영 — 캐시 버전 상향
-const CACHE_NAME = 'momcal-shell-v43';
+// v0.0.39: 관리자 푸시 발송 기능 추가(admin.html/js/admin.js/css/admin.css) — 이 페이지들은
+// APP_SHELL(오프라인 캐시 대상)에 넣지 않음(privacy.html 등 기존 독립 정책 페이지와 동일 취급).
+// js/firebase.js에 Firestore 쿼리 함수(collection/addDoc/query 등) export가 추가되어
+// 앱 본체가 쓰는 정적 파일 내용이 바뀌었으므로 캐시 버전은 올림.
+// v0.0.40: 체크리스트 커스터마이징(탭 표시/캘린더 연동 설정, 준비물 팩, 사용자 정의 체크리스트)
+// 추가 — 새 js/데이터 파일 캐시 목록에 반영, 캐시 버전 상향
+const CACHE_NAME = 'momcal-shell-v45';
 
 const APP_SHELL = [
   './',
@@ -40,6 +46,7 @@ const APP_SHELL = [
   './js/calendar.js',
   './js/calFontSize.js',
   './js/checklist.js',
+  './js/checklistSettings.js',
   './js/checklistCalendarLink.js',
   './js/demoMode.js',
   './js/familyShare.js',
@@ -61,6 +68,7 @@ const APP_SHELL = [
   './js/vaccineSeries.js',
   './data/checklist-data.js',
   './data/checklist-links.js',
+  './data/checklist-packs.js',
   './data/government-support.js',
   './data/milestones.js',
   './data/pregnancy.js',

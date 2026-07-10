@@ -44,6 +44,10 @@ export function emptyState() {
     evColors:    {},   // { req, rec, food, vax, gov, custom } — 사용자 지정 일정 색상 (Sprint 21, 없으면 기본색)
     theme:       'rose',
     selC:        0,    // 현재 선택된 아이 인덱스
+    // v0.0.40: 체크리스트 커스터마이징 — 준비물형(플랫) 체크리스트를 직접 만들고, 탭 표시 여부·
+    // 캘린더 연동 여부를 고를 수 있게 함 (자세한 구조는 docs/product-specs/checklist-customization.md)
+    customChecklists: [], // [{ id, key:'custom_'+id, label, icon, items:[{id,t,r}] }] — 사용자가 직접 만든 플랫 체크리스트
+    clSettings:  { hiddenTabs: [], calendarSync: {} }, // hiddenTabs: 숨긴 탭 key 배열 / calendarSync: { [tabKey]: false } (명시적으로 끈 것만 저장, 기본 true)
   };
 }
 
@@ -120,6 +124,8 @@ export async function saveState() {
       evColors:    S.evColors || {},
       theme:       S.theme,
       selC:        S.selC,
+      customChecklists: S.customChecklists || [],
+      clSettings:  S.clSettings || { hiddenTabs: [], calendarSync: {} },
       updatedAt:   Date.now(),
     }, { merge: true });
     flashSave();
@@ -264,6 +270,8 @@ export async function createFamily() {
     evColors:    S.evColors || {},
     theme:       S.theme,
     selC:        S.selC,
+    customChecklists: S.customChecklists || [],
+    clSettings:  S.clSettings || { hiddenTabs: [], calendarSync: {} },
     members:     [_currentUser.uid],
     createdAt:   Date.now(),
     updatedAt:   Date.now(),
@@ -317,6 +325,11 @@ export function applyData(data) {
   S.itemFeedback = fresh.itemFeedback || {};
   S.evColors    = fresh.evColors    || {};
   S.theme       = fresh.theme       || 'rose';
+  S.customChecklists = fresh.customChecklists || [];
+  S.clSettings  = {
+    hiddenTabs:   fresh.clSettings?.hiddenTabs   || [],
+    calendarSync: fresh.clSettings?.calendarSync || {},
+  };
   // selC 범위 보정
   S.selC = Math.max(0, Math.min(fresh.selC || 0, S.children.length - 1));
 }

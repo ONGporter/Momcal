@@ -26,6 +26,7 @@
 import { S, debounceSave } from './state.js';
 import { today, icon }     from './utils.js';
 import { clData }          from '../data/checklist-data.js';
+import { clPacks }         from '../data/checklist-packs.js';
 import { renderGovChecklistTab } from './govSupport.js';
 import { syncChecklistToCalendar } from './checklistCalendarLink.js';
 import { renderAdSlot } from './adSlot.js';
@@ -101,6 +102,66 @@ function getTier(reqDone, reqTotal, optDone, optTotal) {
 }
 
 /* ────────────────────────────────────
+ *  v0.0.40: 체크리스트 탭 레지스트리
+ *  기존엔 tabDefs가 renderChecklist() 안에 하드코딩돼있고, 다른 함수들(getCats/
+ *  autoSelectCat/renderContextBanner/getCustomKey 등)은 S.clTab이 항상 "0=예방접종,
+ *  1=발달..." 같은 고정 순서라고 가정하고 숫자로 분기했음. 사용자가 탭을 숨길 수 있게
+ *  되면서 그 가정이 깨지므로, 이제 모든 분기는 "지금 보이는 탭 목록에서 S.clTab번째
+ *  탭의 key가 무엇인가"로 판단한다(getVisibleTabDefs(child)[S.clTab]?.key).
+ *  S.clTab 자체는 Firestore에 저장되지 않는 세션 전용 값이라(js/state.js emptyState 참고)
+ *  이 의미 변경이 기존 저장 데이터에 영향을 주지 않는다.
+ */
+
+/** 내장 탭(임신/출산준비물/예방접종/발달/이유식/정부지원) — 항상 존재, key로 표시 여부만 결정됨 */
+function builtinTabDefs(child) {
+  if (!child) return [];
+  if (child.stage === 'preg') {
+    return [
+      { key: 'preg', kind: 'indexed', tabLabel: '<span class="icon icon-sm" translate="no" aria-hidden="true">pregnant_woman</span> 임신 체크' },
+      { key: 'prep', kind: 'indexed', tabLabel: '<span class="icon icon-sm" translate="no" aria-hidden="true">inventory_2</span> 출산 준비물' },
+      { key: 'gov',  kind: 'gov',     tabLabel: '<span class="icon icon-sm" translate="no" aria-hidden="true">account_balance</span> 정부지원' },
+    ];
+  }
+  return [
+    { key: 'vax',  kind: 'indexed', tabLabel: '<span class="icon icon-sm" translate="no" aria-hidden="true">vaccines</span> 예방접종' },
+    { key: 'dev',  kind: 'indexed', tabLabel: '<span class="icon icon-sm" translate="no" aria-hidden="true">child_care</span> 발달' },
+    { key: 'food', kind: 'indexed', tabLabel: '<span class="icon icon-sm" translate="no" aria-hidden="true">restaurant</span> 이유식' },
+    { key: 'gov',  kind: 'gov',     tabLabel: '<span class="icon icon-sm" translate="no" aria-hidden="true">account_balance</span> 정부지원' },
+  ];
+}
+
+/** 준비물형(플랫) 내장 팩 — data/checklist-packs.js. 임신 단계엔 아직 안 보여줌(전부 출산 이후 이벤트라) */
+function packTabDefs(child) {
+  if (!child || child.stage === 'preg') return [];
+  return clPacks.map(p => ({
+    key: p.key, kind: 'flat', label: p.label, items: p.items,
+    tabLabel: `<span class="icon icon-sm" translate="no" aria-hidden="true">${p.icon}</span> ${p.label}`,
+  }));
+}
+
+/** 사용자가 직접 만든 플랫 체크리스트 — S.customChecklists (전부 born 단계 전용, v0.0.40 스코프) */
+function customTabDefs(child) {
+  if (!child || child.stage === 'preg') return [];
+  return (S.customChecklists || []).map(c => ({
+    key: c.key, kind: 'flat', label: c.label, items: c.items,
+    tabLabel: `<span class="icon icon-sm" translate="no" aria-hidden="true">${c.icon || 'checklist'}</span> ${c.label}`,
+  }));
+}
+
+/** 숨김 설정 반영 전 전체 탭 목록(설정 화면에서 "숨긴 탭도 다시 켤 수 있게" 보여줄 때 사용) */
+export function getAllTabDefs(child) {
+  return [...builtinTabDefs(child), ...packTabDefs(child), ...customTabDefs(child)];
+}
+
+/** 지금 실제로 보여줄 탭 목록 — 전부 숨겨진 경우엔 안전장치로 전체를 다시 보여줌(빈 화면 방지) */
+export function getVisibleTabDefs(child) {
+  const all = getAllTabDefs(child);
+  const hidden = new Set((S.clSettings && S.clSettings.hiddenTabs) || []);
+  const visible = all.filter(t => !hidden.has(t.key));
+  return visible.length ? visible : all;
+}
+
+/* ────────────────────────────────────
  *  체크리스트 진입점
  * ──────────────────────────────────── */
 export function renderChecklist() {
@@ -112,21 +173,21 @@ export function renderChecklist() {
     : '<option>아이를 등록해주세요</option>';
 
   const child   = S.children[S.selC];
-  const tabDefs = child
-    ? (child.stage === 'preg'
-        ? [{ label: '<span class="icon icon-sm" translate="no" aria-hidden="true">pregnant_woman</span> 임신 체크', key: 'preg' }, { label: '<span class="icon icon-sm" translate="no" aria-hidden="true">inventory_2</span> 출산 준비물', key: 'prep' }, { label: '<span class="icon icon-sm" translate="no" aria-hidden="true">account_balance</span> 정부지원', key: 'gov' }]
-        // v0.0.30: "육아 체크" 한 탭에 접종·건강검진·발달이 뒤섞여 있던 걸 예방접종/발달 두 탭으로 분리
-        : [{ label: '<span class="icon icon-sm" translate="no" aria-hidden="true">vaccines</span> 예방접종', key: 'vax' }, { label: '<span class="icon icon-sm" translate="no" aria-hidden="true">child_care</span> 발달', key: 'dev' }, { label: '<span class="icon icon-sm" translate="no" aria-hidden="true">restaurant</span> 이유식', key: 'food' }, { label: '<span class="icon icon-sm" translate="no" aria-hidden="true">account_balance</span> 정부지원', key: 'gov' }])
-    : [];
+  const tabDefs = getVisibleTabDefs(child);
+  if ((S.clTab || 0) >= tabDefs.length) S.clTab = 0; // 탭 숨김/커스텀 삭제로 목록이 줄어든 경우 방어
 
   // Sprint 3: 현재 주차/월령에 맞는 카테고리 자동 선택
-  if (child) autoSelectCat(child);
+  if (child) autoSelectCat(child, tabDefs);
 
   const tb = document.getElementById('clTabBar');
   tb.innerHTML = tabDefs.map((t, i) =>
     `<button class="cl-tab-btn ${(S.clTab || 0) === i ? 'on' : ''}"
-             onclick="switchClTab(${i})">${t.label}</button>`
-  ).join('');
+             onclick="switchClTab(${i})">${t.tabLabel}</button>`
+  ).join('') + (child
+    ? `<button type="button" class="cl-tab-settings-btn" title="체크리스트 표시·연동 설정" onclick="gp('settings')">
+         <span class="icon icon-sm" translate="no" aria-hidden="true">tune</span>
+       </button>`
+    : '');
 
   renderContextBanner(child);
   renderClSidebar();
@@ -140,7 +201,8 @@ export function switchClTab(i) {
   S.clTab    = i;
   S.selClCat = 0;
   const child = S.children[S.selC];
-  if (child) autoSelectCat(child);
+  const tabDefs = getVisibleTabDefs(child);
+  if (child) autoSelectCat(child, tabDefs);
   document.querySelectorAll('.cl-tab-btn').forEach((b, j) => b.classList.toggle('on', j === i));
   renderContextBanner(child);
   renderClSidebar();
@@ -149,11 +211,13 @@ export function switchClTab(i) {
 /* ────────────────────────────────────
  *  현재 주차/월령 → 카테고리 자동 선택
  * ──────────────────────────────────── */
-function autoSelectCat(child) {
+function autoSelectCat(child, tabDefs) {
   const cats = getCats();
   if (!cats.length) return;
+  tabDefs = tabDefs || getVisibleTabDefs(child);
+  const curKey = tabDefs[S.clTab || 0]?.key;
 
-  if (child.stage === 'preg' && S.clTab === 0 && child.week) {
+  if (child.stage === 'preg' && curKey === 'preg' && child.week) {
     const week = parseInt(child.week) || 1;
     // 주차 → 카테고리 key 매핑
     const weekKey =
@@ -171,7 +235,7 @@ function autoSelectCat(child) {
 
     // v0.0.30: 육아 체크가 예방접종/발달 두 탭으로 나뉘었지만 월령→카테고리 매핑(milestones)은
     // 동일한 catKey를 공유하므로, 두 탭 모두에서 같은 자동 선택 로직을 적용
-  } else if (child.stage === 'born' && (S.clTab === 0 || S.clTab === 1) && child.birth) {
+  } else if (child.stage === 'born' && (curKey === 'vax' || curKey === 'dev') && child.birth) {
     const ageMonths = Math.floor(
       (new Date(today()).getTime() - new Date(child.birth).getTime()) / (30.44 * 24 * 60 * 60 * 1000)
     );
@@ -272,8 +336,10 @@ function renderContextBanner(child) {
   const el = document.getElementById('clContextBanner');
   if (!el) return;
   if (!child) { el.innerHTML = ''; return; }
+  const tabDefs = getVisibleTabDefs(child);
+  const curKey  = tabDefs[S.clTab || 0]?.key;
 
-  if (child.stage === 'preg' && S.clTab === 0 && child.week) {
+  if (child.stage === 'preg' && curKey === 'preg' && child.week) {
     const week = parseInt(child.week) || 0;
     if (!week) { el.innerHTML = ''; return; }
     const trimester = week <= 12 ? '1분기' : week <= 27 ? '2분기' : '3분기';
@@ -282,7 +348,7 @@ function renderContextBanner(child) {
       <span class="icon icon-sm" translate="no" aria-hidden="true">pregnant_woman</span> 현재 <strong>${week}주차</strong> · ${trimester}
       <span style="color:var(--txl);font-weight:700;margin-left:auto;font-size:.76rem">출산까지 약 ${weeksLeft}주</span>`;
 
-  } else if (child.stage === 'born' && (S.clTab === 0 || S.clTab === 1) && child.birth) {
+  } else if (child.stage === 'born' && (curKey === 'vax' || curKey === 'dev') && child.birth) {
     const ageMs     = new Date(today()).getTime() - new Date(child.birth).getTime();
     const ageMonths = Math.floor(ageMs / (30.44 * 24 * 60 * 60 * 1000));
     const ageWeeks  = Math.floor(ageMs  / (7 * 24 * 60 * 60 * 1000));
@@ -322,17 +388,20 @@ function applyGrowthStageGender(cats, gender) {
 export function getCats() {
   const child = S.children[S.selC];
   if (!child) return [];
-  const tab = S.clTab || 0;
-  if (child.stage === 'preg') {
-    if (tab === 0) return clData.preg.filter(c => c.key !== 'preg_prep');
-    if (tab === 1) return clData.preg.filter(c => c.key === 'preg_prep');
-    return []; // tab 2 = 🟢 정부지원 (getCats 대상 아님, renderGovChecklistTab 에서 별도 렌더링)
-  }
-  // v0.0.30: 육아 체크 탭이 예방접종(0)/발달(1)/이유식(2)/정부지원(3) 4개로 늘어남
-  if (tab === 0) return applyGrowthStageGender(clData.born_vax, child.gender);
-  if (tab === 1) return applyGrowthStageGender(clData.born_dev, child.gender);
-  if (tab === 2) return clData.food;
-  return []; // tab 3 = 🟢 정부지원
+  const tabDefs = getVisibleTabDefs(child);
+  const tab = tabDefs[S.clTab || 0];
+  if (!tab) return [];
+
+  if (tab.key === 'preg') return clData.preg.filter(c => c.key !== 'preg_prep');
+  if (tab.key === 'prep') return clData.preg.filter(c => c.key === 'preg_prep');
+  // v0.0.30: 육아 체크 탭이 예방접종/발달/이유식/정부지원으로 늘어남
+  if (tab.key === 'vax')  return applyGrowthStageGender(clData.born_vax, child.gender);
+  if (tab.key === 'dev')  return applyGrowthStageGender(clData.born_dev, child.gender);
+  if (tab.key === 'food') return clData.food;
+  // v0.0.40: 준비물형(플랫) 팩·커스텀 체크리스트 — 월령 인덱싱 없이 카테고리 1개짜리로 취급
+  // (calcScore/getCatItems/renderClMain은 원래 {key,label,items} 모양이면 뭐든 동일하게 처리함)
+  if (tab.kind === 'flat') return [{ key: tab.key, label: tab.label, items: tab.items }];
+  return []; // 정부지원 탭은 getCats 대상 아님(renderGovChecklistTab에서 별도 렌더링)
 }
 
 /**
@@ -373,8 +442,9 @@ window.openGuideSearch = openGuideSearch;
  */
 function getCustomKey(child, cat) {
   const key = `${child.id}_${cat.key}`;
-  if (child && child.stage === 'born' && (S.clTab === 0 || S.clTab === 1)) {
-    return `${key}__${S.clTab === 0 ? 'vax' : 'dev'}`;
+  const curKey = getVisibleTabDefs(child)[S.clTab || 0]?.key;
+  if (child && child.stage === 'born' && (curKey === 'vax' || curKey === 'dev')) {
+    return `${key}__${curKey}`;
   }
   return key;
 }
@@ -391,10 +461,11 @@ export function renderClSidebar() {
     return;
   }
 
-  // Sprint 6, v0.0.30 수정: 정부지원 탭은 항상 마지막 탭 — 임신(3탭)은 index 2, 육아(4탭,
-  // v0.0.30부터 예방접종/발달 분리)는 index 3으로 서로 다름. 별도 모듈에서 렌더링.
-  const govIdx = child.stage === 'preg' ? 2 : 3;
-  if ((S.clTab || 0) === govIdx) {
+  // Sprint 6, v0.0.30 수정, v0.0.40: 정부지원 탭은 kind:'gov'로 표시되는 탭 — 위치(인덱스)가
+  // 아니라 key로 판단해야 탭을 숨기거나 순서가 바뀌어도 정확히 찾음. 별도 모듈에서 렌더링.
+  const tabDefs = getVisibleTabDefs(child);
+  const curTab  = tabDefs[S.clTab || 0];
+  if (curTab && curTab.kind === 'gov') {
     renderGovChecklistTab(child);
     return;
   }

@@ -44,7 +44,7 @@
 - **리전**: `asia-northeast3` (서울)
 - **인증**: Email/Password + Google OAuth
 - **요금제**: Blaze(종량제) — v0.0.38부터 Cloud Functions(FCM 예약 발송) 사용을 위해 전환됨
-- **Firestore 문서 경로**: `users/{uid}` (+ v0.0.12부터 `families/{familyId}`, 아래 "가족 그룹 공유" 참고)
+- **Firestore 문서 경로**: `users/{uid}` (+ v0.0.12부터 `families/{familyId}`, 아래 "가족 그룹 공유" 참고 / + v0.0.39부터 `adminBroadcasts/{broadcastId}`, 아래 "관리자 푸시 발송" 참고)
 
 ### Firestore 문서 스키마
 
@@ -130,6 +130,18 @@
 ## 계정 영구 삭제 (자체 탈퇴)
 
 > `docs/product-specs/account-deletion.md`로 옮겼습니다.
+
+---
+
+## 관리자 푸시 발송
+
+> `docs/product-specs/admin-push.md` 참고 (v0.0.39).
+
+---
+
+## 체크리스트 커스터마이징
+
+> `docs/product-specs/checklist-customization.md` 참고 (v0.0.40).
 
 ---
 

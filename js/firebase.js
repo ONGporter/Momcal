@@ -18,6 +18,7 @@ import {
   reauthenticateWithCredential,
   reauthenticateWithPopup,
   EmailAuthProvider,
+  getIdTokenResult,
 } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js';
 import {
   getFirestore,
@@ -26,6 +27,13 @@ import {
   setDoc,
   deleteDoc,
   onSnapshot,
+  collection,
+  addDoc,
+  query,
+  where,
+  orderBy,
+  limit,
+  getDocs,
 } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
 // v0.0.36: FCM 진짜 푸시 알림 — 웹 푸시 지원 여부 확인(isSupported)·토큰 발급(getToken)·
 // 포그라운드 수신(onMessage). 실제 사용 로직은 js/push.js에 있음(이 파일은 기존 관례대로
@@ -65,11 +73,19 @@ export {
   reauthenticateWithCredential,
   reauthenticateWithPopup,
   EmailAuthProvider,
+  getIdTokenResult,
   doc,
   getDoc,
   setDoc,
   deleteDoc,
   onSnapshot,
+  collection,
+  addDoc,
+  query,
+  where,
+  orderBy,
+  limit,
+  getDocs,
   getMessaging,
   getToken,
   onMessage,

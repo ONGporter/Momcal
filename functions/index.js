@@ -1,7 +1,11 @@
 /**
- * functions/index.js (v0.0.38)
+ * functions/index.js (v0.0.38, v0.0.39에서 관리자 푸시 발송 추가)
  * 매일 오전 9시(Asia/Seoul)에 실행되는 예약 함수 — 예방접종 하루 전, 정부지원 마감 3일 전,
  * 오늘 일정을 확인해서 FCM 푸시로 발송한다.
+ *
+ * v0.0.39: 관리자(admin.html)가 Firestore adminBroadcasts 컬렉션에 문서를 쓰면
+ * 이 파일의 onBroadcastCreated(즉시 발송)/processScheduledBroadcasts(예약 발송)가
+ * 실제 FCM 전송을 담당한다. 자세한 구조는 docs/product-specs/admin-push.md 참고.
  *
  * ⚠️ functions/data/*.js는 이 폴더에서 직접 수정하는 파일이 아니라, 배포 직전에
  * `firebase.json`의 predeploy 훅(`functions/scripts/sync-data.cjs`)이 루트 `data/`에서
@@ -15,6 +19,7 @@
  */
 
 import { onSchedule } from 'firebase-functions/v2/scheduler';
+import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import { setGlobalOptions } from 'firebase-functions/v2';
 import { initializeApp } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
@@ -191,15 +196,15 @@ function buildNotifications(dataDoc) {
  * 클라이언트는 앱을 열 때마다 최신 토큰을 다시 저장하고(js/push.js의
  * refreshTokenIfNeeded), 서버는 발송 실패로 죽은 토큰을 이렇게 청소함).
  */
-async function sendToUser(uid, tokensMap, body) {
+async function sendToUser(uid, tokensMap, body, title = '맘캘 MomCal') {
   const tokens = Object.keys(tokensMap || {});
-  if (!tokens.length) return;
+  if (!tokens.length) return { success: 0, fail: 0 };
 
   let resp;
   try {
     resp = await messaging.sendEachForMulticast({
       tokens,
-      notification: { title: '맘캘 MomCal', body },
+      notification: { title, body },
       webpush: {
         notification: {
           icon: 'https://momcal.app/icons/icon-192.png',
@@ -210,7 +215,7 @@ async function sendToUser(uid, tokensMap, body) {
     });
   } catch (e) {
     console.error(`푸시 발송 실패 (uid=${uid}):`, e);
-    return;
+    return { success: 0, fail: tokens.length };
   }
 
   const deadTokens = [];
@@ -233,6 +238,8 @@ async function sendToUser(uid, tokensMap, body) {
       console.error(`무효 토큰 정리 실패 (uid=${uid}):`, e);
     }
   }
+
+  return { success: resp.successCount, fail: resp.failureCount };
 }
 
 /* ══════════════════════════════════════
@@ -289,4 +296,141 @@ export const dailyPushCheck = onSchedule(
 
     await Promise.allSettled(tasks);
   }
+);
+
+/* ══════════════════════════════════════
+ *  v0.0.39 — 관리자 푸시 발송 (admin.html)
+ *  Firestore `adminBroadcasts/{broadcastId}` 문서를 admin.html이 생성하면,
+ *  아래 두 함수 중 하나가 실제 FCM 발송을 수행하고 문서 상태를 갱신한다.
+ *  자세한 구조·보안 규칙 안내는 docs/product-specs/admin-push.md 참고.
+ * ══════════════════════════════════════ */
+
+/** KST 기준 만 나이(개월) — birthStr(YYYY-MM-DD) 기준 오늘까지 경과 개월 수 */
+function ageInMonthsKST(birthStr) {
+  const diffDays = (new Date(todayKST()) - new Date(birthStr)) / 86400000;
+  return diffDays / 30.44;
+}
+
+/**
+ * 사용자 문서 하나가 실제로 보고 있는 children 배열을 반환
+ * (js/state.js dataDocRef()와 동일한 분기 — 가족 그룹이면 공유 문서의 children을 씀)
+ */
+function getEffectiveChildren(userData, familyDocs) {
+  if (userData.familyId && familyDocs.has(userData.familyId)) {
+    return familyDocs.get(userData.familyId).children || [];
+  }
+  return userData.children || [];
+}
+
+/** 대상 조건(target/targetParams)에 children 배열이 부합하는지 판정 ('uid' 타깃은 별도 처리) */
+function matchesBroadcastTarget(children, target, params) {
+  if (target === 'all') return true;
+  if (target === 'pregnant') return children.some(c => c.stage === 'preg');
+  if (target === 'ageRange') {
+    const min = Number.isFinite(params.minMonth) ? params.minMonth : 0;
+    const max = Number.isFinite(params.maxMonth) ? params.maxMonth : 999;
+    return children.some(c => {
+      if (c.stage === 'preg' || !c.birth) return false;
+      const age = ageInMonthsKST(c.birth);
+      return age >= min && age <= max;
+    });
+  }
+  return false;
+}
+
+/**
+ * adminBroadcasts/{broadcastId} 문서 하나를 실제로 발송하고 결과를 문서에 기록.
+ * onBroadcastCreated(즉시)와 processScheduledBroadcasts(예약) 양쪽에서 공용으로 씀.
+ */
+async function runBroadcast(broadcastId, data) {
+  const broadcastRef = db.collection('adminBroadcasts').doc(broadcastId);
+  try {
+    const familiesSnap = await db.collection('families').get();
+    const familyDocs = new Map();
+    familiesSnap.forEach(d => familyDocs.set(d.id, d.data()));
+
+    const targetParams = data.targetParams || {};
+    let targetUsers = []; // [{ id, data }]
+
+    if (data.target === 'uid') {
+      const uids = Array.isArray(targetParams.uids) ? targetParams.uids : [];
+      const snaps = await Promise.all(uids.map(uid => db.collection('users').doc(uid).get()));
+      snaps.forEach(snap => { if (snap.exists()) targetUsers.push({ id: snap.id, data: snap.data() }); });
+    } else {
+      const usersSnap = await db.collection('users').get();
+      usersSnap.forEach(doc => {
+        const u = doc.data();
+        const children = getEffectiveChildren(u, familyDocs);
+        if (matchesBroadcastTarget(children, data.target, targetParams)) {
+          targetUsers.push({ id: doc.id, data: u });
+        }
+      });
+    }
+
+    let successCount = 0, failCount = 0, sentUserCount = 0;
+    const tasks = targetUsers.map(async ({ id, data: u }) => {
+      const tokens = u.fcmTokens;
+      if (!tokens || !Object.keys(tokens).length) return;
+      sentUserCount++;
+      const r = await sendToUser(id, tokens, data.body, data.title);
+      successCount += r.success;
+      failCount += r.fail;
+    });
+    await Promise.allSettled(tasks);
+
+    await broadcastRef.update({
+      status: 'sent',
+      sentAt: Date.now(),
+      result: {
+        targetUserCount: targetUsers.length, // 조건에 맞은 사용자 수(토큰 유무 무관)
+        sentUserCount,                        // 그중 실제 토큰이 있어 발송을 시도한 사용자 수
+        successCount,                         // 성공한 토큰(기기) 수
+        failCount,                            // 실패한 토큰(기기) 수
+      },
+    });
+  } catch (e) {
+    console.error(`관리자 발송 실패 (broadcastId=${broadcastId}):`, e);
+    await broadcastRef.update({
+      status: 'failed',
+      sentAt: Date.now(),
+      error: String(e).slice(0, 500),
+    }).catch(() => {});
+  }
+}
+
+/**
+ * 즉시 발송 — admin.html이 scheduledAt 없이(=지금 바로) 문서를 생성하면 곧바로 트리거됨.
+ * 예약 발송(scheduledAt 있음)은 여기서 건너뛰고 processScheduledBroadcasts가 처리함
+ * (한 건이 두 경로에서 중복 발송되지 않도록 분리).
+ */
+export const onBroadcastCreated = onDocumentCreated('adminBroadcasts/{broadcastId}', async (event) => {
+  const data = event.data?.data();
+  if (!data || data.status !== 'pending' || data.scheduledAt) return;
+  await runBroadcast(event.params.broadcastId, data);
+});
+
+/**
+ * 예약 발송 — 5분마다 실행해서 예약 시각(scheduledAt)이 지난 대기 중 건을 발송함.
+ * Firestore 인계 규칙상 scheduledAt이 null인 문서는 범위 조건(<=)에 아예 매칭되지 않아
+ * 즉시 발송 건과 자연히 분리됨(onBroadcastCreated가 이미 처리했으므로 중복 없음).
+ * ⚠️ 이 쿼리는 (status ==, scheduledAt <=) 복합 색인이 필요 — 최초 배포 후 Firebase가
+ * 콘솔 로그에 색인 생성 링크를 안내하면 그걸 눌러서 한 번 만들어줘야 정상 동작함.
+ */
+export const processScheduledBroadcasts = onSchedule(
+  { schedule: 'every 5 minutes', timeZone: 'Asia/Seoul' },
+  async () => {
+    const now = Date.now();
+    const snap = await db.collection('adminBroadcasts')
+      .where('status', '==', 'pending')
+      .where('scheduledAt', '<=', now)
+      .get();
+
+    const tasks = [];
+    snap.forEach(doc => {
+      const data = doc.data();
+      if (!data.scheduledAt) return; // 방어적 가드(위 주석 참고)
+      tasks.push(runBroadcast(doc.id, data));
+    });
+    await Promise.allSettled(tasks);
+  },
 );

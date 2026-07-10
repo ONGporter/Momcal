@@ -15,6 +15,16 @@ import { getAutoEvs } from './calendar.js';
 import { checklistCalendarLinks } from '../data/checklist-links.js';
 
 /**
+ * v0.0.40: 사용자가 설정 탭에서 이 탭(예방접종/발달)의 캘린더 연동을 꺼뒀는지 확인.
+ * 기본값은 켜짐(true) — S.clSettings.calendarSync[tabKey]가 명시적으로 false일 때만 꺼짐.
+ * 이유식·정부지원·준비물 팩·커스텀 체크리스트는 애초에 checklistCalendarLinks에 매핑이
+ * 없어서 이 함수를 거치지 않고도 자연히 연동되지 않음(추가 처리 불필요).
+ */
+function isSyncEnabled(tabKey) {
+  return !(S.clSettings && S.clSettings.calendarSync && S.clSettings.calendarSync[tabKey] === false);
+}
+
+/**
  * v0.0.22: 예방접종(💉)·정부지원(🟢) 이벤트 제목의 이모지 접두어를 없애면서(제목엔 더 이상
  * 이모지가 안 붙음 — 화면 표시는 어차피 stripLeadingEmoji()로 항상 지워왔어서 시각적 변화는
  * 없음), 이 파일의 매칭 로직도 이모지 문자열 대신 ev.type을 기준으로 바꿈.
@@ -31,6 +41,7 @@ export function syncChecklistToCalendar(child, itemId, checked) {
   if (!child) return false;
   const link = checklistCalendarLinks.find(l => l.itemId === itemId);
   if (!link) return false;
+  if (!isSyncEnabled(link.type === 'vax' ? 'vax' : 'dev')) return false;
 
   const fullTitle = calTitleFor(link);
   const ev = getAutoEvs(child).find(e => e.title === fullTitle && e.type === link.type);
@@ -53,6 +64,7 @@ export function syncChecklistToCalendar(child, itemId, checked) {
 export function syncCalendarToChecklist(child, eventTitle, eventType, done) {
   if (!child) return false;
   const isVax = eventType === 'vax';
+  if (!isSyncEnabled(isVax ? 'vax' : 'dev')) return false;
 
   const link = checklistCalendarLinks.find(l =>
     l.calTitle === eventTitle && l.type === (isVax ? 'vax' : 'checkup')

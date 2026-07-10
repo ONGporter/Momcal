@@ -8,6 +8,8 @@
 
 | 버전 | 주요 기능 |
 |:---:|------|
+| v0.0.40 | **체크리스트 커스터마이징** — 준비물형(플랫) 체크리스트 신규(외출 준비물·100일 준비·돌 준비·돌사진 준비), 사용자가 직접 체크리스트를 만드는 기능, 설정 탭에서 탭 표시/숨김·예방접종·발달 탭 캘린더 연동 켜기/끄기 |
+| v0.0.39 | **관리자 전용 푸시 발송 신규**(`admin.html`) — 제목/내용/대상(전체·임산부·연령별·특정 UID) 입력, 즉시·예약 발송, 발송 이력. Firebase Auth 커스텀 클레임(`admin`)으로 접근 제어, `functions/index.js`에 `onBroadcastCreated`/`processScheduledBroadcasts` 추가 |
 | v0.0.2 | 앱 아이콘(`icon-192`/`icon-512`/`apple-touch-icon`/마스커블 2종) 내 마스코트를 더 크게 재제작, topbar·육아정보 헤더의 "맘캘" 로고 글씨 확대(마스코트 크기에 맞춤), 제목(h1~h3/`.sec`) 폰트를 Paperlogy→Pretendard Bold로 재변경(로고는 Paperlogy 유지), 앱 본체·육아정보 페이지 하단 푸터를 동일한 구조(`.site-footer`)로 통일하고 육아정보 페이지에도 버전 표시 추가, 성장그래프 X축 반올림 단위를 5/20/50/100일로 세분화, 성장그래프의 실측 데이터·상하위 10% 밴드 배경 채우기 제거 후 선/점선/색상만으로 구분, 그래프에 "한 달 뒤 예상" 점선 추가, 알림 끄기/켜기 토글 추가 |
 | v0.0.3 | 옹짐꾼님이 제공한 손글씨 폰트 "온글잎 박다현체"로 전면 교체 — 제목/본문/버튼/로고 전부 하나의 폰트로 통일(`fonts/OwnglyphParkDahyun.ttf` 직접 서빙), 캐시 버전 상향(`v8`→`v9`) |
 | v0.0.4 | "맘캘" 로고 글씨 확대, 앱 전체 기준 글자 크기 확대(`html` 16px→17px, 캘린더 이벤트 텍스트는 px 고정으로 제외), 캐시 버전 상향(`v9`→`v10`) |
@@ -81,6 +83,35 @@
 | 29 | 폰트 전면 교체(Paperlogy+Pretendard), 캘린더 타임존 버그 수정, 생후 일수 계산 변경, 성장 예측·알림 기능 신규 |
 
 ---
+
+## [v0.0.40] 2026-07-10 — 체크리스트 커스터마이징 (준비물 팩·사용자 정의·탭 표시/캘린더 연동 설정)
+
+**배경**: 앞으로 외출 준비물·100일 준비·돌 준비·돌사진 준비처럼 월령 인덱싱 없는 "준비물형" 체크리스트가 계속 늘어날 예정이라, 탭이 많아져도 사용자가 원하는 것만 골라 보고, 캘린더가 지저분해지지 않게 연동 여부도 고를 수 있게 함.
+
+- **탭 레지스트리로 전환**: 기존엔 `S.clTab`(숫자 인덱스)이 "0=예방접종, 1=발달…"처럼 고정 순서라고 가정하고 여러 함수가 숫자로 분기했음 — 탭을 숨길 수 있게 되면서 그 가정이 깨지므로, `getVisibleTabDefs(child)[S.clTab]?.key`로 항상 **key 기준**으로 판단하도록 `js/checklist.js`를 리팩터링(`getCats`/`autoSelectCat`/`renderContextBanner`/`getCustomKey`/`renderClSidebar`의 정부지원 판별 전부 포함). `S.clTab`은 Firestore에 저장되지 않는 세션 전용 값이라 기존 데이터에는 영향 없음
+- **준비물형(플랫) 체크리스트 신규**: `data/checklist-packs.js` — 외출 준비물·100일 준비·돌 준비·돌사진 준비 4종을 내장 데이터로 추가. 월령별 하위 카테고리 없이 카테고리 1개짜리로 취급되며, 기존 `calcScore`/`getCatItems`/`renderClMain` 렌더링 파이프라인을 그대로 재사용(신규 렌더 코드 없음)
+- **사용자 정의 체크리스트**: 설정 탭 → "체크리스트 관리" → "＋ 새 체크리스트 만들기"로 이름 + 초기 항목을 입력해 나만의 준비물형 체크리스트를 만들 수 있음(`S.customChecklists`). 이후 항목 추가는 기존 "＋ 항목 직접 추가하기" 버튼 재사용, 삭제는 설정 탭에서 체크리스트 단위로만 가능(항목 단위 편집은 다음 버전 후보)
+- **탭 표시/숨김**: 설정 탭에서 내장 6종(임신 체크·출산 준비물·예방접종·발달·이유식·정부지원) + 준비물 팩 4종 + 커스텀 체크리스트를 각각 표시/숨김 전환 가능(`S.clSettings.hiddenTabs`). 전부 숨기면 안전장치로 전체가 다시 보임(빈 화면 방지)
+- **캘린더 연동 켜기/끄기**: 예방접종·발달 탭만 대상(실제로 `data/checklist-links.js`에 캘린더 자동 일정과 매핑된 항목이 있는 탭이라서). `S.clSettings.calendarSync[tabKey] === false`면 `js/checklistCalendarLink.js`의 양방향 동기화를 건너뜀 — 이유식·정부지원·준비물 팩·커스텀 체크리스트는 애초에 매핑이 없어서 토글 자체를 보여주지 않음(있지도 않은 연동을 끄는 척하는 UI를 만들지 않기 위함)
+- 체크리스트 탭 바 오른쪽에 "설정" 아이콘 버튼 추가 — 누르면 설정 탭의 관리 화면으로 바로 이동
+- Firestore 스키마 추가(둘 다 additive, 기존 필드 안 건드림): `users/{uid}.customChecklists`, `users/{uid}.clSettings`
+- 자세한 구조는 `docs/product-specs/checklist-customization.md` 참고
+- **범위를 의도적으로 좁힌 부분**: 준비물형 체크리스트는 이번 버전에선 출생 후(born) 단계에서만 노출(예시로 받은 4종이 전부 출산 이후 이벤트라서). 육아정보(guide/) 페이지에 대응 콘텐츠 추가는 이번 버전에 포함 안 됨(다음 후보로 TODO.md에 남겨둠)
+- 캐시 버전 상향(`v44`→`v45`), `APP_SHELL`에 `js/checklistSettings.js`·`data/checklist-packs.js` 추가
+
+## [v0.0.39] 2026-07-10 — 관리자 전용 푸시 발송(admin.html) 신규
+
+**신규 페이지**: `admin.html` — 앱 본체(SPA) 밖에 완전히 분리된 관리자 전용 도구(`privacy.html` 등과 같은 독립 정적 페이지 패턴).
+
+- **접근 제어 2단계**: 클라이언트는 Firebase Auth 로그인 + ID 토큰의 커스텀 클레임(`admin === true`) 확인(UI 게이트일 뿐), 실제 방어선은 Firestore 보안 규칙(`adminBroadcasts` 컬렉션에 `request.auth.token.admin == true`만 read/write 허용) — **콘솔 설정 필요, 아직 미적용**
+- **관리자 지정**: `functions/scripts/set-admin-claim.cjs` 신규 — Admin SDK로 커스텀 클레임을 부여/해제하는 로컬 1회성 스크립트(Firestore 필드가 아니라 Auth 커스텀 클레임 방식이라 위조 불가능)
+- **발송 폼**: 제목·내용·대상(전체/임산부/연령별(개월 범위)/특정 UID)·예약 발송 시각(비우면 즉시) 입력 → `adminBroadcasts` Firestore 컬렉션에 문서 생성
+- **발송 처리(`functions/index.js`)**: `onBroadcastCreated`(Firestore 트리거, 즉시 발송)·`processScheduledBroadcasts`(5분마다 실행되는 예약 함수) 신규 추가. 기존 `dailyPushCheck`가 쓰던 `sendToUser()`를 `title` 파라미터를 받고 성공/실패 카운트를 반환하도록 확장해서 공용으로 재사용
+- **대상 산정**: `js/state.js`의 `dataDocRef()` 분기(가족 그룹이면 `families/{familyId}`, 아니면 `users/{uid}`)와 동일한 규칙으로 각 사용자의 실제 `children`을 구해서 임산부·연령별 조건을 판정
+- **발송 이력**: `adminBroadcasts` 컬렉션에 `status`(대기/발송완료/실패)·`result`(대상/성공/실패 수) 기록, admin.html에서 최근 30건 조회
+- 자세한 배포 체크리스트(Firestore 규칙 문자열 포함)는 `docs/product-specs/admin-push.md` 참고
+- `js/firebase.js`에 관리자 페이지가 쓰는 Firestore 쿼리 함수(`collection`/`addDoc`/`query`/`where`/`orderBy`/`limit`/`getDocs`)와 `getIdTokenResult` export 추가 — 앱 본체 동작에는 영향 없음(추가 export일 뿐)
+- 캐시 버전 상향(`v43`→`v44`, `js/firebase.js` 변경 반영) — `admin.html`/`js/admin.js`/`css/admin.css`는 `privacy.html`처럼 `APP_SHELL`(오프라인 캐시 목록)에 넣지 않음
 
 ## [v0.0.38] 2026-07-10 — FCM 2단계: Cloud Functions 자동 발송, 토큰 자동 갱신
 

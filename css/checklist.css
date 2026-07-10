@@ -1,5 +1,5 @@
 /* ── CHECKLIST TABS ── */
-.cl-tab-bar { display: flex; gap: 7px; margin-bottom: 16px; flex-wrap: wrap; }
+.cl-tab-bar { display: flex; gap: 7px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
 .cl-tab-btn {
   padding: 8px 16px; border-radius: 40px;
   font-size: .75rem; font-weight: 800; border: none;
@@ -10,6 +10,34 @@
   background: var(--pk);
   color: #fff; box-shadow: 0 3px 10px rgba(200,80,180,.22);
 }
+
+/* v0.0.40: 탭 바 옆 "체크리스트 표시·연동 설정" 바로가기 — 설정 탭으로 이동 */
+.cl-tab-settings-btn {
+  margin-left: auto; flex-shrink: 0;
+  width: 34px; height: 34px; border-radius: 50%;
+  border: 1.5px solid #EEE0F0; background: var(--wh); color: var(--txl);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all .2s;
+}
+.cl-tab-settings-btn:hover { border-color: var(--pk); color: var(--pkd); }
+
+/* v0.0.40: 설정 탭 — 체크리스트 관리 섹션 */
+.cl-settings-hint { font-size: .72rem; color: var(--txl); margin-bottom: 10px; line-height: 1.5; }
+.cl-settings-group-label {
+  font-size: .68rem; font-weight: 800; color: var(--txl); letter-spacing: .03em;
+  margin: 14px 0 6px; text-transform: uppercase;
+}
+.cl-settings-group-label:first-of-type { margin-top: 0; }
+.cl-settings-row {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--card); border-radius: 13px; padding: 10px 12px; margin-bottom: 6px;
+  box-shadow: var(--card-shadow);
+}
+.cl-settings-row-icon { color: var(--pkd); flex-shrink: 0; }
+.cl-settings-row-label { font-size: .8rem; font-weight: 700; color: var(--tx); flex: 1; min-width: 0; }
+.cl-settings-row-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.cl-form-msg { font-size: .76rem; font-weight: 700; margin-top: 8px; min-height: 1em; }
+.cl-form-msg-err { color: #E53935; }
 
 /* ── LAYOUT ── */
 .cl-layout { display: grid; grid-template-columns: 200px 1fr; gap: 14px; align-items: start; }

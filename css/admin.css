@@ -1,0 +1,87 @@
+/**
+ * css/admin.css (v0.0.39)
+ * admin.html 전용 스타일 — css/main.css의 CSS 변수(--bg/--card/--pk/--tx 등)를 그대로 씀
+ * (하드코딩 색상 리터럴 새로 만들지 않기 — AGENTS.md 규칙)
+ */
+
+body.admin-body {
+  background: var(--bg);
+  min-height: 100vh;
+  padding: 28px 16px 60px;
+}
+
+.admin-wrap {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.admin-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 20px;
+}
+.admin-header h1 {
+  font-size: 1.15rem; font-weight: 800; display: flex; align-items: center; gap: 8px;
+}
+.admin-user {
+  font-size: .74rem; color: var(--txl); display: flex; align-items: center; gap: 8px;
+}
+.admin-user button {
+  border: none; background: none; color: var(--pkd); font-weight: 800;
+  font-size: .74rem; cursor: pointer; font-family: inherit;
+}
+
+/* ── 로그인 / 권한 없음 화면 (auth.css .auth-box 톤 재사용) ── */
+.admin-gate {
+  max-width: 380px; margin: 60px auto 0;
+  background: var(--card); border-radius: 20px; padding: 30px 26px;
+  box-shadow: var(--card-shadow); text-align: center;
+}
+.admin-gate h2 { font-size: 1.05rem; font-weight: 800; margin-bottom: 6px; }
+.admin-gate p { font-size: .8rem; color: var(--txl); margin-bottom: 18px; line-height: 1.5; }
+.admin-gate .fg { text-align: left; }
+
+/* ── 카드 ── */
+.admin-card {
+  background: var(--card); border-radius: var(--radius);
+  box-shadow: var(--card-shadow); padding: 18px 16px; margin-bottom: 16px;
+}
+.admin-card h2 {
+  font-size: .92rem; font-weight: 800; margin-bottom: 12px;
+  display: flex; align-items: center; gap: 6px;
+}
+
+.admin-msg { font-size: .78rem; font-weight: 700; margin-top: 8px; min-height: 1em; }
+.admin-msg.ok  { color: var(--mn); }
+.admin-msg.err { color: #E53935; }
+
+/* ── 발송 이력 ── */
+.admin-history-item {
+  border: 1.5px solid #EEE0F0; border-radius: 13px; padding: 12px 13px; margin-bottom: 9px;
+}
+.admin-history-top {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  margin-bottom: 4px;
+}
+.admin-history-top strong { font-size: .85rem; }
+.admin-status {
+  font-size: .68rem; font-weight: 800; padding: 2px 8px; border-radius: 8px; white-space: nowrap;
+}
+.admin-status-pending { background: #FFF3E0; color: #E65100; }
+.admin-status-sent    { background: #E8F5E9; color: #2E7D32; }
+.admin-status-failed  { background: #FFEBEE; color: #C62828; }
+.admin-history-body { font-size: .78rem; color: var(--tx); margin-bottom: 6px; white-space: pre-wrap; }
+.admin-history-meta { font-size: .68rem; color: var(--txl); }
+.admin-empty { font-size: .8rem; color: var(--txl); text-align: center; padding: 20px 0; }
+
+.admin-history-head {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
+}
+.admin-history-head h2 { margin-bottom: 0; }
+.admin-refresh-btn {
+  border: 1.5px solid #EEE0F0; background: var(--wh); border-radius: 10px;
+  padding: 5px 10px; font-size: .72rem; font-weight: 800; color: var(--txl);
+  cursor: pointer; font-family: inherit;
+}
+
+html[data-theme="dark"] .admin-history-item { border-color: rgba(255,255,255,.12); }
+html[data-theme="dark"] .admin-refresh-btn { border-color: rgba(255,255,255,.12); background: var(--card); color: var(--tx); }

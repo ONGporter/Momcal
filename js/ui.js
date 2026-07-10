@@ -17,6 +17,7 @@ import { renderPushSettings }    from './push.js'; // v0.0.36: FCM 진짜 푸시
 import { renderThemeSettings }   from './theme.js';
 import { renderFontSizeSettings } from './fontSize.js';
 import { renderCalFontSizeSettings } from './calFontSize.js';
+import { renderChecklistSettings } from './checklistSettings.js'; // v0.0.40: 체크리스트 표시/캘린더 연동/커스텀 만들기
 import { renderAdSlot }          from './adSlot.js';
 
 /* ════════════════════════════════════
@@ -58,6 +59,7 @@ export function renderSettings() {
   renderFamilyShareLink();
   renderNotificationSettings();
   renderPushSettings();
+  renderChecklistSettings(); // v0.0.40
 }
 
 /* ════════════════════════════════════
