@@ -39,6 +39,23 @@
 .cl-form-msg { font-size: .76rem; font-weight: 700; margin-top: 8px; min-height: 1em; }
 .cl-form-msg-err { color: #E53935; }
 
+/* v0.0.41: 커스텀 체크리스트 편집 모달 — 항목 행 */
+.cl-edit-item-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.cl-edit-item-text {
+  flex: 1; min-width: 0; padding: 7px 10px; border: 1.5px solid #F0D8E4;
+  border-radius: 9px; font-size: .78rem; font-family: inherit;
+}
+.cl-edit-item-req {
+  display: flex; align-items: center; gap: 4px; font-size: .72rem; font-weight: 700;
+  color: var(--tx); white-space: nowrap; flex-shrink: 0; cursor: pointer;
+}
+.cl-edit-item-remove {
+  flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; border: none;
+  background: #F5EBF0; color: var(--txl); display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+}
+.cl-edit-item-remove:hover { background: #F0D8E4; color: #E53935; }
+
 /* ── LAYOUT ── */
 .cl-layout { display: grid; grid-template-columns: 200px 1fr; gap: 14px; align-items: start; }
 .cl-sidebar { background: var(--card); border-radius: 18px; box-shadow: var(--card-shadow); overflow: hidden; position: sticky; top: 70px; }

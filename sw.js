@@ -27,7 +27,9 @@
 // 앱 본체가 쓰는 정적 파일 내용이 바뀌었으므로 캐시 버전은 올림.
 // v0.0.40: 체크리스트 커스터마이징(탭 표시/캘린더 연동 설정, 준비물 팩, 사용자 정의 체크리스트)
 // 추가 — 새 js/데이터 파일 캐시 목록에 반영, 캐시 버전 상향
-const CACHE_NAME = 'momcal-shell-v45';
+// v0.0.41: 준비물 팩에 dd(상세 설명)·임신 단계용 팩 추가, 체크리스트 편집 UI 추가로
+// js/checklistSettings.js·data/checklist-packs.js 내용이 바뀌어서 캐시 버전 다시 상향
+const CACHE_NAME = 'momcal-shell-v46';
 
 const APP_SHELL = [
   './',

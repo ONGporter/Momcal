@@ -130,22 +130,27 @@ function builtinTabDefs(child) {
   ];
 }
 
-/** 준비물형(플랫) 내장 팩 — data/checklist-packs.js. 임신 단계엔 아직 안 보여줌(전부 출산 이후 이벤트라) */
+/** 준비물형(플랫) 내장 팩 — data/checklist-packs.js. 각 팩의 stage 필드(preg/born)에 맞는 것만 보여줌 */
 function packTabDefs(child) {
-  if (!child || child.stage === 'preg') return [];
-  return clPacks.map(p => ({
-    key: p.key, kind: 'flat', label: p.label, items: p.items,
-    tabLabel: `<span class="icon icon-sm" translate="no" aria-hidden="true">${p.icon}</span> ${p.label}`,
-  }));
+  if (!child) return [];
+  return clPacks
+    .filter(p => (p.stage || 'born') === child.stage)
+    .map(p => ({
+      key: p.key, kind: 'flat', label: p.label, items: p.items,
+      tabLabel: `<span class="icon icon-sm" translate="no" aria-hidden="true">${p.icon}</span> ${p.label}`,
+    }));
 }
 
-/** 사용자가 직접 만든 플랫 체크리스트 — S.customChecklists (전부 born 단계 전용, v0.0.40 스코프) */
+/** 사용자가 직접 만든 플랫 체크리스트 — S.customChecklists. cl.stage(preg/born)에 맞는 것만 보여줌
+ *  (v0.0.40에서 만든 기존 데이터는 stage가 없을 수 있어 'born'으로 취급 — 하위 호환) */
 function customTabDefs(child) {
-  if (!child || child.stage === 'preg') return [];
-  return (S.customChecklists || []).map(c => ({
-    key: c.key, kind: 'flat', label: c.label, items: c.items,
-    tabLabel: `<span class="icon icon-sm" translate="no" aria-hidden="true">${c.icon || 'checklist'}</span> ${c.label}`,
-  }));
+  if (!child) return [];
+  return (S.customChecklists || [])
+    .filter(c => (c.stage || 'born') === child.stage)
+    .map(c => ({
+      key: c.key, kind: 'flat', label: c.label, items: c.items,
+      tabLabel: `<span class="icon icon-sm" translate="no" aria-hidden="true">${c.icon || 'checklist'}</span> ${c.label}`,
+    }));
 }
 
 /** 숨김 설정 반영 전 전체 탭 목록(설정 화면에서 "숨긴 탭도 다시 켤 수 있게" 보여줄 때 사용) */

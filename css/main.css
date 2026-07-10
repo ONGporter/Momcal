@@ -698,6 +698,8 @@ html[data-theme="dark"] .add-pcard {
 }
 html[data-theme="dark"] .cl-tab-btn { background: #2A2733; color: var(--txl); }
 html[data-theme="dark"] .cl-tab-settings-btn { background: var(--card); border-color: rgba(255,255,255,.12); }
+html[data-theme="dark"] .cl-edit-item-text { background: var(--card); color: var(--tx); border-color: rgba(255,255,255,.12); }
+html[data-theme="dark"] .cl-edit-item-remove { background: #2A2733; color: var(--txl); }
 html[data-theme="dark"] .cl-context-banner {
   background: linear-gradient(135deg, #3A2430, #2A2438);
   border-color: #4A3644;
