@@ -1542,7 +1542,7 @@ export function removeSticker(date, idx) {
  * ══════════════════════════════════════ */
 export function getAutoEvs(child) {
   if (!child) return [];
-  const evs = [];
+  let evs = [];
 
   if (child.stage === 'preg') {
     const due = new Date(child.due || new Date());
@@ -1623,6 +1623,17 @@ export function getAutoEvs(child) {
         imp: it.importance, desc: it.desc, link: it.link, deadlineNote: it.deadlineNote || null,
       });
     });
+  }
+
+  // v0.0.42: 체크리스트 캘린더 연동을 꺼두면(설정 탭 → 체크리스트 관리), 완료 체크 동기화만
+  // 멈추는 게 아니라 캘린더에서 해당 카테고리 일정 자체를 안 보이게 함(연동을 다시 켜면 복원).
+  // 건강검진 이벤트는 ev.type이 'checkup'이 아니라 필수/추천 여부에 따라 'req'/'rec'로 저장돼
+  // 있는데, 이 req/rec는 임신 단계(pregEvMap)에서도 같은 문자열을 쓰지만 코드 branch가
+  // preg/born으로 완전히 분리돼 있어서(위 if문) born 단계에서만 만들어진 이벤트라는 게 보장됨.
+  const sync = S.clSettings && S.clSettings.calendarSync;
+  if (sync) {
+    if (sync.vax === false) evs = evs.filter(e => e.type !== 'vax');
+    if (child.stage === 'born' && sync.dev === false) evs = evs.filter(e => e.type !== 'req' && e.type !== 'rec');
   }
   return evs;
 }

@@ -2,6 +2,12 @@
  * js/notifications.js — Sprint 29, v0.0.2에서 알림 끄기 토글 추가, v0.0.7에서 세부 설정 추가
  * 알림 기능 1차 버전 (브라우저 알림 권한 기반의 "로컬" 알림)
  *
+ * v0.0.42: 예전엔 이 로컬 알림("알림 켜짐")과 js/push.js의 진짜 FCM 푸시("진짜 푸시 알림 켜짐")가
+ * 설정 탭에 별개 카드로 떠 있어서 사용자 입장에서 알림이 중복돼 보인다는 피드백을 받음.
+ * 이제 이 파일이 유일한 UI 진입점 — 토글을 켜면 로컬 확인(이 파일)과 로그인 사용자의 FCM
+ * 등록(js/push.js의 enablePushNotifications)이 함께 이뤄짐. js/push.js는 더 이상 자체 UI를
+ * 그리지 않음.
+ *
  * ⚠️ 중요 — 진짜 FCM 푸시 알림(앱을 완전히 꺼도 정해진 시각에 오는 알림)은 아직 아님.
  * 그걸 만들려면 아래 3가지가 필요한데, 전부 Firebase 콘솔 소유자 권한이나 유료 요금제가
  * 필요해서 코드만으로는 대신할 수 없었음 (docs/TODO.md에 상세 안내 남겨둠):
@@ -31,6 +37,8 @@
 
 import { today, stripLeadingEmoji } from './utils.js';
 import { getAllEvs, isGovDeadlineSoon } from './calendar.js';
+import { enablePushNotifications, PUSH_TOKEN_SAVED_KEY } from './push.js'; // v0.0.42: 로컬 알림 + 진짜 푸시(FCM)를 하나의 토글로 통합
+import { getCurrentUser } from './state.js';
 
 const LAST_NOTIFIED_KEY = 'momcal_last_notified_date';
 const NOTIF_ENABLED_KEY = 'momcal_notif_enabled'; // v0.0.2
@@ -84,11 +92,15 @@ function isWithinTimeWindow() {
   return true;
 }
 
-/** v0.0.2: 알림 켜기/끄기 토글 버튼 클릭 핸들러 */
+/** v0.0.2: 알림 켜기/끄기 토글 버튼 클릭 핸들러
+ *  v0.0.42: 로그인 사용자면 로컬 알림과 함께 진짜 푸시(FCM) 등록도 시도함 */
 export function toggleNotifications(enable) {
   localStorage.setItem(NOTIF_ENABLED_KEY, enable ? 'true' : 'false');
   renderNotificationSettings();
-  if (enable) checkAndNotify(true);
+  if (enable) {
+    checkAndNotify(true);
+    if (getCurrentUser()) enablePushNotifications(); // 완료되면 내부에서 renderNotificationSettings()를 다시 호출해 문구 갱신
+  }
 }
 
 /** v0.0.7: 알림이 켜져 있을 때 "설정 탭"에 표시할 세부 설정(카테고리·시간대) */
@@ -129,12 +141,14 @@ export function renderNotificationSettings() {
 
   if (perm === 'granted') {
     if (isNotifEnabled()) {
+      // v0.0.42: 로그인 사용자의 FCM 토큰이 이미 저장돼 있으면 "앱을 꺼도 받을 수 있어요"로 문구를 올려줌
+      const pushReady = !!getCurrentUser() && localStorage.getItem(PUSH_TOKEN_SAVED_KEY) === 'true';
       wrap.innerHTML = `
         <div class="install-link" style="cursor:default">
           <span class="install-ico" style="background:var(--mnl)"><span class="icon icon-sm" translate="no" aria-hidden="true">notifications_active</span></span>
           <div class="install-txt">
             <div class="install-title">알림 켜짐</div>
-            <div class="install-sub">오늘 일정·마감 임박 알림을 받아요 (앱을 열었을 때 확인)</div>
+            <div class="install-sub">${pushReady ? '앱을 완전히 꺼도 맘캘 소식을 받을 수 있어요' : '오늘 일정·마감 임박 알림을 받아요 (앱을 열었을 때 확인)'}</div>
           </div>
           <button class="notif-toggle-btn" onclick="event.stopPropagation();toggleNotifications(false)">끄기</button>
         </div>
@@ -177,13 +191,17 @@ export function renderNotificationSettings() {
     </div>`;
 }
 
-/** 알림 권한 요청 (버튼 클릭 시) */
+/** 알림 권한 요청 (버튼 클릭 시)
+ *  v0.0.42: 로그인 사용자면 허용과 동시에 진짜 푸시(FCM)도 함께 등록 시도 */
 export async function requestNotificationPermission() {
   if (!('Notification' in window)) return;
   const result = await Notification.requestPermission();
   if (result === 'granted') localStorage.setItem(NOTIF_ENABLED_KEY, 'true'); // v0.0.2: 새로 허용하면 항상 켜짐 상태로 시작
   renderNotificationSettings();
-  if (result === 'granted') checkAndNotify(true);
+  if (result === 'granted') {
+    checkAndNotify(true);
+    if (getCurrentUser()) enablePushNotifications();
+  }
 }
 
 /**

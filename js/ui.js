@@ -13,7 +13,6 @@ import { getDailyTip }           from '../data/tips.js';
 import { renderPwaInstallLink }  from './pwaInstall.js';
 import { renderFamilyShareLink } from './familyShare.js';
 import { renderNotificationSettings } from './notifications.js';
-import { renderPushSettings }    from './push.js'; // v0.0.36: FCM 진짜 푸시 알림 설정
 import { renderThemeSettings }   from './theme.js';
 import { renderFontSizeSettings } from './fontSize.js';
 import { renderCalFontSizeSettings } from './calFontSize.js';
@@ -57,8 +56,7 @@ export function renderSettings() {
   renderFontSizeSettings();
   renderCalFontSizeSettings();
   renderFamilyShareLink();
-  renderNotificationSettings();
-  renderPushSettings();
+  renderNotificationSettings(); // v0.0.42: 로컬 알림 + 진짜 푸시(FCM)를 하나의 카드로 통합
   renderChecklistSettings(); // v0.0.40
 }
 

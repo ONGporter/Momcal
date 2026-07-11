@@ -22,6 +22,7 @@
 import { S, debounceSave } from './state.js';
 import { clPacks } from '../data/checklist-packs.js';
 import { showModal, cm } from './modal.js';
+import { resyncTabForAllChildren } from './checklistCalendarLink.js';
 
 /** 내장 탭 6종 — js/checklist.js의 builtinTabDefs()와 key를 맞춰야 함(바뀌면 여기도 같이 고칠 것) */
 const PREG_ROWS = [
@@ -64,16 +65,24 @@ export function toggleClTabHidden(key) {
   window.renderChecklist?.(); // 지금 체크리스트 탭을 보고 있으면 탭 구성을 즉시 반영
 }
 
-/** 캘린더 연동 켜기/끄기 (예방접종·발달 탭만 대상) */
+/** 캘린더 연동 켜기/끄기 (예방접종·발달 탭만 대상)
+ *  v0.0.42: 끄면 js/calendar.js의 getAutoEvs()가 해당 카테고리 일정을 통째로 숨기고,
+ *  다시 켜면 지금 체크리스트 상태를 기준으로 캘린더 완료 표시를 재동기화한 뒤 다시 보여줌 */
 export function toggleClCalendarSync(key) {
   const s = ensureClSettings();
-  if (isSyncOff(key)) {
+  const turningOn = isSyncOff(key);
+  if (turningOn) {
     delete s.calendarSync[key]; // 기본값(연동 켜짐)이면 굳이 저장하지 않음
+    resyncTabForAllChildren(key);
   } else {
     s.calendarSync[key] = false;
   }
   debounceSave();
   renderChecklistSettings();
+  // 지금 캘린더 탭을 보고 있으면 화면에도 즉시 반영
+  if (document.getElementById('pg-calendar')?.classList.contains('on')) {
+    window.renderCal?.();
+  }
 }
 
 function rowHtml({ key, icon, label, syncable, deletable, editable }) {
@@ -113,14 +122,14 @@ export function renderChecklistSettings() {
     .map(c => ({ key: c.key, icon: c.icon || 'checklist', label: c.label, deletable: true, editable: true }));
 
   wrap.innerHTML = `
-    <div class="cl-settings-hint">아이 단계(임신중/출생 후)에 따라 실제로 보이는 탭이 달라져요 — 여기서는 두 단계를 나눠서 한 번에 관리해요.</div>
+    <div class="cl-settings-hint">체크리스트 목록을 원하는 것만 보이게 켜고 끌 수 있고, 나만의 체크리스트도 만들어서 편집할 수 있어요. 아이 단계(임신중/출생 후)에 따라 실제로 보이는 탭이 달라져요 — 여기서는 두 단계를 나눠서 한 번에 관리해요.</div>
 
-    <div class="cl-settings-group-label">🤰 임산부용</div>
+    <div class="cl-settings-group-label"><span class="icon icon-sm" translate="no" aria-hidden="true">pregnant_woman</span> 임산부용</div>
     ${PREG_ROWS.map(rowHtml).join('')}
     ${packPregRows.map(rowHtml).join('')}
     ${customPregRows.length ? customPregRows.map(rowHtml).join('') : ''}
 
-    <div class="cl-settings-group-label">🍼 육아용</div>
+    <div class="cl-settings-group-label"><span class="icon icon-sm" translate="no" aria-hidden="true">child_care</span> 육아용</div>
     ${BORN_ROWS.map(rowHtml).join('')}
     ${packBornRows.map(rowHtml).join('')}
     ${customBornRows.length ? customBornRows.map(rowHtml).join('') : ''}
@@ -143,8 +152,8 @@ export function openCreateChecklistModal() {
     <div class="fg" style="margin-top:10px">
       <label>어느 단계용인가요?</label>
       <div class="stage-toggle" style="margin-top:4px">
-        <button type="button" class="st-btn on" id="newClStageBorn" onclick="setNewClStage('born')">🍼 육아용</button>
-        <button type="button" class="st-btn" id="newClStagePreg" onclick="setNewClStage('preg')">🤰 임산부용</button>
+        <button type="button" class="st-btn on" id="newClStageBorn" onclick="setNewClStage('born')"><span class="icon icon-sm" translate="no" aria-hidden="true">child_care</span> 육아용</button>
+        <button type="button" class="st-btn" id="newClStagePreg" onclick="setNewClStage('preg')"><span class="icon icon-sm" translate="no" aria-hidden="true">pregnant_woman</span> 임산부용</button>
       </div>
     </div>
     <div class="fg" style="margin-top:10px">

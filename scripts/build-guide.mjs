@@ -3,7 +3,8 @@
  *
  * data/checklist-data.js (앱의 체크리스트 데이터, dd 상세 설명 포함)와
  * data/government-support.js (정부지원 제도 일정 데이터)를 그대로 읽어서
- * /guide/pregnancy.html, /guide/parenting.html, /guide/food.html,
+ * /guide/pregnancy.html, /guide/pregnancy-events.html, /guide/parenting.html,
+ * /guide/parenting-events.html, /guide/food.html,
  * /guide/government-support.html 정적 페이지를 생성한다.
  *
  * 왜 정적 생성인가?
@@ -31,7 +32,7 @@ const GUIDE = join(ROOT, 'guide');
 const SITE  = 'https://momcal.app';
 /* v0.0.2: 앱 본체(index.html 최하단)와 반드시 같은 값으로 유지 — 버전을 올릴 땐 이 값과
    index.html의 .site-footer-version 텍스트를 함께 수정해야 함 (docs/PROJECT_SPEC.md 버전 관리 정책 참고) */
-const APP_VERSION = 'v0.0.41';
+const APP_VERSION = 'v0.0.42';
 
 /* 정부지원 데이터는 {preg, postpartum, parenting} 키의 배열이라 체크리스트와 형태가 달라
    가이드 페이지용 카테고리 배열로 한 번 변환해준다. */
@@ -54,15 +55,14 @@ const bornMerged = clData.born_vax.map((vaxCat, i) => {
   return { key: vaxCat.key, label: vaxCat.label, items: [...vaxCat.items, ...(devCat ? devCat.items : [])] };
 });
 
-/* v0.0.41: 준비물형(플랫) 체크리스트 팩(data/checklist-packs.js)도 육아정보 페이지에 반영.
-   앱의 체크리스트 탭과 마찬가지로 stage에 따라 임신 가이드/육아 가이드에 각각 나눠 붙인다
-   (새 카테고리 섹션 하나 추가되는 것뿐이라 page()/renderSection() 등 렌더링 코드는 그대로 재사용). */
+/* v0.0.42: 준비물형(플랫) 체크리스트 팩(data/checklist-packs.js)은 예방접종·임신 체크
+   페이지에 그냥 끼워 넣지 않고 "이벤트 준비 가이드"라는 별도 페이지로 분리했다 —
+   "예방접종 페이지에 돌잔치 얘기가 왜 있냐"는 피드백 때문(v0.0.41에서 한 페이지에 합쳤던
+   걸 되돌림). 육아정보 허브도 임산부용/육아용 두 그룹으로 나눠서 보여줌(아래 hubHtml). */
 const packCatsPreg = clPacks.filter(p => p.stage === 'preg')
   .map(p => ({ key: p.key, label: p.label, items: p.items }));
 const packCatsBorn = clPacks.filter(p => (p.stage || 'born') === 'born')
   .map(p => ({ key: p.key, label: p.label, items: p.items }));
-const pregCats       = [...clData.preg, ...packCatsPreg];
-const parentingCats  = [...bornMerged,  ...packCatsBorn];
 
 /**
  * 육아정보 4개 페이지 전체 항목을 하나의 검색 인덱스로 평탄화 (Sprint 21)
@@ -75,9 +75,11 @@ function buildSearchIndex() {
     cat.items.forEach(it => idx.push({
       id: it.id, title: it.t, desc: it.dd || it.d || '', page, cat: cat.label,
     })));
-  addCl(pregCats, 'pregnancy.html');
-  addCl(parentingCats, 'parenting.html');
+  addCl(clData.preg, 'pregnancy.html');
+  addCl(bornMerged, 'parenting.html');
   addCl(clData.food, 'food.html');
+  addCl(packCatsPreg, 'pregnancy-events.html');
+  addCl(packCatsBorn, 'parenting-events.html');
   govCats.forEach(cat => cat.items.forEach(it => idx.push({
     id: it.key, title: it.title, desc: it.desc || '', page: 'government-support.html', cat: cat.label,
   })));
@@ -372,7 +374,9 @@ function pageSearchBox() {
 function pageNavLinks(activePath) {
   const pages = [
     { href: './pregnancy.html',           label: '<span class="icon icon-sm" translate="no" aria-hidden="true">pregnant_woman</span>  임신' },
+    { href: './pregnancy-events.html',    label: '<span class="icon icon-sm" translate="no" aria-hidden="true">favorite</span> 임신 이벤트' },
     { href: './parenting.html',           label: '<span class="icon icon-sm" translate="no" aria-hidden="true">child_care</span> 예방접종' },
+    { href: './parenting-events.html',    label: '<span class="icon icon-sm" translate="no" aria-hidden="true">celebration</span> 육아 이벤트' },
     { href: './food.html',                label: '<span class="icon icon-sm" translate="no" aria-hidden="true">restaurant</span> 이유식' },
     { href: './government-support.html',  label: '<span class="icon icon-sm" translate="no" aria-hidden="true">account_balance</span> 정부지원금' },
   ];
@@ -417,8 +421,8 @@ const pregHtml = page({
   path: '/guide/pregnancy.html',
   heroTitle: '<span class="icon icon-sm" translate="no" aria-hidden="true">pregnant_woman</span> 임신 주차별 체크리스트',
   heroDesc: '4주부터 40주까지, 꼭 챙겨야 할 검사·영양제·준비물을 주차별로 정리했어요',
-  intro: '임신을 확인한 순간부터 출산까지, 시기별로 꼭 챙겨야 할 것들이 계속 바뀌어요. 아래는 임신 4주부터 40주까지, 그리고 출산 준비물·태명 정하기·태교여행까지 시기별로 정리한 체크리스트예요. 맘캘 앱에 등록하면 이 일정들이 자동으로 캘린더에 채워지고, 체크할 때마다 진행률도 확인할 수 있어요.',
-  cats: pregCats,
+  intro: '임신을 확인한 순간부터 출산까지, 시기별로 꼭 챙겨야 할 것들이 계속 바뀌어요. 아래는 임신 4주부터 40주까지, 그리고 출산 준비물까지 주차별로 정리한 체크리스트예요. 맘캘 앱에 등록하면 이 일정들이 자동으로 캘린더에 채워지고, 체크할 때마다 진행률도 확인할 수 있어요.',
+  cats: clData.preg,
   ctaText: '이 일정, 캘린더에 자동으로 채워드릴까요?',
   disclaimer: '이 페이지의 의학·영양 정보는 일반적인 참고용 요약이며, 병원의 공식 안내를 대체하지 않습니다. 개인 건강 상태에 따라 다를 수 있으니 담당 산부인과와 상담해주세요.',
   questionFn: (it) => `${it.t}, 언제 어떻게 해야 하나요?`,
@@ -432,8 +436,8 @@ const parentingHtml = page({
   path: '/guide/parenting.html',
   heroTitle: '<span class="icon icon-sm" translate="no" aria-hidden="true">child_care</span> 월령별 예방접종 · 건강검진 가이드',
   heroDesc: '0개월부터 5세까지, 예방접종 차수·간격과 국가건강검진 일정을 정리했어요',
-  intro: '신생아부터 5세까지 맞아야 하는 예방접종은 종류도 많고 차수도 헷갈리기 쉬워요. 아래는 월령별로 정리한 예방접종·건강검진·발달 체크 가이드에, 외출 준비물·100일·돌잔치·돌사진처럼 시기별로 챙겨야 할 이벤트 준비물까지 함께 정리했어요. 각 백신이 무엇을 예방하는지, 총 몇 차수인지, 다음 접종까지 간격이 얼마나 되는지 자세히 적어뒀어요. 맘캘 앱에서는 실제 접종한 날짜를 입력하면 이후 회차 일정이 자동으로 재계산돼요.',
-  cats: parentingCats,
+  intro: '신생아부터 5세까지 맞아야 하는 예방접종은 종류도 많고 차수도 헷갈리기 쉬워요. 아래는 월령별로 정리한 예방접종·건강검진·발달 체크 가이드예요. 각 백신이 무엇을 예방하는지, 총 몇 차수인지, 다음 접종까지 간격이 얼마나 되는지 자세히 적어뒀어요. 맘캘 앱에서는 실제 접종한 날짜를 입력하면 이후 회차 일정이 자동으로 재계산돼요.',
+  cats: bornMerged,
   ctaText: '우리 아이 접종 일정, 자동으로 계산해드릴까요?',
   disclaimer: '이 페이지의 예방접종·발달 정보는 일반적인 참고용 요약이며, 병원의 공식 안내를 대체하지 않습니다. 정확한 접종 일정과 개별 건강 상태는 반드시 소아과와 상담해주세요.',
   questionFn: (it) => `${it.t}, 언제 어떻게 해야 하나요?`,
@@ -453,6 +457,34 @@ const foodHtml = page({
   disclaimer: '이 페이지의 이유식·영양 정보는 일반적인 참고용 요약입니다. 아이마다 알레르기·소화 상태가 다르니, 새로운 재료를 시작할 때는 소아과 상담을 권장합니다.',
   questionFn: (it) => `${it.t}, 어떻게 하나요?`,
   answerFn:   (it) => it.dd || it.d || it.t,
+});
+
+/* ── 3-1. 임신 이벤트 준비 가이드 (v0.0.42 신규 — 예방접종 페이지에 섞여있던 걸 분리) ── */
+const pregEventsHtml = page({
+  title: '태명 정하기 · 태교여행 준비 가이드 | 맘캘 MomCal',
+  desc: '태명은 어떻게 정하면 좋을지, 태교여행은 언제 가는 게 안전한지 정리했어요. 임신 중 챙기면 좋은 이벤트 준비를 확인하세요.',
+  path: '/guide/pregnancy-events.html',
+  heroTitle: '<span class="icon icon-sm" translate="no" aria-hidden="true">favorite</span> 임신 중 이벤트 준비 가이드',
+  heroDesc: '태명 정하기부터 태교여행까지, 임신 중 챙기면 좋은 일들을 정리했어요',
+  intro: '검사·영양제 말고도 임신 기간에 챙기면 즐거운 일들이 있어요. 아래는 태명 정하기, 태교여행 준비처럼 임신 중 이벤트 준비를 정리한 가이드예요.',
+  cats: packCatsPreg,
+  ctaText: '태명 정하고 나만의 태교 기록도 맘캘에서 남겨보세요',
+  questionFn: (it) => `${it.t}, 어떻게 준비하나요?`,
+  answerFn:   (it) => it.dd || it.t,
+});
+
+/* ── 3-2. 육아 이벤트 준비 가이드 (v0.0.42 신규 — 예방접종 페이지에 섞여있던 걸 분리) ── */
+const parentingEventsHtml = page({
+  title: '외출 준비물 · 100일 · 돌잔치 · 돌사진 준비 가이드 | 맘캘 MomCal',
+  desc: '아기와 외출할 때 챙길 것부터 100일상, 돌잔치, 돌사진까지 시기별로 준비할 것들을 정리했어요.',
+  path: '/guide/parenting-events.html',
+  heroTitle: '<span class="icon icon-sm" translate="no" aria-hidden="true">celebration</span> 육아 이벤트 준비 가이드',
+  heroDesc: '외출 준비물부터 100일·돌잔치·돌사진까지, 시기별로 챙길 것들을 정리했어요',
+  intro: '예방접종·건강검진 말고도 육아 중엔 챙겨야 할 이벤트가 많아요. 아래는 외출 준비물, 100일 준비, 돌 준비, 돌사진 준비를 정리한 가이드예요.',
+  cats: packCatsBorn,
+  ctaText: '이 준비물들, 체크리스트로 하나씩 관리해보세요',
+  questionFn: (it) => `${it.t}, 어떻게 준비하나요?`,
+  answerFn:   (it) => it.dd || it.t,
 });
 
 /* ── 4. 정부지원금 가이드 ── */
@@ -557,22 +589,41 @@ ${header()}
     정보를 로그인 없이도 누구나 볼 수 있도록 정리한 육아 정보 모음입니다.
   </div>
   ${hubSearchBox()}
+  <div class="g-group-label"><span class="icon icon-sm" translate="no" aria-hidden="true">pregnant_woman</span> 임산부용</div>
   <div class="g-card-grid">
     <a class="g-cat-card" href="./pregnancy.html">
       <div class="ico"><span class="icon icon-lg" translate="no" aria-hidden="true">pregnant_woman</span></div>
       <h2>임신 주차별 체크리스트</h2>
-      <p>4주~40주 검사·영양제·준비물 (${countItems(pregCats)}개 항목)</p>
+      <p>4주~40주 검사·영양제·준비물 (${countItems(clData.preg)}개 항목)</p>
     </a>
+    <a class="g-cat-card" href="./pregnancy-events.html">
+      <div class="ico"><span class="icon icon-lg" translate="no" aria-hidden="true">favorite</span></div>
+      <h2>임신 이벤트 준비</h2>
+      <p>태명 정하기, 태교여행 (${countItems(packCatsPreg)}개 항목)</p>
+    </a>
+  </div>
+
+  <div class="g-group-label"><span class="icon icon-sm" translate="no" aria-hidden="true">child_care</span> 육아용</div>
+  <div class="g-card-grid">
     <a class="g-cat-card" href="./parenting.html">
       <div class="ico"><span class="icon icon-lg" translate="no" aria-hidden="true">child_care</span></div>
       <h2>월령별 예방접종·건강검진</h2>
-      <p>0~5세 접종 일정과 발달 체크 (${countItems(parentingCats)}개 항목)</p>
+      <p>0~5세 접종 일정과 발달 체크 (${countItems(bornMerged)}개 항목)</p>
     </a>
     <a class="g-cat-card" href="./food.html">
       <div class="ico"><span class="icon icon-lg" translate="no" aria-hidden="true">restaurant</span></div>
       <h2>이유식 단계별 가이드</h2>
       <p>초기~유아식 재료·조리법 (${countItems(clData.food)}개 항목)</p>
     </a>
+    <a class="g-cat-card" href="./parenting-events.html">
+      <div class="ico"><span class="icon icon-lg" translate="no" aria-hidden="true">celebration</span></div>
+      <h2>육아 이벤트 준비</h2>
+      <p>외출 준비물·100일·돌잔치·돌사진 (${countItems(packCatsBorn)}개 항목)</p>
+    </a>
+  </div>
+
+  <div class="g-group-label"><span class="icon icon-sm" translate="no" aria-hidden="true">account_balance</span> 공통</div>
+  <div class="g-card-grid">
     <a class="g-cat-card" href="./government-support.html">
       <div class="ico"><span class="icon icon-lg" translate="no" aria-hidden="true">account_balance</span></div>
       <h2>정부지원금 가이드</h2>
@@ -588,14 +639,18 @@ ${footer()}
 
 /* ── 파일 쓰기 ── */
 writeFileSync(join(GUIDE, 'pregnancy.html'), pregHtml);
+writeFileSync(join(GUIDE, 'pregnancy-events.html'), pregEventsHtml);
 writeFileSync(join(GUIDE, 'parenting.html'), parentingHtml);
+writeFileSync(join(GUIDE, 'parenting-events.html'), parentingEventsHtml);
 writeFileSync(join(GUIDE, 'food.html'), foodHtml);
 writeFileSync(join(GUIDE, 'government-support.html'), govHtml);
 writeFileSync(join(GUIDE, 'index.html'), hubHtml);
 
 console.log('guide 페이지 생성 완료');
 console.log('  - guide/index.html');
-console.log('  - guide/pregnancy.html          (', countItems(pregCats), '개 항목)');
-console.log('  - guide/parenting.html         (', countItems(parentingCats), '개 항목)');
+console.log('  - guide/pregnancy.html          (', countItems(clData.preg), '개 항목)');
+console.log('  - guide/pregnancy-events.html   (', countItems(packCatsPreg), '개 항목)');
+console.log('  - guide/parenting.html         (', countItems(bornMerged), '개 항목)');
+console.log('  - guide/parenting-events.html  (', countItems(packCatsBorn), '개 항목)');
 console.log('  - guide/food.html               (', countItems(clData.food), '개 항목)');
 console.log('  - guide/government-support.html (', countItems(govCats), '개 항목)');

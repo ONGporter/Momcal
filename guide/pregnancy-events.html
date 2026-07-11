@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- v0.0.7: 설정 탭에서 고른 글자 크기를 CSS 로드 전에 미리 적용 — 앱 본체 index.html과 동일한 방식
+     v0.0.8: 다크 모드도 같은 방식으로 추가 -->
+<script>
+  try {
+    if (localStorage.getItem('momcal_theme') === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+    var fs = localStorage.getItem('momcal_fontsize');
+    if (fs && fs !== 'md') document.documentElement.setAttribute('data-fontsize', fs);
+  } catch (e) {}
+</script>
+<title>태명 정하기 · 태교여행 준비 가이드 | 맘캘 MomCal</title>
+<meta name="description" content="태명은 어떻게 정하면 좋을지, 태교여행은 언제 가는 게 안전한지 정리했어요. 임신 중 챙기면 좋은 이벤트 준비를 확인하세요.">
+<link rel="canonical" href="https://momcal.app/guide/pregnancy-events.html">
+<meta name="robots" content="index, follow">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="맘캘 MomCal">
+<meta property="og:title" content="태명 정하기 · 태교여행 준비 가이드 | 맘캘 MomCal">
+<meta property="og:description" content="태명은 어떻게 정하면 좋을지, 태교여행은 언제 가는 게 안전한지 정리했어요. 임신 중 챙기면 좋은 이벤트 준비를 확인하세요.">
+<meta property="og:image" content="https://momcal.app/icons/og-image.png">
+<meta property="og:url" content="https://momcal.app/guide/pregnancy-events.html">
+<meta property="og:locale" content="ko_KR">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="https://momcal.app/icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0&display=block" rel="stylesheet">
+<link rel="stylesheet" href="./guide.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "태명 후보 여러 개 뽑아보기, 어떻게 준비하나요?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "태명은 법적 효력이 없는 애칭이라 부담 없이 정해도 괜찮아요. 부부가 각자 원하는 의미나 소리 느낌을 몇 개씩 적어서 비교해보면 좁혀나가기 쉬워요."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "태명 최종 결정, 어떻게 준비하나요?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "초음파로 태명을 부르며 대화하면 정서적 유대에 도움이 된다는 이야기가 많아요. 부르기 쉽고 발음이 편한 이름이 실제로 자주 쓰게 돼요."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "태명으로 태교 일기·SNS 계정 만들기, 어떻게 준비하나요?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "태명을 정하면 태교 일기나 성장 기록용 SNS 계정을 만들어 임신 기간을 기록해두는 부모님들이 많아요. 나중에 아이에게 보여주기 좋은 추억이 돼요."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "여행 가능 시기 확인 (담당의 상담), 어떻게 준비하나요?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "일반적으로 유산 위험이 낮고 배가 많이 나오기 전인 임신 14~28주(안정기)가 여행하기 가장 무난한 시기로 알려져 있어요. 여행 전 반드시 담당 산부인과에서 여행 가능 여부를 확인하세요."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "여행지·이동 수단 정하기, 어떻게 준비하나요?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "장시간 비행이나 시차가 큰 해외보다는 이동 시간이 짧고 의료 접근성이 좋은 곳이 안전해요. 항공사마다 임신 주수별 탑승 제한·소견서 요구 기준이 다르니 미리 확인하세요."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "여행자 보험(임신부 특약) 가입, 어떻게 준비하나요?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "일반 여행자 보험은 임신·출산 관련 사고를 보장하지 않는 경우가 많아요. 임신부 특약이 있는 상품을 찾아 가입하면 만일의 상황에 대비할 수 있어요."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "편안한 신발·복대 등 여행용품 준비, 어떻게 준비하나요?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "오래 걷거나 서 있는 일정이 많다면 압박스타킹과 복대가 붓기·허리 부담을 줄여줘요. 신발은 굽 없이 편한 것으로 준비하세요."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "근처 병원·응급실 위치 미리 확인, 어떻게 준비하나요?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "여행지에서 몸 상태가 갑자기 안 좋아질 경우를 대비해, 숙소 근처 산부인과나 응급실 위치를 미리 검색해두면 마음이 한결 놓여요."
+      }
+    }
+  ]
+}
+</script>
+</head>
+<body>
+<header class="g-header">
+  <a class="g-logo" href="./index.html">맘캘 <img src="https://momcal.app/icons/logo-mark.png" alt="" class="brand-mark"></a>
+  <a class="g-cta js-cta" href="https://momcal.app/"><span class="icon icon-sm" translate="no" aria-hidden="true">calendar_month</span> 맘캘 앱 열기</a>
+</header>
+<div class="g-hero">
+  <h1><span class="icon icon-sm" translate="no" aria-hidden="true">favorite</span> 임신 중 이벤트 준비 가이드</h1>
+  <p>태명 정하기부터 태교여행까지, 임신 중 챙기면 좋은 일들을 정리했어요</p>
+</div>
+<div class="g-wrap">
+  <div class="g-breadcrumb"><a href="./index.html">육아정보</a> › <span class="icon icon-sm" translate="no" aria-hidden="true">favorite</span> 임신 중 이벤트 준비 가이드</div>
+  <div class="g-page-nav" id="pageNav">
+    <a href="./pregnancy.html" class="g-page-nav-tab"><span class="icon icon-sm" translate="no" aria-hidden="true">pregnant_woman</span>  임신</a><a href="./pregnancy-events.html" class="g-page-nav-tab on"><span class="icon icon-sm" translate="no" aria-hidden="true">favorite</span> 임신 이벤트</a><a href="./parenting.html" class="g-page-nav-tab"><span class="icon icon-sm" translate="no" aria-hidden="true">child_care</span> 예방접종</a><a href="./parenting-events.html" class="g-page-nav-tab"><span class="icon icon-sm" translate="no" aria-hidden="true">celebration</span> 육아 이벤트</a><a href="./food.html" class="g-page-nav-tab"><span class="icon icon-sm" translate="no" aria-hidden="true">restaurant</span> 이유식</a><a href="./government-support.html" class="g-page-nav-tab"><span class="icon icon-sm" translate="no" aria-hidden="true">account_balance</span> 정부지원금</a>
+  </div>
+  <div class="g-intro">검사·영양제 말고도 임신 기간에 챙기면 즐거운 일들이 있어요. 아래는 태명 정하기, 태교여행 준비처럼 임신 중 이벤트 준비를 정리한 가이드예요.</div>
+  
+  <div class="g-search">
+    <input type="search" id="pageSearch" class="g-search-input"
+           placeholder="이 페이지에서 검색 (예: 엽산, DTaP, 쌀미음)"
+           oninput="filterGuidePage(this.value)">
+    <div id="pageSearchCount" class="g-search-count"></div>
+  </div>
+  <script>
+    function filterGuidePage(q) {
+      q = q.trim().toLowerCase();
+      var sections = document.querySelectorAll('.g-section');
+      var totalShown = 0;
+      sections.forEach(function(sec) {
+        var items = sec.querySelectorAll('.g-item');
+        var shownInSec = 0;
+        items.forEach(function(it) {
+          var match = !q || it.textContent.toLowerCase().indexOf(q) !== -1;
+          it.style.display = match ? '' : 'none';
+          if (match) shownInSec++;
+        });
+        sec.style.display = shownInSec > 0 ? '' : 'none';
+        totalShown += shownInSec;
+      });
+      var countEl = document.getElementById('pageSearchCount');
+      if (countEl) countEl.textContent = q ? (totalShown + '개 항목 검색됨') : '';
+    }
+  </script>
+  <div class="g-cat-tabs" id="catTabs">
+    <a href="#pack_babyname" class="g-cat-tab">태명 정하기</a><a href="#pack_babymoon" class="g-cat-tab">태교여행 준비</a>
+  </div>
+  <script>
+    (function() {
+      function enableDragScroll(el) {
+        if (!el) return;
+        var isDown = false, startX = 0, scrollLeft = 0, moved = false;
+        el.addEventListener('mousedown', function(e) {
+          isDown = true; moved = false; el.classList.add('dragging');
+          startX = e.pageX - el.offsetLeft; scrollLeft = el.scrollLeft;
+        });
+        window.addEventListener('mouseup', function() { isDown = false; el.classList.remove('dragging'); });
+        el.addEventListener('mouseleave', function() { isDown = false; el.classList.remove('dragging'); });
+        el.addEventListener('mousemove', function(e) {
+          if (!isDown) return;
+          e.preventDefault();
+          var x = e.pageX - el.offsetLeft;
+          var walk = (x - startX);
+          if (Math.abs(walk) > 4) moved = true;
+          el.scrollLeft = scrollLeft - walk;
+        });
+        // 드래그로 이동했으면 클릭(앵커 이동)이 발동하지 않도록 방지
+        el.addEventListener('click', function(e) { if (moved) { e.preventDefault(); moved = false; } }, true);
+        // 세로 휠 스크롤을 가로 스크롤로 변환 (마우스 사용자용)
+        el.addEventListener('wheel', function(e) {
+          if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+            el.scrollLeft += e.deltaY;
+            e.preventDefault();
+          }
+        }, { passive: false });
+      }
+      enableDragScroll(document.getElementById('catTabs'));
+      enableDragScroll(document.getElementById('pageNav'));
+    })();
+  </script>
+  <section class="g-section" id="pack_babyname">
+    <h2>태명 정하기</h2>
+    
+    <div class="g-item" id="pk_nm_1">
+      <h3>태명 후보 여러 개 뽑아보기 <span class="req">필수</span></h3>
+      <p>태명은 법적 효력이 없는 애칭이라 부담 없이 정해도 괜찮아요. 부부가 각자 원하는 의미나 소리 느낌을 몇 개씩 적어서 비교해보면 좁혀나가기 쉬워요.</p>
+      
+    <div class="g-feedback" data-item-id="pk_nm_1">
+      <span class="g-feedback-label">이 설명이 도움이 됐나요?</span>
+      <button type="button" class="g-feedback-btn" data-fb="up"><span class="icon icon-sm" translate="no" aria-hidden="true">thumb_up</span> 도움돼요</button>
+      <button type="button" class="g-feedback-btn" data-fb="down"><span class="icon icon-sm" translate="no" aria-hidden="true">thumb_down</span> 아쉬워요</button>
+    </div>
+    </div>
+    <div class="g-item" id="pk_nm_2">
+      <h3>태명 최종 결정 <span class="req">필수</span></h3>
+      <p>초음파로 태명을 부르며 대화하면 정서적 유대에 도움이 된다는 이야기가 많아요. 부르기 쉽고 발음이 편한 이름이 실제로 자주 쓰게 돼요.</p>
+      
+    <div class="g-feedback" data-item-id="pk_nm_2">
+      <span class="g-feedback-label">이 설명이 도움이 됐나요?</span>
+      <button type="button" class="g-feedback-btn" data-fb="up"><span class="icon icon-sm" translate="no" aria-hidden="true">thumb_up</span> 도움돼요</button>
+      <button type="button" class="g-feedback-btn" data-fb="down"><span class="icon icon-sm" translate="no" aria-hidden="true">thumb_down</span> 아쉬워요</button>
+    </div>
+    </div>
+    <div class="g-item" id="pk_nm_3">
+      <h3>태명으로 태교 일기·SNS 계정 만들기 <span class="opt">선택</span></h3>
+      <p>태명을 정하면 태교 일기나 성장 기록용 SNS 계정을 만들어 임신 기간을 기록해두는 부모님들이 많아요. 나중에 아이에게 보여주기 좋은 추억이 돼요.</p>
+      
+    <div class="g-feedback" data-item-id="pk_nm_3">
+      <span class="g-feedback-label">이 설명이 도움이 됐나요?</span>
+      <button type="button" class="g-feedback-btn" data-fb="up"><span class="icon icon-sm" translate="no" aria-hidden="true">thumb_up</span> 도움돼요</button>
+      <button type="button" class="g-feedback-btn" data-fb="down"><span class="icon icon-sm" translate="no" aria-hidden="true">thumb_down</span> 아쉬워요</button>
+    </div>
+    </div>
+  </section>
+  <section class="g-section" id="pack_babymoon">
+    <h2>태교여행 준비</h2>
+    
+    <div class="g-item" id="pk_bm_1">
+      <h3>여행 가능 시기 확인 (담당의 상담) <span class="req">필수</span></h3>
+      <p>일반적으로 유산 위험이 낮고 배가 많이 나오기 전인 임신 14~28주(안정기)가 여행하기 가장 무난한 시기로 알려져 있어요. 여행 전 반드시 담당 산부인과에서 여행 가능 여부를 확인하세요.</p>
+      
+    <div class="g-feedback" data-item-id="pk_bm_1">
+      <span class="g-feedback-label">이 설명이 도움이 됐나요?</span>
+      <button type="button" class="g-feedback-btn" data-fb="up"><span class="icon icon-sm" translate="no" aria-hidden="true">thumb_up</span> 도움돼요</button>
+      <button type="button" class="g-feedback-btn" data-fb="down"><span class="icon icon-sm" translate="no" aria-hidden="true">thumb_down</span> 아쉬워요</button>
+    </div>
+    </div>
+    <div class="g-item" id="pk_bm_2">
+      <h3>여행지·이동 수단 정하기 <span class="req">필수</span></h3>
+      <p>장시간 비행이나 시차가 큰 해외보다는 이동 시간이 짧고 의료 접근성이 좋은 곳이 안전해요. 항공사마다 임신 주수별 탑승 제한·소견서 요구 기준이 다르니 미리 확인하세요.</p>
+      
+    <div class="g-feedback" data-item-id="pk_bm_2">
+      <span class="g-feedback-label">이 설명이 도움이 됐나요?</span>
+      <button type="button" class="g-feedback-btn" data-fb="up"><span class="icon icon-sm" translate="no" aria-hidden="true">thumb_up</span> 도움돼요</button>
+      <button type="button" class="g-feedback-btn" data-fb="down"><span class="icon icon-sm" translate="no" aria-hidden="true">thumb_down</span> 아쉬워요</button>
+    </div>
+    </div>
+    <div class="g-item" id="pk_bm_3">
+      <h3>여행자 보험(임신부 특약) 가입 <span class="opt">선택</span></h3>
+      <p>일반 여행자 보험은 임신·출산 관련 사고를 보장하지 않는 경우가 많아요. 임신부 특약이 있는 상품을 찾아 가입하면 만일의 상황에 대비할 수 있어요.</p>
+      
+    <div class="g-feedback" data-item-id="pk_bm_3">
+      <span class="g-feedback-label">이 설명이 도움이 됐나요?</span>
+      <button type="button" class="g-feedback-btn" data-fb="up"><span class="icon icon-sm" translate="no" aria-hidden="true">thumb_up</span> 도움돼요</button>
+      <button type="button" class="g-feedback-btn" data-fb="down"><span class="icon icon-sm" translate="no" aria-hidden="true">thumb_down</span> 아쉬워요</button>
+    </div>
+    </div>
+    <div class="g-item" id="pk_bm_4">
+      <h3>편안한 신발·복대 등 여행용품 준비 <span class="opt">선택</span></h3>
+      <p>오래 걷거나 서 있는 일정이 많다면 압박스타킹과 복대가 붓기·허리 부담을 줄여줘요. 신발은 굽 없이 편한 것으로 준비하세요.</p>
+      
+    <div class="g-feedback" data-item-id="pk_bm_4">
+      <span class="g-feedback-label">이 설명이 도움이 됐나요?</span>
+      <button type="button" class="g-feedback-btn" data-fb="up"><span class="icon icon-sm" translate="no" aria-hidden="true">thumb_up</span> 도움돼요</button>
+      <button type="button" class="g-feedback-btn" data-fb="down"><span class="icon icon-sm" translate="no" aria-hidden="true">thumb_down</span> 아쉬워요</button>
+    </div>
+    </div>
+    <div class="g-item" id="pk_bm_5">
+      <h3>근처 병원·응급실 위치 미리 확인 <span class="opt">선택</span></h3>
+      <p>여행지에서 몸 상태가 갑자기 안 좋아질 경우를 대비해, 숙소 근처 산부인과나 응급실 위치를 미리 검색해두면 마음이 한결 놓여요.</p>
+      
+    <div class="g-feedback" data-item-id="pk_bm_5">
+      <span class="g-feedback-label">이 설명이 도움이 됐나요?</span>
+      <button type="button" class="g-feedback-btn" data-fb="up"><span class="icon icon-sm" translate="no" aria-hidden="true">thumb_up</span> 도움돼요</button>
+      <button type="button" class="g-feedback-btn" data-fb="down"><span class="icon icon-sm" translate="no" aria-hidden="true">thumb_down</span> 아쉬워요</button>
+    </div>
+    </div>
+  </section>
+  <div class="g-cta-banner">
+  <h2 class="js-cta-banner-title"><span class="icon icon-sm" translate="no" aria-hidden="true">calendar_month</span> 태명 정하고 나만의 태교 기록도 맘캘에서 남겨보세요</h2>
+  <p class="js-cta-banner-desc">맘캘에 등록하면 오늘 날짜 기준으로 일정이 자동으로 정리돼요. 로그인 없이도 바로 써볼 수 있어요.</p>
+  <a class="js-cta-banner-btn" href="https://momcal.app/">맘캘 앱으로 →</a>
+</div>
+</div>
+<footer class="site-footer">
+  <div class="site-footer-links">
+    <a href="./index.html"><span class="icon icon-sm" translate="no" aria-hidden="true">menu_book</span> 육아정보</a>
+    <a href="../privacy.html"><span class="icon icon-sm" translate="no" aria-hidden="true">lock</span> 개인정보처리방침</a>
+    <a href="../terms.html"><span class="icon icon-sm" translate="no" aria-hidden="true">description</span> 이용약관</a>
+    <a href="../contact.html"><span class="icon icon-sm" translate="no" aria-hidden="true">mail</span> 문의</a>
+  </div>
+  <div class="site-footer-version">맘캘 MomCal v0.0.42</div>
+</footer>
+<a href="#" class="g-top-btn" aria-label="맨 위로">↑</a>
+<script>
+(function(){
+  try {
+    var known = !!localStorage.getItem('momcal_guest_v1');
+    if (!known) {
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (k && k.indexOf('firebase:authUser:') === 0) { known = true; break; }
+      }
+    }
+    if (!known) return;
+    document.querySelectorAll('.js-cta').forEach(function(el){ el.textContent = '맘캘 앱으로 돌아가기'; });
+    document.querySelectorAll('.js-cta-banner-title').forEach(function(el){ el.textContent = '이 정보, 맘캘 앱에서 이어보기'; });
+    document.querySelectorAll('.js-cta-banner-desc').forEach(function(el){ el.textContent = '이미 맘캘을 쓰고 계시네요! 앱으로 돌아가서 이어서 확인해보세요.'; });
+    document.querySelectorAll('.js-cta-banner-btn').forEach(function(el){ el.textContent = '맘캘 앱으로 →'; });
+  } catch (e) {}
+})();
+</script>
+<script>
+(function(){
+  var KEY = 'momcal_item_feedback_v1';
+  function load(){ try { return JSON.parse(localStorage.getItem(KEY) || '{}'); } catch(e){ return {}; } }
+  function save(data){ try { localStorage.setItem(KEY, JSON.stringify(data)); } catch(e){} }
+  function paint(box, value){
+    box.querySelectorAll('.g-feedback-btn').forEach(function(btn){
+      btn.classList.toggle('on-up',   value === 'up'   && btn.dataset.fb === 'up');
+      btn.classList.toggle('on-down', value === 'down' && btn.dataset.fb === 'down');
+    });
+  }
+  var data = load();
+  document.querySelectorAll('.g-feedback').forEach(function(box){
+    var id = box.dataset.itemId;
+    paint(box, data[id]);
+    box.querySelectorAll('.g-feedback-btn').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var v = btn.dataset.fb;
+        data[id] = data[id] === v ? undefined : v;
+        if (data[id] === undefined) delete data[id];
+        save(data);
+        paint(box, data[id]);
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>

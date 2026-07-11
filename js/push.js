@@ -27,6 +27,7 @@ import { getCurrentUser, userDocRef } from './state.js';
 const VAPID_KEY = 'BPDAP4TNZW3vHCF80G1OWRY8FvbvXKiLNcdaGzLFcNKd3cByXiacCpJ3zlCmyWf52kmKjdq3tKeDdARqphUNqFY';
 
 const PUSH_TOKEN_SAVED_KEY = 'momcal_push_token_saved'; // 이 기기·브라우저에 토큰 저장을 완료했는지(로컬 캐시, 재요청 방지용)
+export { PUSH_TOKEN_SAVED_KEY }; // v0.0.42: js/notifications.js가 통합 알림 카드에서 "진짜 푸시로 켜졌는지" 표시할 때 씀
 
 let _messagingInstance; // undefined = 아직 확인 안 함, null = 미지원, 그 외 = 인스턴스
 
@@ -42,84 +43,27 @@ async function getMessagingSafe() {
   return _messagingInstance;
 }
 
-/** 설정 탭 — "진짜 푸시 알림" 섹션 렌더 (js/notifications.js의 로컬 알림 섹션과 별개) */
-export async function renderPushSettings() {
-  const wrap = document.getElementById('pushSettingsWrap');
-  if (!wrap) return;
+/**
+ * v0.0.42: 예전엔 여기서 "진짜 푸시 알림" 카드를 따로 렌더링했는데, 설정 탭에 로컬 알림
+ * (js/notifications.js) 카드와 나란히 있어서 옹짐꾼님이 "왜 알림이 두 개냐"고 지적함.
+ * 이제 이 파일은 UI를 그리지 않고 enablePushNotifications()/refreshTokenIfNeeded()만
+ * 제공하며, 상태 표시(켜짐/꺼짐)는 js/notifications.js의 통합 카드가 대신 보여줌.
+ */
 
-  if (!getCurrentUser()) {
-    wrap.innerHTML = `
-      <div class="install-link" style="cursor:default;opacity:.7">
-        <span class="install-ico"><span class="icon icon-sm" translate="no" aria-hidden="true">cloud_off</span></span>
-        <div class="install-txt">
-          <div class="install-title">진짜 푸시 알림</div>
-          <div class="install-sub">로그인(계정) 사용자만 사용할 수 있어요 — 앱을 꺼도 알림이 와요</div>
-        </div>
-      </div>`;
-    return;
-  }
-
-  if (!('Notification' in window)) { wrap.innerHTML = ''; return; }
-
-  const messaging = await getMessagingSafe();
-  if (!messaging) {
-    wrap.innerHTML = `
-      <div class="install-link" style="cursor:default;opacity:.7">
-        <span class="install-ico"><span class="icon icon-sm" translate="no" aria-hidden="true">cloud_off</span></span>
-        <div class="install-txt">
-          <div class="install-title">진짜 푸시 알림</div>
-          <div class="install-sub">이 브라우저에서는 지원되지 않아요</div>
-        </div>
-      </div>`;
-    return;
-  }
-
-  if (Notification.permission === 'denied') {
-    wrap.innerHTML = `
-      <div class="install-link" style="cursor:default;opacity:.7">
-        <span class="install-ico"><span class="icon icon-sm" translate="no" aria-hidden="true">cloud_off</span></span>
-        <div class="install-txt">
-          <div class="install-title">푸시 알림이 차단되어 있어요</div>
-          <div class="install-sub">브라우저·기기 설정에서 맘캘 알림 권한을 허용해주세요</div>
-        </div>
-      </div>`;
-    return;
-  }
-
-  if (Notification.permission === 'granted' && localStorage.getItem(PUSH_TOKEN_SAVED_KEY) === 'true') {
-    wrap.innerHTML = `
-      <div class="install-link" style="cursor:default">
-        <span class="install-ico" style="background:var(--mnl)"><span class="icon icon-sm" translate="no" aria-hidden="true">cloud_done</span></span>
-        <div class="install-txt">
-          <div class="install-title">진짜 푸시 알림 켜짐</div>
-          <div class="install-sub">이 기기는 앱을 꺼도 맘캘 소식을 받을 수 있어요</div>
-        </div>
-      </div>`;
-    return;
-  }
-
-  wrap.innerHTML = `
-    <div class="install-link" onclick="enablePushNotifications()">
-      <span class="install-ico"><span class="icon icon-sm" translate="no" aria-hidden="true">cloud_sync</span></span>
-      <div class="install-txt">
-        <div class="install-title">진짜 푸시 알림 켜기</div>
-        <div class="install-sub">앱을 완전히 꺼도 맘캘 소식을 받을 수 있어요</div>
-      </div>
-      <span class="install-arrow">›</span>
-    </div>`;
-}
-
-/** 버튼 클릭 — 알림 권한 요청 + FCM 토큰 발급 + Firestore 저장 */
+/** 버튼 클릭 — 알림 권한 요청 + FCM 토큰 발급 + Firestore 저장
+ *  v0.0.42: 이 함수는 이제 단독 버튼이 아니라 js/notifications.js의 통합 알림 토글이
+ *  로그인 사용자에 대해 자동으로 호출함 — 성공 여부와 무관하게 renderNotificationSettings()로
+ *  통합 카드를 다시 그려서 "앱을 꺼도 받을 수 있어요" 문구 반영 여부를 갱신함 */
 export async function enablePushNotifications() {
   if (!getCurrentUser() || !('Notification' in window)) return;
 
   const perm = Notification.permission === 'granted'
     ? 'granted'
     : await Notification.requestPermission();
-  if (perm !== 'granted') { renderPushSettings(); return; }
+  if (perm !== 'granted') { window.renderNotificationSettings?.(); return; }
 
   await fetchAndSaveToken();
-  renderPushSettings();
+  window.renderNotificationSettings?.();
 }
 
 /**
@@ -190,5 +134,4 @@ async function bindForegroundListener() {
 bindForegroundListener();
 
 window.enablePushNotifications = enablePushNotifications;
-window.renderPushSettings      = renderPushSettings;
 window.refreshTokenIfNeeded    = refreshTokenIfNeeded;

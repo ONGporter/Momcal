@@ -1,7 +1,7 @@
 # 진짜 푸시 알림 (FCM)
 
-> **상태**: 🟡 코드 구현 + Cloud Functions 배포 완료(`dailyPushCheck` 정상 배포됨) · "테스트 실행"으로 실제 발송 확인만 남음
-> **관련 코드**: `js/push.js`(클라이언트), `sw.js`(`push`/`notificationclick` 이벤트), `js/firebase.js`(Messaging SDK import), `functions/index.js`(예약 발송, Cloud Functions)
+> **상태**: ✅ 배포·테스트 완료(옹짐꾼님이 admin.html 발송을 통해 실제 수신까지 확인함)
+> **관련 코드**: `js/push.js`(클라이언트, 토큰 관리만 — UI 없음), `js/notifications.js`(통합 설정 UI, v0.0.42), `sw.js`(`push`/`notificationclick` 이벤트), `js/firebase.js`(Messaging SDK import), `functions/index.js`(예약 발송, Cloud Functions)
 
 기존 `js/notifications.js`(로컬 알림, "앱을 열었을 때"만 확인)와 별개로, 앱을 완전히 꺼도(백그라운드·종료 상태) 알림을 받을 수 있는 실제 FCM 웹 푸시. 로그인(계정) 사용자만 지원 — 게스트 모드는 토큰을 연결할 계정(uid)이 없어서 기존 로컬 알림만 계속 사용 가능.
 
@@ -14,7 +14,11 @@
 | 발송 방식 | 클라이언트가 조건 확인 후 직접 표시 | 서버(Cloud Functions)가 매일 09:00 확인 후 발송 |
 | 자동화 상태 | 완전 자동(앱 열 때마다 조건 확인) | ✅ 완전 자동(v0.0.38, 매일 09:00 Asia/Seoul) |
 
-두 시스템은 서로 대체가 아니라 보완 관계 — 껐다 켜지 않는 게 아니라 둘 다 계속 켜둠. 설정 탭에도 두 섹션이 나란히 있음(`notifSettingsWrap`/`pushSettingsWrap`).
+두 시스템은 내부적으로는 여전히 별개(로컬 조건 확인 vs 서버 자동 발송)지만, **v0.0.42부터 설정 탭 UI는 하나로 통합됨** — 예전엔 "알림 켜짐"(로컬)과 "진짜 푸시 알림 켜짐"(FCM) 카드가 나란히 있어서 사용자에게 알림이 두 개처럼 보인다는 지적을 받음. 이제 `js/push.js`는 자체 UI를 그리지 않고(`renderPushSettings()` 삭제) `enablePushNotifications()`/`refreshTokenIfNeeded()`만 제공하며, `js/notifications.js`의 토글 하나가:
+- 로컬 알림 플래그를 켜고
+- 로그인 사용자라면 `enablePushNotifications()`도 함께 호출해 FCM 등록까지 시도함
+
+상태 문구도 FCM 토큰 저장 여부(`localStorage`의 `PUSH_TOKEN_SAVED_KEY`, `js/push.js`에서 export)에 따라 자동으로 "앱을 완전히 꺼도 받을 수 있어요"로 바뀜. `index.html`의 `pushSettingsWrap` div는 더 이상 안 씀(제거됨) — `notifSettingsWrap` 하나만 남음.
 
 ## 구조 — 1단계(수신 인프라)
 

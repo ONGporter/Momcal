@@ -34,6 +34,33 @@ function calTitleFor(link) {
 }
 
 /**
+ * v0.0.42 버그 수정: checklist-links.js의 건강검진 항목은 type이 'checkup' 문자열이지만,
+ * js/calendar.js의 getAutoEvs()가 실제로 만드는 건강검진 이벤트의 ev.type은 'checkup'이
+ * 아니라 필수/추천 여부에 따른 'req'|'rec'임(임신 체크와 같은 규칙을 재사용해서 그럼).
+ * 그래서 예전 코드(`e.type === link.type`)는 link.type이 'checkup'인 항목에 대해 절대
+ * 매칭되는 이벤트를 못 찾았음 — 즉 발달(건강검진) 쪽은 체크리스트→캘린더 방향 동기화가
+ * 계속 조용히 실패해왔던 것으로 보임. 이 함수로 실제 타입 규칙에 맞게 판별한다.
+ */
+function evTypeMatchesLink(ev, linkType) {
+  return linkType === 'vax' ? ev.type === 'vax' : (ev.type === 'req' || ev.type === 'rec');
+}
+
+/**
+ * 체크리스트 항목 체크/해제 → 연결된 캘린더 이벤트 완료 상태에 반영 (내부용, 연동 켜짐 여부를 확인하지 않음)
+ */
+function doSyncChecklistToCalendar(child, link, checked) {
+  const fullTitle = calTitleFor(link);
+  const ev = getAutoEvs(child).find(e => e.title === fullTitle && evTypeMatchesLink(e, link.type));
+  if (!ev) return false; // 이 아이 일정에 해당 이벤트가 없음 (스킵)
+
+  if (!S.eventMods) S.eventMods = {};
+  const key = `auto_${ev._origDate}_${ev.title}`;
+  const existing = S.eventMods[key] || {};
+  S.eventMods[key] = { ...existing, done: checked };
+  return true;
+}
+
+/**
  * 체크리스트 항목 체크/해제 → 연결된 캘린더 이벤트 완료 상태에 반영
  * @returns {boolean} 연동된 항목이 있었는지 여부
  */
@@ -42,16 +69,24 @@ export function syncChecklistToCalendar(child, itemId, checked) {
   const link = checklistCalendarLinks.find(l => l.itemId === itemId);
   if (!link) return false;
   if (!isSyncEnabled(link.type === 'vax' ? 'vax' : 'dev')) return false;
+  return doSyncChecklistToCalendar(child, link, checked);
+}
 
-  const fullTitle = calTitleFor(link);
-  const ev = getAutoEvs(child).find(e => e.title === fullTitle && e.type === link.type);
-  if (!ev) return false; // 이 아이 일정에 해당 이벤트가 없음 (스킵)
-
-  if (!S.eventMods) S.eventMods = {};
-  const key = `auto_${ev._origDate}_${ev.title}`;
-  const existing = S.eventMods[key] || {};
-  S.eventMods[key] = { ...existing, done: checked };
-  return true;
+/**
+ * v0.0.42: 캘린더 연동을 껐다가 다시 켤 때 호출 — 꺼져있던 동안 체크리스트에서 바뀐 내용이
+ * 캘린더엔 반영 안 돼 있을 수 있으니(꺼진 동안엔 tgCk가 동기화를 건너뜀), 지금 체크리스트
+ * 상태를 기준으로 모든 아이의 캘린더 완료 표시를 한 번에 다시 맞춘다.
+ * (js/checklistSettings.js의 toggleClCalendarSync가 "켜기"로 전환할 때만 호출함)
+ */
+export function resyncTabForAllChildren(tabKey) {
+  const links = checklistCalendarLinks.filter(l => (l.type === 'vax' ? 'vax' : 'dev') === tabKey);
+  (S.children || []).forEach(child => {
+    links.forEach(link => {
+      const key = `${child.id}_${link.catKey}`;
+      const checked = !!(S.checks[key] && S.checks[key][link.itemId]);
+      doSyncChecklistToCalendar(child, link, checked);
+    });
+  });
 }
 
 /**
@@ -80,3 +115,4 @@ export function syncCalendarToChecklist(child, eventTitle, eventType, done) {
 // calendar.js에서 순환 import 없이 호출할 수 있도록 window에도 노출
 window.syncCalendarToChecklist = syncCalendarToChecklist;
 window.syncChecklistToCalendar = syncChecklistToCalendar;
+window.resyncTabForAllChildren = resyncTabForAllChildren;

@@ -148,6 +148,14 @@ a:hover { text-decoration: underline; }
 
 /* ── 허브 페이지: 카테고리 카드 ── */
 .g-card-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+
+/* v0.0.42: 허브 페이지 — 임산부용/육아용/공통 그룹 라벨 */
+.g-group-label {
+  font-size: .82rem; font-weight: 900; color: var(--pkd);
+  display: flex; align-items: center; gap: 6px;
+  margin: 28px 0 12px;
+}
+.g-group-label:first-of-type { margin-top: 8px; }
 @media (min-width: 560px) { .g-card-grid { grid-template-columns: 1fr 1fr; } }
 
 .g-cat-card {
