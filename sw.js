@@ -41,7 +41,12 @@
 // 놀이하기/목욕하기/뽀뽀하기/안아주기/양치하기/우유먹기/이유식먹기/책읽기 10종) 추가.
 // js/calendar.js(stickerCats·ICON_STICKERS·stickerDisplay), css/calendar.css(.sticker-img) 변경 +
 // icons/stickers/momcal-action/*.png 신규 정적 파일 — 캐시 버전 상향
-const CACHE_NAME = 'momcal-shell-v55';
+// v0.0.51: 위 이미지 10종이 (1) 다른 이모지보다 작게 보이던 문제 — 원본 캔버스에 여백이 많이
+// 남아있어서 생긴 문제, 실제 그림 영역만 타이트하게 크롭 후 재배치해서 시각적 크기를 맞춤.
+// (2) 다크 모드에서 흰 배경 박스가 그대로 보이던 문제 — 원본 PNG가 알파채널은 있었지만
+// 배경이 완전 불투명한 흰색으로 채워져 있었음(투명 처리가 안 돼 있었음), 캔버스 테두리에 붙은
+// 흰 영역만 골라 투명화(캐릭터 몸통 내부의 흰색은 안 건드림)하는 방식으로 재처리 — 캐시 버전 상향
+const CACHE_NAME = 'momcal-shell-v56';
 
 const APP_SHELL = [
   './',
