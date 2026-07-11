@@ -236,9 +236,23 @@ export function openEditChecklistModal(key) {
   return openEditCustomChecklistModal(key);
 }
 
+/**
+ * v0.0.44: 체크리스트 탭에서 "＋ 항목 직접 추가하기"로 만든 항목은 이제 cl.items에 바로
+ * 쓰이지만(js/checklist.js의 submitAddClItem 참고), v0.0.43 이전에 추가된 항목은 아직
+ * S.customClItems[{child.id}_{key}]에 남아있을 수 있어서 편집 화면을 열 때 함께 보여주고
+ * 저장 시 cl.items로 완전히 옮겨서(마이그레이션) 다음부턴 한곳에서만 관리되게 함.
+ */
+function legacyItemsFor(key) {
+  const child = S.children[S.selC];
+  const legacyKey = child ? `${child.id}_${key}` : null;
+  return { legacyKey, legacyItems: (legacyKey && S.customClItems && S.customClItems[legacyKey]) || [] };
+}
+
 function openEditCustomChecklistModal(key) {
   const cl = (S.customChecklists || []).find(c => c.key === key);
   if (!cl) return;
+  const { legacyItems } = legacyItemsFor(key);
+  const allItems = [...cl.items, ...legacyItems];
   showModal(`"${cl.label}" 편집`, `
     <div class="fg" style="margin:0">
       <label>이름</label>
@@ -246,7 +260,7 @@ function openEditCustomChecklistModal(key) {
     </div>
     <div class="fg" style="margin-top:10px">
       <label>항목</label>
-      <div id="editClItemsList">${cl.items.map((it, i) => editItemRowHtml(it, i)).join('')}</div>
+      <div id="editClItemsList">${allItems.map((it, i) => editItemRowHtml(it, i)).join('')}</div>
       <button type="button" class="cl-add-item-btn" style="margin-top:8px" onclick="addEditClItemRow()">＋ 항목 추가</button>
     </div>
     <div class="cl-form-msg" id="editClMsg"></div>
@@ -331,6 +345,9 @@ export function submitEditChecklist(key) {
   const label = (document.getElementById('editClLabel')?.value || '').trim();
   if (!label) { if (msgEl) { msgEl.textContent = '이름을 입력해주세요'; msgEl.classList.add('cl-form-msg-err'); } return; }
 
+  const { legacyKey, legacyItems } = legacyItemsFor(key);
+  const allItems = [...cl.items, ...legacyItems];
+
   const rows = Array.from(document.querySelectorAll('#editClItemsList .cl-edit-item-row'));
   const items = [];
   rows.forEach((row) => {
@@ -338,7 +355,7 @@ export function submitEditChecklist(key) {
     if (!text) return; // 빈 항목은 무시(삭제한 것으로 취급)
     const req = !!row.querySelector('.cl-edit-item-req-cb')?.checked;
     const idxAttr = row.getAttribute('data-idx');
-    const original = /^\d+$/.test(idxAttr) ? cl.items[Number(idxAttr)] : null;
+    const original = /^\d+$/.test(idxAttr) ? allItems[Number(idxAttr)] : null;
     // 기존 항목은 id를 유지해야 그동안 체크한 상태(S.checks)가 끊기지 않음
     const id = original ? original.id : `cclt_${cl.id}_${Date.now()}_${items.length}`;
     items.push({ id, t: text, r: req });
@@ -347,7 +364,8 @@ export function submitEditChecklist(key) {
   if (!items.length) { if (msgEl) { msgEl.textContent = '항목을 한 개 이상 남겨주세요'; msgEl.classList.add('cl-form-msg-err'); } return; }
 
   cl.label = label;
-  cl.items = items;
+  cl.items = items; // 레거시 항목까지 포함한 전체 목록으로 교체 — 이제부터 한곳(cl.items)에서만 관리됨
+  if (legacyKey && S.customClItems) delete S.customClItems[legacyKey]; // 마이그레이션 완료, 중복 방지
 
   cm();
   debounceSave();

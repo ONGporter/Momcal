@@ -35,7 +35,9 @@
 // v0.0.43: CSS 버그 수정(가족 공유 버튼 글자색, 편집 모달 체크박스 겹침) + 체크리스트 탭
 // 안내문 이동 + 팩 직접추가 항목 설정 연동으로 css/checklist.css·css/main.css·
 // js/checklist.js·js/checklistSettings.js 변경
-const CACHE_NAME = 'momcal-shell-v48';
+// v0.0.44: 커스텀 체크리스트 양방향 편집 완전 수정("내가 추가함" 배지 제거 포함) + 가족
+// 나가기 버튼 테두리 제거 + 안내문 화살표 방향 수정
+const CACHE_NAME = 'momcal-shell-v49';
 
 const APP_SHELL = [
   './',

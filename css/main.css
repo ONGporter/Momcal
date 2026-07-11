@@ -424,9 +424,9 @@ html[data-theme="dark"] .dash-badge-mini-legend  { background: linear-gradient(1
    나와서(명시도가 같으면 나중에 나온 규칙이 이김) 흰 글자가 옅은 배경 위에 그대로 덮여
    거의 안 보였음(옹짐꾼님 스크린샷 제보) — 명시도를 올려서 확실히 이기도록 .btn과 결합함 */
 .btn.family-copy-btn  { background: var(--pkl); color: var(--pkd); }
-.btn.family-leave-btn { background: #FFF5F5; color: #E53935; border: 1px solid #FFCDD2; }
+.btn.family-leave-btn { background: #FFF5F5; color: #E53935; } /* v0.0.44: 테두리가 너무 튀어보여 제거(옹짐꾼님 제보) */
 html[data-theme="dark"] .family-leave-btn {
-  background: #3A2323; color: #FF8A80; border-color: #5A2E2E;
+  background: #3A2323; color: #FF8A80;
 }
 
 /* ── 광고 슬롯 (Sprint 13) ──

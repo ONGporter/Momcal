@@ -572,48 +572,59 @@ export function renderClMain() {
       ? `<div style="font-size:.68rem;color:#5B4FCF;font-weight:700;margin:-10px 0 14px"><span class="icon icon-sm" translate="no" aria-hidden="true">star</span> 선택 항목까지 체크하면 최대 200%까지 올라가요!</div>`
       : ''
     }
-    ${getCatItems(cat, key, customKey).map(it => {
-      const uid      = `${key}_${it.id}`;
-      const checked  = !!S.checks[key][it.id];
-      const isCustom = it.id.startsWith('custom_');
-      return `
-      <div class="ci-wrap" id="ciwrap_${uid}">
-        <div class="ci ${checked ? 'done' : ''}" onclick="tgCk('${key}','${it.id}')">
-          <div class="ci-box"></div>
-          <div style="flex:1;min-width:0">
-            <div class="ci-title">${it.t}
-              ${it.r ? '<span class="badge-r">필수</span>' : '<span class="badge-o">선택</span>'}
-              ${isCustom ? '<span class="badge-custom">내가 추가함</span>' : ''}
+    ${(() => {
+      // v0.0.44: 커스텀 체크리스트(사용자가 "새 체크리스트 만들기"로 직접 만든 것)는
+      // 어차피 전부 본인이 만든 항목이라 "내가 추가함" 배지로 구분할 의미가 없다는 피드백
+      // 반영 — 이 카테고리에서는 배지 없이 모든 항목을 똑같이 삭제 가능하게 처리한다.
+      // (준비물 팩처럼 원래 콘텐츠(dd)가 있는 카테고리는 기존처럼 구분을 유지함)
+      const isCustomChecklist = cat.key.startsWith('custom_');
+      return getCatItems(cat, key, customKey).map(it => {
+        const uid       = `${key}_${it.id}`;
+        const checked   = !!S.checks[key][it.id];
+        const isCustomAdd = !isCustomChecklist && it.id.startsWith('custom_');
+        const canDelete   = isCustomChecklist || isCustomAdd;
+        const deleteOnclick = isCustomChecklist
+          ? `deleteCustomChecklistItemInTab('${cat.key}','${customKey}','${it.id}')`
+          : `deleteCustomClItem('${customKey}','${it.id}')`;
+        return `
+        <div class="ci-wrap" id="ciwrap_${uid}">
+          <div class="ci ${checked ? 'done' : ''}" onclick="tgCk('${key}','${it.id}')">
+            <div class="ci-box"></div>
+            <div style="flex:1;min-width:0">
+              <div class="ci-title">${it.t}
+                ${it.r ? '<span class="badge-r">필수</span>' : '<span class="badge-o">선택</span>'}
+                ${isCustomAdd ? '<span class="badge-custom">내가 추가함</span>' : ''}
+              </div>
+              ${it.d ? `<div class="ci-desc">${it.d}</div>` : ''}
             </div>
-            ${it.d ? `<div class="ci-desc">${it.d}</div>` : ''}
+            ${canDelete ? `
+            <button type="button" class="ci-expand-btn" aria-label="삭제"
+                    onclick="event.stopPropagation();${deleteOnclick}">
+              <span class="ci-expand-arrow"><span class="icon icon-sm" translate="no" aria-hidden="true">close</span></span>
+            </button>` : it.dd ? `
+            <button type="button" class="ci-expand-btn" aria-label="자세히 보기"
+                    onclick="event.stopPropagation();toggleCiDetail('${uid}')">
+              <span class="ci-expand-arrow">▾</span>
+            </button>` : ''}
           </div>
-          ${isCustom ? `
-          <button type="button" class="ci-expand-btn" aria-label="삭제"
-                  onclick="event.stopPropagation();deleteCustomClItem('${customKey}','${it.id}')">
-            <span class="ci-expand-arrow"><span class="icon icon-sm" translate="no" aria-hidden="true">close</span></span>
-          </button>` : it.dd ? `
-          <button type="button" class="ci-expand-btn" aria-label="자세히 보기"
-                  onclick="event.stopPropagation();toggleCiDetail('${uid}')">
-            <span class="ci-expand-arrow">▾</span>
-          </button>` : ''}
-        </div>
-        ${it.dd ? `<div class="ci-detail">
-          <span class="icon icon-sm" translate="no" aria-hidden="true">menu_book</span> ${it.dd}
-          <div class="ci-feedback">
-            <span class="ci-feedback-label">이 설명이 도움이 됐나요?</span>
-            <button type="button" class="ci-feedback-btn ${S.itemFeedback?.[it.id] === 'up' ? 'on-up' : ''}"
-                    onclick="event.stopPropagation();setItemFeedback('${it.id}','up')">
-              <span class="icon icon-sm" translate="no" aria-hidden="true">thumb_up</span> 도움돼요
-            </button>
-            <button type="button" class="ci-feedback-btn ${S.itemFeedback?.[it.id] === 'down' ? 'on-down' : ''}"
-                    onclick="event.stopPropagation();setItemFeedback('${it.id}','down')">
-              <span class="icon icon-sm" translate="no" aria-hidden="true">thumb_down</span> 아쉬워요
-            </button>
-          </div>
-        </div>` : ''}
-      </div>`;
-    }).join('')}
-    <button type="button" class="cl-add-item-btn" onclick="openAddClItemModal('${customKey}')">
+          ${it.dd ? `<div class="ci-detail">
+            <span class="icon icon-sm" translate="no" aria-hidden="true">menu_book</span> ${it.dd}
+            <div class="ci-feedback">
+              <span class="ci-feedback-label">이 설명이 도움이 됐나요?</span>
+              <button type="button" class="ci-feedback-btn ${S.itemFeedback?.[it.id] === 'up' ? 'on-up' : ''}"
+                      onclick="event.stopPropagation();setItemFeedback('${it.id}','up')">
+                <span class="icon icon-sm" translate="no" aria-hidden="true">thumb_up</span> 도움돼요
+              </button>
+              <button type="button" class="ci-feedback-btn ${S.itemFeedback?.[it.id] === 'down' ? 'on-down' : ''}"
+                      onclick="event.stopPropagation();setItemFeedback('${it.id}','down')">
+                <span class="icon icon-sm" translate="no" aria-hidden="true">thumb_down</span> 아쉬워요
+              </button>
+            </div>
+          </div>` : ''}
+        </div>`;
+      }).join('');
+    })()}
+    <button type="button" class="cl-add-item-btn" onclick="openAddClItemModal('${customKey}','${cat.key}')">
       ＋ 항목 직접 추가하기
     </button>`;
 }
@@ -624,7 +635,7 @@ export function renderClMain() {
  * 퍼센티지 계산에 들어간다 — getCatItems()가 cat.items와 합쳐서 반환해주기 때문에
  * 별도 계산 로직을 새로 만들 필요 없이 그대로 반영됨.
  */
-function openAddClItemModal(key) {
+function openAddClItemModal(key, catKey) {
   showModal('체크리스트 항목 추가', `
     <div class="fg" style="margin:0">
       <label>항목 이름</label>
@@ -641,29 +652,61 @@ function openAddClItemModal(key) {
         </label>
       </div>
     </div>
-    <button class="btn bpk" style="width:100%;margin-top:16px" onclick="submitAddClItem('${key}')">추가하기</button>
+    <button class="btn bpk" style="width:100%;margin-top:16px" onclick="submitAddClItem('${key}','${catKey}')">추가하기</button>
   `);
 }
 
-function submitAddClItem(key) {
+/**
+ * v0.0.44: 커스텀 체크리스트(cat.key가 'custom_'로 시작)는 사용자가 처음부터 다 만든
+ * 목록이라 "내가 추가함"으로 따로 구분할 이유가 없다는 피드백을 받아, 이 경우엔
+ * S.customClItems(아이별 별도 버킷)가 아니라 S.customChecklists의 items 배열에
+ * 바로 써서 설정 탭의 "편집"과 완전히 같은 데이터를 보게 함(양방향 반영이 저절로 됨).
+ * 그 외(준비물 팩·내장 카테고리)는 기존처럼 아이별 customClItems 버킷을 그대로 씀.
+ */
+function submitAddClItem(key, catKey) {
   const titleInput = document.getElementById('clNewItemTitle');
   const title = (titleInput?.value || '').trim();
   if (!title) { alert('항목 이름을 입력해주세요'); return; }
   const req = document.querySelector('input[name="clNewItemReq"]:checked')?.value === '1';
 
-  if (!S.customClItems[key]) S.customClItems[key] = [];
-  S.customClItems[key].push({ id: `custom_${Date.now()}`, t: title, r: req });
+  if (catKey && catKey.startsWith('custom_')) {
+    const cl = (S.customChecklists || []).find(c => c.key === catKey);
+    if (cl) cl.items.push({ id: `cclt_${Date.now()}`, t: title, r: req });
+  } else {
+    if (!S.customClItems[key]) S.customClItems[key] = [];
+    S.customClItems[key].push({ id: `custom_${Date.now()}`, t: title, r: req });
+  }
 
   cm();
   renderClSidebar(); // 사이드바 %와 메인 화면 함께 갱신
   debounceSave();
 }
 
-/** 내가 추가한 항목 삭제 (기존 체크리스트 원본 항목은 삭제 불가) */
+/** 내가 추가한 항목 삭제 (기존 체크리스트 원본 항목은 삭제 불가) — 준비물 팩·내장 카테고리용 */
 function deleteCustomClItem(key, id) {
   if (!confirm('이 항목을 삭제할까요?')) return;
   S.customClItems[key] = (S.customClItems[key] || []).filter(it => it.id !== id);
   if (S.checks[key]) delete S.checks[key][id];
+  renderClSidebar();
+  debounceSave();
+}
+
+/**
+ * v0.0.44: 커스텀 체크리스트 전용 삭제 — cl.items(설정 탭 "편집"과 공유하는 배열)에서
+ * 지우고, 혹시 v0.0.43 이전 방식으로 저장된 레거시 customClItems 항목이 남아있으면
+ * 그것도 함께 정리한다. 체크리스트 자체가 모든 아이가 공유하는 하나의 템플릿이라
+ * 체크 상태도 아이 전체를 순회하며 정리함.
+ */
+function deleteCustomChecklistItemInTab(catKey, customKey, id) {
+  if (!confirm('이 항목을 삭제할까요?')) return;
+  const cl = (S.customChecklists || []).find(c => c.key === catKey);
+  if (cl) cl.items = cl.items.filter(it => it.id !== id);
+  if (S.customClItems && S.customClItems[customKey]) {
+    S.customClItems[customKey] = S.customClItems[customKey].filter(it => it.id !== id);
+  }
+  Object.keys(S.checks || {}).forEach(k => {
+    if (k.endsWith('_' + catKey) && S.checks[k]) delete S.checks[k][id];
+  });
   renderClSidebar();
   debounceSave();
 }
@@ -817,3 +860,4 @@ window.shareChecklistImage = shareChecklistImage;
 window.openAddClItemModal = openAddClItemModal;
 window.submitAddClItem    = submitAddClItem;
 window.deleteCustomClItem = deleteCustomClItem;
+window.deleteCustomChecklistItemInTab = deleteCustomChecklistItemInTab;
