@@ -887,7 +887,7 @@ function groupVaxEvents(dayEvs) {
  * - 드래그 타겟 (data-date, ondragover, ondrop)
  * - 이벤트 필: 드래그 가능, 클릭 → 수정 Modal, ✅ 완료 표시
  */
-function cellHTML(ds, d, other, evs, td, th) {
+export function cellHTML(ds, d, other, evs, td, th) {
   // v0.0.32: 이유식 필터가 켜져 있으면 칸 가운데에 이유식 스티커(g수 포함)를 크게 보여주고
   // 나머지 일정·스티커는 숨김 — 필터를 눌렀을 때 실제로 뭔가 달라지게 하기 위함
   // (이유식은 더 이상 자동 일정이 아니라 스티커로만 기록되므로, 이벤트 필터와는 다르게 다룸)

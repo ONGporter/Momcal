@@ -1,25 +1,24 @@
 /**
- * js/homeWeekWidget.js — v0.0.45 신규, v0.0.46 개편
+ * js/homeWeekWidget.js — v0.0.45 신규, v0.0.46/v0.0.47 개편
  *
  * 홈 화면에 있던 "우리 아이 무럭무럭!" 배너를 없애고 그 자리에 넣는 간소화 캘린더.
- * 오늘이 포함된 주(월~일)를 한 줄로 보여주고, 이전/다음 주로 이동할 수 있다.
+ * 오늘(또는 선택된 날짜)이 포함된 주(월~일)를 한 줄로 보여주고, 이전/다음 주로 이동할 수 있다.
  *
- * v0.0.46: "독립된 미니 캘린더"가 아니라 "전체 캘린더의 한 주치 슬라이스"가 되도록 변경.
- * 자체 기준일(S.homeWeekRef)을 따로 두지 않고 캘린더 탭과 완전히 같은 상태(S.calWeekRef)를
- * 공유한다 — 캘린더 탭에서 주간 뷰로 주를 이동하면 홈 위젯도 같은 주를 보여주고, 반대로
- * 홈 위젯에서 주를 이동해도 다음에 캘린더 탭(주간 뷰)을 열면 그 주가 그대로 이어진다.
- * 날짜를 클릭하면 캘린더 탭의 주간 뷰로 이동해 그 날짜를 선택한 상태로 보여준다.
+ * v0.0.47: "전체 캘린더 탭의 한 주치를 그대로 가져온 것"이 되도록 js/calendar.js의
+ * 실제 셀 렌더러(cellHTML)와 이벤트 데이터(getAllEvs)를 그대로 재사용한다 — 그래서 일정
+ * 색상 줄·스티커·완료 표시·공휴일 표시가 캘린더 탭과 완전히 동일하게 보인다(직접 재구현하지
+ * 않음으로써 두 화면이 항상 같은 결과를 내게 함, AGENTS.md 원칙과도 맞음: cellHTML은 export만
+ * 추가했을 뿐 내부 동작은 전혀 안 건드림).
  *
- * 렌더링 로직 자체(무거운 월간/주간 뷰의 드래그·타임블록 등)는 여전히 js/calendar.js의
- * 것을 그대로 갖다 쓰지 않고 이 파일에서 가볍게 새로 그린다 — AGENTS.md "공용 원본을
- * 특정 화면 하나 때문에 함부로 바꾸지 마" 원칙에 따름. 색상(themes)·날짜 선택 로직은
- * js/calendar.js의 것을 그대로 가져와 써서 두 화면이 항상 같은 결과를 내게 한다.
+ * 동기화 대상은 "월간 뷰"다 — 별도의 주간 전용 기준일(S.calWeekRef, 캘린더 탭 주간 뷰 전용)을
+ * 쓰지 않고, 앱 전체가 이미 공유하는 "현재 선택된 날짜"(S.selDate, 없으면 오늘)를 기준으로
+ * 주를 계산한다. 날짜를 클릭하거나 위젯에서 주를 이동하면 캘린더 탭의 월간 뷰가 보여줄
+ * 연/월(S.calY/S.calM)도 함께 맞춰서, 나중에 캘린더 탭(월간 뷰)을 열어도 같은 맥락이 이어진다.
  */
 
 import { S } from './state.js';
 import { today } from './utils.js';
-import { themes, selectDate } from './calendar.js';
-import { getHoliday } from '../data/kr-holidays.js';
+import { themes, getAllEvs, cellHTML, selectDate } from './calendar.js';
 
 const DOW_LABELS = ['월', '화', '수', '목', '금', '토', '일'];
 
@@ -45,70 +44,84 @@ function monthRangeLabel(mon, sun) {
   return `${y1}년 ${m1}월 - ${y2}년 ${m2}월`;
 }
 
+/** 현재 홈 위젯이 보여줘야 할 "기준일" — 선택된 날짜가 있으면 그 날, 없으면 오늘 */
+function focusDate() {
+  return S.selDate || today();
+}
+
 export function renderHomeWeek() {
   const grid  = document.getElementById('homeWeekGrid');
   const monEl = document.getElementById('homeWeekMonth');
   if (!grid) return;
 
-  // v0.0.46: 캘린더 탭과 같은 기준일(S.calWeekRef)을 공유 — 아직 아무도 설정한 적 없으면 오늘 기준
-  if (!S.calWeekRef) S.calWeekRef = today();
   const th  = themes[S.theme] || themes.rose;
-  const mon = mondayOf(S.calWeekRef);
+  const mon = mondayOf(focusDate());
   const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
   const td  = today();
+  const evs = getAllEvs();
 
   if (monEl) monEl.textContent = monthRangeLabel(mon, sun);
 
   let headHtml = '';
-  let dateHtml = '';
+  let bodyHtml = '';
 
   for (let i = 0; i < 7; i++) {
-    const d  = new Date(mon);
+    const d = new Date(mon);
     d.setDate(mon.getDate() + i);
-    const ds  = fmtDate(d);
-    const dow = d.getDay();
-    // 헤더(요일 이름)는 기존 캘린더(js/calendar.js renderMonthView)와 동일하게
-    // 토/일 열 위치만 고정으로 빨간색 — 날짜 숫자만 공휴일 여부까지 반영해 빨간색 처리
+    const ds = fmtDate(d);
+    // 헤더(요일 이름)는 기존 캘린더(js/calendar.js renderMonthView)와 동일하게 토/일 열만 고정 빨간색
     const isWeekendCol = i === 5 || i === 6; // 월요일 시작이므로 5=토, 6=일
-    const isRedNum = dow === 0 || dow === 6 || !!getHoliday(ds);
-    const isToday  = ds === td;
-
-    headHtml += `<div class="hw-head-cell${isWeekendCol ? ' hw-head-red' : ''}">${DOW_LABELS[i]}</div>`;
-    dateHtml += `
-      <div class="hw-date-cell" onclick="goToCalendarDay('${ds}')" title="캘린더에서 보기">
-        <span class="hw-date-num${isToday ? ' hw-today' : ''}${isRedNum && !isToday ? ' hw-red' : ''}">${d.getDate()}</span>
-      </div>`;
+    headHtml += `<div class="cal-head-cell${isWeekendCol ? ' cal-head-red' : ''}">${DOW_LABELS[i]}</div>`;
+    // 캘린더 탭과 완전히 같은 셀 렌더러 재사용 — 일정·스티커·완료표시·공휴일 표시가 그대로 나옴
+    bodyHtml += cellHTML(ds, d.getDate(), false, evs, td, th);
   }
 
   grid.innerHTML = `
-    <div class="hw-head-row" style="background:${th.g}">${headHtml}</div>
-    <div class="hw-date-row">${dateHtml}</div>`;
+    <div class="cal-wrap">
+      <div class="cal-head-row" style="background:${th.g}">${headHtml}</div>
+      <div class="cal-body" onclick="onHomeWeekCellClick(event)">${bodyHtml}</div>
+    </div>`;
 }
 
-/** 이전/다음 주 이동 (delta: -1 | 1) — 캘린더 탭과 공유하는 S.calWeekRef를 직접 이동시킨다 */
+/** 이전/다음 주 이동 (delta: -1 | 1) — 기준일을 7일 단위로 옮기고, 캘린더 탭 월간 뷰의 연/월도 함께 맞춤 */
 export function moveHomeWeek(delta) {
-  const mon = mondayOf(S.calWeekRef || today());
-  mon.setDate(mon.getDate() + delta * 7);
-  S.calWeekRef = fmtDate(mon);
+  const d = new Date(focusDate());
+  d.setDate(d.getDate() + delta * 7);
+  const newRef = fmtDate(d);
+  S.selDate = newRef;
+  S.calY = d.getFullYear();
+  S.calM = d.getMonth();
   renderHomeWeek();
 }
 
 /**
- * 홈 위젯에서 날짜를 클릭하면 캘린더 탭으로 이동해 그 날짜가 보이는 주간 뷰를 연다.
- * S.calWeekRef는 이미 홈 위젯과 공유 중이므로 그대로 두고(재계산하는 setCalView()는
- * 일부러 쓰지 않음 — today/selDate 기준으로 다시 계산해버려서 미래/과거 주로 이동한
- * 상태에서 클릭하면 엉뚱하게 오늘이 있는 주로 되돌아가버림), 뷰 상태와 토글 버튼
- * UI만 "주간"으로 맞춰준다.
+ * 홈 위젯의 날짜 셀을 클릭했을 때 캘린더 탭(월간 뷰)으로 이동한다.
+ * cellHTML이 이미 각 셀에 data-date·자체 onclick(selectDate)을 넣어주므로,
+ * 여기서는 클릭된 셀을 event delegation으로 찾아 캘린더 탭 이동만 담당한다.
+ */
+function onHomeWeekCellClick(evt) {
+  const cell = evt.target.closest('.cal-cell');
+  if (!cell) return;
+  goToCalendarDay(cell.dataset.date);
+}
+
+/**
+ * 캘린더 탭 월간 뷰로 이동해 해당 날짜가 보이는 달을 펼치고 그 날짜를 선택 상태로 만든다.
+ * (v0.0.46에선 주간 뷰로 보냈었는데, "주간 뷰가 아니라 월간 뷰와 연동해달라"는 피드백으로
+ * v0.0.47에서 변경 — S.calView를 강제로 'month'로 맞추고 .cvt 토글 UI도 함께 갱신)
  */
 function goToCalendarDay(ds) {
-  S.calView = 'week';
+  const d = new Date(ds);
+  S.calY = d.getFullYear();
+  S.calM = d.getMonth();
+  S.calView = 'month';
   window.gp('calendar', document.querySelector(".np[data-page='calendar']"));
   document.querySelectorAll('.cvt').forEach(b => b.classList.remove('on'));
-  const weekBtn = [...document.querySelectorAll('.cvt')].find(b => b.textContent.trim() === '주간');
-  if (weekBtn) weekBtn.classList.add('on');
-  selectDate(ds);
+  const monthBtn = [...document.querySelectorAll('.cvt')].find(b => b.textContent.trim() === '월간');
+  if (monthBtn) monthBtn.classList.add('on');
+  selectDate(ds); // 선택 상태·세부일정 패널까지 확실히 맞춤(멱등적이라 다시 호출해도 안전)
 }
 
 // 인라인 onclick에서 접근할 수 있도록 전역 노출 (js/ui.js gp()·calendar.js 패턴과 동일)
-window.moveHomeWeek    = moveHomeWeek;
-window.goToCalendarDay = goToCalendarDay;
+window.moveHomeWeek        = moveHomeWeek;
+window.onHomeWeekCellClick = onHomeWeekCellClick;

@@ -219,11 +219,13 @@
      HOME PAGE
 ════════════════════════════════════ -->
 <div id="pg-home" class="pg on">
-  <!-- v0.0.45: 기존 "우리 아이 무럭무럭!" 배너를 없애고, 오늘이 포함된 주가 보이는
-       간소화 캘린더 위젯으로 교체 (js/homeWeekWidget.js) -->
+  <!-- v0.0.45: 기존 "우리 아이 무럭무럭!" 배너를 없애고, 오늘(또는 선택된 날짜)이 포함된 주가
+       보이는 간소화 캘린더 위젯으로 교체 (js/homeWeekWidget.js). v0.0.47: 캘린더 탭과 완전히
+       같은 셀 렌더러·이벤트 데이터를 재사용해 일정까지 그대로 보이도록 개편 -->
   <div class="home-week-card" id="homeWeekCard">
     <div class="home-week-head">
-      <span class="home-week-title"><span class="icon icon-sm" translate="no" aria-hidden="true">calendar_month</span> 이번 주 일정 <span class="home-week-month" id="homeWeekMonth"></span></span>
+      <span class="home-week-title"><span class="icon icon-sm" translate="no" aria-hidden="true">calendar_month</span> 이번 주 일정</span>
+      <span class="home-week-month" id="homeWeekMonth"></span>
       <div class="home-week-nav">
         <button class="hw-nav-btn" onclick="moveHomeWeek(-1)" title="이전 주" aria-label="이전 주"><span class="icon icon-sm" translate="no" aria-hidden="true">chevron_left</span></button>
         <button class="hw-nav-btn" onclick="moveHomeWeek(1)" title="다음 주" aria-label="다음 주"><span class="icon icon-sm" translate="no" aria-hidden="true">chevron_right</span></button>
@@ -448,7 +450,7 @@
     <a href="./terms.html"><span class="icon icon-sm" translate="no" aria-hidden="true">description</span> 이용약관</a>
     <a href="./contact.html"><span class="icon icon-sm" translate="no" aria-hidden="true">mail</span> 문의</a>
   </div>
-  <div class="site-footer-version">맘캘 MomCal v0.0.46</div>
+  <div class="site-footer-version">맘캘 MomCal v0.0.47</div>
 </footer>
 
 <!-- ════════════════════════════════════
