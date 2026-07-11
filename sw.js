@@ -32,7 +32,10 @@
 // v0.0.42: 캘린더 연동 토글이 실제로 일정을 숨김/표시하도록 js/calendar.js·
 // js/checklistCalendarLink.js 수정, 알림 통합으로 js/notifications.js·js/push.js·js/ui.js
 // 변경 — 캐시 버전 다시 상향
-const CACHE_NAME = 'momcal-shell-v47';
+// v0.0.43: CSS 버그 수정(가족 공유 버튼 글자색, 편집 모달 체크박스 겹침) + 체크리스트 탭
+// 안내문 이동 + 팩 직접추가 항목 설정 연동으로 css/checklist.css·css/main.css·
+// js/checklist.js·js/checklistSettings.js 변경
+const CACHE_NAME = 'momcal-shell-v48';
 
 const APP_SHELL = [
   './',

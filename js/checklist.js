@@ -190,9 +190,12 @@ export function renderChecklist() {
              onclick="switchClTab(${i})">${t.tabLabel}</button>`
   ).join('') + (child
     ? `<button type="button" class="cl-tab-settings-btn" title="체크리스트 표시·연동 설정" onclick="gp('settings')">
-         <span class="icon icon-sm" translate="no" aria-hidden="true">tune</span>
+         <span class="icon icon-sm" translate="no" aria-hidden="true">tune</span> 편집
        </button>`
     : '');
+
+  const hintEl = document.getElementById('clTabHint');
+  if (hintEl) hintEl.style.display = child ? '' : 'none'; // v0.0.43: "편집" 버튼이 뭘 하는지 처음 보는 사람도 알 수 있게 짧은 안내 추가
 
   renderContextBanner(child);
   renderClSidebar();

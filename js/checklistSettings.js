@@ -114,16 +114,14 @@ export function renderChecklistSettings() {
   const wrap = document.getElementById('clSettingsWrap');
   if (!wrap) return;
 
-  const packPregRows = clPacks.filter(p => p.stage === 'preg').map(p => ({ key: p.key, icon: p.icon, label: p.label }));
-  const packBornRows = clPacks.filter(p => (p.stage || 'born') === 'born').map(p => ({ key: p.key, icon: p.icon, label: p.label }));
+  const packPregRows = clPacks.filter(p => p.stage === 'preg').map(p => ({ key: p.key, icon: p.icon, label: p.label, editable: true }));
+  const packBornRows = clPacks.filter(p => (p.stage || 'born') === 'born').map(p => ({ key: p.key, icon: p.icon, label: p.label, editable: true }));
   const customPregRows = (S.customChecklists || []).filter(c => c.stage === 'preg')
     .map(c => ({ key: c.key, icon: c.icon || 'checklist', label: c.label, deletable: true, editable: true }));
   const customBornRows = (S.customChecklists || []).filter(c => (c.stage || 'born') === 'born')
     .map(c => ({ key: c.key, icon: c.icon || 'checklist', label: c.label, deletable: true, editable: true }));
 
   wrap.innerHTML = `
-    <div class="cl-settings-hint">체크리스트 목록을 원하는 것만 보이게 켜고 끌 수 있고, 나만의 체크리스트도 만들어서 편집할 수 있어요. 아이 단계(임신중/출생 후)에 따라 실제로 보이는 탭이 달라져요 — 여기서는 두 단계를 나눠서 한 번에 관리해요.</div>
-
     <div class="cl-settings-group-label"><span class="icon icon-sm" translate="no" aria-hidden="true">pregnant_woman</span> 임산부용</div>
     ${PREG_ROWS.map(rowHtml).join('')}
     ${packPregRows.map(rowHtml).join('')}
@@ -234,6 +232,11 @@ function editItemRowHtml(it, idxAttr) {
 }
 
 export function openEditChecklistModal(key) {
+  if (key.startsWith('pack_')) return openEditPackExtrasModal(key);
+  return openEditCustomChecklistModal(key);
+}
+
+function openEditCustomChecklistModal(key) {
   const cl = (S.customChecklists || []).find(c => c.key === key);
   if (!cl) return;
   showModal(`"${cl.label}" 편집`, `
@@ -249,6 +252,66 @@ export function openEditChecklistModal(key) {
     <div class="cl-form-msg" id="editClMsg"></div>
     <button class="btn bpk" style="width:100%;margin-top:10px" onclick="submitEditChecklist('${cl.key}')">저장</button>
   `);
+}
+
+/**
+ * v0.0.43: 준비물 팩(예: "100일 준비")은 콘텐츠(dd 상세 설명 포함)가 데이터 파일에 미리
+ * 정해져 있어서 그 항목들 자체는 여기서 수정할 수 없음 — 대신 체크리스트 탭에서
+ * "＋ 항목 직접 추가하기"로 사용자가 덧붙인 항목만 편집 대상. 두 화면이 같은
+ * S.customClItems 배열을 그대로 읽고 쓰기 때문에 별도 동기화 코드 없이 서로 반영됨
+ * (체크리스트 탭에서 추가 → 설정에 바로 보임, 설정에서 수정 → 체크리스트 탭에 바로 반영).
+ * 어떤 아이 기준으로 보여줄지는 지금 앱에서 선택 중인 아이(S.selC)를 그대로 씀 —
+ * 체크리스트 탭에서 그 항목을 추가할 때도 같은 아이가 선택돼 있었을 것이기 때문.
+ */
+function openEditPackExtrasModal(packKey) {
+  const child = S.children[S.selC];
+  if (!child) { alert('먼저 체크리스트 탭에서 아이를 등록·선택해주세요'); return; }
+  const pack = clPacks.find(p => p.key === packKey);
+  const customKey = `${child.id}_${packKey}`;
+  const items = (S.customClItems && S.customClItems[customKey]) || [];
+
+  showModal(`"${pack ? pack.label : ''}"에 직접 추가한 항목`, `
+    <div class="cl-form-msg" style="margin-top:0;color:var(--txl);font-weight:600">${escapeHtml(child.avatar || '')} ${escapeHtml(child.name || '')} 기준이에요. 원래 있던 기본 항목은 여기서 못 바꿔요.</div>
+    <div class="fg" style="margin-top:10px">
+      <div id="editClItemsList">${items.map((it, i) => editItemRowHtml(it, i)).join('')}</div>
+      <button type="button" class="cl-add-item-btn" style="margin-top:8px" onclick="addEditClItemRow()">＋ 항목 추가</button>
+    </div>
+    <div class="cl-form-msg" id="editClMsg"></div>
+    <button class="btn bpk" style="width:100%;margin-top:10px" onclick="submitEditPackExtras('${packKey}')">저장</button>
+  `);
+}
+
+export function submitEditPackExtras(packKey) {
+  const child = S.children[S.selC];
+  if (!child) return;
+  const customKey = `${child.id}_${packKey}`;
+  const existing = (S.customClItems && S.customClItems[customKey]) || [];
+
+  const rows = Array.from(document.querySelectorAll('#editClItemsList .cl-edit-item-row'));
+  const items = [];
+  rows.forEach((row) => {
+    const text = row.querySelector('.cl-edit-item-text')?.value.trim();
+    if (!text) return; // 빈 항목은 삭제로 취급
+    const req = !!row.querySelector('.cl-edit-item-req-cb')?.checked;
+    const idxAttr = row.getAttribute('data-idx');
+    const original = /^\d+$/.test(idxAttr) ? existing[Number(idxAttr)] : null;
+    const id = original ? original.id : `custom_${Date.now()}_${items.length}`; // 체크리스트 탭의 "+ 항목 추가"와 같은 id 접두어 규칙
+    items.push({ id, t: text, r: req });
+  });
+
+  if (!S.customClItems) S.customClItems = {};
+  S.customClItems[customKey] = items;
+  // 삭제된 항목의 체크 상태도 함께 정리
+  if (S.checks[customKey]) {
+    const validIds = new Set(items.map((i) => i.id));
+    Object.keys(S.checks[customKey]).forEach((id) => {
+      if (id.startsWith('custom_') && !validIds.has(id)) delete S.checks[customKey][id];
+    });
+  }
+
+  cm();
+  debounceSave();
+  window.renderChecklist?.(); // 체크리스트 탭이 열려있으면 다음에 그 탭을 볼 때 바로 반영됨
 }
 
 export function addEditClItemRow() {
@@ -300,5 +363,6 @@ window.setNewClStage            = setNewClStage;
 window.submitCreateChecklist    = submitCreateChecklist;
 window.deleteCustomChecklist    = deleteCustomChecklist;
 window.openEditChecklistModal   = openEditChecklistModal;
+window.submitEditPackExtras     = submitEditPackExtras;
 window.addEditClItemRow         = addEditClItemRow;
 window.submitEditChecklist      = submitEditChecklist;

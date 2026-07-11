@@ -420,8 +420,11 @@ html[data-theme="dark"] .dash-badge-mini-legend  { background: linear-gradient(1
 
 /* v0.0.15: 가족 그룹 공유 카드의 "코드 복사"/"가족 그룹 나가기" 버튼 —
    인라인 색상 대신 클래스로 분리해서 다크 모드에서도 잘 보이게 함 */
-.family-copy-btn  { background: var(--pkl); color: var(--pkd); }
-.family-leave-btn { background: #FFF5F5; color: #E53935; border: 1px solid #FFCDD2; }
+/* v0.0.43 버그 수정: .btn 기본 규칙(color:#fff)이 css/main.css에서 이 규칙보다 뒤에
+   나와서(명시도가 같으면 나중에 나온 규칙이 이김) 흰 글자가 옅은 배경 위에 그대로 덮여
+   거의 안 보였음(옹짐꾼님 스크린샷 제보) — 명시도를 올려서 확실히 이기도록 .btn과 결합함 */
+.btn.family-copy-btn  { background: var(--pkl); color: var(--pkd); }
+.btn.family-leave-btn { background: #FFF5F5; color: #E53935; border: 1px solid #FFCDD2; }
 html[data-theme="dark"] .family-leave-btn {
   background: #3A2323; color: #FF8A80; border-color: #5A2E2E;
 }
