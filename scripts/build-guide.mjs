@@ -32,7 +32,7 @@ const GUIDE = join(ROOT, 'guide');
 const SITE  = 'https://momcal.app';
 /* v0.0.2: 앱 본체(index.html 최하단)와 반드시 같은 값으로 유지 — 버전을 올릴 땐 이 값과
    index.html의 .site-footer-version 텍스트를 함께 수정해야 함 (docs/PROJECT_SPEC.md 버전 관리 정책 참고) */
-const APP_VERSION = 'v0.0.48';
+const APP_VERSION = 'v0.0.49';
 
 /* 정부지원 데이터는 {preg, postpartum, parenting} 키의 배열이라 체크리스트와 형태가 달라
    가이드 페이지용 카테고리 배열로 한 번 변환해준다. */
@@ -147,7 +147,10 @@ function faqJsonLd(cats, questionFn, answerFn) {
 
 function header() {
   return `<header class="g-header">
-  <a class="g-logo" href="./index.html">맘캘 <img src="${SITE}/icons/logo-mark.png" alt="" class="brand-mark"></a>
+  <div class="g-logo-col">
+    <a class="g-logo" href="./index.html">맘캘 <img src="${SITE}/icons/logo-mark.png" alt="" class="brand-mark"></a>
+    <span class="g-logo-tagline">우리 아이 무럭무럭!</span>
+  </div>
   <a class="g-cta js-cta" href="${SITE}/"><span class="icon icon-sm" translate="no" aria-hidden="true">calendar_month</span> 맘캘 앱 열기</a>
 </header>`;
 }

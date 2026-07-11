@@ -111,6 +111,16 @@ a:hover { text-decoration: underline; }
   vertical-align: -.75rem;
   margin-left: 2px;
 }
+/* v0.0.49: 앱 본체(css/main.css .logo-col/.logo-tagline)와 동일한 로고 아래 작은 태그라인 —
+   캐릭터 이미지(.brand-mark)와 겹치지 않도록 양수 margin-top으로 간격을 둠 */
+.g-logo-col { display: flex; flex-direction: column; }
+.g-logo-tagline {
+  font-size: .62rem;
+  font-weight: 800;
+  color: var(--txl);
+  margin: 2px 0 0 3px;
+  letter-spacing: -.1px;
+}
 .g-cta {
   background: var(--pk);
   color: #fff; font-weight: 600; font-size: .82rem;

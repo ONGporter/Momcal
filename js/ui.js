@@ -35,10 +35,6 @@ export function gp(id, btn) {
   document.querySelectorAll('.np').forEach(b => b.classList.remove('on'));
   if (btn) btn.classList.add('on');
 
-  // v0.0.45: 로고 아래 작은 태그라인("우리 아이 무럭무럭!")은 홈 화면에서만 표시
-  const tagline = document.getElementById('logoTagline');
-  if (tagline) tagline.style.display = id === 'home' ? '' : 'none';
-
   // 페이지별 초기 렌더 (동적 import를 피하기 위해 window 함수 호출)
   const pageRender = {
     home:      () => renderHome(),

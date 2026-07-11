@@ -211,7 +211,7 @@ h1, h2, h3, .sec {
   font-size: .62rem;
   font-weight: 800;
   color: var(--txl);
-  margin: -4px 0 0 3px;
+  margin: 2px 0 0 3px;
   letter-spacing: -.1px;
 }
 @media (max-width: 380px) {
