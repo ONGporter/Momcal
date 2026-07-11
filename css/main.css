@@ -318,6 +318,7 @@ h1, h2, h3, .sec {
   font-size: .82rem; font-weight: 900; color: var(--txl);
   display: flex; align-items: center; gap: 6px;
 }
+.home-week-month { font-weight: 800; color: var(--pk); } /* v0.0.46: 이번 주가 걸친 월 표시 */
 .home-week-nav { display: flex; gap: 4px; }
 .hw-nav-btn {
   width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid #EEE0F0;
@@ -331,13 +332,15 @@ h1, h2, h3, .sec {
 .hw-head-cell { text-align: center; font-size: .66rem; font-weight: 900; color: #fff; }
 .hw-head-cell.hw-head-red { color: var(--holiday-red); text-shadow: 0 1px 2px rgba(0,0,0,.15); }
 .hw-date-row { padding: 10px 0 14px; }
-.hw-date-cell { display: flex; align-items: center; justify-content: center; }
+.hw-date-cell { display: flex; align-items: center; justify-content: center; cursor: pointer; } /* v0.0.46: 클릭 시 캘린더 탭으로 이동 */
+.hw-date-cell:hover .hw-date-num { background: var(--pkl); }
 .hw-date-num {
   width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
-  font-size: .78rem; font-weight: 800; color: var(--tx); border-radius: 50%;
+  font-size: .78rem; font-weight: 800; color: var(--tx); border-radius: 50%; transition: background .2s;
 }
 .hw-date-num.hw-red   { color: var(--holiday-red); }
 .hw-date-num.hw-today { background: var(--pk); color: #fff; }
+.hw-date-cell:hover .hw-date-num.hw-today { background: var(--pkd); }
 
 /* ── PROFILE STRIP ── */
 .profile-strip {
