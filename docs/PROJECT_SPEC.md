@@ -74,7 +74,7 @@
     }
   ],
   "dayStickers": {
-    "2024-07-01": ["🌸", "💕", "momcal:hug"]
+    "2024-07-01": ["🌸", "💕", "momcal:hug", "icon:daisy"]
   },
   "checks": {
     "{childId}_{catKey}": {
