@@ -18,6 +18,7 @@ import { renderFontSizeSettings } from './fontSize.js';
 import { renderCalFontSizeSettings } from './calFontSize.js';
 import { renderChecklistSettings } from './checklistSettings.js'; // v0.0.40: 체크리스트 표시/캘린더 연동/커스텀 만들기
 import { renderAdSlot }          from './adSlot.js';
+import { renderHomeWeek }        from './homeWeekWidget.js'; // v0.0.45: 홈 화면 간소화 주간 캘린더
 
 /* ════════════════════════════════════
  *  네비게이션
@@ -33,6 +34,10 @@ export function gp(id, btn) {
   document.getElementById('pg-' + id).classList.add('on');
   document.querySelectorAll('.np').forEach(b => b.classList.remove('on'));
   if (btn) btn.classList.add('on');
+
+  // v0.0.45: 로고 아래 작은 태그라인("우리 아이 무럭무럭!")은 홈 화면에서만 표시
+  const tagline = document.getElementById('logoTagline');
+  if (tagline) tagline.style.display = id === 'home' ? '' : 'none';
 
   // 페이지별 초기 렌더 (동적 import를 피하기 위해 window 함수 호출)
   const pageRender = {
@@ -64,6 +69,7 @@ export function renderSettings() {
  *  홈 화면
  * ════════════════════════════════════ */
 export function renderHome() {
+  renderHomeWeek(); // v0.0.45: 이번 주 간소화 캘린더
   renderDashboard();
 
   // 프로필 카드

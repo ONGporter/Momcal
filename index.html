@@ -168,7 +168,11 @@
 ════════════════════════════════════ -->
 <div class="topbar">
   <div class="topbar-top">
-    <div class="logo" onclick="gp('home', document.querySelector('.np[data-page=\'home\']'))" style="cursor:pointer" title="홈으로">맘캘 <img src="./icons/logo-mark.png" alt="" class="brand-mark"></div>
+    <div class="logo-col">
+      <div class="logo" onclick="gp('home', document.querySelector('.np[data-page=\'home\']'))" style="cursor:pointer" title="홈으로">맘캘 <img src="./icons/logo-mark.png" alt="" class="brand-mark"></div>
+      <!-- v0.0.45: 기존 홈 배너(우리 아이 무럭무럭!)를 없애면서 로고 아래 작은 태그라인으로 이동. 홈 화면일 때만 표시(js/ui.js gp() 참고) -->
+      <div class="logo-tagline" id="logoTagline">우리 아이 무럭무럭!</div>
+    </div>
     <div class="topbar-right">
       <button class="np np-register" data-page="register" onclick="gp('register',this)"><span class="icon icon-sm" translate="no" aria-hidden="true">add</span> 등록</button>
       <!-- Sprint 15: 게스트 모드일 때는 "로그인" 칩, 로그인 상태일 때는 기존 유저칩 (JS가 display 전환) -->
@@ -215,9 +219,17 @@
      HOME PAGE
 ════════════════════════════════════ -->
 <div id="pg-home" class="pg on">
-  <div class="home-hero">
-    <h1>우리 아이 무럭무럭!</h1>
-    <p>임신부터 육아까지, 맘캘이 함께해요</p>
+  <!-- v0.0.45: 기존 "우리 아이 무럭무럭!" 배너를 없애고, 오늘이 포함된 주가 보이는
+       간소화 캘린더 위젯으로 교체 (js/homeWeekWidget.js) -->
+  <div class="home-week-card" id="homeWeekCard">
+    <div class="home-week-head">
+      <span class="home-week-title"><span class="icon icon-sm" translate="no" aria-hidden="true">calendar_month</span> 이번 주 일정</span>
+      <div class="home-week-nav">
+        <button class="hw-nav-btn" onclick="moveHomeWeek(-1)" title="이전 주" aria-label="이전 주"><span class="icon icon-sm" translate="no" aria-hidden="true">chevron_left</span></button>
+        <button class="hw-nav-btn" onclick="moveHomeWeek(1)" title="다음 주" aria-label="다음 주"><span class="icon icon-sm" translate="no" aria-hidden="true">chevron_right</span></button>
+      </div>
+    </div>
+    <div id="homeWeekGrid"></div>
   </div>
 
   <div class="sec"><span class="icon icon-sm" translate="no" aria-hidden="true">dashboard</span> 오늘의 대시보드</div>
@@ -436,7 +448,7 @@
     <a href="./terms.html"><span class="icon icon-sm" translate="no" aria-hidden="true">description</span> 이용약관</a>
     <a href="./contact.html"><span class="icon icon-sm" translate="no" aria-hidden="true">mail</span> 문의</a>
   </div>
-  <div class="site-footer-version">맘캘 MomCal v0.0.44</div>
+  <div class="site-footer-version">맘캘 MomCal v0.0.45</div>
 </footer>
 
 <!-- ════════════════════════════════════

@@ -13,7 +13,7 @@
 - **이모지 대부분 삭제 → 아이콘 라이브러리(Material Symbols)로 대체.** 아래 "아이콘 시스템" 참고.
 - **둥글기 16px**(`--radius`). 작은 요소(배지·태그)는 별도 값 유지.
 - **여백은 12 / 16 / 20px만**(`--sp-sm`/`--sp-md`/`--sp-lg`). 13px·15px·18px 같은 임의 값을 새로 만들지 말 것.
-- **그라디언트 규칙**: 버튼·탭·진행률바 등 "조작 가능한 UI"는 전부 단색(`var(--pk)`). 히어로/배너류(`.home-hero`, `guide/`의 `.g-hero`·`.g-cta-banner`)는 예외로 핑크 계열 그라디언트(`linear-gradient(135deg, #F8BBD0 0%, #F06292 100%)`)를 허용 — **단, 항상 이 정확한 핑크 2색 조합만 쓸 것, 보라·파랑 등 다른 색을 섞지 말 것.** 등급 배지(Perfect/Master/Legend)도 정보 전달용 그라디언트 예외.
+- **그라디언트 규칙**: 버튼·탭·진행률바 등 "조작 가능한 UI"는 전부 단색(`var(--pk)`). 히어로/배너류(`guide/`의 `.g-hero`·`.g-cta-banner`, v0.0.45 이전엔 앱 홈의 `.home-hero`도 포함됐으나 이번 주 간소화 캘린더 위젯으로 교체되며 제거됨)는 예외로 핑크 계열 그라디언트(`linear-gradient(135deg, #F8BBD0 0%, #F06292 100%)`)를 허용 — **단, 항상 이 정확한 핑크 2색 조합만 쓸 것, 보라·파랑 등 다른 색을 섞지 말 것.** 등급 배지(Perfect/Master/Legend)도 정보 전달용 그라디언트 예외.
 - **모바일 우선** — 터치 타겟 최소 44px.
 - **애니메이션은 과하지 않게** — 0.2~0.3s ease, 필요한 곳만.
 
@@ -79,7 +79,7 @@ background: linear-gradient(135deg, #F8BBD0 0%, #F06292 100%);
 /* 우상단 은은한 장식(선택) */
 background: radial-gradient(circle, rgba(255,255,255,.18), transparent);
 ```
-적용처: 앱 홈 `.home-hero`, 육아정보(`guide/`) `.g-hero`·`.g-cta-banner`. 이 세 곳은 항상 같은 그라디언트로 통일할 것 — 색을 새로 고르지 말 것.
+적용처: 육아정보(`guide/`) `.g-hero`·`.g-cta-banner`. 이 두 곳은 항상 같은 그라디언트로 통일할 것 — 색을 새로 고르지 말 것. (v0.0.45: 앱 홈의 `.home-hero`는 이번 주 간소화 캘린더 위젯(`.home-week-card`)으로 교체되며 제거됨 — 새 위젯은 카드 배경에 그라디언트를 쓰지 않고 헤더 행에만 캘린더 테마색을 씀)
 
 ### 그 외 모든 곳(버튼·탭·진행률바)
 ```css
@@ -289,7 +289,6 @@ transition: all .22s;             /* 카드 hover */
   .cl-layout  { grid-template-columns: 1fr; }  /* 체크리스트 사이드바 세로 전환 */
   .cl-sidebar { position: static; }
   .cal-cell   { min-height: 52px; }            /* 캘린더 셀 축소 */
-  .home-hero h1 { font-size: 1.28rem; }        /* 홈 제목 축소 */
   .fg2 { grid-template-columns: 1fr; }         /* 폼 2열 → 1열 */
 }
 ```

@@ -205,6 +205,19 @@ h1, h2, h3, .sec {
   margin-left: 2px;
 }
 
+/* v0.0.45: 로고 아래 작은 태그라인("우리 아이 무럭무럭!") — 홈 화면일 때만 표시(js/ui.js gp() 참고) */
+.logo-col { display: flex; flex-direction: column; flex-shrink: 0; }
+.logo-tagline {
+  font-size: .62rem;
+  font-weight: 800;
+  color: var(--txl);
+  margin: -4px 0 0 3px;
+  letter-spacing: -.1px;
+}
+@media (max-width: 380px) {
+  .logo-tagline { font-size: .56rem; }
+}
+
 /* 탭 줄 — 홈/캘린더/체크리스트/성장 4개는 기존처럼 균등하게, "설정"만 아이콘 위주로 좁게
    v0.0.7: "5개 탭이 다 똑같이 커져서 이상하다"는 피드백 — 설정 탭 너비만 줄이고 나머지 4개는 원래 크기로 복원 */
 .nav-pills {
@@ -288,25 +301,43 @@ h1, h2, h3, .sec {
 }
 
 /* ── HOME ── */
-/* Sprint 28: 배너가 너무 크다는 피드백 반영 — 패딩·글자 크기를 전체적으로 축소 */
-.home-hero {
-  background: linear-gradient(135deg, #F8BBD0 0%, #F06292 100%);
+/* v0.0.45: 기존 "우리 아이 무럭무럭!" 큰 배너(.home-hero)를 없애고, 로고 아래 작은
+   태그라인 + 이번 주 간소화 캘린더 위젯(.home-week-*)으로 교체함 */
+.home-week-card {
+  background: var(--card);
   border-radius: 20px;
-  padding: 18px 22px;
-  text-align: center;
-  margin-bottom: 18px;
-  position: relative;
+  box-shadow: var(--card-shadow);
   overflow: hidden;
+  margin-bottom: 18px;
 }
-.home-hero::before {
-  content: ''; position: absolute;
-  width: 160px; height: 160px;
-  background: radial-gradient(circle, rgba(255,255,255,.18), transparent);
-  border-radius: 50%; top: -55px; right: -40px;
+.home-week-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px 10px;
 }
-.home-hero h1 { font-size: 1.12rem; font-weight: 900; color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,.12); margin-bottom: 3px; }
-.home-hero p  { font-size: .76rem; color: rgba(255,255,255,.85); }
-.hero-emoji   { font-size: 1.6rem; margin-bottom: 4px; display: block; }
+.home-week-title {
+  font-size: .82rem; font-weight: 900; color: var(--txl);
+  display: flex; align-items: center; gap: 6px;
+}
+.home-week-nav { display: flex; gap: 4px; }
+.hw-nav-btn {
+  width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid #EEE0F0;
+  background: var(--wh); color: var(--txl); cursor: pointer; padding: 0;
+  display: flex; align-items: center; justify-content: center; transition: all .2s;
+}
+.hw-nav-btn:hover { border-color: var(--pk); color: var(--pk); }
+
+.hw-head-row, .hw-date-row { display: grid; grid-template-columns: repeat(7, 1fr); }
+.hw-head-row { padding: 9px 0; }
+.hw-head-cell { text-align: center; font-size: .66rem; font-weight: 900; color: #fff; }
+.hw-head-cell.hw-head-red { color: var(--holiday-red); text-shadow: 0 1px 2px rgba(0,0,0,.15); }
+.hw-date-row { padding: 10px 0 14px; }
+.hw-date-cell { display: flex; align-items: center; justify-content: center; }
+.hw-date-num {
+  width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
+  font-size: .78rem; font-weight: 800; color: var(--tx); border-radius: 50%;
+}
+.hw-date-num.hw-red   { color: var(--holiday-red); }
+.hw-date-num.hw-today { background: var(--pk); color: #fff; }
 
 /* ── PROFILE STRIP ── */
 .profile-strip {
@@ -654,6 +685,8 @@ html[data-theme="dark"] .ci-detail { background: #241F2C; border-color: #3A2E3C;
 html[data-theme="dark"] .cal-cell { border-color: rgba(255,255,255,.06); }
 html[data-theme="dark"] .cal-cell:hover { background: #221E2A; }
 html[data-theme="dark"] .cal-head-row { filter: brightness(.9); }
+html[data-theme="dark"] .hw-head-row { filter: brightness(.9); } /* v0.0.45 */
+html[data-theme="dark"] .hw-nav-btn { border-color: rgba(255,255,255,.1); } /* v0.0.45 */
 html[data-theme="dark"] .notif-toggle-btn { background: var(--card); border-color: rgba(255,255,255,.12); }
 html[data-theme="dark"] .auth-box,
 html[data-theme="dark"] .btn-google,

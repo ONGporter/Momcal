@@ -37,7 +37,7 @@
 // js/checklist.js·js/checklistSettings.js 변경
 // v0.0.44: 커스텀 체크리스트 양방향 편집 완전 수정("내가 추가함" 배지 제거 포함) + 가족
 // 나가기 버튼 테두리 제거 + 안내문 화살표 방향 수정
-const CACHE_NAME = 'momcal-shell-v49';
+const CACHE_NAME = 'momcal-shell-v50';
 
 const APP_SHELL = [
   './',
@@ -66,6 +66,7 @@ const APP_SHELL = [
   './js/growth.js',
   './js/growthChart.js',
   './js/guestMode.js',
+  './js/homeWeekWidget.js',
   './js/modal.js',
   './js/notifications.js',
   './js/pwaInstall.js',

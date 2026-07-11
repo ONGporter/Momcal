@@ -60,6 +60,7 @@ export const S = Object.assign(emptyState(), {
   calM:     new Date().getMonth(),
   calView:  'month',
   calWeekRef: null,      // v0.0.11: 주간 뷰 전용 기준일(YYYY-MM-DD) — calMove()가 7일 단위로 이동
+  homeWeekRef: null,     // v0.0.45: 홈 화면 간소화 캘린더 전용 기준일(YYYY-MM-DD) — 캘린더 탭의 calWeekRef와 별개
   selDate:  null,
   selSCat:  0,           // 선택된 스티커 카테고리 인덱스
   clTab:    0,           // 체크리스트 탭 인덱스
