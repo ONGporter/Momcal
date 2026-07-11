@@ -1,8 +1,11 @@
 /**
- * js/homeWeekWidget.js — v0.0.45 신규, v0.0.46/v0.0.47 개편
+ * js/homeWeekWidget.js — v0.0.45 신규, v0.0.46/v0.0.47/v0.0.48 개편
  *
  * 홈 화면에 있던 "우리 아이 무럭무럭!" 배너를 없애고 그 자리에 넣는 간소화 캘린더.
- * 오늘(또는 선택된 날짜)이 포함된 주(월~일)를 한 줄로 보여주고, 이전/다음 주로 이동할 수 있다.
+ * 오늘(또는 선택된 날짜)이 포함된 주(일~토)를 한 줄로 보여주고, 이전/다음 주로 이동할 수 있다.
+ * v0.0.48: 요일 시작을 월요일 → 일요일로 변경 — 캘린더 탭 월간 뷰(js/calendar.js
+ * renderMonthView, `['일','월','화','수','목','금','토']` + `new Date(y,m,1).getDay()`
+ * 기준 일요일 시작 그리드)와 요일 순서를 완전히 맞춤.
  *
  * v0.0.47: "전체 캘린더 탭의 한 주치를 그대로 가져온 것"이 되도록 js/calendar.js의
  * 실제 셀 렌더러(cellHTML)와 이벤트 데이터(getAllEvs)를 그대로 재사용한다 — 그래서 일정
@@ -20,25 +23,24 @@ import { S } from './state.js';
 import { today } from './utils.js';
 import { themes, getAllEvs, cellHTML, selectDate } from './calendar.js';
 
-const DOW_LABELS = ['월', '화', '수', '목', '금', '토', '일'];
+const DOW_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 
 function fmtDate(d) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-/** 주어진 날짜(YYYY-MM-DD)가 속한 주의 월요일 Date 객체를 반환 */
-function mondayOf(dateStr) {
+/** 주어진 날짜(YYYY-MM-DD)가 속한 주의 일요일 Date 객체를 반환 (v0.0.48: 캘린더 탭과 동일하게 일요일 시작) */
+function sundayOf(dateStr) {
   const d = new Date(dateStr);
   const dow = d.getDay(); // 0=일 ~ 6=토
-  const diff = dow === 0 ? -6 : 1 - dow;
-  d.setDate(d.getDate() + diff);
+  d.setDate(d.getDate() - dow);
   return d;
 }
 
 /** 주가 걸친 월을 "7월" 또는 "7월 - 8월"(연도가 겹치면 연도도 함께) 형태로 표시 */
-function monthRangeLabel(mon, sun) {
-  const y1 = mon.getFullYear(), m1 = mon.getMonth() + 1;
-  const y2 = sun.getFullYear(), m2 = sun.getMonth() + 1;
+function monthRangeLabel(start, end) {
+  const y1 = start.getFullYear(), m1 = start.getMonth() + 1;
+  const y2 = end.getFullYear(), m2 = end.getMonth() + 1;
   if (y1 === y2 && m1 === m2) return `${m1}월`;
   if (y1 === y2) return `${m1}월 - ${m2}월`;
   return `${y1}년 ${m1}월 - ${y2}년 ${m2}월`;
@@ -54,23 +56,23 @@ export function renderHomeWeek() {
   const monEl = document.getElementById('homeWeekMonth');
   if (!grid) return;
 
-  const th  = themes[S.theme] || themes.rose;
-  const mon = mondayOf(focusDate());
-  const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
-  const td  = today();
-  const evs = getAllEvs();
+  const th    = themes[S.theme] || themes.rose;
+  const start = sundayOf(focusDate());
+  const end   = new Date(start); end.setDate(start.getDate() + 6);
+  const td    = today();
+  const evs   = getAllEvs();
 
-  if (monEl) monEl.textContent = monthRangeLabel(mon, sun);
+  if (monEl) monEl.textContent = monthRangeLabel(start, end);
 
   let headHtml = '';
   let bodyHtml = '';
 
   for (let i = 0; i < 7; i++) {
-    const d = new Date(mon);
-    d.setDate(mon.getDate() + i);
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
     const ds = fmtDate(d);
-    // 헤더(요일 이름)는 기존 캘린더(js/calendar.js renderMonthView)와 동일하게 토/일 열만 고정 빨간색
-    const isWeekendCol = i === 5 || i === 6; // 월요일 시작이므로 5=토, 6=일
+    // 헤더(요일 이름)는 기존 캘린더(js/calendar.js renderMonthView)와 동일하게 일/토 열만 고정 빨간색
+    const isWeekendCol = i === 0 || i === 6; // v0.0.48: 일요일 시작이므로 0=일, 6=토
     headHtml += `<div class="cal-head-cell${isWeekendCol ? ' cal-head-red' : ''}">${DOW_LABELS[i]}</div>`;
     // 캘린더 탭과 완전히 같은 셀 렌더러 재사용 — 일정·스티커·완료표시·공휴일 표시가 그대로 나옴
     bodyHtml += cellHTML(ds, d.getDate(), false, evs, td, th);
