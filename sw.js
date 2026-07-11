@@ -37,7 +37,11 @@
 // js/checklist.js·js/checklistSettings.js 변경
 // v0.0.44: 커스텀 체크리스트 양방향 편집 완전 수정("내가 추가함" 배지 제거 포함) + 가족
 // 나가기 버튼 테두리 제거 + 안내문 화살표 방향 수정
-const CACHE_NAME = 'momcal-shell-v54';
+// v0.0.50: 캘린더 스티커에 자체 제작 이미지 카테고리("맘캘 육아" — 기저귀갈기/꿈나라가기/
+// 놀이하기/목욕하기/뽀뽀하기/안아주기/양치하기/우유먹기/이유식먹기/책읽기 10종) 추가.
+// js/calendar.js(stickerCats·ICON_STICKERS·stickerDisplay), css/calendar.css(.sticker-img) 변경 +
+// icons/stickers/momcal-action/*.png 신규 정적 파일 — 캐시 버전 상향
+const CACHE_NAME = 'momcal-shell-v55';
 
 const APP_SHELL = [
   './',

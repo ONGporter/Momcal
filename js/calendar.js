@@ -911,7 +911,7 @@ export function cellHTML(ds, d, other, evs, td, th) {
 
   const stickerHtml = otherStickers.length
     ? `<div class="sticker-row">
-        ${otherStickers.slice(0, showCount).map(s => `<span class="sticker-on-cal">${s}</span>`).join('')}
+        ${otherStickers.slice(0, showCount).map(s => `<span class="sticker-on-cal">${stickerDisplay(s, '.8rem')}</span>`).join('')}
         ${overflow > 0 ? `<span class="sticker-overflow">+${overflow}</span>` : ''}
        </div>`
     : '';
@@ -1206,7 +1206,7 @@ function renderWeekView() {
     const otherStickers = (S.dayStickers[ds] || []).filter(s => !isFoodSticker(s));
     const stickerHtml = otherStickers.length
       ? `<div class="sticker-row" style="position:static;margin-top:2px;justify-content:flex-start">
-          ${otherStickers.slice(0, 4).map(s => `<span class="sticker-on-cal">${s}</span>`).join('')}
+          ${otherStickers.slice(0, 4).map(s => `<span class="sticker-on-cal">${stickerDisplay(s, '.8rem')}</span>`).join('')}
           ${otherStickers.length > 4 ? `<span class="sticker-overflow">+${otherStickers.length - 4}</span>` : ''}
          </div>`
       : '';
@@ -1320,7 +1320,7 @@ export function showDayPanel(ds) {
                  `<div onclick="removeSticker('${ds}',${i})"
                        style="font-size:1.45rem;cursor:pointer;padding:5px 7px;border-radius:10px;
                               background:var(--pkl);border:1.5px solid var(--pk);display:flex;align-items:center;gap:2px">
-                       ${stickerEmoji(s)}${isFoodSticker(s) && s.includes('|')
+                       ${stickerDisplay(s, '1.45rem')}${isFoodSticker(s) && s.includes('|')
                          ? `<span style="font-size:.62rem;font-weight:800;color:var(--pkd)">${s.split('|')[1]}g</span>` : ''}
                        </div>`
                ).join('')}
@@ -1475,6 +1475,15 @@ export const stickerCats = [
   { key: 'celebrate', label: `${icon('celebration', { size: 'sm' })} 기념`, items: ['🎉','🎊','🎂','🎁','🏆','🥇','✨','🎈','🎀','🌟','🪄','🎗','🥳','🎺','🎵','🎶'] },
   { key: 'food',   label: `${icon('restaurant', { size: 'sm' })} 이유식`, items: ['🍚','🌾','🥩','🐔','🐟','🥕','🥦','🍠','🥔','🌽','🫛','🧀','🥚','🍳','🫐','🍎','🍌','🍓','🍇','🥑','🥛','🧆','🍲','🥣','🍜','🥗','🫘','🧅','🧄','🫚'] },
   { key: 'health', label: `${icon('health_and_safety', { size: 'sm' })} 건강`, items: ['💊','💉','🩺','🏥','🩹','💪','🩻','🔬','🧬','🌡️','🩸','⚕️','🏋️','🧘','🚑','🫀'] },
+  // v0.0.50: 맘캘 육아 액션 시리즈 — 유니코드 이모지가 아니라 자체 제작 일러스트(PNG) 스티커.
+  // 저장 형식은 기존 이모지 스티커와 완전히 동일한 문자열(S.dayStickers에 그대로 push/split)이라
+  // Firebase 구조·기존 저장 데이터는 전혀 안 건드림 — 다만 값 자체가 이모지가 아니라
+  // 'momcal:' 접두어가 붙은 고유 토큰이고, 렌더링 시 stickerDisplay()가 이 접두어를 보고
+  // ICON_STICKERS 맵에서 이미지를 찾아 <img>로 그려줌(못 찾으면 텍스트 그대로 폴백).
+  { key: 'momcal_action', label: `${icon('emoji_people', { size: 'sm' })} 맘캘 육아`, items: [
+      'momcal:diaper_change', 'momcal:sleep_time', 'momcal:play', 'momcal:bath', 'momcal:kiss',
+      'momcal:hug', 'momcal:brush_teeth', 'momcal:milk_feeding', 'momcal:baby_food_eating', 'momcal:reading',
+    ] },
 ];
 
 /**
@@ -1493,7 +1502,37 @@ const FOOD_STICKER_SET = new Set(stickerCats.find(c => c.key === 'food').items);
  */
 function stickerEmoji(s) { return s.split('|')[0]; }
 function isFoodSticker(s) { return FOOD_STICKER_SET.has(stickerEmoji(s)); }
-/** 캘린더/데이 패널에 표시할 텍스트 — g수가 있으면 "🍚(50g)", 없으면 "🍚" 그대로 */
+
+/**
+ * v0.0.50: 이미지 기반 스티커('momcal:xxx' 토큰) → 실제 파일 매핑.
+ * key는 stickerCats의 'momcal_action' 카테고리 items에 저장된 값과 정확히 같아야 함
+ * (Firestore에 이 문자열 그대로 저장되므로 key를 바꾸면 이미 저장된 사용자 데이터와 어긋남 — 바꾸지 말 것).
+ */
+const ICON_STICKERS = {
+  'momcal:diaper_change':    { file: 'diaper_change.png',    label: '기저귀 갈기' },
+  'momcal:sleep_time':       { file: 'sleep_time.png',       label: '꿈나라 가기' },
+  'momcal:play':             { file: 'play.png',             label: '놀이하기' },
+  'momcal:bath':             { file: 'bath.png',             label: '목욕하기' },
+  'momcal:kiss':             { file: 'kiss.png',             label: '뽀뽀하기' },
+  'momcal:hug':              { file: 'hug.png',              label: '안아주기' },
+  'momcal:brush_teeth':      { file: 'brush_teeth.png',      label: '양치하기' },
+  'momcal:milk_feeding':     { file: 'milk_feeding.png',     label: '우유먹기' },
+  'momcal:baby_food_eating': { file: 'baby_food_eating.png', label: '이유식먹기' },
+  'momcal:reading':          { file: 'reading.png',          label: '책읽기' },
+};
+const MOMCAL_ACTION_ICON_BASE = './icons/stickers/momcal-action/';
+
+/**
+ * 스티커 값 하나를 화면에 그릴 HTML을 반환. ICON_STICKERS에 있는 이미지 스티커면 <img>,
+ * 아니면(기존 이모지 스티커) 텍스트 그대로 폴백 — 매핑에 없는 값이 와도 절대 빈 화면이 되지 않음.
+ * size는 기존 이모지가 쓰던 font-size 값을 그대로 넘겨서 시각적 크기를 맞춤(예: '.8rem', '1.45rem').
+ */
+function stickerDisplay(s, size) {
+  const meta = ICON_STICKERS[stickerEmoji(s)];
+  if (!meta) return stickerEmoji(s);
+  return `<img class="sticker-img" src="${MOMCAL_ACTION_ICON_BASE}${meta.file}" alt="${meta.label}" title="${meta.label}" style="width:${size};height:${size}" loading="lazy">`;
+}
+
 function formatSticker(s) {
   const [emoji, grams] = s.split('|');
   return grams ? `${emoji}(${grams}g)` : emoji;
@@ -1504,7 +1543,7 @@ export function renderStickerPicker() {
     `<button class="sp-tab ${i === S.selSCat ? 'on' : ''}" onclick="selSCat(${i})">${c.label}</button>`
   ).join('');
   document.getElementById('spGrid').innerHTML = stickerCats[S.selSCat].items.map(s =>
-    `<div class="sp-sticker" onclick="placeSticker('${s}')">${s}</div>`
+    `<div class="sp-sticker" onclick="placeSticker('${s}')">${stickerDisplay(s, '1.45rem')}</div>`
   ).join('');
 }
 
