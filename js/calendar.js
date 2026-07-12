@@ -1513,6 +1513,16 @@ function stickerEmoji(s) { return s.split('|')[0]; }
 function isFoodSticker(s) { return FOOD_STICKER_SET.has(stickerEmoji(s)); }
 
 /**
+ * v0.0.54: 이미지 스티커 URL 끝에 버전 쿼리스트링을 붙여서 캐시 버스팅.
+ * 지금까지 kiss.png 같은 파일명이 버전이 올라가도 단 한 번도 안 바뀌었던 게 문제였음 —
+ * sw.js의 CACHE_NAME을 올려도 그건 서비스워커 자체 Cache Storage만 초기화할 뿐,
+ * 브라우저 기본 HTTP 캐시나 Vercel CDN 엣지 캐시는 URL이 그대로면 계속 옛날 파일을
+ * 재사용함. 이미지 내용을 바꿀 때마다 이 숫자만 올리면(=URL이 바뀌면) 모든 캐시 계층이
+ * 강제로 새로 받아오게 됨 — 앞으로 스티커 이미지를 교체할 때 반드시 이 값도 함께 올릴 것.
+ */
+const ICON_ASSET_VERSION = 'v54';
+
+/**
  * v0.0.50~52: 이미지 기반 스티커('momcal:xxx', 'icon:xxx' 토큰) → 실제 파일 매핑.
  * key는 stickerCats의 items에 저장된 값과 정확히 같아야 함(Firestore에 이 문자열 그대로
  * 저장되므로 key를 바꾸면 이미 저장된 사용자 데이터와 어긋남 — 바꾸지 말 것).
@@ -1562,11 +1572,12 @@ const ICON_STICKERS = {
  * 스티커 값 하나를 화면에 그릴 HTML을 반환. ICON_STICKERS에 있는 이미지 스티커면 <img>,
  * 아니면(기존 이모지 스티커) 텍스트 그대로 폴백 — 매핑에 없는 값이 와도 절대 빈 화면이 되지 않음.
  * size는 기존 이모지가 쓰던 font-size 값을 그대로 넘겨서 시각적 크기를 맞춤(예: '.8rem', '1.45rem').
+ * URL 끝에 ?v=ICON_ASSET_VERSION을 붙여 캐시 버스팅(위 설명 참고).
  */
 function stickerDisplay(s, size) {
   const meta = ICON_STICKERS[stickerEmoji(s)];
   if (!meta) return stickerEmoji(s);
-  return `<img class="sticker-img" src="${meta.path}" alt="${meta.label}" title="${meta.label}" style="width:${size};height:${size}" loading="lazy">`;
+  return `<img class="sticker-img" src="${meta.path}?v=${ICON_ASSET_VERSION}" alt="${meta.label}" title="${meta.label}" style="width:${size};height:${size}" loading="lazy">`;
 }
 
 function formatSticker(s) {
