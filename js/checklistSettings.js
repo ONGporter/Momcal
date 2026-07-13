@@ -23,7 +23,6 @@ import { S, debounceSave } from './state.js';
 import { clPacks } from '../data/checklist-packs.js';
 import { showModal, cm } from './modal.js';
 import { resyncTabForAllChildren } from './checklistCalendarLink.js';
-import { avatarTextFallback } from './utils.js';
 
 /** 내장 탭 6종 — js/checklist.js의 builtinTabDefs()와 key를 맞춰야 함(바뀌면 여기도 같이 고칠 것) */
 const PREG_ROWS = [
@@ -286,7 +285,7 @@ function openEditPackExtrasModal(packKey) {
   const items = (S.customClItems && S.customClItems[customKey]) || [];
 
   showModal(`"${pack ? pack.label : ''}"에 직접 추가한 항목`, `
-    <div class="cl-form-msg" style="margin-top:0;color:var(--txl);font-weight:600">${avatarTextFallback(child.gender)} ${escapeHtml(child.name || '')} 기준이에요. 원래 있던 기본 항목은 여기서 못 바꿔요.</div>
+    <div class="cl-form-msg" style="margin-top:0;color:var(--txl);font-weight:600">${escapeHtml(child.name || '')} 기준이에요. 원래 있던 기본 항목은 여기서 못 바꿔요.</div>
     <div class="fg" style="margin-top:10px">
       <div id="editClItemsList">${items.map((it, i) => editItemRowHtml(it, i)).join('')}</div>
       <button type="button" class="cl-add-item-btn" style="margin-top:8px" onclick="addEditClItemRow()">＋ 항목 추가</button>

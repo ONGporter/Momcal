@@ -80,9 +80,11 @@ export function icon(name, opts = {}) {
  *  1) Firestore엔 이모지 대신 안정적인 토큰 문자열을 저장 (avatarToken)
  *  2) 렌더링 시에만 이 맵을 보고 <img>로 바꿔치기 (avatarDisplay) — 매핑에 없으면(레거시 데이터,
  *     예전에 저장된 순수 이모지 👦/👧/👶) 원래 값을 그대로 반환해 과거 데이터도 안 깨짐
- *  3) <select><option>이나 escapeHtml() 같은 "이미지가 아예 안 되는 순수 텍스트" 자리는
- *     avatarTextFallback()으로 이모지 텍스트만 별도 반환(성별 미정이면 남아 이모지로 기본값)
  * 성별 미정('u' 또는 그 외 값)은 옹짐꾼님 요청대로 항상 "남아" 쪽을 기본값으로 씀.
+ * v0.0.54: <select><option>·escapeHtml() 같은 "이미지가 아예 안 되는 순수 텍스트" 자리는
+ * 처음엔 이모지로 대체(avatarTextFallback)했었는데, "이미지가 되는 곳엔 이미지, 안 되는 곳엔
+ * 이모지"가 오히려 통일성이 없다는 피드백으로 그런 자리는 아이 이름만 표시하는 것으로 변경
+ * (avatarTextFallback 삭제 — 필요해지면 다시 추가 가능).
  */
 export const AVATAR_ICON_BASE = './icons/avatars/';
 
@@ -101,11 +103,6 @@ export function avatarDisplay(avatarValue, size) {
   const meta = AVATAR_ICONS[avatarValue];
   if (!meta) return avatarValue || '';
   return `<img class="avatar-img" src="${AVATAR_ICON_BASE}${meta.file}" alt="${meta.label}" style="width:${size};height:${size};object-fit:contain;vertical-align:middle" loading="lazy">`;
-}
-
-/** <option>/escapeHtml() 등 이미지를 못 쓰는 순수 텍스트 자리 전용 — 이모지 문자만 반환 */
-export function avatarTextFallback(gender) {
-  return gender === 'f' ? '👧' : '👦';
 }
 
 /**

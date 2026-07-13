@@ -61,7 +61,12 @@
 // js/ui.js·calendar.js·checklist.js·checklistSettings.js·growthChart.js·demoMode.js,
 // scripts/build-guide.mjs(육아정보 페이지도 동일 이미지로, 성별 없어 남아 기본값) 변경 +
 // icons/avatars/*.png 신규 정적 파일 — 캐시 버전 상향
-const CACHE_NAME = 'momcal-shell-v58';
+// v0.0.54: 이미지가 아예 안 되는 순수 텍스트 자리(체크리스트·성장 탭의 "아이 선택" <select>,
+// 준비물 팩 편집 모달 안내 문구)에 v0.0.53에서 넣었던 이모지 폴백(avatarTextFallback)을 빼고
+// 아이 이름만 표시하도록 변경 — "이미지 되는 곳엔 이미지, 안 되는 곳엔 이모지"가 오히려
+// 통일성이 없다는 피드백 반영. js/utils.js(avatarTextFallback 삭제)·growthChart.js·
+// checklist.js·checklistSettings.js 변경 — 캐시 버전 상향
+const CACHE_NAME = 'momcal-shell-v59';
 
 const APP_SHELL = [
   './',

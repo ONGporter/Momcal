@@ -24,7 +24,7 @@
  */
 
 import { S, debounceSave } from './state.js';
-import { today, icon, avatarTextFallback, growthStageIconImg } from './utils.js';
+import { today, icon, growthStageIconImg } from './utils.js';
 import { clData }          from '../data/checklist-data.js';
 import { clPacks }         from '../data/checklist-packs.js';
 import { renderGovChecklistTab } from './govSupport.js';
@@ -173,7 +173,7 @@ export function renderChecklist() {
   const csel = document.getElementById('clChildSel');
   csel.innerHTML = S.children.length
     ? S.children.map((c, i) =>
-        `<option value="${i}" ${i == S.selC ? 'selected' : ''}>${avatarTextFallback(c.gender)} ${c.name}</option>`
+        `<option value="${i}" ${i == S.selC ? 'selected' : ''}>${c.name}</option>`
       ).join('')
     : '<option>아이를 등록해주세요</option>';
 
