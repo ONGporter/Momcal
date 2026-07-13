@@ -84,6 +84,7 @@
   gap: 2px; flex: 1; min-height: 0; text-align: center;
 }
 .food-center-item {
+  display: inline-flex; align-items: center; gap: 3px;
   font-size: .72rem; font-weight: 800; color: var(--pkd, #C2185B);
   background: var(--pkl); border-radius: 8px; padding: 2px 6px; line-height: 1.5;
 }

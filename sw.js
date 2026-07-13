@@ -66,7 +66,14 @@
 // 아이 이름만 표시하도록 변경 — "이미지 되는 곳엔 이미지, 안 되는 곳엔 이모지"가 오히려
 // 통일성이 없다는 피드백 반영. js/utils.js(avatarTextFallback 삭제)·growthChart.js·
 // checklist.js·checklistSettings.js 변경 — 캐시 버전 상향
-const CACHE_NAME = 'momcal-shell-v59';
+// v0.0.55: 캘린더 스티커 "이유식" 카테고리를 기존 이모지 30종에서 자체 제작 이미지 48종으로
+// 교체(momcal:food_xxx 토큰, 다른 이미지 카테고리와 동일 패턴). 이 작업 중 캘린더 셀/주간 뷰
+// 헤더의 이유식 스티커 표시가 stickerDisplay()를 거치지 않고 stickerEmoji()로 텍스트를 직접
+// 찍던 것을 발견해 함께 수정(예전엔 이유식이 항상 순수 이모지였어서 문제가 안 드러났었음) —
+// 안 고쳤으면 이미지 대신 'momcal:food_xxx' 토큰 글자가 그대로 보였을 버그. formatSticker()도
+// 툴팁에 토큰 대신 사람이 읽을 라벨이 뜨도록 개선. js/calendar.js, css/calendar.css 변경 +
+// icons/stickers/babyfood/*.png 신규 정적 파일 — 캐시 버전 상향
+const CACHE_NAME = 'momcal-shell-v60';
 
 const APP_SHELL = [
   './',

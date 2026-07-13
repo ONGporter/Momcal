@@ -921,7 +921,7 @@ export function cellHTML(ds, d, other, evs, td, th) {
   const foodShow     = foodOverflow > 0 ? FOOD_MAX : foodStickers.length;
   const foodHtml     = foodStickers.length
     ? `<span class="day-food-stickers">
-        ${foodStickers.slice(0, foodShow).map(s => `<span class="food-sticker-on-cal" title="${formatSticker(s)}">${stickerEmoji(s)}</span>`).join('')}
+        ${foodStickers.slice(0, foodShow).map(s => `<span class="food-sticker-on-cal" title="${formatSticker(s)}">${stickerDisplay(s, '.74rem')}</span>`).join('')}
         ${foodOverflow > 0 ? `<span class="food-sticker-overflow">+${foodOverflow}</span>` : ''}
        </span>`
     : '';
@@ -929,7 +929,7 @@ export function cellHTML(ds, d, other, evs, td, th) {
   // 이유식 필터 켜졌을 때: 칸 가운데에 "🍚 50g" 형태로 세로로 크게 나열
   const foodCenterHtml = foodStickers.length
     ? `<div class="day-food-center">
-        ${foodStickers.map(s => `<span class="food-center-item">${formatSticker(s)}</span>`).join('')}
+        ${foodStickers.map(s => `<span class="food-center-item">${foodCenterItemHtml(s)}</span>`).join('')}
        </div>`
     : '';
 
@@ -1185,7 +1185,7 @@ function renderWeekView() {
           const foodHtml = foodStickers.length
             ? `<div class="week-head-food-stickers" title="이유식 스티커">
                  <span class="week-head-food-label">이유식</span>
-                 ${foodStickers.slice(0, FOOD_MAX).map(s => `<span class="food-sticker-on-cal" title="${formatSticker(s)}">${stickerEmoji(s)}</span>`).join('')}
+                 ${foodStickers.slice(0, FOOD_MAX).map(s => `<span class="food-sticker-on-cal" title="${formatSticker(s)}">${stickerDisplay(s, '.74rem')}</span>`).join('')}
                  ${foodOverflow > 0 ? `<span class="food-sticker-overflow">+${foodOverflow}</span>` : ''}
                </div>`
             : '';
@@ -1215,7 +1215,7 @@ function renderWeekView() {
     const wdFoodStickers = (S.dayStickers[ds] || []).filter(s => isFoodSticker(s));
     const foodCenterHtml = wdFoodStickers.length
       ? `<div class="day-food-center">
-          ${wdFoodStickers.map(s => `<span class="food-center-item">${formatSticker(s)}</span>`).join('')}
+          ${wdFoodStickers.map(s => `<span class="food-center-item">${foodCenterItemHtml(s)}</span>`).join('')}
          </div>`
       : '';
 
@@ -1485,7 +1485,24 @@ export const stickerCats = [
   { key: 'baby',   label: `${icon('child_care', { size: 'sm' })} 아기`, items: ['👶','🍼','🧸','🎀','🍭','🎠','🐣','🐥','🐰','🐨','🦄','🐸','🐮','🐷','🐻','🐼'] },
   { key: 'heart',  label: `${icon('favorite', { size: 'sm' })} 하트`, items: ['💕','💖','💗','💝','❤️','🧡','💛','💚','💙','💜','🩷','🩵','🤍','💞','💓','💘'] },
   { key: 'celebrate', label: `${icon('celebration', { size: 'sm' })} 기념`, items: ['🎉','🎊','🎂','🎁','🏆','🥇','✨','🎈','🎀','🌟','🪄','🎗','🥳','🎺','🎵','🎶'] },
-  { key: 'food',   label: `${icon('restaurant', { size: 'sm' })} 이유식`, items: ['🍚','🌾','🥩','🐔','🐟','🥕','🥦','🍠','🥔','🌽','🫛','🧀','🥚','🍳','🫐','🍎','🍌','🍓','🍇','🥑','🥛','🧆','🍲','🥣','🍜','🥗','🫘','🧅','🧄','🫚'] },
+  // v0.0.55: 이유식 카테고리도 기존 이모지 30종 → 자체 제작 이미지 48종으로 교체(패턴은
+  // 'momcal_action'·'nature'와 동일). food 카테고리는 특히 FOOD_STICKER_SET·isFoodSticker()가
+  // 이 items 배열을 그대로 기준 삼아 "이유식 스티커인지" 판별하므로, 여기 값을 바꾸는 것만으로
+  // 나머지 이유식 전용 로직(먹은 양 g 기록, 캘린더 셀 별도 표시 등)이 자동으로 새 값을 따라감.
+  { key: 'food',   label: `${icon('restaurant', { size: 'sm' })} 이유식`, items: [
+      'momcal:food_rice', 'momcal:food_oatmeal', 'momcal:food_bread', 'momcal:food_barley',
+      'momcal:food_potato', 'momcal:food_sweet_potato', 'momcal:food_corn',
+      'momcal:food_beef', 'momcal:food_chicken', 'momcal:food_egg_yolk',
+      'momcal:food_salmon', 'momcal:food_cod', 'momcal:food_anchovy',
+      'momcal:food_tofu', 'momcal:food_kidney_bean', 'momcal:food_milk', 'momcal:food_cheese', 'momcal:food_yogurt',
+      'momcal:food_broccoli', 'momcal:food_carrot', 'momcal:food_spinach', 'momcal:food_sweet_pumpkin',
+      'momcal:food_zucchini', 'momcal:food_cucumber', 'momcal:food_avocado', 'momcal:food_tomato',
+      'momcal:food_onion', 'momcal:food_green_onion', 'momcal:food_cabbage', 'momcal:food_napa_cabbage', 'momcal:food_bok_choy',
+      'momcal:food_eggplant', 'momcal:food_paprika', 'momcal:food_radish', 'momcal:food_lotus_root', 'momcal:food_green_pea',
+      'momcal:food_shiitake_mushroom', 'momcal:food_enoki_mushroom', 'momcal:food_king_oyster_mushroom',
+      'momcal:food_apple', 'momcal:food_banana', 'momcal:food_pear', 'momcal:food_peach',
+      'momcal:food_strawberry', 'momcal:food_blueberry', 'momcal:food_kiwi', 'momcal:food_orange', 'momcal:food_korean_melon',
+    ] },
   { key: 'health', label: `${icon('health_and_safety', { size: 'sm' })} 건강`, items: ['💊','💉','🩺','🏥','🩹','💪','🩻','🔬','🧬','🌡️','🩸','⚕️','🏋️','🧘','🚑','🫀'] },
   // v0.0.50: 맘캘 육아 액션 시리즈 — 유니코드 이모지가 아니라 자체 제작 일러스트(PNG) 스티커.
   // 저장 형식은 기존 이모지 스티커와 완전히 동일한 문자열(S.dayStickers에 그대로 push/split)이라
@@ -1562,6 +1579,55 @@ const ICON_STICKERS = {
   'momcal:flower_rainbow':          { path: 'flower-nature', file: 'rainbow.png',          label: '무지개' },
   'momcal:flower_raindrop':         { path: 'flower-nature', file: 'raindrop.png',         label: '빗방울' },
   'momcal:flower_snowflake':        { path: 'flower-nature', file: 'snowflake.png',        label: '눈꽃' },
+  // v0.0.55: 이유식 카테고리
+  'momcal:food_rice':               { path: 'babyfood', file: 'rice.png',               label: '쌀' },
+  'momcal:food_oatmeal':            { path: 'babyfood', file: 'oatmeal.png',            label: '오트밀' },
+  'momcal:food_bread':              { path: 'babyfood', file: 'bread.png',              label: '빵' },
+  'momcal:food_barley':             { path: 'babyfood', file: 'barley.png',             label: '보리' },
+  'momcal:food_potato':             { path: 'babyfood', file: 'potato.png',             label: '감자' },
+  'momcal:food_sweet_potato':       { path: 'babyfood', file: 'sweet_potato.png',       label: '고구마' },
+  'momcal:food_corn':               { path: 'babyfood', file: 'corn.png',               label: '옥수수' },
+  'momcal:food_beef':               { path: 'babyfood', file: 'beef.png',               label: '소고기' },
+  'momcal:food_chicken':            { path: 'babyfood', file: 'chicken.png',            label: '닭고기' },
+  'momcal:food_egg_yolk':           { path: 'babyfood', file: 'egg_yolk.png',           label: '노른자' },
+  'momcal:food_salmon':             { path: 'babyfood', file: 'salmon.png',             label: '연어' },
+  'momcal:food_cod':                { path: 'babyfood', file: 'cod.png',                label: '대구' },
+  'momcal:food_anchovy':            { path: 'babyfood', file: 'anchovy.png',            label: '멸치' },
+  'momcal:food_tofu':               { path: 'babyfood', file: 'tofu.png',               label: '두부' },
+  'momcal:food_kidney_bean':        { path: 'babyfood', file: 'kidney_bean.png',        label: '강낭콩' },
+  'momcal:food_milk':               { path: 'babyfood', file: 'milk.png',               label: '우유' },
+  'momcal:food_cheese':             { path: 'babyfood', file: 'cheese.png',             label: '치즈' },
+  'momcal:food_yogurt':             { path: 'babyfood', file: 'yogurt.png',             label: '요거트' },
+  'momcal:food_broccoli':           { path: 'babyfood', file: 'broccoli.png',           label: '브로콜리' },
+  'momcal:food_carrot':             { path: 'babyfood', file: 'carrot.png',             label: '당근' },
+  'momcal:food_spinach':            { path: 'babyfood', file: 'spinach.png',            label: '시금치' },
+  'momcal:food_sweet_pumpkin':      { path: 'babyfood', file: 'sweet_pumpkin.png',      label: '단호박' },
+  'momcal:food_zucchini':           { path: 'babyfood', file: 'zucchini.png',           label: '애호박' },
+  'momcal:food_cucumber':           { path: 'babyfood', file: 'cucumber.png',           label: '오이' },
+  'momcal:food_avocado':            { path: 'babyfood', file: 'avocado.png',            label: '아보카도' },
+  'momcal:food_tomato':             { path: 'babyfood', file: 'tomato.png',             label: '토마토' },
+  'momcal:food_onion':              { path: 'babyfood', file: 'onion.png',              label: '양파' },
+  'momcal:food_green_onion':        { path: 'babyfood', file: 'green_onion.png',        label: '파' },
+  'momcal:food_cabbage':            { path: 'babyfood', file: 'cabbage.png',            label: '양배추' },
+  'momcal:food_napa_cabbage':       { path: 'babyfood', file: 'napa_cabbage.png',       label: '배추' },
+  'momcal:food_bok_choy':           { path: 'babyfood', file: 'bok_choy.png',           label: '청경채' },
+  'momcal:food_eggplant':           { path: 'babyfood', file: 'eggplant.png',           label: '가지' },
+  'momcal:food_paprika':            { path: 'babyfood', file: 'paprika.png',            label: '파프리카' },
+  'momcal:food_radish':             { path: 'babyfood', file: 'radish.png',             label: '무' },
+  'momcal:food_lotus_root':         { path: 'babyfood', file: 'lotus_root.png',         label: '연근' },
+  'momcal:food_green_pea':          { path: 'babyfood', file: 'green_pea.png',          label: '완두콩' },
+  'momcal:food_shiitake_mushroom':  { path: 'babyfood', file: 'shiitake_mushroom.png',  label: '표고버섯' },
+  'momcal:food_enoki_mushroom':     { path: 'babyfood', file: 'enoki_mushroom.png',     label: '팽이버섯' },
+  'momcal:food_king_oyster_mushroom': { path: 'babyfood', file: 'king_oyster_mushroom.png', label: '새송이버섯' },
+  'momcal:food_apple':              { path: 'babyfood', file: 'apple.png',              label: '사과' },
+  'momcal:food_banana':             { path: 'babyfood', file: 'banana.png',             label: '바나나' },
+  'momcal:food_pear':               { path: 'babyfood', file: 'pear.png',               label: '배' },
+  'momcal:food_peach':              { path: 'babyfood', file: 'peach.png',              label: '복숭아' },
+  'momcal:food_strawberry':         { path: 'babyfood', file: 'strawberry.png',         label: '딸기' },
+  'momcal:food_blueberry':          { path: 'babyfood', file: 'blueberry.png',          label: '블루베리' },
+  'momcal:food_kiwi':               { path: 'babyfood', file: 'kiwi.png',               label: '키위' },
+  'momcal:food_orange':             { path: 'babyfood', file: 'orange.png',             label: '오렌지' },
+  'momcal:food_korean_melon':       { path: 'babyfood', file: 'korean_melon.png',       label: '참외' },
 };
 const STICKER_ICON_BASE = './icons/stickers/';
 
@@ -1577,8 +1643,16 @@ function stickerDisplay(s, size) {
 }
 
 function formatSticker(s) {
-  const [emoji, grams] = s.split('|');
-  return grams ? `${emoji}(${grams}g)` : emoji;
+  const [raw, grams] = s.split('|');
+  const label = ICON_STICKERS[raw]?.label || raw; // 이미지 토큰이면 사람이 읽을 라벨로, 레거시 이모지면 그대로
+  return grams ? `${label}(${grams}g)` : label;
+}
+
+/** v0.0.55: 이유식 필터 켜졌을 때 칸 가운데에 크게 보여주는 항목 — stickerDisplay()가 이미지
+ *  토큰이면 <img>를, 레거시 이모지면 텍스트를 반환하므로 그 뒤에 g수(있으면)만 붙여줌 */
+function foodCenterItemHtml(s) {
+  const grams = s.includes('|') ? s.split('|')[1] : '';
+  return `${stickerDisplay(s, '1.1em')}${grams ? ` ${grams}g` : ''}`;
 }
 
 export function renderStickerPicker() {
