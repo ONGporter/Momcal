@@ -1660,7 +1660,7 @@ export function renderStickerPicker() {
     `<button class="sp-tab ${i === S.selSCat ? 'on' : ''}" onclick="selSCat(${i})">${c.label}</button>`
   ).join('');
   document.getElementById('spGrid').innerHTML = stickerCats[S.selSCat].items.map(s =>
-    `<div class="sp-sticker" onclick="placeSticker('${s}')">${stickerDisplay(s, '1.45rem')}</div>`
+    `<div class="sp-sticker" onclick="placeSticker('${s}')">${stickerDisplay(s, '2.9rem')}</div>`
   ).join('');
 }
 
@@ -1673,7 +1673,7 @@ export function placeSticker(s) {
   // v0.0.31: 이유식 스티커는 먹은 양(g)을 함께 기록할 수 있음(선택 사항 — 취소하거나
   // 빈 값으로 두면 예전처럼 이모지만 붙음)
   if (FOOD_STICKER_SET.has(s)) {
-    const input = prompt(`${s} 먹은 양을 g으로 입력해주세요 (선택 사항, 비워두면 기록 없이 붙어요)`, '');
+    const input = prompt(`${formatSticker(s)} 먹은 양을 g으로 입력해주세요 (선택 사항, 비워두면 기록 없이 붙어요)`, '');
     if (input !== null) {
       const g = parseInt(input.trim(), 10);
       if (!isNaN(g) && g > 0) {

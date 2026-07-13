@@ -76,7 +76,12 @@
 // v0.0.56: 커스텀 404 페이지 신규 추가(404.html) — privacy.html/terms.html/contact.html과
 // 같은 성격의 독립 정책 페이지라 APP_SHELL(오프라인 캐시 대상)엔 안 넣음. index.html 하단
 // 버전 표시 텍스트가 바뀌어서(APP_SHELL에 포함된 파일) 캐시 버전만 상향
-const CACHE_NAME = 'momcal-shell-v61';
+// v0.0.57: (1) 스티커 고르는 화면(.sp-sticker)의 크기를 기존 대비 2배로 확대(1.45rem→2.9rem,
+// 달력 안에 붙는 스티커 크기는 그대로 유지) (2) 이유식 스티커를 붙일 때 뜨는 g수 입력 prompt()가
+// "momcal:food_barley 먹은 양을..."처럼 원본 토큰 문자열을 그대로 보여주던 버그 수정 —
+// formatSticker()로 사람이 읽을 라벨("보리")을 쓰도록 변경. js/calendar.js, css/calendar.css
+// 변경 — 캐시 버전 상향
+const CACHE_NAME = 'momcal-shell-v62';
 
 const APP_SHELL = [
   './',

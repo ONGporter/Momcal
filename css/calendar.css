@@ -171,10 +171,12 @@ html[data-cal-fontsize="xl"] .ev-more { font-size: 11px; }
   font-family: inherit; white-space: nowrap; transition: all .2s;
 }
 .sp-tab.on { background: var(--pk); color: #fff; }
-.sp-grid   { display: flex; gap: 6px; flex-wrap: wrap; }
+.sp-grid   { display: flex; gap: 10px; flex-wrap: wrap; }
 .sp-sticker {
-  font-size: 1.45rem; cursor: pointer; padding: 6px;
-  border-radius: 10px; transition: all .2s; border: 2px solid transparent;
+  /* v0.0.57: 스티커 고르는 화면에서만 크기를 기존 대비 2배(1.45rem→2.9rem)로 키움 —
+     달력 안에 붙는 스티커 크기(stickerDisplay 호출부의 다른 size 값들)는 그대로 유지 */
+  font-size: 2.9rem; cursor: pointer; padding: 8px;
+  border-radius: 12px; transition: all .2s; border: 2px solid transparent;
 }
 .sp-sticker:hover { background: var(--pkl); border-color: var(--pk); transform: scale(1.2); }
 /* v0.0.50: '맘캘 육아' 이미지 스티커 — 기존 이모지 자리에 <img>로 들어가므로 정렬만 맞춰줌 */
