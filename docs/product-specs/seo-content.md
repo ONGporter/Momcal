@@ -34,3 +34,4 @@
 | AdSense 심사용 정책 페이지 | ✅ 적용 (Sprint 16) | `privacy.html`/`terms.html`/`contact.html` (Sprint 17에서 문의 이메일 반영) |
 | Google Search Console 등록 | ✅ 소유권 확인 완료 | 사이트맵 제출 등 후속 절차는 `docs/TODO.md` 참고 |
 | 네이버 서치어드바이저 등록 | ✅ 소유권 확인 완료 | 사이트맵 제출·수집 요청 등 후속 절차는 `docs/TODO.md` 참고 |
+| 커스텀 404 페이지 | ✅ 적용 (v0.0.56) | `404.html` — Vercel이 `vercel.json` 없는 정적 배포에서 루트의 `404.html`을 자동으로 인식해서 404 응답 시 보여줌. 마스코트 이미지 + 홈으로 가기 버튼, `noindex, follow`로 색인 제외 |

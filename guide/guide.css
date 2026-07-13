@@ -314,6 +314,27 @@ a:hover { text-decoration: underline; }
   background: var(--pkl); color: var(--pkd); padding: 10px 20px; border-radius: 40px;
 }
 
+/* ── 404 페이지 (v0.0.56) — 마스코트 이미지 + 안내 문구 + 홈으로 가기 버튼, 가운데 정렬 카드 ── */
+.g-404-wrap {
+  min-height: calc(100vh - 260px); /* 헤더·푸터를 뺀 나머지 공간에서 세로 가운데 정렬 */
+  display: flex; align-items: center; justify-content: center;
+  padding: 40px 20px;
+}
+.g-404-box {
+  background: var(--card); border-radius: var(--radius); box-shadow: var(--card-shadow);
+  padding: 40px 32px; text-align: center; max-width: 420px;
+}
+.g-404-mascot { width: 140px; height: auto; margin-bottom: 18px; }
+.g-404-box h1 { font-size: 1.25rem; font-weight: 900; margin: 0 0 8px; color: var(--tx); }
+.g-404-box p  { font-size: .88rem; color: var(--txl); margin: 0 0 22px; }
+.g-404-home-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: var(--pk); color: #fff; font-weight: 600; font-size: .88rem;
+  padding: 11px 24px; border-radius: 40px;
+  box-shadow: 0 4px 14px rgba(194,24,91,.22);
+}
+.g-404-home-btn:hover { opacity: .88; text-decoration: none; }
+
 /* ── 하단 CTA 배너 — 히어로와 동일한 그라디언트로 브랜드 통일(v0.0.27) ── */
 .g-cta-banner {
   background: linear-gradient(135deg, #F8BBD0 0%, #F06292 100%); color: #fff;

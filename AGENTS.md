@@ -74,7 +74,7 @@ docs/product-specs/              기능별 상세 스펙(가족공유·게스트
 functions/                        Cloud Functions(FCM 예약 발송, v0.0.38) — 별도 Node 프로젝트, Vercel 배포와 무관
 fonts/, icons/                    정적 리소스
 sw.js, manifest.json              PWA
-privacy.html·terms.html·contact.html, robots.txt, sitemap.xml   정책·SEO 페이지
+privacy.html·terms.html·contact.html·404.html, robots.txt, sitemap.xml   정책·SEO 페이지
 ```
 
 ## 문서 간 역할 분리 (중복 방지 — 예전에 PROJECT_SPEC.md와 CHANGELOG.md 내용이 겹쳐서 정리한 적 있음)

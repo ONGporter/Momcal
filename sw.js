@@ -73,7 +73,10 @@
 // 안 고쳤으면 이미지 대신 'momcal:food_xxx' 토큰 글자가 그대로 보였을 버그. formatSticker()도
 // 툴팁에 토큰 대신 사람이 읽을 라벨이 뜨도록 개선. js/calendar.js, css/calendar.css 변경 +
 // icons/stickers/babyfood/*.png 신규 정적 파일 — 캐시 버전 상향
-const CACHE_NAME = 'momcal-shell-v60';
+// v0.0.56: 커스텀 404 페이지 신규 추가(404.html) — privacy.html/terms.html/contact.html과
+// 같은 성격의 독립 정책 페이지라 APP_SHELL(오프라인 캐시 대상)엔 안 넣음. index.html 하단
+// 버전 표시 텍스트가 바뀌어서(APP_SHELL에 포함된 파일) 캐시 버전만 상향
+const CACHE_NAME = 'momcal-shell-v61';
 
 const APP_SHELL = [
   './',
