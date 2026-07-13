@@ -1469,15 +1469,18 @@ export function delCustomEv(id) {
  *  스티커
  * ══════════════════════════════════════ */
 export const stickerCats = [
-  // v0.0.52: 유니코드 이모지 → 자체 제작 일러스트(PNG) 25종으로 전면 교체.
-  // 저장 형식은 기존과 동일(문자열 그대로 push/split), 다만 값이 이모지가 아니라
-  // 'icon:' 접두어가 붙은 고유 토큰 — 렌더링은 stickerDisplay()가 ICON_STICKERS 맵을 보고 처리.
+  // v0.0.52: 기존 이모지 16종 → 옹짐꾼님이 제작한 자체 일러스트(투명 배경 PNG) 25종으로 교체.
+  // 'momcal_action' 카테고리와 동일한 패턴(momcal:xxx 토큰 + ICON_STICKERS 매핑)을 그대로 재사용.
+  // 이미 저장된 기존 이모지 스티커(예: 날짜에 붙여둔 🌸)는 ICON_STICKERS에 없으므로
+  // stickerDisplay()가 텍스트로 폴백해 기존처럼 그대로 보임 — 과거 데이터는 안 깨짐.
   { key: 'nature', label: `${icon('spa', { size: 'sm' })} 꽃·자연`, items: [
-      'icon:cherry_blossom', 'icon:daisy', 'icon:tulip', 'icon:sunflower', 'icon:hydrangea',
-      'icon:four_leaf_clover', 'icon:sprout', 'icon:leaf', 'icon:tree', 'icon:rainbow',
-      'icon:star', 'icon:sun', 'icon:moon', 'icon:cloud', 'icon:raindrop',
-      'icon:butterfly', 'icon:ladybug', 'icon:bee', 'icon:apple_blossom', 'icon:bamboo',
-      'icon:rose', 'icon:maple_leaf', 'icon:snowflake', 'icon:wheat', 'icon:fallen_leaf',
+      'momcal:flower_cherry_blossom', 'momcal:flower_rose', 'momcal:flower_tulip', 'momcal:flower_sunflower',
+      'momcal:flower_daisy', 'momcal:flower_hydrangea', 'momcal:flower_apple_blossom', 'momcal:flower_four_leaf_clover',
+      'momcal:flower_leaf', 'momcal:flower_fallen_leaf', 'momcal:flower_autumn_leaf', 'momcal:flower_sprout',
+      'momcal:flower_bamboo', 'momcal:flower_barley', 'momcal:flower_tree', 'momcal:flower_butterfly',
+      'momcal:flower_bee', 'momcal:flower_ladybug', 'momcal:flower_sun', 'momcal:flower_moon',
+      'momcal:flower_star', 'momcal:flower_cloud', 'momcal:flower_rainbow', 'momcal:flower_raindrop',
+      'momcal:flower_snowflake',
     ] },
   { key: 'baby',   label: `${icon('child_care', { size: 'sm' })} 아기`, items: ['👶','🍼','🧸','🎀','🍭','🎠','🐣','🐥','🐰','🐨','🦄','🐸','🐮','🐷','🐻','🐼'] },
   { key: 'heart',  label: `${icon('favorite', { size: 'sm' })} 하트`, items: ['💕','💖','💗','💝','❤️','🧡','💛','💚','💙','💜','🩷','🩵','🤍','💞','💓','💘'] },
@@ -1513,71 +1516,64 @@ function stickerEmoji(s) { return s.split('|')[0]; }
 function isFoodSticker(s) { return FOOD_STICKER_SET.has(stickerEmoji(s)); }
 
 /**
- * v0.0.54: 이미지 스티커 URL 끝에 버전 쿼리스트링을 붙여서 캐시 버스팅.
- * 지금까지 kiss.png 같은 파일명이 버전이 올라가도 단 한 번도 안 바뀌었던 게 문제였음 —
- * sw.js의 CACHE_NAME을 올려도 그건 서비스워커 자체 Cache Storage만 초기화할 뿐,
- * 브라우저 기본 HTTP 캐시나 Vercel CDN 엣지 캐시는 URL이 그대로면 계속 옛날 파일을
- * 재사용함. 이미지 내용을 바꿀 때마다 이 숫자만 올리면(=URL이 바뀌면) 모든 캐시 계층이
- * 강제로 새로 받아오게 됨 — 앞으로 스티커 이미지를 교체할 때 반드시 이 값도 함께 올릴 것.
- */
-const ICON_ASSET_VERSION = 'v54';
-
-/**
- * v0.0.50~52: 이미지 기반 스티커('momcal:xxx', 'icon:xxx' 토큰) → 실제 파일 매핑.
- * key는 stickerCats의 items에 저장된 값과 정확히 같아야 함(Firestore에 이 문자열 그대로
- * 저장되므로 key를 바꾸면 이미 저장된 사용자 데이터와 어긋남 — 바꾸지 말 것).
- * path는 프로젝트 루트 기준 상대경로(카테고리별로 icons/stickers/{폴더}/ 아래 정리).
+ * v0.0.50: 이미지 기반 스티커('momcal:xxx' 토큰) → 실제 파일 매핑.
+ * key는 stickerCats items에 저장된 값과 정확히 같아야 함
+ * (Firestore에 이 문자열 그대로 저장되므로 key를 바꾸면 이미 저장된 사용자 데이터와 어긋남 — 바꾸지 말 것).
+ * v0.0.52: 폴더가 여러 개(momcal-action/, flower-nature/)로 늘어나서 항목마다 path(하위 폴더명)를
+ * 따로 갖도록 확장 — file은 파일명만, path는 STICKER_ICON_BASE 밑의 하위 폴더명.
+ * "맘캘 육아" 10종은 이번에 새 원화로 전부 교체됐는데, 8개는 기존 파일명(bath.png 등)과 같아서
+ * 그대로 덮어쓰면 브라우저/CDN 캐시가 예전 이미지를 계속 보여주는 문제(v0.0.51에서 겪은 캐시 이슈와
+ * 동일 원인)가 재발할 수 있어 전부 새 파일명(_v2)으로 저장 — 예전 파일은 삭제함.
  */
 const ICON_STICKERS = {
-  // 맘캘 육아 액션 시리즈 (v0.0.50)
-  'momcal:diaper_change':    { path: './icons/stickers/momcal-action/diaper_change.png',    label: '기저귀 갈기' },
-  'momcal:sleep_time':       { path: './icons/stickers/momcal-action/sleep_time.png',       label: '꿈나라 가기' },
-  'momcal:play':             { path: './icons/stickers/momcal-action/play.png',             label: '놀이하기' },
-  'momcal:bath':             { path: './icons/stickers/momcal-action/bath.png',             label: '목욕하기' },
-  'momcal:kiss':             { path: './icons/stickers/momcal-action/kiss.png',             label: '뽀뽀하기' },
-  'momcal:hug':              { path: './icons/stickers/momcal-action/hug.png',              label: '안아주기' },
-  'momcal:brush_teeth':      { path: './icons/stickers/momcal-action/brush_teeth.png',      label: '양치하기' },
-  'momcal:milk_feeding':     { path: './icons/stickers/momcal-action/milk_feeding.png',     label: '우유먹기' },
-  'momcal:baby_food_eating': { path: './icons/stickers/momcal-action/baby_food_eating.png', label: '이유식먹기' },
-  'momcal:reading':          { path: './icons/stickers/momcal-action/reading.png',          label: '책읽기' },
-  // 꽃·자연 (v0.0.52) — 기존 이모지 16종을 자체 제작 일러스트 25종으로 전면 교체
-  'icon:cherry_blossom':     { path: './icons/stickers/nature/cherry_blossom.png',     label: '벚꽃' },
-  'icon:daisy':              { path: './icons/stickers/nature/daisy.png',              label: '데이지' },
-  'icon:tulip':              { path: './icons/stickers/nature/tulip.png',              label: '튤립' },
-  'icon:sunflower':          { path: './icons/stickers/nature/sunflower.png',          label: '해바라기' },
-  'icon:hydrangea':          { path: './icons/stickers/nature/hydrangea.png',          label: '수국' },
-  'icon:four_leaf_clover':   { path: './icons/stickers/nature/four_leaf_clover.png',   label: '네잎클로버' },
-  'icon:sprout':             { path: './icons/stickers/nature/sprout.png',             label: '새싹' },
-  'icon:leaf':               { path: './icons/stickers/nature/leaf.png',               label: '잎사귀' },
-  'icon:tree':               { path: './icons/stickers/nature/tree.png',               label: '나무' },
-  'icon:rainbow':            { path: './icons/stickers/nature/rainbow.png',            label: '무지개' },
-  'icon:star':               { path: './icons/stickers/nature/star.png',               label: '별' },
-  'icon:sun':                { path: './icons/stickers/nature/sun.png',                label: '해' },
-  'icon:moon':               { path: './icons/stickers/nature/moon.png',               label: '달' },
-  'icon:cloud':              { path: './icons/stickers/nature/cloud.png',              label: '구름' },
-  'icon:raindrop':           { path: './icons/stickers/nature/raindrop.png',           label: '빗방울' },
-  'icon:butterfly':          { path: './icons/stickers/nature/butterfly.png',          label: '나비' },
-  'icon:ladybug':            { path: './icons/stickers/nature/ladybug.png',            label: '무당벌레' },
-  'icon:bee':                { path: './icons/stickers/nature/bee.png',                label: '꿀벌' },
-  'icon:apple_blossom':      { path: './icons/stickers/nature/apple_blossom.png',      label: '사과꽃' },
-  'icon:bamboo':             { path: './icons/stickers/nature/bamboo.png',             label: '대나무' },
-  'icon:rose':               { path: './icons/stickers/nature/rose.png',               label: '장미' },
-  'icon:maple_leaf':         { path: './icons/stickers/nature/maple_leaf.png',         label: '단풍' },
-  'icon:snowflake':          { path: './icons/stickers/nature/snowflake.png',          label: '눈송이' },
-  'icon:wheat':              { path: './icons/stickers/nature/wheat.png',              label: '보리' },
-  'icon:fallen_leaf':        { path: './icons/stickers/nature/fallen_leaf.png',        label: '낙엽' },
+  'momcal:diaper_change':    { path: 'momcal-action', file: 'diaper_change_v2.png',    label: '기저귀 갈기' },
+  'momcal:sleep_time':       { path: 'momcal-action', file: 'sleep_time_v2.png',       label: '꿈나라 가기' },
+  'momcal:play':             { path: 'momcal-action', file: 'play_v2.png',             label: '놀이하기' },
+  'momcal:bath':             { path: 'momcal-action', file: 'bath_v2.png',             label: '목욕하기' },
+  'momcal:kiss':             { path: 'momcal-action', file: 'kiss_v2.png',             label: '뽀뽀하기' },
+  'momcal:hug':              { path: 'momcal-action', file: 'hug_v2.png',              label: '안아주기' },
+  'momcal:brush_teeth':      { path: 'momcal-action', file: 'brush_teeth_v2.png',      label: '양치하기' },
+  'momcal:milk_feeding':     { path: 'momcal-action', file: 'milk_feeding_v2.png',     label: '우유먹기' },
+  'momcal:baby_food_eating': { path: 'momcal-action', file: 'baby_food_eating_v2.png', label: '이유식먹기' },
+  'momcal:reading':          { path: 'momcal-action', file: 'reading_v2.png',          label: '책읽기' },
+  // v0.0.52: 꽃·자연 카테고리
+  'momcal:flower_cherry_blossom':   { path: 'flower-nature', file: 'cherry_blossom.png',   label: '벚꽃' },
+  'momcal:flower_rose':             { path: 'flower-nature', file: 'rose.png',             label: '장미' },
+  'momcal:flower_tulip':            { path: 'flower-nature', file: 'tulip.png',            label: '튤립' },
+  'momcal:flower_sunflower':        { path: 'flower-nature', file: 'sunflower.png',        label: '해바라기' },
+  'momcal:flower_daisy':            { path: 'flower-nature', file: 'daisy.png',            label: '데이지' },
+  'momcal:flower_hydrangea':        { path: 'flower-nature', file: 'hydrangea.png',        label: '수국' },
+  'momcal:flower_apple_blossom':    { path: 'flower-nature', file: 'apple_blossom.png',    label: '사과꽃' },
+  'momcal:flower_four_leaf_clover': { path: 'flower-nature', file: 'four_leaf_clover.png', label: '네잎클로버' },
+  'momcal:flower_leaf':             { path: 'flower-nature', file: 'leaf.png',             label: '나뭇잎' },
+  'momcal:flower_fallen_leaf':      { path: 'flower-nature', file: 'fallen_leaf.png',      label: '낙엽' },
+  'momcal:flower_autumn_leaf':      { path: 'flower-nature', file: 'autumn_leaf.png',      label: '단풍잎' },
+  'momcal:flower_sprout':           { path: 'flower-nature', file: 'sprout.png',           label: '새싹' },
+  'momcal:flower_bamboo':           { path: 'flower-nature', file: 'bamboo.png',           label: '대나무' },
+  'momcal:flower_barley':           { path: 'flower-nature', file: 'barley.png',           label: '보리' },
+  'momcal:flower_tree':             { path: 'flower-nature', file: 'tree.png',             label: '나무' },
+  'momcal:flower_butterfly':        { path: 'flower-nature', file: 'butterfly.png',        label: '나비' },
+  'momcal:flower_bee':              { path: 'flower-nature', file: 'bee.png',              label: '꿀벌' },
+  'momcal:flower_ladybug':          { path: 'flower-nature', file: 'ladybug.png',          label: '무당벌레' },
+  'momcal:flower_sun':              { path: 'flower-nature', file: 'sun.png',              label: '해' },
+  'momcal:flower_moon':             { path: 'flower-nature', file: 'moon.png',             label: '달' },
+  'momcal:flower_star':             { path: 'flower-nature', file: 'star.png',             label: '별' },
+  'momcal:flower_cloud':            { path: 'flower-nature', file: 'cloud.png',            label: '구름' },
+  'momcal:flower_rainbow':          { path: 'flower-nature', file: 'rainbow.png',          label: '무지개' },
+  'momcal:flower_raindrop':         { path: 'flower-nature', file: 'raindrop.png',         label: '빗방울' },
+  'momcal:flower_snowflake':        { path: 'flower-nature', file: 'snowflake.png',        label: '눈꽃' },
 };
+const STICKER_ICON_BASE = './icons/stickers/';
 
 /**
  * 스티커 값 하나를 화면에 그릴 HTML을 반환. ICON_STICKERS에 있는 이미지 스티커면 <img>,
  * 아니면(기존 이모지 스티커) 텍스트 그대로 폴백 — 매핑에 없는 값이 와도 절대 빈 화면이 되지 않음.
  * size는 기존 이모지가 쓰던 font-size 값을 그대로 넘겨서 시각적 크기를 맞춤(예: '.8rem', '1.45rem').
- * URL 끝에 ?v=ICON_ASSET_VERSION을 붙여 캐시 버스팅(위 설명 참고).
  */
 function stickerDisplay(s, size) {
   const meta = ICON_STICKERS[stickerEmoji(s)];
   if (!meta) return stickerEmoji(s);
-  return `<img class="sticker-img" src="${meta.path}?v=${ICON_ASSET_VERSION}" alt="${meta.label}" title="${meta.label}" style="width:${size};height:${size}" loading="lazy">`;
+  return `<img class="sticker-img" src="${STICKER_ICON_BASE}${meta.path}/${meta.file}" alt="${meta.label}" title="${meta.label}" style="width:${size};height:${size}" loading="lazy">`;
 }
 
 function formatSticker(s) {
