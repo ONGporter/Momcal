@@ -24,7 +24,7 @@
  */
 
 import { S, debounceSave } from './state.js';
-import { today, icon }     from './utils.js';
+import { today, icon, avatarTextFallback, growthStageIconImg } from './utils.js';
 import { clData }          from '../data/checklist-data.js';
 import { clPacks }         from '../data/checklist-packs.js';
 import { renderGovChecklistTab } from './govSupport.js';
@@ -173,7 +173,7 @@ export function renderChecklist() {
   const csel = document.getElementById('clChildSel');
   csel.innerHTML = S.children.length
     ? S.children.map((c, i) =>
-        `<option value="${i}" ${i == S.selC ? 'selected' : ''}>${c.avatar} ${c.name}</option>`
+        `<option value="${i}" ${i == S.selC ? 'selected' : ''}>${avatarTextFallback(c.gender)} ${c.name}</option>`
       ).join('')
     : '<option>아이를 등록해주세요</option>';
 
@@ -370,23 +370,15 @@ function renderContextBanner(child) {
   }
 }
 
-/* 육아 체크 "아기→어린이→다 자란 아이" 성장 단계 아이콘을 아이 성별에 맞춰 바꾸기 위한 매핑
- * (v0.0.22) — Unicode엔 "아기 남아/여아"를 구분하는 전용 이모지가 없어서, 아기 단계도
- * 어린이와 같은 👦/👧로 통일함(성별 미정이면 중성 이모지로 이전 단계감을 그대로 유지) */
-const GROWTH_STAGE_ICON = {
-  m18: { m: '👦', f: '👧', u: '👶' },
-  m24: { m: '👦', f: '👧', u: '🧒' },
-  m36: { m: '👦', f: '👧', u: '🧑' },
-};
-
-/** clData.born_vax/born_dev 배열의 m18/m24/m36 라벨 앞 이모지를 아이 성별에 맞게 바꿔서 새 배열로 반환
- *  (원본 clData.born_vax/born_dev는 건드리지 않음 — guide 페이지 생성 등 다른 곳에서도 그대로 씀) */
+/* 육아 체크 "아기→돌쟁이→어린이" 성장 단계 아이콘을 아이 성별에 맞춰 바꾸기 위한 헬퍼
+ * (v0.0.22 이모지 버전 → v0.0.53 이미지로 교체) — 실제 파일 매핑은 js/utils.js의
+ * growthStageIconImg()에 있음(GROWTH_STAGE_FILES). 성별 미정('u')이면 옹짐꾼님 요청대로
+ * 항상 "남아" 이미지를 기본값으로 씀. */
 function applyGrowthStageGender(cats, gender) {
   return cats.map(c => {
-    const iconMap = GROWTH_STAGE_ICON[c.key];
-    if (!iconMap) return c;
-    const icon = iconMap[gender] || iconMap.u;
-    return { ...c, label: c.label.replace(/^\S+/, icon) };
+    const iconHtml = growthStageIconImg(c.key, gender);
+    if (!iconHtml) return c;
+    return { ...c, label: c.label.replace(/^\S+/, iconHtml) };
   });
 }
 

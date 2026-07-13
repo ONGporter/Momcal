@@ -4,7 +4,7 @@
  */
 
 import { S, debounceSave, selectChild } from './state.js';
-import { ageFmt, ageD, today, icon } from './utils.js';
+import { ageFmt, ageD, today, icon, avatarDisplay, avatarToken } from './utils.js';
 import { showModal }             from './modal.js';
 import { getAllEvs }             from './calendar.js';
 import { getTodayCategoryInfo }  from './checklist.js';
@@ -72,7 +72,7 @@ export function renderHome() {
   const ps = document.getElementById('homeProfiles');
   ps.innerHTML = S.children.map((c, i) => `
     <div class="pcard ${i == S.selC ? 'sel' : ''}" onclick="selectChild(${i});renderHome()">
-      <div class="pav">${c.avatar}</div>
+      <div class="pav">${avatarDisplay(c.avatar, '1.9rem')}</div>
       <div class="pnm">${c.name}</div>
       <div class="pag">${c.stage === 'preg' ? `<span class="icon icon-sm" translate="no" aria-hidden="true">pregnant_woman</span> ${c.week}주차` : ageFmt(c.birth)}</div>
       <span class="pst ${c.stage === 'preg' ? 'st-preg' : 'st-born'}">${c.stage === 'preg' ? '임신중' : '육아중'}</span>
@@ -270,14 +270,14 @@ export function regChild() {
   const name = document.getElementById('rName').value.trim();
   if (!name) { alert('이름을 입력해주세요'); return; }
 
-  const av    = { m: '👦', f: '👧', u: '👶' };
   const birth = S.rStage === 'born' ? document.getElementById('rBirth').value : '';
   const due   = S.rStage === 'preg' ? document.getElementById('rDue').value   : '';
   const week  = parseInt(document.getElementById('rWeek')?.value) || 8;
 
   if (S.rStage === 'born' && !birth) { alert('생년월일을 입력해주세요'); return; }
 
-  S.children.push({ name, gender: S.gender, stage: S.rStage, birth, due, week, avatar: av[S.gender], id: Date.now() });
+  // v0.0.53: 순수 이모지 대신 이미지 토큰 저장(avatarToken) — 렌더링 시 avatarDisplay()가 <img>로 바꿔줌
+  S.children.push({ name, gender: S.gender, stage: S.rStage, birth, due, week, avatar: avatarToken(S.gender), id: Date.now() });
   S.selC = S.children.length - 1;
   document.getElementById('rName').value = '';
 
@@ -303,7 +303,7 @@ export function renderRegList() {
       <div class="sec" style="font-size:.8rem">등록 목록</div>
       ${S.children.map((c, i) => `
         <div class="reg-list-item">
-          <span style="font-size:1.35rem">${c.avatar}</span>
+          <span style="font-size:1.35rem">${avatarDisplay(c.avatar, '1.35rem')}</span>
           <div style="flex:1">
             <b style="font-size:.88rem">${c.name}</b>
             <div style="font-size:.72rem;color:var(--txl);margin-top:2px">

@@ -73,3 +73,59 @@ export function icon(name, opts = {}) {
   const fillCls = fill ? ' icon-fill' : '';
   return `<span class="icon${sizeCls}${fillCls}" style="${style}" translate="no" aria-hidden="true">${name}</span>`;
 }
+
+/**
+ * v0.0.53: 아이 프로필/월령별 성장 단계 아이콘 — 옹짐꾼님이 제작한 자체 일러스트(투명 배경 PNG)로 교체.
+ * 캘린더 스티커(js/calendar.js의 ICON_STICKERS)와 동일한 설계 원칙:
+ *  1) Firestore엔 이모지 대신 안정적인 토큰 문자열을 저장 (avatarToken)
+ *  2) 렌더링 시에만 이 맵을 보고 <img>로 바꿔치기 (avatarDisplay) — 매핑에 없으면(레거시 데이터,
+ *     예전에 저장된 순수 이모지 👦/👧/👶) 원래 값을 그대로 반환해 과거 데이터도 안 깨짐
+ *  3) <select><option>이나 escapeHtml() 같은 "이미지가 아예 안 되는 순수 텍스트" 자리는
+ *     avatarTextFallback()으로 이모지 텍스트만 별도 반환(성별 미정이면 남아 이모지로 기본값)
+ * 성별 미정('u' 또는 그 외 값)은 옹짐꾼님 요청대로 항상 "남아" 쪽을 기본값으로 씀.
+ */
+export const AVATAR_ICON_BASE = './icons/avatars/';
+
+const AVATAR_ICONS = {
+  'momcal:avatar_boy':  { file: 'boy.png',  label: '남아' },
+  'momcal:avatar_girl': { file: 'girl.png', label: '여아' },
+};
+
+/** 아이 등록 시 성별에 맞는 avatar 토큰 반환(레지스트리 값, 그대로 Firestore에 저장) */
+export function avatarToken(gender) {
+  return gender === 'f' ? 'momcal:avatar_girl' : 'momcal:avatar_boy';
+}
+
+/** child.avatar 값을 화면에 그릴 HTML 반환 — 토큰이면 <img>, 아니면(레거시 이모지) 그대로 폴백 */
+export function avatarDisplay(avatarValue, size) {
+  const meta = AVATAR_ICONS[avatarValue];
+  if (!meta) return avatarValue || '';
+  return `<img class="avatar-img" src="${AVATAR_ICON_BASE}${meta.file}" alt="${meta.label}" style="width:${size};height:${size};object-fit:contain;vertical-align:middle" loading="lazy">`;
+}
+
+/** <option>/escapeHtml() 등 이미지를 못 쓰는 순수 텍스트 자리 전용 — 이모지 문자만 반환 */
+export function avatarTextFallback(gender) {
+  return gender === 'f' ? '👧' : '👦';
+}
+
+/**
+ * 육아 체크 "아기→돌쟁이→어린이" 성장 단계별(월령 카테고리 m18/m24/m36) 아이콘 파일명.
+ * m18(18~23개월)엔 아이 프로필과 같은 이미지(boy.png/girl.png)를 그대로 씀.
+ */
+const GROWTH_STAGE_FILES = {
+  m18: { boy: 'boy.png',          girl: 'girl.png' },
+  m24: { boy: 'boy_dol_baby.png', girl: 'girl_dol_baby.png' },
+  m36: { boy: 'boy_child.png',    girl: 'girl_child.png' },
+};
+
+/**
+ * 성장 단계 아이콘 <img> HTML 반환. base를 다르게 넘기면 앱(상대경로)·guide 정적 페이지(절대경로)
+ * 양쪽에서 재사용 가능(scripts/build-guide.mjs 참고).
+ */
+export function growthStageIconImg(stageKey, gender, opts = {}) {
+  const files = GROWTH_STAGE_FILES[stageKey];
+  if (!files) return '';
+  const { base = AVATAR_ICON_BASE, size = '1.1em' } = opts;
+  const file = gender === 'f' ? files.girl : files.boy;
+  return `<img class="avatar-img" src="${base}${file}" alt="" style="width:${size};height:${size};object-fit:contain;vertical-align:middle" loading="lazy">`;
+}

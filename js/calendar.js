@@ -10,7 +10,7 @@
  */
 
 import { S, debounceSave } from './state.js';
-import { today, daysUntil, stripLeadingEmoji, icon } from './utils.js';
+import { today, daysUntil, stripLeadingEmoji, icon, avatarDisplay } from './utils.js';
 import { showModal, cm }   from './modal.js';
 import { vaxSched }        from '../data/vaccines.js';
 import { pregEvMap }       from '../data/pregnancy.js';
@@ -767,7 +767,7 @@ export function renderCal() {
                background:${i == S.selC ? 'var(--pkl)' : 'var(--wh)'};
                color:${i == S.selC ? 'var(--pkd)' : 'var(--txl)'};
                font-size:.73rem;font-weight:800;cursor:pointer;font-family:inherit;transition:all .2s">
-        ${c.avatar} ${c.name}
+        ${avatarDisplay(c.avatar, '1.1em')} ${c.name}
       </button>`
     ).join('');
   }

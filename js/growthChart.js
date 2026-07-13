@@ -13,6 +13,7 @@ import { S, debounceSave, selectChild }  from './state.js';
 import { showModal, cm }                 from './modal.js';
 import { getGrowthRecords, getLatestGrowth, openGrowthModal } from './growth.js';
 import { refTableFor, growthMetricLabel, fetalMetricLabel } from '../data/who-growth.js';
+import { avatarTextFallback } from './utils.js';
 import { renderAdSlot } from './adSlot.js';
 import { icon } from './utils.js';
 
@@ -177,7 +178,7 @@ export function renderGrowthPage() {
   const sel = document.getElementById('growthChildSel');
   sel.innerHTML = S.children.length
     ? S.children.map((c, i) =>
-        `<option value="${i}" ${i == S.selC ? 'selected' : ''}>${c.avatar} ${c.name}</option>`
+        `<option value="${i}" ${i == S.selC ? 'selected' : ''}>${avatarTextFallback(c.gender)} ${c.name}</option>`
       ).join('')
     : '<option>아이를 등록해주세요</option>';
 

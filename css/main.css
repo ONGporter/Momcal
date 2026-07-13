@@ -359,6 +359,9 @@ h1, h2, h3, .sec {
 .pcard:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(180,80,160,.16); }
 .pcard.sel   { border-color: var(--pk); background: linear-gradient(135deg, #FFF5F8, #F5EEFF); }
 .pcard .pav  { font-size: 1.9rem; margin-bottom: 6px; }
+/* v0.0.53: 아이 프로필/성장 단계 이미지 아이콘 — 실제 크기·정렬은 인라인 style(width/height)로
+   호출부마다 다르게 주고, 여기선 공통 표시 속성만 지정(캘린더 스티커 .sticker-img와 동일 패턴) */
+.avatar-img { display: inline-block; vertical-align: middle; object-fit: contain; }
 .pcard .pnm  { font-weight: 900; font-size: .9rem; color: var(--tx); }
 .pcard .pag  { font-size: .71rem; color: var(--pk); font-weight: 700; margin-top: 3px; }
 .pcard .pst  { font-size: .62rem; margin-top: 5px; padding: 3px 8px; border-radius: 10px; font-weight: 800; display: inline-block; }

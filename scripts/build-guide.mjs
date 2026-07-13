@@ -22,6 +22,7 @@
 import { clData } from '../data/checklist-data.js';
 import { clPacks } from '../data/checklist-packs.js';
 import { govSupportSchedule, GOV_INFO_BASIS } from '../data/government-support.js';
+import { growthStageIconImg } from '../js/utils.js';
 import { writeFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -32,7 +33,7 @@ const GUIDE = join(ROOT, 'guide');
 const SITE  = 'https://momcal.app';
 /* v0.0.2: 앱 본체(index.html 최하단)와 반드시 같은 값으로 유지 — 버전을 올릴 땐 이 값과
    index.html의 .site-footer-version 텍스트를 함께 수정해야 함 (docs/PROJECT_SPEC.md 버전 관리 정책 참고) */
-const APP_VERSION = 'v0.0.52';
+const APP_VERSION = 'v0.0.53';
 
 /* 정부지원 데이터는 {preg, postpartum, parenting} 키의 배열이라 체크리스트와 형태가 달라
    가이드 페이지용 카테고리 배열로 한 번 변환해준다. */
@@ -53,6 +54,17 @@ const govCats = Object.entries(govSupportSchedule).map(([key, items]) => ({
 const bornMerged = clData.born_vax.map((vaxCat, i) => {
   const devCat = clData.born_dev[i];
   return { key: vaxCat.key, label: vaxCat.label, items: [...vaxCat.items, ...(devCat ? devCat.items : [])] };
+});
+
+/* v0.0.53: 육아정보 페이지는 특정 아이가 없어(성별 모름) m18/m24/m36 카테고리 라벨의
+   이모지(👶/🧒/🧑)를 옹짐꾼님 제작 이미지로 바꾸되 항상 "남아" 쪽을 기본값으로 씀
+   (js/checklist.js의 applyGrowthStageGender()가 앱 안에서 아이 성별에 맞게 바꿔주는 것과
+   동일한 이미지 세트, 절대경로만 다름). 검색 인덱스(buildSearchIndex, 아래)는 이 변환 이전의
+   원본 bornMerged를 그대로 쓰므로 검색 결과 배지에는 영향 없음. */
+const bornMergedForGuide = bornMerged.map(cat => {
+  const iconHtml = growthStageIconImg(cat.key, 'm', { base: `${SITE}/icons/avatars/` });
+  if (!iconHtml) return cat;
+  return { ...cat, label: cat.label.replace(/^\S+/, iconHtml) };
 });
 
 /* v0.0.42: 준비물형(플랫) 체크리스트 팩(data/checklist-packs.js)은 예방접종·임신 체크
@@ -440,7 +452,7 @@ const parentingHtml = page({
   heroTitle: '<span class="icon icon-sm" translate="no" aria-hidden="true">child_care</span> 월령별 예방접종 · 건강검진 가이드',
   heroDesc: '0개월부터 5세까지, 예방접종 차수·간격과 국가건강검진 일정을 정리했어요',
   intro: '신생아부터 5세까지 맞아야 하는 예방접종은 종류도 많고 차수도 헷갈리기 쉬워요. 아래는 월령별로 정리한 예방접종·건강검진·발달 체크 가이드예요. 각 백신이 무엇을 예방하는지, 총 몇 차수인지, 다음 접종까지 간격이 얼마나 되는지 자세히 적어뒀어요. 맘캘 앱에서는 실제 접종한 날짜를 입력하면 이후 회차 일정이 자동으로 재계산돼요.',
-  cats: bornMerged,
+  cats: bornMergedForGuide,
   ctaText: '우리 아이 접종 일정, 자동으로 계산해드릴까요?',
   disclaimer: '이 페이지의 예방접종·발달 정보는 일반적인 참고용 요약이며, 병원의 공식 안내를 대체하지 않습니다. 정확한 접종 일정과 개별 건강 상태는 반드시 소아과와 상담해주세요.',
   questionFn: (it) => `${it.t}, 언제 어떻게 해야 하나요?`,

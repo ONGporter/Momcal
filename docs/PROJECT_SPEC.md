@@ -59,7 +59,7 @@
       "birth": "2024-01-15",
       "due": "",
       "week": 0,
-      "avatar": "👦"
+      "avatar": "momcal:avatar_boy"
     }
   ],
   "customEvs": [
@@ -106,6 +106,7 @@
 - `eventMods`의 키는 자동 일정이면 `auto_{원본날짜}_{제목}`, 커스텀 일정이면 `custom_{_id}` 형식 (`js/calendar.js`의 `getEventKey()` 참고) — v0.0.22부터 제목에 이모지 접두어가 안 붙음(예전 형식 키는 `js/state.js`의 `migrateEventModKeys()`가 로드 시 자동 이전)
 - `growthRecords`는 Sprint 4에서 추가, `checks`/`eventMods`는 Sprint 2~6 사이 단계적으로 추가됨 — 전부 하위 호환 유지(과거 데이터에 필드가 없으면 빈 배열/객체로 처리). v0.0.23부터 `week`(임신 주수)·`isFetal`(태아 기록 여부) 필드 추가 — 둘 다 없으면(과거 데이터) 출생 후 기록으로 취급됨
 - `itemFeedback`은 v0.0.23에서 추가 — 체크리스트 항목별 "도움돼요/아쉬워요" 개인 반응(다른 사용자와 집계되는 공개 투표 아님)
+- `avatar`는 v0.0.53부터 순수 이모지(`👦`/`👧`/`👶`) 대신 `momcal:avatar_boy`/`momcal:avatar_girl` 토큰을 저장(캘린더 스티커 `dayStickers`의 `momcal:xxx` 토큰과 동일한 패턴) — 렌더링 시 `js/utils.js`의 `avatarDisplay()`가 이 맵을 보고 `<img>`로 바꿔치기하며, 매핑에 없는 값(예전에 저장된 순수 이모지)은 그대로 반환해 과거 데이터도 안 깨짐. `<select><option>`처럼 이미지를 아예 못 쓰는 자리는 `avatarTextFallback()`으로 성별 기반 이모지 텍스트만 별도로 씀(둘 다 성별 미정이면 남아 쪽을 기본값으로 함)
 
 ---
 

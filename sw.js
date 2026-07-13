@@ -52,7 +52,16 @@
 // 전부 새 파일명(_v2)으로 저장하고 예전 PNG는 삭제. js/calendar.js(stickerCats·ICON_STICKERS)
 // 변경 + icons/stickers/flower-nature/*.png 신규, icons/stickers/momcal-action/*_v2.png 교체 —
 // 캐시 버전 상향
-const CACHE_NAME = 'momcal-shell-v57';
+// v0.0.53: 아이 프로필 아바타(👦/👧/👶)와 육아 체크 성장 단계 아이콘(18~23·24~35·36~60개월,
+// 👶/🧒/🧑)을 옹짐꾼님 제작 이미지로 교체 — 아바타는 캘린더 스티커와 동일 패턴(토큰 문자열을
+// child.avatar에 저장, avatarDisplay()가 렌더링 시 <img>로 변환, 레거시 이모지 데이터는 폴백
+// 유지). <select><option>·escapeHtml() 등 이미지가 안 되는 순수 텍스트 자리는 성별 기반
+// 이모지 텍스트(avatarTextFallback)로 별도 처리. 성별 미정은 항상 남아 이미지가 기본값.
+// js/utils.js(avatarDisplay·avatarToken·avatarTextFallback·growthStageIconImg 신규),
+// js/ui.js·calendar.js·checklist.js·checklistSettings.js·growthChart.js·demoMode.js,
+// scripts/build-guide.mjs(육아정보 페이지도 동일 이미지로, 성별 없어 남아 기본값) 변경 +
+// icons/avatars/*.png 신규 정적 파일 — 캐시 버전 상향
+const CACHE_NAME = 'momcal-shell-v58';
 
 const APP_SHELL = [
   './',

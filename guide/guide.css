@@ -205,6 +205,9 @@ a:hover { text-decoration: underline; }
   box-shadow: var(--card-shadow);
 }
 .g-cat-tab:hover { border-color: var(--pk); color: var(--pkd); text-decoration: none; }
+/* v0.0.53: 월령별 성장 단계 이미지 아이콘(예방접종·건강검진 가이드 탭·섹션 제목) — 크기는
+   호출부 인라인 style로 지정, 여기선 공통 표시 속성만(앱 css/main.css의 .avatar-img와 동일) */
+.avatar-img { display: inline-block; vertical-align: middle; object-fit: contain; }
 
 /* ── Sprint 29: 다른 육아정보 페이지로 이동하는 탭 (상단, 페이지 간 이동) ── */
 .g-page-nav {

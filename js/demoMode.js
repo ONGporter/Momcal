@@ -16,6 +16,7 @@
 import { S }              from './state.js';
 import { showApp }        from './auth.js';
 import { clData }         from '../data/checklist-data.js';
+import { avatarToken }    from './utils.js';
 
 const toStr   = (d) => d.toISOString().split('T')[0];
 const addDays = (base, days) => { const d = new Date(base); d.setDate(d.getDate() + days); return d; };
@@ -57,7 +58,7 @@ function seedDemoData() {
 
   const todayStr = toStr(new Date());
 
-  S.children      = [{ id: childId, name: '민준 (체험)', gender: 'm', stage: 'born', birth: birthStr, due: '', week: 0, avatar: '👦' }];
+  S.children      = [{ id: childId, name: '민준 (체험)', gender: 'm', stage: 'born', birth: birthStr, due: '', week: 0, avatar: avatarToken('m') }];
   S.customEvs     = [{ _id: Date.now() + 1, date: todayStr, title: '소아과 정기 방문', note: '체험 모드 샘플 일정', type: 'custom', auto: false }];
   S.dayStickers   = { [todayStr]: ['🌸', '💕'] };
   S.checks        = checks;
