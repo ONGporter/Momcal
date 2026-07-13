@@ -1482,7 +1482,16 @@ export const stickerCats = [
       'momcal:flower_star', 'momcal:flower_cloud', 'momcal:flower_rainbow', 'momcal:flower_raindrop',
       'momcal:flower_snowflake',
     ] },
-  { key: 'baby',   label: `${icon('child_care', { size: 'sm' })} 아기`, items: ['👶','🍼','🧸','🎀','🍭','🎠','🐣','🐥','🐰','🐨','🦄','🐸','🐮','🐷','🐻','🐼'] },
+  // v0.0.58: 아기 카테고리도 기존 이모지 16종 → 자체 제작 이미지 21종으로 교체(다른 이미지
+  // 카테고리와 동일 패턴 — momcal:babyitem_xxx 토큰 + ICON_STICKERS)
+  { key: 'baby',   label: `${icon('child_care', { size: 'sm' })} 아기`, items: [
+      'momcal:babyitem_newborn', 'momcal:babyitem_face', 'momcal:babyitem_girl_toddler',
+      'momcal:babyitem_bottle', 'momcal:babyitem_pacifier', 'momcal:babyitem_bib', 'momcal:babyitem_diaper',
+      'momcal:babyitem_clothes', 'momcal:babyitem_hat', 'momcal:babyitem_socks', 'momcal:babyitem_blanket',
+      'momcal:babyitem_stroller', 'momcal:babyitem_bathtub', 'momcal:babyitem_bath_duck',
+      'momcal:babyitem_teddy_bear', 'momcal:babyitem_toy', 'momcal:babyitem_rattle', 'momcal:babyitem_mobile',
+      'momcal:babyitem_picture_book', 'momcal:babyitem_footprint', 'momcal:babyitem_balloon',
+    ] },
   { key: 'heart',  label: `${icon('favorite', { size: 'sm' })} 하트`, items: ['💕','💖','💗','💝','❤️','🧡','💛','💚','💙','💜','🩷','🩵','🤍','💞','💓','💘'] },
   { key: 'celebrate', label: `${icon('celebration', { size: 'sm' })} 기념`, items: ['🎉','🎊','🎂','🎁','🏆','🥇','✨','🎈','🎀','🌟','🪄','🎗','🥳','🎺','🎵','🎶'] },
   // v0.0.55: 이유식 카테고리도 기존 이모지 30종 → 자체 제작 이미지 48종으로 교체(패턴은
@@ -1628,6 +1637,28 @@ const ICON_STICKERS = {
   'momcal:food_kiwi':               { path: 'babyfood', file: 'kiwi.png',               label: '키위' },
   'momcal:food_orange':             { path: 'babyfood', file: 'orange.png',             label: '오렌지' },
   'momcal:food_korean_melon':       { path: 'babyfood', file: 'korean_melon.png',       label: '참외' },
+  // v0.0.58: 아기 카테고리
+  'momcal:babyitem_newborn':        { path: 'baby-items', file: 'newborn.png',      label: '신생아' },
+  'momcal:babyitem_face':           { path: 'baby-items', file: 'baby_face.png',    label: '아기 얼굴' },
+  'momcal:babyitem_girl_toddler':   { path: 'baby-items', file: 'girl_toddler.png', label: '여자 아기' },
+  'momcal:babyitem_bottle':         { path: 'baby-items', file: 'baby_bottle.png',  label: '젖병' },
+  'momcal:babyitem_pacifier':       { path: 'baby-items', file: 'pacifier.png',     label: '쪽쪽이' },
+  'momcal:babyitem_bib':            { path: 'baby-items', file: 'bib.png',          label: '턱받이' },
+  'momcal:babyitem_diaper':         { path: 'baby-items', file: 'diaper.png',       label: '기저귀' },
+  'momcal:babyitem_clothes':        { path: 'baby-items', file: 'clothes.png',      label: '아기옷' },
+  'momcal:babyitem_hat':            { path: 'baby-items', file: 'baby_hat.png',     label: '아기 모자' },
+  'momcal:babyitem_socks':          { path: 'baby-items', file: 'socks.png',        label: '양말' },
+  'momcal:babyitem_blanket':        { path: 'baby-items', file: 'baby_blanket.png', label: '속싸개' },
+  'momcal:babyitem_stroller':       { path: 'baby-items', file: 'stroller.png',     label: '유모차' },
+  'momcal:babyitem_bathtub':        { path: 'baby-items', file: 'baby_bathtub.png', label: '아기 욕조' },
+  'momcal:babyitem_bath_duck':      { path: 'baby-items', file: 'bath_duck.png',    label: '목욕 오리' },
+  'momcal:babyitem_teddy_bear':     { path: 'baby-items', file: 'teddy_bear.png',   label: '곰인형' },
+  'momcal:babyitem_toy':            { path: 'baby-items', file: 'toy.png',          label: '장난감' },
+  'momcal:babyitem_rattle':         { path: 'baby-items', file: 'rattle.png',       label: '딸랑이' },
+  'momcal:babyitem_mobile':         { path: 'baby-items', file: 'mobile.png',       label: '모빌' },
+  'momcal:babyitem_picture_book':   { path: 'baby-items', file: 'picture_book.png', label: '그림책' },
+  'momcal:babyitem_footprint':      { path: 'baby-items', file: 'footprint.png',    label: '발자국' },
+  'momcal:babyitem_balloon':        { path: 'baby-items', file: 'balloon.png',      label: '풍선' },
 };
 const STICKER_ICON_BASE = './icons/stickers/';
 

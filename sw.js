@@ -81,7 +81,12 @@
 // "momcal:food_barley 먹은 양을..."처럼 원본 토큰 문자열을 그대로 보여주던 버그 수정 —
 // formatSticker()로 사람이 읽을 라벨("보리")을 쓰도록 변경. js/calendar.js, css/calendar.css
 // 변경 — 캐시 버전 상향
-const CACHE_NAME = 'momcal-shell-v62';
+// v0.0.58: 캘린더 스티커 "아기" 카테고리를 기존 이모지 16종에서 자체 제작 이미지 21종으로
+// 교체(momcal:babyitem_xxx 토큰, 다른 이미지 카테고리와 동일 패턴). 새 파일명을 기존 스티커
+// 폴더 전체(momcal-action/flower-nature/babyfood/avatars)와 대조해 충돌 없음을 확인 —
+// 폴더가 달라 겹쳐도 실제로는 무해하지만(경로로 구분됨) 미리 점검함. js/calendar.js 변경 +
+// icons/stickers/baby-items/*.png 신규 정적 파일 — 캐시 버전 상향
+const CACHE_NAME = 'momcal-shell-v63';
 
 const APP_SHELL = [
   './',
