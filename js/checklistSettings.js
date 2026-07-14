@@ -20,6 +20,7 @@
  */
 
 import { S, debounceSave } from './state.js';
+import { escapeHtml } from './utils.js';
 import { clPacks } from '../data/checklist-packs.js';
 import { showModal, cm } from './modal.js';
 import { resyncTabForAllChildren } from './checklistCalendarLink.js';
@@ -45,11 +46,7 @@ function ensureClSettings() {
   return S.clSettings;
 }
 
-function escapeHtml(s) {
-  return String(s || '').replace(/[&<>"']/g, (c) => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
-  }[c]));
-}
+// v0.2.1: 로컬 escapeHtml() 제거 — js/utils.js의 공용 escapeHtml()로 통일(동일 로직 중복이었음)
 function escapeAttr(s) { return escapeHtml(s).replace(/\n/g, '&#10;'); }
 
 function isHidden(key)  { return ensureClSettings().hiddenTabs.includes(key); }

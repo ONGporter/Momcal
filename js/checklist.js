@@ -24,7 +24,7 @@
  */
 
 import { S, debounceSave } from './state.js';
-import { today, icon, growthStageIconImg } from './utils.js';
+import { today, icon, growthStageIconImg, escapeHtml } from './utils.js';
 import { clData }          from '../data/checklist-data.js';
 import { clPacks }         from '../data/checklist-packs.js';
 import { renderGovChecklistTab } from './govSupport.js';
@@ -363,7 +363,7 @@ function renderContextBanner(child) {
     const display   = ageMonths < 3 ? `${ageWeeks}주` : `${ageMonths}개월`;
     el.innerHTML = `
       <span class="icon icon-sm" translate="no" aria-hidden="true">child_care</span> 현재 <strong>${display}</strong>
-      <span style="color:var(--txl);font-weight:700;margin-left:auto;font-size:.76rem">${child.name}이(가) 쑥쑥 크는 중 <span class="icon icon-sm" translate="no" aria-hidden="true">eco</span></span>`;
+      <span style="color:var(--txl);font-weight:700;margin-left:auto;font-size:.76rem">${escapeHtml(child.name)}이(가) 쑥쑥 크는 중 <span class="icon icon-sm" translate="no" aria-hidden="true">eco</span></span>`;
 
   } else {
     el.innerHTML = '';
@@ -585,11 +585,11 @@ export function renderClMain() {
           <div class="ci ${checked ? 'done' : ''}" onclick="tgCk('${key}','${it.id}')">
             <div class="ci-box"></div>
             <div style="flex:1;min-width:0">
-              <div class="ci-title">${it.t}
+              <div class="ci-title">${escapeHtml(it.t)}
                 ${it.r ? '<span class="badge-r">필수</span>' : '<span class="badge-o">선택</span>'}
                 ${isCustomAdd ? '<span class="badge-custom">내가 추가함</span>' : ''}
               </div>
-              ${it.d ? `<div class="ci-desc">${it.d}</div>` : ''}
+              ${it.d ? `<div class="ci-desc">${escapeHtml(it.d)}</div>` : ''}
             </div>
             ${canDelete ? `
             <button type="button" class="ci-expand-btn" aria-label="삭제"
@@ -790,7 +790,7 @@ export async function shareChecklistImage() {
     <div style="text-align:center;margin-bottom:20px">
       <div style="font-size:1.25rem;font-weight:900;color:#F06292">맘캘 <span style="font-size:.82rem;color:#8A849A;font-weight:700">MomCal</span></div>
     </div>
-    <div style="text-align:center;font-size:.8rem;color:#8A849A;font-weight:700;margin-bottom:4px">${child.name}의 체크리스트</div>
+    <div style="text-align:center;font-size:.8rem;color:#8A849A;font-weight:700;margin-bottom:4px">${escapeHtml(child.name)}의 체크리스트</div>
     <div style="text-align:center;font-size:1.15rem;font-weight:900;color:#2D2D3A;margin-bottom:18px">${cat.label}</div>
     <div style="text-align:center;margin-bottom:14px">
       <div style="display:inline-block;padding:14px 30px;border-radius:20px;background:#FFF0F5;font-size:2rem;font-weight:900;color:#F06292">${basePct}%</div>
@@ -803,7 +803,7 @@ export async function shareChecklistImage() {
       <span style="display:inline-block;padding:8px 18px;border-radius:14px;background:${badge.bg};color:${badge.color};font-weight:900;font-size:.85rem">${badge.emoji} ${badge.text}</span>
     </div>` : ''}
     <div style="border-top:1.5px dashed #F0D8E4;padding-top:14px;margin-top:6px">
-      ${doneItems.slice(0, 8).map(it => `<div style="font-size:.76rem;color:#2D2D3A;padding:3px 0">✅ ${it.t}</div>`).join('')}
+      ${doneItems.slice(0, 8).map(it => `<div style="font-size:.76rem;color:#2D2D3A;padding:3px 0">✅ ${escapeHtml(it.t)}</div>`).join('')}
       ${doneItems.length > 8 ? `<div style="font-size:.72rem;color:#8A849A;padding:3px 0">그 외 ${doneItems.length - 8}개 더 완료 (전체 ${totalItems}개 중 ${doneItems.length}개 완료)</div>` : ''}
     </div>
     <div style="text-align:center;font-size:.66rem;color:#B0A8C0;margin-top:20px">momcal.app · 임신·육아 캘린더 앱</div>

@@ -108,7 +108,7 @@
 // "일정 색상" 스와치에 정부지원 추가) — 캐시 버전 상향
 // v0.1.1: data/checklist-data.js 수정(예방접종 "9~11개월" 카테고리 유일 항목을 선택→필수로
 // 변경 — 필수 항목이 없어서 항상 "Perfect 100%"로 보이던 버그 수정) — 캐시 버전 상향
-const CACHE_NAME = 'momcal-shell-v69';
+const CACHE_NAME = 'momcal-shell-v70';
 
 const APP_SHELL = [
   './',

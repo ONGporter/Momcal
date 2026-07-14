@@ -10,7 +10,7 @@
  */
 
 import { S, debounceSave } from './state.js';
-import { today, daysUntil, stripLeadingEmoji, icon, avatarDisplay } from './utils.js';
+import { today, daysUntil, stripLeadingEmoji, icon, avatarDisplay, escapeHtml } from './utils.js';
 import { showModal, cm }   from './modal.js';
 import { vaxSched }        from '../data/vaccines.js';
 import { pregEvMap }       from '../data/pregnancy.js';
@@ -577,7 +577,7 @@ function showRecalcNotice(changed) {
         <div style="display:flex;justify-content:space-between;align-items:center;
                     padding:9px 13px;background:var(--pul);border-radius:11px;
                     font-size:.8rem;font-weight:800;color:#4A148C">
-          <span><span class="icon icon-sm" translate="no" aria-hidden="true">vaccines</span> ${stripLeadingEmoji(c.title)}</span><span><span class="icon icon-sm" translate="no" aria-hidden="true">calendar_month</span> ${c.newDate}</span>
+          <span><span class="icon icon-sm" translate="no" aria-hidden="true">vaccines</span> ${esc(stripLeadingEmoji(c.title))}</span><span><span class="icon icon-sm" translate="no" aria-hidden="true">calendar_month</span> ${c.newDate}</span>
         </div>`).join('')}
     </div>
     <button class="btn bpk" onclick="cm()">확인</button>
@@ -776,7 +776,7 @@ export function renderCal() {
                background:${i == S.selC ? 'var(--pkl)' : 'var(--wh)'};
                color:${i == S.selC ? 'var(--pkd)' : 'var(--txl)'};
                font-size:.73rem;font-weight:800;cursor:pointer;font-family:inherit;transition:all .2s">
-        ${avatarDisplay(c.avatar, '1.1em')} ${c.name}
+        ${avatarDisplay(c.avatar, '1.1em')} ${esc(c.name)}
       </button>`
     ).join('');
   }
@@ -1119,9 +1119,8 @@ function renderWeekTimedBlock(e, top, height, track, trackCount) {
          title="${safe}${urgent ? ' — ⏰ 마감 임박' : ''}">${label}</div>`;
 }
 
-function esc(str) {
-  return String(str).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-}
+// v0.2.1: js/utils.js의 공용 escapeHtml()로 통일(기존엔 따옴표만 이스케이프하던 로컬 함수였음)
+const esc = escapeHtml;
 
 /** 이벤트 1건 — 배경 없이 카테고리 색상 그대로 텍스트에 입힘 (네이티브 캘린더 스타일) */
 function renderEventLine(e) {
@@ -1349,7 +1348,7 @@ export function showDayPanel(ds) {
               return `
                 <div class="dp-ev" style="background:${bg};flex-direction:column;align-items:stretch">
                   <div class="dp-ev-title" style="margin-bottom:8px">
-                    ${stripLeadingEmoji(e.title)}
+                    ${esc(stripLeadingEmoji(e.title))}
                     ${e.done ? '<span style="color:var(--mn);margin-left:5px"><span class="icon icon-sm" translate="no" aria-hidden="true">check_circle</span> 모두 완료</span>' : ''}
                   </div>
                   <div style="display:flex;flex-direction:column;gap:6px">
@@ -1357,7 +1356,7 @@ export function showDayPanel(ds) {
                       <div class="dp-vax-item-row" style="display:flex;justify-content:space-between;align-items:center;
                                   border-radius:9px;padding:6px 10px">
                         <span style="font-size:.78rem;font-weight:700;color:var(--tx)">
-                          ${item.done ? '<span class="icon icon-sm" translate="no" aria-hidden="true">check_circle</span>' : '<span class="icon icon-sm" translate="no" aria-hidden="true">radio_button_unchecked</span>'} ${stripLeadingEmoji(item.title)}
+                          ${item.done ? '<span class="icon icon-sm" translate="no" aria-hidden="true">check_circle</span>' : '<span class="icon icon-sm" translate="no" aria-hidden="true">radio_button_unchecked</span>'} ${esc(stripLeadingEmoji(item.title))}
                           ${item.recalculated ? '<span style="color:#7B1FA2;font-size:.65rem;margin-left:4px"><span class="icon icon-sm" translate="no" aria-hidden="true">sync</span>조정됨</span>' : ''}
                         </span>
                         <button onclick="openEvModal(${item._idx})"
@@ -1376,13 +1375,13 @@ export function showDayPanel(ds) {
               <div class="dp-ev${e.done ? ' dp-done' : ''}${urgent ? ' dp-ev-urgent' : ''}" style="background:${bg}">
                 <div class="dp-ev-main">
                   <div class="dp-ev-title">
-                    ${stripLeadingEmoji(e.title)}
+                    ${esc(stripLeadingEmoji(e.title))}
                     ${e.done ? '<span style="color:var(--mn);margin-left:5px"><span class="icon icon-sm" translate="no" aria-hidden="true">check_circle</span></span>' : ''}
                     ${e.type === 'gov' && e.imp === 'rec' ? '<span class="badge-o" style="margin-left:5px">해당자</span>' : ''}
                     ${urgent ? `<span class="badge-r" style="margin-left:5px"><span class="icon icon-sm" translate="no" aria-hidden="true">schedule</span> 마감임박</span>` : ''}
                   </div>
-                  ${e.hospital ? `<div class="dp-ev-note"><span class="icon icon-sm" translate="no" aria-hidden="true">local_hospital</span> ${e.hospital}</div>` : ''}
-                  ${e.note     ? `<div class="dp-ev-note"><span class="icon icon-sm" translate="no" aria-hidden="true">edit_note</span> ${e.note}</div>`     : ''}
+                  ${e.hospital ? `<div class="dp-ev-note"><span class="icon icon-sm" translate="no" aria-hidden="true">local_hospital</span> ${esc(e.hospital)}</div>` : ''}
+                  ${e.note     ? `<div class="dp-ev-note"><span class="icon icon-sm" translate="no" aria-hidden="true">edit_note</span> ${esc(e.note)}</div>`     : ''}
                   ${e.recDate && e.recDate !== e.date
                     ? `<div class="dp-ev-note" style="color:var(--pu)"><span class="icon icon-sm" translate="no" aria-hidden="true">event_available</span> 권장일: ${e.recDate}</div>` : ''}
                   ${e.recalculated

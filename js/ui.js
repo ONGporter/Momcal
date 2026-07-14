@@ -4,7 +4,7 @@
  */
 
 import { S, debounceSave, selectChild } from './state.js';
-import { ageFmt, ageD, today, icon, avatarDisplay, avatarToken } from './utils.js';
+import { ageFmt, ageD, today, icon, avatarDisplay, avatarToken, escapeHtml } from './utils.js';
 import { showModal }             from './modal.js';
 import { getAllEvs }             from './calendar.js';
 import { getTodayCategoryInfo }  from './checklist.js';
@@ -73,7 +73,7 @@ export function renderHome() {
   ps.innerHTML = S.children.map((c, i) => `
     <div class="pcard ${i == S.selC ? 'sel' : ''}" onclick="selectChild(${i});renderHome()">
       <div class="pav">${avatarDisplay(c.avatar, '1.9rem')}</div>
-      <div class="pnm">${c.name}</div>
+      <div class="pnm">${escapeHtml(c.name)}</div>
       <div class="pag">${c.stage === 'preg' ? `<span class="icon icon-sm" translate="no" aria-hidden="true">pregnant_woman</span> ${c.week}주차` : ageFmt(c.birth)}</div>
       <span class="pst ${c.stage === 'preg' ? 'st-preg' : 'st-born'}">${c.stage === 'preg' ? '임신중' : '육아중'}</span>
     </div>`
@@ -127,7 +127,7 @@ function dashAgeCard(child) {
   }
   const d = ageD(child.birth);
   const m = Math.floor(d / 30.44);
-  return dashCard('child_care', `${child.name} 오늘`, `${d}일째`, m >= 1 ? `${m}개월` : '신생아');
+  return dashCard('child_care', `${escapeHtml(child.name)} 오늘`, `${d}일째`, m >= 1 ? `${m}개월` : '신생아');
 }
 
 /** 다음 일정 */
