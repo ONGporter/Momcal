@@ -33,7 +33,7 @@ const GUIDE = join(ROOT, 'guide');
 const SITE  = 'https://momcal.app';
 /* v0.0.2: 앱 본체(index.html 최하단)와 반드시 같은 값으로 유지 — 버전을 올릴 땐 이 값과
    index.html의 .site-footer-version 텍스트를 함께 수정해야 함 (docs/PROJECT_SPEC.md 버전 관리 정책 참고) */
-const APP_VERSION = 'v0.0.60';
+const APP_VERSION = 'v0.0.61';
 
 /* 정부지원 데이터는 {preg, postpartum, parenting} 키의 배열이라 체크리스트와 형태가 달라
    가이드 페이지용 카테고리 배열로 한 번 변환해준다. */
@@ -63,6 +63,15 @@ const bornMerged = clData.born_vax.map((vaxCat, i) => {
    같은 방식으로 포함됨. 검색 인덱스(buildSearchIndex, 아래)는 이 변환 이전의 원본
    bornMerged를 그대로 쓰므로 검색 결과 배지에는 영향 없음. */
 const bornMergedForGuide = bornMerged.map(cat => {
+  const iconHtml = growthStageIconImg(cat.key, 'm', { iconRoot: `${SITE}/icons/` });
+  if (!iconHtml) return cat;
+  return { ...cat, label: cat.label.replace(/^\S+/, iconHtml) };
+});
+
+/* v0.0.61: 이유식 단계(f6~f24)도 같은 방식으로 이미지 적용 — 성별 무관이라 'm' 인자는 형식상
+   넘기는 것뿐, 실제로는 아무 영향 없음(js/utils.js GROWTH_STAGE_FILES 참고).
+   검색 인덱스는 원본 clData.food 라벨을 그대로 쓰므로 영향 없음. */
+const foodForGuide = clData.food.map(cat => {
   const iconHtml = growthStageIconImg(cat.key, 'm', { iconRoot: `${SITE}/icons/` });
   if (!iconHtml) return cat;
   return { ...cat, label: cat.label.replace(/^\S+/, iconHtml) };
@@ -468,7 +477,7 @@ const foodHtml = page({
   heroTitle: '<span class="icon icon-sm" translate="no" aria-hidden="true">restaurant</span> 이유식 단계별 시작 가이드',
   heroDesc: '6개월 쌀미음부터 24개월 유아식까지, 재료 효과와 조리 팁을 정리했어요',
   intro: '이유식은 언제 시작해야 할지, 어떤 재료부터 줘야 할지 막막하기 쉬워요. 아래는 생후 6개월 초기 이유식부터 24개월 유아식까지, 단계별로 정리한 가이드예요. 재료마다 어떤 효과가 있는지, 알레르기는 어떻게 확인해야 하는지도 함께 적어뒀어요.',
-  cats: clData.food,
+  cats: foodForGuide,
   ctaText: '이유식 진행 상황, 체크리스트로 관리해보세요',
   disclaimer: '이 페이지의 이유식·영양 정보는 일반적인 참고용 요약입니다. 아이마다 알레르기·소화 상태가 다르니, 새로운 재료를 시작할 때는 소아과 상담을 권장합니다.',
   questionFn: (it) => `${it.t}, 어떻게 하나요?`,

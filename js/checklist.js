@@ -370,10 +370,12 @@ function renderContextBanner(child) {
   }
 }
 
-/* 육아 체크 "아기→돌쟁이→어린이" 성장 단계 아이콘을 아이 성별에 맞춰 바꾸기 위한 헬퍼
- * (v0.0.22 이모지 버전 → v0.0.53 이미지로 교체) — 실제 파일 매핑은 js/utils.js의
- * growthStageIconImg()에 있음(GROWTH_STAGE_FILES). 성별 미정('u')이면 옹짐꾼님 요청대로
- * 항상 "남아" 이미지를 기본값으로 씀. */
+/* 육아 체크 카테고리 라벨 앞 아이콘을 바꿔치기하는 헬퍼(원래 "아기→돌쟁이→어린이" 성장 단계용
+ * — v0.0.22 이모지 버전 → v0.0.53 이미지로 교체 — 였는데 v0.0.61부터 이유식 단계(f6~f24)에도
+ * 재사용함, 이름은 그대로 둠) — 실제 파일 매핑은 js/utils.js의 growthStageIconImg()에 있음
+ * (GROWTH_STAGE_FILES). m18~m36처럼 진짜 성별이 있는 단계만 gender를 실제로 구분해서 쓰고,
+ * m0~m12·f6~f24처럼 성별이 의미 없는 단계는 boy/girl에 같은 파일이 등록돼 있어 그대로 재사용
+ * 가능함. 성별 미정('u')이면 옹짐꾼님 요청대로 항상 "남아" 이미지를 기본값으로 씀. */
 function applyGrowthStageGender(cats, gender) {
   return cats.map(c => {
     const iconHtml = growthStageIconImg(c.key, gender);
@@ -397,7 +399,7 @@ export function getCats() {
   // v0.0.30: 육아 체크 탭이 예방접종/발달/이유식/정부지원으로 늘어남
   if (tab.key === 'vax')  return applyGrowthStageGender(clData.born_vax, child.gender);
   if (tab.key === 'dev')  return applyGrowthStageGender(clData.born_dev, child.gender);
-  if (tab.key === 'food') return clData.food;
+  if (tab.key === 'food') return applyGrowthStageGender(clData.food, child.gender);
   // v0.0.40: 준비물형(플랫) 팩·커스텀 체크리스트 — 월령 인덱싱 없이 카테고리 1개짜리로 취급
   // (calcScore/getCatItems/renderClMain은 원래 {key,label,items} 모양이면 뭐든 동일하게 처리함)
   if (tab.kind === 'flat') return [{ key: tab.key, label: tab.label, items: tab.items }];

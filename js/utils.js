@@ -106,10 +106,12 @@ export function avatarDisplay(avatarValue, size) {
 }
 
 /**
- * 육아 체크 성장 단계 아이콘 파일명 — 월령 카테고리별(m0~m36).
- * m0~m12는 성별 구분 없는 식물 성장 비유(새싹→나무, boy/girl에 같은 파일)라
- * "꽃·자연" 스티커와 같은 이미지 세트를 재사용함(dir: 'stickers/flower-nature').
+ * 육아 체크 성장 단계 아이콘 파일명 — 월령 카테고리별(m0~m36) + 이유식 단계별(f6~f24).
+ * m0~m12, f6~f24는 성별 구분 없는 이미지(boy/girl에 같은 파일)라 이름은 "성장 단계"지만
+ * 실제로는 "카테고리 아이콘 스왑"에 더 가까움 — applyGrowthStageGender()가 두 종류 모두 처리함.
+ * m0~m12는 "꽃·자연" 스티커 이미지 세트를 재사용(dir: 'stickers/flower-nature').
  * m18~m36은 아이 프로필과 같은 성별 이미지 세트(dir: 'avatars').
+ * f6~f24(이유식 단계)는 전용 이미지 세트(dir: 'mealstage').
  */
 const GROWTH_STAGE_FILES = {
   m0:  { boy: 'sprout.png',       girl: 'sprout.png',       dir: 'stickers/flower-nature' },
@@ -121,11 +123,16 @@ const GROWTH_STAGE_FILES = {
   m18: { boy: 'boy.png',          girl: 'girl.png',          dir: 'avatars' },
   m24: { boy: 'boy_dol_baby.png', girl: 'girl_dol_baby.png', dir: 'avatars' },
   m36: { boy: 'boy_child.png',    girl: 'girl_child.png',    dir: 'avatars' },
+  f6:  { boy: 'puree_bowl.png',        girl: 'puree_bowl.png',        dir: 'mealstage' },
+  f8:  { boy: 'porridge_bowl.png',     girl: 'porridge_bowl.png',     dir: 'mealstage' },
+  f10: { boy: 'soup_pot.png',          girl: 'soup_pot.png',          dir: 'mealstage' },
+  f12: { boy: 'divided_plate.png',     girl: 'divided_plate.png',     dir: 'mealstage' },
+  f24: { boy: 'toddler_meal_plate.png', girl: 'toddler_meal_plate.png', dir: 'mealstage' },
 };
 
 /**
- * 성장 단계 아이콘 <img> HTML 반환. iconRoot를 다르게 넘기면 앱(상대경로)·guide 정적 페이지
- * (절대경로) 양쪽에서 재사용 가능(scripts/build-guide.mjs 참고). 실제 파일 폴더는 단계마다
+ * 성장/이유식 단계 아이콘 <img> HTML 반환. iconRoot를 다르게 넘기면 앱(상대경로)·guide 정적
+ * 페이지(절대경로) 양쪽에서 재사용 가능(scripts/build-guide.mjs 참고). 실제 파일 폴더는 단계마다
  * 다를 수 있어(GROWTH_STAGE_FILES의 dir) iconRoot는 항상 './icons/' 같은 공통 루트만 넘기면 됨.
  */
 export function growthStageIconImg(stageKey, gender, opts = {}) {

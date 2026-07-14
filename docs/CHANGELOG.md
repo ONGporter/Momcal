@@ -8,6 +8,7 @@
 
 | 버전 | 주요 기능 |
 |:---:|------|
+| v0.0.61 | 체크리스트 "이유식" 탭(6~24개월 5단계) 이모지를 이미지로 교체 — 앱·육아정보 페이지 양쪽 반영 |
 | v0.0.60 | 캘린더 스티커 "꽃·자연" 이미지 전면 교체(기존 세트 삭제) + 체크리스트 성장 단계(m0~m12) 아이콘을 새싹→나무 이미지로 교체 |
 | v0.0.59 | 캘린더 스티커 "하트"·"기념"·"건강" 카테고리를 이미지로 교체 — 스티커 8개 카테고리 전체 이미지화 완료 |
 | v0.0.58 | 캘린더 스티커 "아기" 카테고리를 기존 이모지 16종 → 자체 제작 이미지 21종으로 교체 |
@@ -103,6 +104,15 @@
 | 29 | 폰트 전면 교체(Paperlogy+Pretendard), 캘린더 타임존 버그 수정, 생후 일수 계산 변경, 성장 예측·알림 기능 신규 |
 
 ---
+
+## [v0.0.61] 2026-07-14 — 체크리스트 "이유식" 단계 이모지를 이미지로 교체
+
+- 체크리스트 "이유식" 탭의 5단계(6개월 초기1단계 🥣, 8개월 초기2단계 🍲, 10개월 중기 🍱, 12개월 완료기 🍚, 24개월 유아식 🥘) 이모지를 옹짐꾼님이 제작한 이미지로 교체
+  - m0~m36 성장 단계에 쓰던 `growthStageIconImg()`/`applyGrowthStageGender()`를 그대로 재사용 — `js/utils.js`의 `GROWTH_STAGE_FILES`에 `f6`~`f24` 항목만 추가(성별 무관이라 `boy`/`girl`에 같은 파일 등록, `dir: 'mealstage'`)
+  - `js/checklist.js`의 `getCats()`가 이유식 탭에서 `clData.food`를 그냥 반환하던 것을 `applyGrowthStageGender(clData.food, child.gender)`로 감싸서 다른 성장 단계와 동일하게 처리
+  - 육아정보(`guide/food.html`) 페이지도 동일 이미지로 반영 — `scripts/build-guide.mjs`에 `foodForGuide` 파생 배열 추가(패턴은 `bornMergedForGuide`와 동일), 검색 인덱스는 원본 `clData.food` 라벨을 그대로 써서 영향 없음
+- 신규 정적 파일: `icons/mealstage/puree_bowl.png`, `porridge_bowl.png`, `soup_pot.png`, `divided_plate.png`, `toddler_meal_plate.png`
+- `sw.js` `CACHE_NAME` 상향(v66)
 
 ## [v0.0.60] 2026-07-14 — "꽃·자연" 스티커 전면 교체 + 체크리스트 성장 단계(m0~m12) 이미지화
 

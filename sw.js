@@ -99,7 +99,12 @@
 // growthStageIconImg() 재사용, GROWTH_STAGE_FILES에 폴더별 dir 필드 추가해 avatars/flower-nature
 // 두 폴더를 함께 지원하도록 구조 확장. js/utils.js, js/calendar.js, scripts/build-guide.mjs 변경
 // — 캐시 버전 상향
-const CACHE_NAME = 'momcal-shell-v65';
+// v0.0.61: 체크리스트 "이유식" 탭(6/8/10/12/24개월 — 초기1단계/초기2단계/중기/완료기/유아식)
+// 이모지를 이미지로 교체 — m0~m36 성장 단계와 같은 growthStageIconImg()/applyGrowthStageGender()
+// 재사용(GROWTH_STAGE_FILES에 f6~f24 항목 추가), 성별 무관이라 boy/girl에 같은 파일 등록.
+// 앱(js/checklist.js)·육아정보 food.html(scripts/build-guide.mjs) 양쪽 다 반영 —
+// icons/mealstage/*.png 신규 정적 파일. 캐시 버전 상향
+const CACHE_NAME = 'momcal-shell-v66';
 
 const APP_SHELL = [
   './',
