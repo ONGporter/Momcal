@@ -33,7 +33,7 @@ const GUIDE = join(ROOT, 'guide');
 const SITE  = 'https://momcal.app';
 /* v0.0.2: 앱 본체(index.html 최하단)와 반드시 같은 값으로 유지 — 버전을 올릴 땐 이 값과
    index.html의 .site-footer-version 텍스트를 함께 수정해야 함 (docs/PROJECT_SPEC.md 버전 관리 정책 참고) */
-const APP_VERSION = 'v0.0.58';
+const APP_VERSION = 'v0.0.60';
 
 /* 정부지원 데이터는 {preg, postpartum, parenting} 키의 배열이라 체크리스트와 형태가 달라
    가이드 페이지용 카테고리 배열로 한 번 변환해준다. */
@@ -59,10 +59,11 @@ const bornMerged = clData.born_vax.map((vaxCat, i) => {
 /* v0.0.53: 육아정보 페이지는 특정 아이가 없어(성별 모름) m18/m24/m36 카테고리 라벨의
    이모지(👶/🧒/🧑)를 옹짐꾼님 제작 이미지로 바꾸되 항상 "남아" 쪽을 기본값으로 씀
    (js/checklist.js의 applyGrowthStageGender()가 앱 안에서 아이 성별에 맞게 바꿔주는 것과
-   동일한 이미지 세트, 절대경로만 다름). 검색 인덱스(buildSearchIndex, 아래)는 이 변환 이전의
-   원본 bornMerged를 그대로 쓰므로 검색 결과 배지에는 영향 없음. */
+   동일한 이미지 세트, 절대경로만 다름). v0.0.60부터 m0~m12(식물 성장 비유, 성별 무관)도
+   같은 방식으로 포함됨. 검색 인덱스(buildSearchIndex, 아래)는 이 변환 이전의 원본
+   bornMerged를 그대로 쓰므로 검색 결과 배지에는 영향 없음. */
 const bornMergedForGuide = bornMerged.map(cat => {
-  const iconHtml = growthStageIconImg(cat.key, 'm', { base: `${SITE}/icons/avatars/` });
+  const iconHtml = growthStageIconImg(cat.key, 'm', { iconRoot: `${SITE}/icons/` });
   if (!iconHtml) return cat;
   return { ...cat, label: cat.label.replace(/^\S+/, iconHtml) };
 });

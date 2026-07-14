@@ -86,7 +86,20 @@
 // 폴더 전체(momcal-action/flower-nature/babyfood/avatars)와 대조해 충돌 없음을 확인 —
 // 폴더가 달라 겹쳐도 실제로는 무해하지만(경로로 구분됨) 미리 점검함. js/calendar.js 변경 +
 // icons/stickers/baby-items/*.png 신규 정적 파일 — 캐시 버전 상향
-const CACHE_NAME = 'momcal-shell-v63';
+// v0.0.59: 캘린더 스티커 "하트"(28종)·"기념"(24종)·"건강"(24종) 카테고리를 기존 이모지에서
+// 자체 제작 이미지로 교체 — 이번으로 스티커 전체 8개 카테고리가 모두 이미지 기반으로 전환
+// 완료됨(momcal-action/flower-nature/babyfood/baby-items/heart/memorial/health).
+// 파일명은 기존 폴더 전체와 대조해 충돌 없음 확인. js/calendar.js 변경 +
+// icons/stickers/heart|memorial|health/*.png 신규 정적 파일 — 캐시 버전 상향
+// v0.0.60: (1) 캘린더 스티커 "꽃·자연" 카테고리를 옹짐꾼님이 새로 주신 이미지 28종으로 전면
+// 교체(기존 25종 icons/stickers/flower-nature/*.png는 삭제) — 예전 flower 토큰이 붙어있던
+// 날짜는 이제 매핑이 없어서 원본 토큰 문자열이 그대로 보일 수 있음(감수하기로 함, 사용자가
+// 명시적으로 기존 세트 삭제를 요청). (2) 체크리스트 성장 단계 0~1/2~3/4~5/6~8/9~11/12~17개월
+// (m0~m12) 아이콘을 새싹/클로버/나뭇잎/나뭇가지/화분/나무 이미지로 교체 — m18~m36과 같은
+// growthStageIconImg() 재사용, GROWTH_STAGE_FILES에 폴더별 dir 필드 추가해 avatars/flower-nature
+// 두 폴더를 함께 지원하도록 구조 확장. js/utils.js, js/calendar.js, scripts/build-guide.mjs 변경
+// — 캐시 버전 상향
+const CACHE_NAME = 'momcal-shell-v65';
 
 const APP_SHELL = [
   './',

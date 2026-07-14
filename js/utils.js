@@ -106,23 +106,32 @@ export function avatarDisplay(avatarValue, size) {
 }
 
 /**
- * 육아 체크 "아기→돌쟁이→어린이" 성장 단계별(월령 카테고리 m18/m24/m36) 아이콘 파일명.
- * m18(18~23개월)엔 아이 프로필과 같은 이미지(boy.png/girl.png)를 그대로 씀.
+ * 육아 체크 성장 단계 아이콘 파일명 — 월령 카테고리별(m0~m36).
+ * m0~m12는 성별 구분 없는 식물 성장 비유(새싹→나무, boy/girl에 같은 파일)라
+ * "꽃·자연" 스티커와 같은 이미지 세트를 재사용함(dir: 'stickers/flower-nature').
+ * m18~m36은 아이 프로필과 같은 성별 이미지 세트(dir: 'avatars').
  */
 const GROWTH_STAGE_FILES = {
-  m18: { boy: 'boy.png',          girl: 'girl.png' },
-  m24: { boy: 'boy_dol_baby.png', girl: 'girl_dol_baby.png' },
-  m36: { boy: 'boy_child.png',    girl: 'girl_child.png' },
+  m0:  { boy: 'sprout.png',       girl: 'sprout.png',       dir: 'stickers/flower-nature' },
+  m2:  { boy: 'clover.png',       girl: 'clover.png',       dir: 'stickers/flower-nature' },
+  m4:  { boy: 'leaf.png',         girl: 'leaf.png',         dir: 'stickers/flower-nature' },
+  m6:  { boy: 'branch.png',       girl: 'branch.png',       dir: 'stickers/flower-nature' },
+  m9:  { boy: 'potted_plant.png', girl: 'potted_plant.png', dir: 'stickers/flower-nature' },
+  m12: { boy: 'tree.png',         girl: 'tree.png',         dir: 'stickers/flower-nature' },
+  m18: { boy: 'boy.png',          girl: 'girl.png',          dir: 'avatars' },
+  m24: { boy: 'boy_dol_baby.png', girl: 'girl_dol_baby.png', dir: 'avatars' },
+  m36: { boy: 'boy_child.png',    girl: 'girl_child.png',    dir: 'avatars' },
 };
 
 /**
- * 성장 단계 아이콘 <img> HTML 반환. base를 다르게 넘기면 앱(상대경로)·guide 정적 페이지(절대경로)
- * 양쪽에서 재사용 가능(scripts/build-guide.mjs 참고).
+ * 성장 단계 아이콘 <img> HTML 반환. iconRoot를 다르게 넘기면 앱(상대경로)·guide 정적 페이지
+ * (절대경로) 양쪽에서 재사용 가능(scripts/build-guide.mjs 참고). 실제 파일 폴더는 단계마다
+ * 다를 수 있어(GROWTH_STAGE_FILES의 dir) iconRoot는 항상 './icons/' 같은 공통 루트만 넘기면 됨.
  */
 export function growthStageIconImg(stageKey, gender, opts = {}) {
   const files = GROWTH_STAGE_FILES[stageKey];
   if (!files) return '';
-  const { base = AVATAR_ICON_BASE, size = '1.1em' } = opts;
+  const { iconRoot = './icons/', size = '1.1em' } = opts;
   const file = gender === 'f' ? files.girl : files.boy;
-  return `<img class="avatar-img" src="${base}${file}" alt="" style="width:${size};height:${size};object-fit:contain;vertical-align:middle" loading="lazy">`;
+  return `<img class="avatar-img" src="${iconRoot}${files.dir}/${file}" alt="" style="width:${size};height:${size};object-fit:contain;vertical-align:middle" loading="lazy">`;
 }
