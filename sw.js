@@ -104,7 +104,11 @@
 // 재사용(GROWTH_STAGE_FILES에 f6~f24 항목 추가), 성별 무관이라 boy/girl에 같은 파일 등록.
 // 앱(js/checklist.js)·육아정보 food.html(scripts/build-guide.mjs) 양쪽 다 반영 —
 // icons/mealstage/*.png 신규 정적 파일. 캐시 버전 상향
-const CACHE_NAME = 'momcal-shell-v66';
+// v0.1.0: index.html/css/calendar.css/js/calendar.js 수정(캘린더 하단 색상 범례 제거,
+// "일정 색상" 스와치에 정부지원 추가) — 캐시 버전 상향
+// v0.1.1: data/checklist-data.js 수정(예방접종 "9~11개월" 카테고리 유일 항목을 선택→필수로
+// 변경 — 필수 항목이 없어서 항상 "Perfect 100%"로 보이던 버그 수정) — 캐시 버전 상향
+const CACHE_NAME = 'momcal-shell-v68';
 
 const APP_SHELL = [
   './',

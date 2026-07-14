@@ -288,7 +288,9 @@ html[data-cal-fontsize="xl"] .ev-more { font-size: 11px; }
   color: var(--pk);
 }
 
-/* ── Sprint 21: 캘린더 하단 색상 범례 (탭하면 색상 변경) ── */
+/* ── Sprint 21: 캘린더 하단 색상 범례 (탭하면 색상 변경) ──
+   v0.1.0: index.html에서 #calLegend 요소를 제거해서 현재는 실제로 쓰이지 않음(js/calendar.js
+   renderCalLegend() 주석 참고) — 요소를 되살리면 바로 다시 적용되므로 스타일은 남겨둠 */
 .cal-legend {
   display: flex; flex-wrap: wrap; gap: 8px 14px;
   margin-top: 14px; padding: 14px 16px;

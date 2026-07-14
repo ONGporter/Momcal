@@ -378,8 +378,11 @@
     <button class="btn bpk" style="margin-top:6px" onclick="addCustomEv()">일정 추가</button>
   </div>
 
-  <!-- 범례 (Sprint 21: 색상 탭해서 직접 바꿀 수 있음) -->
-  <div id="calLegend" class="cal-legend"></div>
+  <!-- v0.1.0: 하단 색상 범례(필수/선택/이유식/접종/정부지원) 제거 — "일정 색상" 스와치에
+       이미 종류별 색이 보이니 중복이라는 옹짐꾼님 피드백. 관련 렌더 함수(renderCalLegend 등,
+       js/calendar.js)와 CSS(.cal-legend 등, css/calendar.css)는 안전하게 남겨둠(요소가 없으면
+       조용히 아무것도 안 함) — 되살릴 땐 이 자리에 `<div id="calLegend" class="cal-legend"></div>`만
+       다시 추가하면 됨 -->
 </div>
 
 <!-- ════════════════════════════════════
@@ -451,7 +454,7 @@
     <a href="./terms.html"><span class="icon icon-sm" translate="no" aria-hidden="true">description</span> 이용약관</a>
     <a href="./contact.html"><span class="icon icon-sm" translate="no" aria-hidden="true">mail</span> 문의</a>
   </div>
-  <div class="site-footer-version">맘캘 MomCal v0.0.61</div>
+  <div class="site-footer-version">맘캘 MomCal v0.1.1</div>
 </footer>
 
 <!-- ════════════════════════════════════

@@ -137,8 +137,11 @@ window.selectEvColorSwatch = selectEvColorSwatch;
  * (getEvColor()를 그대로 써서, 범례에서 색을 바꿔둔 경우에도 항상 최신 색으로 표시됨)
  * v0.0.33: 다만 "내 일정"은 원래 일정마다 다른 색으로 구분해서 쓰던 용도라, "내 일정"을
  * 고르면 아래에 개별 색상 선택지가 추가로 나타남(다른 종류 색과 안 겹치는 팔레트만 제공).
+ * v0.1.0: "정부지원"(gov) 추가 — 하단 범례(renderCalLegend)를 없애면서 종류별 색을 확인·선택할
+ * 수 있는 자리가 이 스와치뿐이라, 기존에 없던 gov도 여기 포함시킴. 이유식(food)은 이벤트로
+ * 직접 추가하는 종류가 아니라(스티커로만 기록) 그대로 제외.
  */
-const ADDABLE_EV_TYPES = ['custom', 'req', 'rec', 'vax'];
+const ADDABLE_EV_TYPES = ['custom', 'req', 'rec', 'vax', 'gov'];
 
 function evTypeSwatchesHtml(selectedType, selectedCustomColor) {
   const sel = selectedType || 'custom';
@@ -212,6 +215,12 @@ export function resetEvColor(cat) {
  * 캘린더 하단 색상 범례 렌더 — 각 항목을 탭하면 색상을 직접 고를 수 있음
  * v0.0.16: "내 일정"(custom)은 일정을 추가할 때 직접 색을 고르는 방식으로 바뀌어서
  * 범례에서는 제외함(카테고리 공통 색 하나로 묶어두면 여러 개인 일정을 구분하기 어려웠음)
+ * v0.1.0: index.html에서 #calLegend 요소 자체를 제거함(옹짐꾼님 요청 — "일정 색상" 스와치와
+ * 내용이 중복돼 보인다는 피드백). 이 함수는 el이 없으면 그냥 조용히 리턴하므로 에러 없이
+ * 남겨둠 — 요소를 되살리면 그대로 다시 작동함. 단, 이 함수가 그동안 "필수/선택/이유식/접종/
+ * 정부지원" 공통 색을 사용자가 직접 바꾸는 유일한 진입점이었으므로, 되살릴 계획이 없다면
+ * 그 색상 커스터마이징 기능 자체가 없어졌다는 점을 인지할 것(정부지원은 v0.1.0에서 evTypeSwatchesHtml에
+ * 추가됐지만, 이유식은 여전히 색을 바꿀 UI가 없음).
  */
 export function renderCalLegend() {
   const el = document.getElementById('calLegend');
