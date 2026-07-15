@@ -11,8 +11,14 @@
  *  4) 만든 체크리스트의 이름·항목을 나중에 통째로 편집 (v0.0.41)
  *
  * v0.0.41: 임산부용(임신 체크/출산 준비물 + preg 팩/커스텀)과 육아용(예방접종/발달/이유식
- * + born 팩/커스텀)을 화면에서 구분해서 보여줌 — 정부지원만 두 단계 공통이라 별도 묶음.
+ * + born 팩/커스텀)을 화면에서 구분해서 보여줌.
  * 실제 표시 여부(hiddenTabs)·연동 설정은 이 구분과 무관하게 동일한 저장 구조를 씀.
+ *
+ * v0.2.5: 정부지원(gov)은 원래 "공통" 그룹으로 따로 묶여 있었는데(단일 탭이라 임산부용/
+ * 육아용 구분이 없어서), 옹짐꾼님 피드백으로 "공통" 그룹 자체를 없애고 임산부용·육아용
+ * 화면에 각각 정부지원 행을 하나씩 넣기로 함 — 두 행 모두 실제로는 같은 탭(key='gov')의
+ * 표시/숨김 상태를 공유해서 보여주고, 편집(직접 추가) 버튼만 단계별로 다른 목록(gov_preg/
+ * gov_born pseudo-key)을 열도록 rowHtml()의 editKey로 분리함(renderChecklistSettings() 참고).
  *
  * 탭 목록·표시 로직 자체(getVisibleTabDefs 등)는 js/checklist.js에 있고, 이 파일은
  * "그 설정값을 사용자가 바꾸는 UI"만 담당함(순환 참조 방지를 위해 checklist.js를
@@ -37,9 +43,6 @@ const BORN_ROWS = [
   { key: 'vax',  icon: 'vaccines',   label: '예방접종', syncable: true },
   { key: 'dev',  icon: 'child_care', label: '발달',     syncable: true },
   { key: 'food', icon: 'restaurant', label: '이유식' },
-];
-const COMMON_ROWS = [
-  { key: 'gov', icon: 'account_balance', label: '정부지원' },
 ];
 
 /** 설정 화면의 row key → 실제 항목 배열에서 쓰는 카테고리 key로 변환.
@@ -92,7 +95,10 @@ export function toggleClCalendarSync(key) {
   }
 }
 
-function rowHtml({ key, icon, label, syncable, deletable, editable, hideToggle }) {
+/** v0.2.5: editKey — 편집(연필) 버튼이 표시/숨김 토글과 다른 key로 라우팅해야 하는 경우
+ *  (정부지원처럼 "표시 여부"는 실제 탭 key(gov)로, "직접 추가 편집"은 별도 pseudo-key
+ *  (gov_preg/gov_born)로 openEditChecklistModal()에 분기해야 할 때 씀). 안 주면 key와 동일. */
+function rowHtml({ key, icon, label, syncable, deletable, editable, editKey, hideToggle }) {
   const hidden = isHidden(key);
   return `
     <div class="cl-settings-row">
@@ -104,7 +110,7 @@ function rowHtml({ key, icon, label, syncable, deletable, editable, hideToggle }
             ${isSyncOff(key) ? '캘린더 연동 꺼짐' : '캘린더 연동 켜짐'}
           </button>` : ''}
         ${editable ? `
-          <button type="button" class="ci-expand-btn" aria-label="편집" onclick="openEditChecklistModal('${key}')">
+          <button type="button" class="ci-expand-btn" aria-label="편집" onclick="openEditChecklistModal('${editKey || key}')">
             <span class="ci-expand-arrow"><span class="icon icon-sm" translate="no" aria-hidden="true">edit</span></span>
           </button>` : ''}
         ${deletable ? `
@@ -129,15 +135,19 @@ export function renderChecklistSettings() {
   const customBornRows = (S.customChecklists || []).filter(c => (c.stage || 'born') === 'born')
     .map(c => ({ key: c.key, icon: c.icon || 'checklist', label: c.label, deletable: true, editable: true }));
 
-  // v0.2.4: 정부지원은 기존처럼 "공통" 그룹에서 탭 표시/숨김을 관리하고(단일 탭이라 임산부용/
-  // 육아용 구분이 없음), 추가로 임산부용·육아용 각 그룹 맨 아래에 "직접 추가" 전용 행을
-  // 둠(hideToggle: 표시/숨김 버튼은 뜻이 없으므로 안 보이게). 몇 개 추가했는지 라벨에 표시.
+  // v0.2.5: 정부지원은 원래 "표시/숨김"(공통 그룹, key='gov' 하나뿐)과 "직접 추가 편집"
+  // (임산부용/육아용 각각, hideToggle:true라 편집 버튼만 있던 행)이 화면에 총 3줄로 따로
+  // 있었는데, 옹짐꾼님 요청으로 "공통" 그룹 자체를 없애고 임산부용·육아용에 각각 정부지원
+  // 행 하나씩만 남기기로 함 — 표시/숨김 토글은 실제 탭 key(gov, 단일 탭이라 두 행이 결국
+  // 같은 hiddenTabs 상태를 공유·표시함)를, 편집 버튼은 이전과 동일하게 stage별 pseudo-key
+  // (gov_preg/gov_born)를 쓰도록 rowHtml()의 editKey로 분리함(openEditChecklistModal()의
+  // 기존 분기 로직은 그대로 재사용).
   const govPregCount = (S.customGovItems || []).filter(it => it.stage === 'preg').length;
   const govBornCount = (S.customGovItems || []).filter(it => it.stage === 'born').length;
-  const govPregRow = { key: 'gov_preg', icon: 'account_balance', editable: true, hideToggle: true,
-    label: `정부지원 항목 직접 추가${govPregCount ? ` (${govPregCount}개 추가함)` : ''}` };
-  const govBornRow = { key: 'gov_born', icon: 'account_balance', editable: true, hideToggle: true,
-    label: `정부지원 항목 직접 추가${govBornCount ? ` (${govBornCount}개 추가함)` : ''}` };
+  const govPregRow = { key: 'gov', icon: 'account_balance', editable: true, editKey: 'gov_preg',
+    label: `정부지원${govPregCount ? ` (직접 추가 ${govPregCount}개)` : ''}` };
+  const govBornRow = { key: 'gov', icon: 'account_balance', editable: true, editKey: 'gov_born',
+    label: `정부지원${govBornCount ? ` (직접 추가 ${govBornCount}개)` : ''}` };
 
   wrap.innerHTML = `
     <div class="cl-settings-group-label"><span class="icon icon-sm" translate="no" aria-hidden="true">pregnant_woman</span> 임산부용</div>
@@ -151,9 +161,6 @@ export function renderChecklistSettings() {
     ${packBornRows.map(rowHtml).join('')}
     ${customBornRows.length ? customBornRows.map(rowHtml).join('') : ''}
     ${rowHtml(govBornRow)}
-
-    <div class="cl-settings-group-label">공통</div>
-    ${COMMON_ROWS.map(rowHtml).join('')}
 
     <button type="button" class="btn bmn" style="margin-top:14px" onclick="openCreateChecklistModal()">＋ 새 체크리스트 만들기</button>
   `;
@@ -488,7 +495,14 @@ export function deleteCustomGovItem(id) {
 
   debounceSave();
   renderChecklistSettings();
-  if (item) openGovItemsModal(item.stage);
+  // v0.2.5: 이 삭제 버튼은 두 곳에서 쓰임 — (1) 설정의 "정부지원 항목 직접 추가" 관리 모달
+  // 안 목록, (2) 체크리스트 → 정부지원 탭의 항목 목록(모달 없이 바로 삭제). (2)에서 눌렀을 때도
+  // 무조건 openGovItemsModal()을 다시 열어버려서, 추가 버튼을 누르지 않았는데도 "항목 추가"
+  // 팝업이 뜨는 버그였음(옹짐꾼님 제보) — 그 모달이 실제로 열려있을 때(#govItemsList가 DOM에
+  // 있을 때)만 새로고침하고, 아닐 땐 모달을 열지 않음.
+  if (item && document.getElementById('govItemsList')) {
+    openGovItemsModal(item.stage);
+  }
   window.renderChecklist?.();
   if (document.getElementById('pg-calendar')?.classList.contains('on')) window.renderCal?.();
 }

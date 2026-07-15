@@ -33,7 +33,7 @@ const GUIDE = join(ROOT, 'guide');
 const SITE  = 'https://momcal.app';
 /* v0.0.2: 앱 본체(index.html 최하단)와 반드시 같은 값으로 유지 — 버전을 올릴 땐 이 값과
    index.html의 .site-footer-version 텍스트를 함께 수정해야 함 (docs/PROJECT_SPEC.md 버전 관리 정책 참고) */
-const APP_VERSION = 'v0.2.4';
+const APP_VERSION = 'v0.2.5';
 
 /* 정부지원 데이터는 {preg, postpartum, parenting} 키의 배열이라 체크리스트와 형태가 달라
    가이드 페이지용 카테고리 배열로 한 번 변환해준다. */
@@ -593,6 +593,15 @@ function hubSearchBox() {
 /* ── 5. 허브 페이지 ── */
 function countItems(cats) { return cats.reduce((sum, c) => sum + c.items.length, 0); }
 
+/* v0.2.5: 허브 페이지의 "공통" 그룹(정부지원금 카드 하나만 있던 자리)을 없애고, 앱 설정
+   화면과 똑같이 임산부용/육아용에 정부지원 카드를 각각 넣기로 함(옹짐꾼님 요청). 실제
+   government-support.html 파일은 하나로 유지하고(외부 링크·SEO 깨질 위험 회피), govCats의
+   키(govSupportSchedule의 preg/postpartum/parenting, renderSection이 그대로 id로 씀)를
+   기준으로 임산부용은 #preg 구간만, 육아용은 #postpartum+#parenting 구간을 가리키는 앵커
+   링크로 나눠서 연결한다. */
+const govCatsPreg = govCats.filter(c => c.key === 'preg');
+const govCatsBorn = govCats.filter(c => c.key !== 'preg');
+
 const hubHtml = `<!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -626,6 +635,11 @@ ${header()}
       <h2>임신 이벤트 준비</h2>
       <p>태명 정하기, 태교여행 (${countItems(packCatsPreg)}개 항목)</p>
     </a>
+    <a class="g-cat-card" href="./government-support.html#preg">
+      <div class="ico"><span class="icon icon-lg" translate="no" aria-hidden="true">account_balance</span></div>
+      <h2>정부지원금 가이드</h2>
+      <p>임신 중 지원 제도 (${countItems(govCatsPreg)}개 항목)</p>
+    </a>
   </div>
 
   <div class="g-group-label"><span class="icon icon-sm" translate="no" aria-hidden="true">child_care</span> 육아용</div>
@@ -645,14 +659,10 @@ ${header()}
       <h2>육아 이벤트 준비</h2>
       <p>외출 준비물·100일·돌잔치·돌사진 (${countItems(packCatsBorn)}개 항목)</p>
     </a>
-  </div>
-
-  <div class="g-group-label"><span class="icon icon-sm" translate="no" aria-hidden="true">account_balance</span> 공통</div>
-  <div class="g-card-grid">
-    <a class="g-cat-card" href="./government-support.html">
+    <a class="g-cat-card" href="./government-support.html#postpartum">
       <div class="ico"><span class="icon icon-lg" translate="no" aria-hidden="true">account_balance</span></div>
       <h2>정부지원금 가이드</h2>
-      <p>임신~육아 시기별 지원 제도 (${countItems(govCats)}개 항목)</p>
+      <p>출산~육아 시기별 지원 제도 (${countItems(govCatsBorn)}개 항목)</p>
     </a>
   </div>
   ${ctaBanner('이 모든 정보, 우리 아이 일정에 맞춰 자동으로 관리해보세요')}
