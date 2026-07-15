@@ -72,6 +72,22 @@ export function escapeHtml(str) {
 }
 
 /**
+ * v0.2.4: 사용자가 직접 입력하는 링크(정부지원 커스텀 항목의 "신청 링크" 등)를 `href`에
+ * 넣기 전에 거치는 검증 — `javascript:`처럼 클릭 시 스크립트를 실행하는 위험한 스킴을
+ * 걸러내고 http/https만 허용함. escapeHtml()과는 별개로 이것도 항상 함께 써야 함(escapeHtml은
+ * 따옴표·꺾쇠 이스케이프만 하지 스킴 자체를 막지는 않음). 유효하지 않으면 빈 문자열 반환.
+ */
+export function sanitizeUrl(url) {
+  if (!url) return '';
+  try {
+    const u = new URL(String(url).trim(), window.location.href);
+    return (u.protocol === 'http:' || u.protocol === 'https:') ? u.href : '';
+  } catch {
+    return '';
+  }
+}
+
+/**
  * v0.0.20: 아이콘 렌더링 공용 헬퍼 — Material Symbols 아이콘 하나를 만들 때 항상 이 함수를 씀.
  * "아이콘 색은 훅 하나로 통일" 원칙 — 마크업·클래스 이름이 여기 한 곳에만 있어서,
  * 나중에 아이콘 라이브러리를 바꾸거나 스타일을 조정할 때 이 함수만 고치면 됨.

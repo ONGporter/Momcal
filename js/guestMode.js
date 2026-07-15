@@ -62,6 +62,14 @@ export function saveGuestData() {
       evColors:      S.evColors || {},
       theme:         S.theme,
       selC:          S.selC,
+      // v0.2.4: 아래 세 필드가 게스트 저장 목록에서 빠져있던 걸 발견 — 체크리스트 커스터마이징
+      // (v0.0.40)이 로그인 계정(js/state.js의 saveState)에만 저장되고, 게스트 모드(로그인 없이
+      // localStorage 저장)에서는 만든 커스텀 체크리스트·준비물 팩에 추가한 항목·탭 표시 설정이
+      // 새로고침하면 사라지는 버그였음(로그인 계정에선 정상 동작해서 그동안 못 봤을 가능성이 큼)
+      customClItems:    S.customClItems    || {},
+      customChecklists: S.customChecklists || [],
+      clSettings:       S.clSettings       || { hiddenTabs: [], calendarSync: {} },
+      customGovItems:   S.customGovItems   || [],
       updatedAt:     Date.now(),
     }));
     flashGuestSave();

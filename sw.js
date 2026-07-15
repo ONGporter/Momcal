@@ -115,7 +115,10 @@
 // 렌더링 시점마다 escapeHtml(cat.label)을 씌우는 바람에 그 아이콘까지 글자 그대로 깨져
 // 보이던 문제 — 이스케이프 위치를 렌더링 시점 3곳에서 getCats()의 커스텀 체크리스트
 // 분기 한 곳으로 옮겨서 해결(js/checklist.js) — 캐시 버전 상향
-const CACHE_NAME = 'momcal-shell-v72';
+// v0.2.4: js/checklist.js·js/checklistSettings.js·js/calendar.js·js/govSupport.js·js/state.js·
+// js/guestMode.js·js/utils.js 수정 — "출산 준비물" 항목 직접 추가 지원, 정부지원 커스텀 항목
+// 추가 기능 신규, 캘린더 그리드 이벤트 제목 이스케이프 누락 수정 — 캐시 버전 상향
+const CACHE_NAME = 'momcal-shell-v73';
 
 const APP_SHELL = [
   './',

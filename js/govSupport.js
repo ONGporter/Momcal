@@ -9,7 +9,7 @@
 
 import { S }                      from './state.js';
 import { getAllEvs, openEvModal, isGovDeadlineSoon } from './calendar.js';
-import { daysUntil, stripLeadingEmoji, icon } from './utils.js';
+import { daysUntil, stripLeadingEmoji, icon, escapeHtml } from './utils.js';
 import { GOV_INFO_BASIS }         from '../data/government-support.js';
 import { guideSearchBoxHtml }     from './checklist.js';
 
@@ -34,12 +34,19 @@ export function renderGovChecklistTab(child) {
     return;
   }
 
+  // v0.2.4: 지자체별 지원금처럼 앱에 없는 정부지원 항목을 이 탭에서 바로 추가할 수 있게
+  // 함(설정 → 체크리스트 관리에서도 같은 모달을 열 수 있음, js/checklistSettings.js 참고)
+  const addBtnHtml = `
+    <button type="button" class="cl-add-item-btn" onclick="openGovItemsModal('${child.stage}')">
+      ＋ 항목 직접 추가하기
+    </button>`;
+
   const items = getAllEvs()
     .filter(e => e.type === 'gov')
     .sort((a, b) => (a.date < b.date ? -1 : 1));
 
   if (!items.length) {
-    main.innerHTML = '<p style="color:var(--txl);text-align:center;padding:20px">해당하는 정부지원 일정이 없어요.</p>';
+    main.innerHTML = `<p style="color:var(--txl);text-align:center;padding:20px">해당하는 정부지원 일정이 없어요.</p>${addBtnHtml}`;
     return;
   }
 
@@ -60,7 +67,7 @@ export function renderGovChecklistTab(child) {
         : status === 'applied' ? icon('radio_button_checked', { size: 'sm', style: 'color:var(--bl)' })
         : icon('trip_origin', { size: 'sm', style: 'color:#2E7D32' });
       const label  = status === 'paid' ? '지급 완료' : status === 'applied' ? '신청 완료' : '신청 전';
-      const cleanTitle = stripLeadingEmoji(e.title);
+      const cleanTitle = escapeHtml(stripLeadingEmoji(e.title));
       const impBadge = e.imp === 'req'
         ? '<span class="badge-r">필수</span>'
         : '<span class="badge-o">해당자</span>';
@@ -71,12 +78,17 @@ export function renderGovChecklistTab(child) {
         <div class="gov-cl-item${urgent ? ' gov-cl-urgent' : ''}" onclick="openEvModal(${e._idx})">
           <div class="gov-cl-icon">${statusIcon}</div>
           <div style="flex:1;min-width:0">
-            <div class="gov-cl-title">${cleanTitle} ${impBadge}${urgent ? ` <span class="badge-r">${icon('schedule', { size: 'sm' })} 마감임박</span>` : ''}</div>
-            <div class="gov-cl-desc"${urgent ? ' style="color:#C62828;font-weight:800"' : ''}>${e.date} 권장${deadline ? ` · ${icon('schedule', { size: 'sm' })} 마감 ${deadline}${urgentText}` : ''}</div>
+            <div class="gov-cl-title">${cleanTitle} ${impBadge}${e.customGov ? ' <span class="badge-custom">내가 추가함</span>' : ''}${urgent ? ` <span class="badge-r">${icon('schedule', { size: 'sm' })} 마감임박</span>` : ''}</div>
+            <div class="gov-cl-desc"${urgent ? ' style="color:#C62828;font-weight:800"' : ''}>${escapeHtml(e.date)} 권장${deadline ? ` · ${icon('schedule', { size: 'sm' })} 마감 ${escapeHtml(deadline)}${urgentText}` : ''}</div>
           </div>
           <span class="gov-cl-status status-${status}">${label}</span>
+          ${e.customGov ? `
+          <button type="button" class="ci-expand-btn" aria-label="삭제" onclick="event.stopPropagation();deleteCustomGovItem('${e._customGovId}')">
+            <span class="ci-expand-arrow"><span class="icon icon-sm" translate="no" aria-hidden="true">close</span></span>
+          </button>` : ''}
         </div>`;
     }).join('')}
+    ${addBtnHtml}
   `;
 }
 

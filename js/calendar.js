@@ -10,7 +10,7 @@
  */
 
 import { S, debounceSave } from './state.js';
-import { today, daysUntil, stripLeadingEmoji, icon, avatarDisplay, escapeHtml } from './utils.js';
+import { today, daysUntil, stripLeadingEmoji, icon, avatarDisplay, escapeHtml, sanitizeUrl } from './utils.js';
 import { showModal, cm }   from './modal.js';
 import { vaxSched }        from '../data/vaccines.js';
 import { pregEvMap }       from '../data/pregnancy.js';
@@ -421,9 +421,9 @@ export function openEvModal(idx) {
       const urgentText = dLeft === null ? '' : dLeft < 0 ? ' (마감 지남)' : dLeft === 0 ? ' (오늘 마감)' : ` (D-${dLeft})`;
       return `
       <div style="background:${urgent ? '#FFF3F3' : '#F8F4FA'};border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:.78rem;color:var(--tx);line-height:1.6;${urgent ? 'border:1.5px solid #C62828' : ''}">
-        ${ev.desc ? `<div>${ev.desc}</div>` : ''}
-        ${(ev.deadlineDate || ev.deadlineNote) ? `<div style="color:#C62828;font-weight:800;margin-top:6px">⏰ 마감: ${ev.deadlineDate || ev.deadlineNote}${urgentText}</div>` : ''}
-        ${ev.link ? `<a href="${ev.link}" target="_blank" rel="noopener" style="display:inline-block;margin-top:6px;color:var(--bl);font-weight:800;text-decoration:underline"><span class="icon icon-sm" translate="no" aria-hidden="true">open_in_new</span> 관련 기관 바로가기</a>` : ''}
+        ${ev.desc ? `<div>${escapeHtml(ev.desc)}</div>` : ''}
+        ${(ev.deadlineDate || ev.deadlineNote) ? `<div style="color:#C62828;font-weight:800;margin-top:6px">⏰ 마감: ${escapeHtml(ev.deadlineDate || ev.deadlineNote)}${urgentText}</div>` : ''}
+        ${sanitizeUrl(ev.link) ? `<a href="${escapeHtml(sanitizeUrl(ev.link))}" target="_blank" rel="noopener" style="display:inline-block;margin-top:6px;color:var(--bl);font-weight:800;text-decoration:underline"><span class="icon icon-sm" translate="no" aria-hidden="true">open_in_new</span> 관련 기관 바로가기</a>` : ''}
       </div>`;
     })() : ''}
 
@@ -1102,7 +1102,7 @@ function renderWeekTimedBlock(e, top, height, track, trackCount) {
            ontouchmove="onTouchMove(event)"
            ontouchend="onTouchEnd(event)"
            ontouchcancel="onTouchCancel(event)"
-           title="${safe} — 탭하면 자세히, 꾹 눌러 이동">${label}</div>`;
+           title="${safe} — 탭하면 자세히, 꾹 눌러 이동">${safe}</div>`;
   }
 
   return `
@@ -1116,7 +1116,7 @@ function renderWeekTimedBlock(e, top, height, track, trackCount) {
          ontouchend="onTouchEnd(event)"
          ontouchcancel="onTouchCancel(event)"
          onclick="event.stopPropagation();openEvModal(${e._idx})"
-         title="${safe}${urgent ? ' — ⏰ 마감 임박' : ''}">${label}</div>`;
+         title="${safe}${urgent ? ' — ⏰ 마감 임박' : ''}">${safe}</div>`;
 }
 
 // v0.2.1: js/utils.js의 공용 escapeHtml()로 통일(기존엔 따옴표만 이스케이프하던 로컬 함수였음)
@@ -1144,7 +1144,7 @@ function renderEventLine(e) {
            ontouchmove="onTouchMove(event)"
            ontouchend="onTouchEnd(event)"
            ontouchcancel="onTouchCancel(event)"
-           title="${safe} — 탭하면 자세히, 꾹 눌러 이동">${label}</div>`;
+           title="${safe} — 탭하면 자세히, 꾹 눌러 이동">${safe}</div>`;
   }
 
   return `
@@ -1158,7 +1158,7 @@ function renderEventLine(e) {
          ontouchend="onTouchEnd(event)"
          ontouchcancel="onTouchCancel(event)"
          onclick="event.stopPropagation();openEvModal(${e._idx})"
-         title="${safe}${urgent ? ' — ⏰ 마감 임박' : ''}">${label}</div>`;
+         title="${safe}${urgent ? ' — ⏰ 마감 임박' : ''}">${safe}</div>`;
 }
 
 /* ── 주간 뷰 ── */
@@ -1387,11 +1387,11 @@ export function showDayPanel(ds) {
                   ${e.recalculated
                     ? `<div class="dp-ev-note" style="color:#7B1FA2;font-weight:800"><span class="icon icon-sm" translate="no" aria-hidden="true">sync</span> 실접종일 기준 자동 조정됨</div>` : ''}
                   ${e.type === 'gov' && e.desc
-                    ? `<div class="dp-ev-note" style="margin-top:4px">${e.desc}</div>` : ''}
+                    ? `<div class="dp-ev-note" style="margin-top:4px">${escapeHtml(e.desc)}</div>` : ''}
                   ${e.type === 'gov' && (e.deadlineDate || e.deadlineNote)
-                    ? `<div class="dp-ev-note" style="color:#C62828;font-weight:${urgent ? 800 : 400}">⏰ 마감: ${e.deadlineDate || e.deadlineNote} ${urgentText}</div>` : ''}
-                  ${e.type === 'gov' && e.link
-                    ? `<a href="${e.link}" target="_blank" rel="noopener" style="font-size:.72rem;color:var(--bl);font-weight:800;text-decoration:underline"><span class="icon icon-sm" translate="no" aria-hidden="true">open_in_new</span> 관련 기관 바로가기</a>` : ''}
+                    ? `<div class="dp-ev-note" style="color:#C62828;font-weight:${urgent ? 800 : 400}">⏰ 마감: ${escapeHtml(e.deadlineDate || e.deadlineNote)} ${urgentText}</div>` : ''}
+                  ${e.type === 'gov' && sanitizeUrl(e.link)
+                    ? `<a href="${escapeHtml(sanitizeUrl(e.link))}" target="_blank" rel="noopener" style="font-size:.72rem;color:var(--bl);font-weight:800;text-decoration:underline"><span class="icon icon-sm" translate="no" aria-hidden="true">open_in_new</span> 관련 기관 바로가기</a>` : ''}
                 </div>
                 <button onclick="openEvModal(${e._idx})"
                         style="background:none;border:1px solid #EEE0F0;border-radius:8px;flex-shrink:0;
@@ -1932,6 +1932,19 @@ export function getAutoEvs(child) {
       });
     });
   }
+
+  // v0.2.4: 사용자가 설정 탭에서 직접 추가한 정부지원 항목(지자체별 지원금 등) — 앱 기본
+  // 제공 govSupportSchedule과 똑같은 모양(type:'gov')으로 섞어 넣어서 캘린더·체크리스트
+  // 정부지원 탭에 기존 항목과 동일하게 표시되게 함. 날짜는 사용자가 직접 고른 절대 날짜라
+  // (임신 주차/개월수 기반 자동 계산이 아님) 그대로 씀. stage가 지금 아이 단계와 같은
+  // 항목만 보여줌(임산부용으로 추가한 건 임신 중인 아이에게만, 육아용은 출생한 아이에게만).
+  (S.customGovItems || []).filter(it => it.stage === child.stage).forEach(it => {
+    evs.push({
+      date: it.date, _origDate: it.date, title: it.title, type: 'gov', auto: true,
+      imp: it.imp || 'rec', desc: it.desc || '', link: it.link || '',
+      deadlineNote: null, deadlineDate: null, customGov: true, _customGovId: it.id,
+    });
+  });
 
   // v0.0.42: 체크리스트 캘린더 연동을 꺼두면(설정 탭 → 체크리스트 관리), 완료 체크 동기화만
   // 멈추는 게 아니라 캘린더에서 해당 카테고리 일정 자체를 안 보이게 함(연동을 다시 켜면 복원).

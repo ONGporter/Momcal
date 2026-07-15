@@ -48,6 +48,10 @@ export function emptyState() {
     // 캘린더 연동 여부를 고를 수 있게 함 (자세한 구조는 docs/product-specs/checklist-customization.md)
     customChecklists: [], // [{ id, key:'custom_'+id, label, icon, items:[{id,t,r}] }] — 사용자가 직접 만든 플랫 체크리스트
     clSettings:  { hiddenTabs: [], calendarSync: {} }, // hiddenTabs: 숨긴 탭 key 배열 / calendarSync: { [tabKey]: false } (명시적으로 끈 것만 저장, 기본 true)
+    // v0.2.4: 정부지원 탭에 앱 기본 제공 항목 외에 사용자가 직접 추가하는 항목(지자체별 지원금 등).
+    // stage('preg'|'born')로 임산부용/육아용을 구분하고, js/calendar.js의 getAutoEvs()가 이 배열을
+    // 읽어서 캘린더·체크리스트 정부지원 탭에 기존 항목과 동일한 방식으로 섞어서 보여줌
+    customGovItems: [], // [{ id, title, stage, date:'YYYY-MM-DD', imp:'req'|'rec', desc, link }]
   };
 }
 
@@ -126,6 +130,7 @@ export async function saveState() {
       selC:        S.selC,
       customChecklists: S.customChecklists || [],
       clSettings:  S.clSettings || { hiddenTabs: [], calendarSync: {} },
+      customGovItems: S.customGovItems || [],
       updatedAt:   Date.now(),
     }, { merge: true });
     flashSave();
@@ -272,6 +277,7 @@ export async function createFamily() {
     selC:        S.selC,
     customChecklists: S.customChecklists || [],
     clSettings:  S.clSettings || { hiddenTabs: [], calendarSync: {} },
+    customGovItems: S.customGovItems || [],
     members:     [_currentUser.uid],
     createdAt:   Date.now(),
     updatedAt:   Date.now(),
@@ -330,6 +336,7 @@ export function applyData(data) {
     hiddenTabs:   fresh.clSettings?.hiddenTabs   || [],
     calendarSync: fresh.clSettings?.calendarSync || {},
   };
+  S.customGovItems = fresh.customGovItems || [];
   // selC 범위 보정
   S.selC = Math.max(0, Math.min(fresh.selC || 0, S.children.length - 1));
 }

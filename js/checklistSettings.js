@@ -25,10 +25,13 @@ import { clPacks } from '../data/checklist-packs.js';
 import { showModal, cm } from './modal.js';
 import { resyncTabForAllChildren } from './checklistCalendarLink.js';
 
-/** 내장 탭 6종 — js/checklist.js의 builtinTabDefs()와 key를 맞춰야 함(바뀌면 여기도 같이 고칠 것) */
+/** 내장 탭 6종 — js/checklist.js의 builtinTabDefs()와 key를 맞춰야 함(바뀌면 여기도 같이 고칠 것)
+ *  v0.2.4: '출산 준비물'(prep)도 준비물 팩과 똑같이 "직접 추가한 항목" 편집을 지원하도록
+ *  editable:true 추가 — clData.preg의 'preg_prep' 카테고리 하나뿐인 인덱스 탭이라 항목 자체
+ *  (기본 제공 내용)는 못 바꾸고, 준비물 팩처럼 사용자가 덧붙인 항목만 관리 가능(BUILTIN_CAT_KEY_MAP 참고) */
 const PREG_ROWS = [
   { key: 'preg', icon: 'pregnant_woman', label: '임신 체크' },
-  { key: 'prep', icon: 'inventory_2',    label: '출산 준비물' },
+  { key: 'prep', icon: 'inventory_2',    label: '출산 준비물', editable: true },
 ];
 const BORN_ROWS = [
   { key: 'vax',  icon: 'vaccines',   label: '예방접종', syncable: true },
@@ -38,6 +41,13 @@ const BORN_ROWS = [
 const COMMON_ROWS = [
   { key: 'gov', icon: 'account_balance', label: '정부지원' },
 ];
+
+/** 설정 화면의 row key → 실제 항목 배열에서 쓰는 카테고리 key로 변환.
+ *  대부분(준비물 팩)은 tab key와 cat.key가 같지만, '출산 준비물'(prep)만 js/checklist.js의
+ *  getCats()에서 실제로 clData.preg의 'preg_prep' 카테고리를 반환하므로 여기서 매핑해줘야
+ *  "직접 추가한 항목"이 체크리스트 탭에서 보는 것과 같은 자리(S.customClItems 키)에 저장됨. */
+const BUILTIN_CAT_KEY_MAP = { prep: 'preg_prep' };
+function resolveCatKey(packKey) { return BUILTIN_CAT_KEY_MAP[packKey] || packKey; }
 
 function ensureClSettings() {
   if (!S.clSettings) S.clSettings = { hiddenTabs: [], calendarSync: {} };
@@ -82,7 +92,7 @@ export function toggleClCalendarSync(key) {
   }
 }
 
-function rowHtml({ key, icon, label, syncable, deletable, editable }) {
+function rowHtml({ key, icon, label, syncable, deletable, editable, hideToggle }) {
   const hidden = isHidden(key);
   return `
     <div class="cl-settings-row">
@@ -101,7 +111,8 @@ function rowHtml({ key, icon, label, syncable, deletable, editable }) {
           <button type="button" class="ci-expand-btn" aria-label="삭제" onclick="deleteCustomChecklist('${key}')">
             <span class="ci-expand-arrow"><span class="icon icon-sm" translate="no" aria-hidden="true">delete</span></span>
           </button>` : ''}
-        <button type="button" class="notif-toggle-btn" onclick="toggleClTabHidden('${key}')">${hidden ? '숨김' : '표시중'}</button>
+        ${hideToggle ? '' : `
+        <button type="button" class="notif-toggle-btn" onclick="toggleClTabHidden('${key}')">${hidden ? '숨김' : '표시중'}</button>`}
       </div>
     </div>`;
 }
@@ -118,16 +129,28 @@ export function renderChecklistSettings() {
   const customBornRows = (S.customChecklists || []).filter(c => (c.stage || 'born') === 'born')
     .map(c => ({ key: c.key, icon: c.icon || 'checklist', label: c.label, deletable: true, editable: true }));
 
+  // v0.2.4: 정부지원은 기존처럼 "공통" 그룹에서 탭 표시/숨김을 관리하고(단일 탭이라 임산부용/
+  // 육아용 구분이 없음), 추가로 임산부용·육아용 각 그룹 맨 아래에 "직접 추가" 전용 행을
+  // 둠(hideToggle: 표시/숨김 버튼은 뜻이 없으므로 안 보이게). 몇 개 추가했는지 라벨에 표시.
+  const govPregCount = (S.customGovItems || []).filter(it => it.stage === 'preg').length;
+  const govBornCount = (S.customGovItems || []).filter(it => it.stage === 'born').length;
+  const govPregRow = { key: 'gov_preg', icon: 'account_balance', editable: true, hideToggle: true,
+    label: `정부지원 항목 직접 추가${govPregCount ? ` (${govPregCount}개 추가함)` : ''}` };
+  const govBornRow = { key: 'gov_born', icon: 'account_balance', editable: true, hideToggle: true,
+    label: `정부지원 항목 직접 추가${govBornCount ? ` (${govBornCount}개 추가함)` : ''}` };
+
   wrap.innerHTML = `
     <div class="cl-settings-group-label"><span class="icon icon-sm" translate="no" aria-hidden="true">pregnant_woman</span> 임산부용</div>
     ${PREG_ROWS.map(rowHtml).join('')}
     ${packPregRows.map(rowHtml).join('')}
     ${customPregRows.length ? customPregRows.map(rowHtml).join('') : ''}
+    ${rowHtml(govPregRow)}
 
     <div class="cl-settings-group-label"><span class="icon icon-sm" translate="no" aria-hidden="true">child_care</span> 육아용</div>
     ${BORN_ROWS.map(rowHtml).join('')}
     ${packBornRows.map(rowHtml).join('')}
     ${customBornRows.length ? customBornRows.map(rowHtml).join('') : ''}
+    ${rowHtml(govBornRow)}
 
     <div class="cl-settings-group-label">공통</div>
     ${COMMON_ROWS.map(rowHtml).join('')}
@@ -229,7 +252,10 @@ function editItemRowHtml(it, idxAttr) {
 }
 
 export function openEditChecklistModal(key) {
-  if (key.startsWith('pack_')) return openEditPackExtrasModal(key);
+  if (key === 'gov_preg') return openGovItemsModal('preg');
+  if (key === 'gov_born') return openGovItemsModal('born');
+  // v0.2.4: '출산 준비물'(prep)도 준비물 팩과 같은 "직접 추가한 항목만 편집" 방식을 씀
+  if (key.startsWith('pack_') || key === 'prep') return openEditPackExtrasModal(key);
   return openEditCustomChecklistModal(key);
 }
 
@@ -278,10 +304,12 @@ function openEditPackExtrasModal(packKey) {
   const child = S.children[S.selC];
   if (!child) { alert('먼저 체크리스트 탭에서 아이를 등록·선택해주세요'); return; }
   const pack = clPacks.find(p => p.key === packKey);
-  const customKey = `${child.id}_${packKey}`;
+  // v0.2.4: 'prep'(출산 준비물)처럼 clPacks에 없는 내장 탭은 PREG_ROWS/BORN_ROWS에서 라벨을 찾음
+  const label = pack ? pack.label : ([...PREG_ROWS, ...BORN_ROWS].find(r => r.key === packKey)?.label || '');
+  const customKey = `${child.id}_${resolveCatKey(packKey)}`;
   const items = (S.customClItems && S.customClItems[customKey]) || [];
 
-  showModal(`"${pack ? pack.label : ''}"에 직접 추가한 항목`, `
+  showModal(`"${label}"에 직접 추가한 항목`, `
     <div class="cl-form-msg" style="margin-top:0;color:var(--txl);font-weight:600">${escapeHtml(child.name || '')} 기준이에요. 원래 있던 기본 항목은 여기서 못 바꿔요.</div>
     <div class="fg" style="margin-top:10px">
       <div id="editClItemsList">${items.map((it, i) => editItemRowHtml(it, i)).join('')}</div>
@@ -295,7 +323,7 @@ function openEditPackExtrasModal(packKey) {
 export function submitEditPackExtras(packKey) {
   const child = S.children[S.selC];
   if (!child) return;
-  const customKey = `${child.id}_${packKey}`;
+  const customKey = `${child.id}_${resolveCatKey(packKey)}`;
   const existing = (S.customClItems && S.customClItems[customKey]) || [];
 
   const rows = Array.from(document.querySelectorAll('#editClItemsList .cl-edit-item-row'));
@@ -370,6 +398,101 @@ export function submitEditChecklist(key) {
   window.renderChecklist?.();
 }
 
+/* ── 정부지원 항목 직접 추가 (v0.2.4) ──
+ * 앱이 기본 제공하는 전국 단위 정부지원 일정(data/government-support.js) 외에, 지자체마다
+ * 다른 지원금처럼 앱에 없는 항목을 사용자가 직접 추가하는 기능. 날짜를 직접 골라서 넣는
+ * 방식이라(임신 주차·출생 후 개월수 기준 자동 계산이 아님) 관리가 단순함 — 추가한 항목은
+ * js/calendar.js의 getAutoEvs()가 읽어서 기존 정부지원 항목과 완전히 같은 방식으로 캘린더·
+ * 체크리스트 정부지원 탭에 표시됨(js/govSupport.js도 참고). stage로 임산부용/육아용을
+ * 구분하는데, S.customGovItems 자체는 커스텀 체크리스트처럼 가족 전체가 공유하는 목록이고
+ * (아이별로 따로 저장하지 않음), 화면에는 지금 아이의 stage와 같은 항목만 보임. */
+
+function govItemRowHtml(it) {
+  return `
+    <div class="cl-edit-item-row" data-id="${it.id}">
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:800;font-size:.8rem">${escapeHtml(it.title)} ${it.imp === 'req' ? '<span class="badge-r">필수</span>' : '<span class="badge-o">해당자</span>'}</div>
+        <div style="font-size:.7rem;color:var(--txl);margin-top:2px">${escapeHtml(it.date)}${it.desc ? ' · ' + escapeHtml(it.desc) : ''}</div>
+      </div>
+      <button type="button" class="cl-edit-item-remove" aria-label="이 항목 삭제" onclick="deleteCustomGovItem('${it.id}')">
+        <span class="icon icon-sm" translate="no" aria-hidden="true">close</span>
+      </button>
+    </div>`;
+}
+
+export function openGovItemsModal(stage) {
+  const items = (S.customGovItems || []).filter(it => it.stage === stage);
+  const stageLabel = stage === 'preg' ? '임산부용' : '육아용';
+  showModal(`정부지원 항목 직접 추가 (${stageLabel})`, `
+    <div class="cl-form-msg" style="margin-top:0;color:var(--txl);font-weight:600">지자체별 지원금처럼 앱에 없는 정부지원 항목을 추가하면 캘린더·체크리스트 정부지원 탭에 똑같이 표시돼요.</div>
+    <div id="govItemsList" style="margin-top:10px">${items.length ? items.map(govItemRowHtml).join('') : '<div class="cl-form-msg" style="margin:0">아직 직접 추가한 항목이 없어요</div>'}</div>
+    <div class="fg" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--gray-200)">
+      <label>새 항목 추가</label>
+      <input id="newGovTitle" placeholder="예) OO구 출산지원금" maxlength="30" style="margin-top:6px">
+      <div class="fg2" style="margin-top:8px">
+        <div>
+          <label style="font-size:.72rem">날짜</label>
+          <input id="newGovDate" type="date">
+        </div>
+        <div>
+          <label style="font-size:.72rem">중요도</label>
+          <div class="stage-toggle" style="margin:4px 0 0">
+            <button type="button" class="st-btn on" id="newGovImpReq" onclick="setNewGovImp('req')">필수</button>
+            <button type="button" class="st-btn" id="newGovImpRec" onclick="setNewGovImp('rec')">해당자</button>
+          </div>
+        </div>
+      </div>
+      <input id="newGovDesc" placeholder="설명 (선택)" maxlength="60" style="margin-top:8px">
+      <input id="newGovLink" placeholder="신청 링크 (선택)" maxlength="200" style="margin-top:8px">
+    </div>
+    <div class="cl-form-msg" id="newGovMsg"></div>
+    <button class="btn bpk" style="width:100%;margin-top:10px" onclick="submitAddGovItem('${stage}')">추가하기</button>
+  `);
+  window._newGovImp = 'req';
+}
+
+export function setNewGovImp(val) {
+  window._newGovImp = val === 'rec' ? 'rec' : 'req';
+  document.getElementById('newGovImpReq')?.classList.toggle('on', window._newGovImp === 'req');
+  document.getElementById('newGovImpRec')?.classList.toggle('on', window._newGovImp === 'rec');
+}
+
+export function submitAddGovItem(stage) {
+  const title = (document.getElementById('newGovTitle')?.value || '').trim();
+  const date  = document.getElementById('newGovDate')?.value || '';
+  const desc  = (document.getElementById('newGovDesc')?.value || '').trim();
+  const link  = (document.getElementById('newGovLink')?.value || '').trim();
+  const msgEl = document.getElementById('newGovMsg');
+  if (!title) { if (msgEl) { msgEl.textContent = '항목 이름을 입력해주세요'; msgEl.classList.add('cl-form-msg-err'); } return; }
+  if (!date)  { if (msgEl) { msgEl.textContent = '날짜를 선택해주세요';     msgEl.classList.add('cl-form-msg-err'); } return; }
+
+  if (!S.customGovItems) S.customGovItems = [];
+  S.customGovItems.push({
+    id: `gov_${Date.now()}`, title, stage, date,
+    imp: window._newGovImp === 'rec' ? 'rec' : 'req', desc, link,
+  });
+
+  debounceSave();
+  renderChecklistSettings();
+  openGovItemsModal(stage); // 방금 추가한 항목이 반영된 목록으로 다시 열기
+  window.renderChecklist?.();
+  if (document.getElementById('pg-calendar')?.classList.contains('on')) window.renderCal?.();
+}
+
+export function deleteCustomGovItem(id) {
+  if (!confirm('이 정부지원 항목을 삭제할까요?')) return;
+  const item = (S.customGovItems || []).find(it => it.id === id);
+  S.customGovItems = (S.customGovItems || []).filter(it => it.id !== id);
+  // 지금까지 이 항목에 저장된 신청 상태(신청 완료 등)도 함께 정리
+  if (item && S.eventMods) delete S.eventMods[`auto_${item.date}_${item.title}`];
+
+  debounceSave();
+  renderChecklistSettings();
+  if (item) openGovItemsModal(item.stage);
+  window.renderChecklist?.();
+  if (document.getElementById('pg-calendar')?.classList.contains('on')) window.renderCal?.();
+}
+
 window.toggleClTabHidden        = toggleClTabHidden;
 window.toggleClCalendarSync     = toggleClCalendarSync;
 window.renderChecklistSettings  = renderChecklistSettings;
@@ -381,3 +504,7 @@ window.openEditChecklistModal   = openEditChecklistModal;
 window.submitEditPackExtras     = submitEditPackExtras;
 window.addEditClItemRow         = addEditClItemRow;
 window.submitEditChecklist      = submitEditChecklist;
+window.openGovItemsModal        = openGovItemsModal;
+window.setNewGovImp             = setNewGovImp;
+window.submitAddGovItem         = submitAddGovItem;
+window.deleteCustomGovItem      = deleteCustomGovItem;
