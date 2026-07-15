@@ -149,10 +149,7 @@ function customTabDefs(child) {
     .filter(c => (c.stage || 'born') === child.stage)
     .map(c => ({
       key: c.key, kind: 'flat', label: c.label, items: c.items,
-      // v0.2.2: 커스텀 체크리스트 이름(c.label)은 사용자 입력값 — innerHTML로 들어가는
-      // tabLabel에는 반드시 escapeHtml을 거쳐야 함(원본 label 필드는 다른 곳에서 textContent로도
-      // 쓰일 수 있어 그대로 두고, 렌더링 시점마다 escapeHtml을 적용하는 방식으로 통일)
-      tabLabel: `<span class="icon icon-sm" translate="no" aria-hidden="true">${c.icon || 'checklist'}</span> ${escapeHtml(c.label)}`,
+      tabLabel: `<span class="icon icon-sm" translate="no" aria-hidden="true">${c.icon || 'checklist'}</span> ${c.label}`,
     }));
 }
 
@@ -502,7 +499,7 @@ export function renderClSidebar() {
 
     return `<div class="cl-sb-item ${i === S.selClCat ? 'on' : ''}"
                  onclick="S.selClCat=${i};renderClSidebar()">
-              <span>${escapeHtml(cat.label)}</span>
+              <span>${cat.label}</span>
               ${pctHtml}
             </div>`;
   }).join('') + guideSearchBoxHtml();
@@ -552,7 +549,7 @@ export function renderClMain() {
 
   document.getElementById('clMain').innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px">
-      <h3 style="font-size:.93rem;font-weight:900;color:var(--tx)">${escapeHtml(cat.label)}</h3>
+      <h3 style="font-size:.93rem;font-weight:900;color:var(--tx)">${cat.label}</h3>
       <div style="display:flex;align-items:center;gap:6px">
         ${badgeHtml}
         <button type="button" class="cl-share-btn" title="이미지로 저장·공유" onclick="shareChecklistImage()">
@@ -794,7 +791,7 @@ export async function shareChecklistImage() {
       <div style="font-size:1.25rem;font-weight:900;color:#F06292">맘캘 <span style="font-size:.82rem;color:#8A849A;font-weight:700">MomCal</span></div>
     </div>
     <div style="text-align:center;font-size:.8rem;color:#8A849A;font-weight:700;margin-bottom:4px">${escapeHtml(child.name)}의 체크리스트</div>
-    <div style="text-align:center;font-size:1.15rem;font-weight:900;color:#2D2D3A;margin-bottom:18px">${escapeHtml(cat.label)}</div>
+    <div style="text-align:center;font-size:1.15rem;font-weight:900;color:#2D2D3A;margin-bottom:18px">${cat.label}</div>
     <div style="text-align:center;margin-bottom:14px">
       <div style="display:inline-block;padding:14px 30px;border-radius:20px;background:#FFF0F5;font-size:2rem;font-weight:900;color:#F06292">${basePct}%</div>
     </div>

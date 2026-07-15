@@ -175,7 +175,7 @@ function dashChecklistCard(child) {
     <div class="dash-card" onclick="${onclick}">
       <div class="dash-icon">${icon('checklist')}</div>
       <div class="dash-body">
-        <div class="dash-label">${escapeHtml(info.cat.label)}</div>
+        <div class="dash-label">${info.cat.label}</div>
         <div class="dash-value">${reqDone} / ${reqTotal} 완료(필수) <span class="dash-sub-inline">${doneTotal} / ${itemsTotal} 완료(전체)</span></div>
         ${badge ? `<div class="dash-badge-mini ${badge.cls}">${icon(badge.iconName, { size: 'sm' })} ${badge.label}</div>` : ''}
       </div>
