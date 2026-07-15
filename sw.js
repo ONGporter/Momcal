@@ -120,7 +120,7 @@
 // 추가 기능 신규, 캘린더 그리드 이벤트 제목 이스케이프 누락 수정 — 캐시 버전 상향
 // v0.2.5: js/checklistSettings.js 수정 — 정부지원 항목 삭제 시 엉뚱한 모달이 뜨던 버그 수정,
 // 설정 화면 정부지원 "공통" 그룹 제거 후 임산부용/육아용에 통합 — 캐시 버전 상향
-const CACHE_NAME = 'momcal-shell-v74';
+const CACHE_NAME = 'momcal-shell-v75';
 
 const APP_SHELL = [
   './',

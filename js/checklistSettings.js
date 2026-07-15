@@ -498,9 +498,16 @@ export function deleteCustomGovItem(id) {
   // v0.2.5: 이 삭제 버튼은 두 곳에서 쓰임 — (1) 설정의 "정부지원 항목 직접 추가" 관리 모달
   // 안 목록, (2) 체크리스트 → 정부지원 탭의 항목 목록(모달 없이 바로 삭제). (2)에서 눌렀을 때도
   // 무조건 openGovItemsModal()을 다시 열어버려서, 추가 버튼을 누르지 않았는데도 "항목 추가"
-  // 팝업이 뜨는 버그였음(옹짐꾼님 제보) — 그 모달이 실제로 열려있을 때(#govItemsList가 DOM에
-  // 있을 때)만 새로고침하고, 아닐 땐 모달을 열지 않음.
-  if (item && document.getElementById('govItemsList')) {
+  // 팝업이 뜨는 버그였음(옹짐꾼님 제보).
+  // v0.2.5의 수정은 "#govItemsList가 DOM에 있으면 모달이 열린 것"으로 판단했는데 이게 틀렸음:
+  // 모달을 닫는 cm()(js/modal.js)은 #modal에서 open 클래스만 떼고 #mB의 innerHTML은 지우지
+  // 않아서(display:none으로 안 보이기만 함), 이 모달을 한 번이라도 열었다 닫으면 그 뒤로도
+  // #govItemsList가 DOM에 계속 남아 있었음 — 그래서 체크리스트 탭에서 지울 때도 "모달이 열려
+  //있다"고 잘못 판단해 버그가 재현된 것. #modal 자체가 실제로 open 클래스를 갖고 있는지(화면에
+  // 보이는 상태인지)까지 함께 확인해야 진짜로 "지금 열려있는지"를 판단할 수 있음.
+  const govModalOpen = document.getElementById('modal')?.classList.contains('open')
+    && document.getElementById('govItemsList');
+  if (item && govModalOpen) {
     openGovItemsModal(item.stage);
   }
   window.renderChecklist?.();
