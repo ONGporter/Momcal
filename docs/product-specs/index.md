@@ -7,9 +7,9 @@
 | [`family-sharing.md`](./family-sharing.md) | 가족 그룹 공유 — Firestore 구조, 초대 코드, 보안 규칙 | ✅ 실사용 검증 완료 |
 | [`guest-mode.md`](./guest-mode.md) | 게스트 모드 — 로그인 없이 로컬 저장, 계정 이전 규칙 | ✅ 구현 완료 |
 | [`seo-content.md`](./seo-content.md) | 공개 육아정보 페이지(`guide/`) + 정책 페이지 + SEO 현황 | ✅ 구현 완료 |
-| [`monetization.md`](./monetization.md) | 수익화 & 트래픽 전략, 광고 슬롯 | 🟡 준비 완료(AdSense 신청 전) |
+| [`monetization.md`](./monetization.md) | 수익화 & 트래픽 전략, 광고 슬롯 | 🟡 AdSense 심사 신청 완료 · 승인 대기 중 |
 | [`account-deletion.md`](./account-deletion.md) | 계정 영구 삭제(자체 탈퇴) 흐름 | ✅ 구현 완료 |
-| [`push-notifications.md`](./push-notifications.md) | 진짜 FCM 푸시 알림 — 토큰 발급/저장/자동갱신, 서비스워커 수신, Cloud Functions 자동 발송 | 🟡 코드 구현 완료 · 배포·실기기 확인 대기 |
+| [`push-notifications.md`](./push-notifications.md) | 진짜 FCM 푸시 알림 — 토큰 발급/저장/자동갱신, 서비스워커 수신, Cloud Functions 자동 발송 | ✅ 배포·테스트 완료 |
 | [`admin-push.md`](./admin-push.md) | 관리자 전용 푸시 발송(`admin.html`) — 커스텀 클레임 접근 제어, 대상별 발송, 예약 발송, 발송 이력 | 🟡 코드 구현 완료 · Firestore 규칙·관리자 클레임 설정 대기 |
 | [`checklist-customization.md`](./checklist-customization.md) | 체크리스트 커스터마이징 — 준비물형(플랫) 체크리스트, 사용자 정의 체크리스트, 탭 표시/캘린더 연동 설정 | ✅ 코드 완료 · 실기기 확인 대기 |
 
