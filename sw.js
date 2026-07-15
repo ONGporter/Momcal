@@ -108,7 +108,14 @@
 // "일정 색상" 스와치에 정부지원 추가) — 캐시 버전 상향
 // v0.1.1: data/checklist-data.js 수정(예방접종 "9~11개월" 카테고리 유일 항목을 선택→필수로
 // 변경 — 필수 항목이 없어서 항상 "Perfect 100%"로 보이던 버그 수정) — 캐시 버전 상향
-const CACHE_NAME = 'momcal-shell-v70';
+// v0.2.2: js/checklist.js·js/ui.js 수정(커스텀 체크리스트 이름이 escapeHtml 없이 innerHTML에
+// 삽입되던 4~5곳에 escapeHtml 적용 — 저장된 XSS 위험 보완) — 캐시 버전 상향
+// v0.2.3: v0.2.2 회귀 버그 수정 — 예방접종/발달/이유식 카테고리 라벨(cat.label)에는
+// applyGrowthStageGender()가 성장 단계 아이콘 <img> 태그를 일부러 심어두는데, v0.2.2에서
+// 렌더링 시점마다 escapeHtml(cat.label)을 씌우는 바람에 그 아이콘까지 글자 그대로 깨져
+// 보이던 문제 — 이스케이프 위치를 렌더링 시점 3곳에서 getCats()의 커스텀 체크리스트
+// 분기 한 곳으로 옮겨서 해결(js/checklist.js) — 캐시 버전 상향
+const CACHE_NAME = 'momcal-shell-v72';
 
 const APP_SHELL = [
   './',

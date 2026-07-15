@@ -149,7 +149,10 @@ function customTabDefs(child) {
     .filter(c => (c.stage || 'born') === child.stage)
     .map(c => ({
       key: c.key, kind: 'flat', label: c.label, items: c.items,
-      tabLabel: `<span class="icon icon-sm" translate="no" aria-hidden="true">${c.icon || 'checklist'}</span> ${c.label}`,
+      // v0.2.2: 커스텀 체크리스트 이름(c.label)은 사용자 입력값 — innerHTML로 들어가는
+      // tabLabel에는 반드시 escapeHtml을 거쳐야 함(원본 label 필드는 다른 곳에서 textContent로도
+      // 쓰일 수 있어 그대로 두고, 렌더링 시점마다 escapeHtml을 적용하는 방식으로 통일)
+      tabLabel: `<span class="icon icon-sm" translate="no" aria-hidden="true">${c.icon || 'checklist'}</span> ${escapeHtml(c.label)}`,
     }));
 }
 
@@ -402,7 +405,17 @@ export function getCats() {
   if (tab.key === 'food') return applyGrowthStageGender(clData.food, child.gender);
   // v0.0.40: 준비물형(플랫) 팩·커스텀 체크리스트 — 월령 인덱싱 없이 카테고리 1개짜리로 취급
   // (calcScore/getCatItems/renderClMain은 원래 {key,label,items} 모양이면 뭐든 동일하게 처리함)
-  if (tab.kind === 'flat') return [{ key: tab.key, label: tab.label, items: tab.items }];
+  // v0.2.2: 여기서 나온 label은 renderClSidebar/renderClMain/공유 카드에서 escapeHtml 없이
+  // 그대로 innerHTML에 들어감 — applyGrowthStageGender()가 위 vax/dev/food 카테고리에 일부러
+  // <img> 태그를 심어두므로(성장 단계 아이콘) 그 라벨은 이스케이프하면 안 됨. 반면 커스텀
+  // 체크리스트(key가 'custom_'로 시작, js/checklistSettings.js의 submitCreateChecklist 참고)는
+  // 사용자가 직접 입력한 이름이라 여기서 escapeHtml을 거쳐야 함 — 신뢰 가능한 개발자 제공 HTML과
+  // 사용자 입력이 같은 label 필드를 공유하므로, 렌더링 시점이 아니라 이 소스에서 한 번만 분기해
+  // 이스케이프하는 게 안전함(렌더링 시점마다 escapeHtml을 씌우면 성장 단계 아이콘이 깨짐).
+  if (tab.kind === 'flat') {
+    const isCustom = typeof tab.key === 'string' && tab.key.startsWith('custom_');
+    return [{ key: tab.key, label: isCustom ? escapeHtml(tab.label) : tab.label, items: tab.items }];
+  }
   return []; // 정부지원 탭은 getCats 대상 아님(renderGovChecklistTab에서 별도 렌더링)
 }
 
