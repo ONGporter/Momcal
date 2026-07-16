@@ -8,6 +8,7 @@
 
 | 버전 | 주요 기능 |
 |:---:|------|
+| v0.3.4 | 플레이스토어 출시 진행 — PWABuilder로 Android TWA 패키지(.aab/.apk) 생성 완료(Package ID `app.momcal.www`), `.well-known/assetlinks.json` 추가(Digital Asset Links, TWA 주소창 제거용) |
 | v0.3.3 | 플레이스토어 출시 준비 중 PWABuilder 분석에서 나온 경고 해소 — `manifest.json`에 `id`·`categories` 필드 추가(선택 항목, 기존 동작 영향 없음). 플레이스토어 출시 가이드 문서(`docs/product-specs/play-store-launch.md`) 신규 작성 |
 | v0.3.2 | 임신 주차별 체크리스트 카테고리 라벨(🫐/🍇/🥝 등)에 남아있던 이모지를 옹짐꾼님이 전달한 "태아 크기 비교 과일" 이미지로 교체(m0~m36·f6~f24와 같은 growthStageIconImg 패턴 재사용) — 앱·육아정보 pregnancy.html 양쪽 반영 |
 | v0.3.1 | 정부지원 표시/숨김이 임산부용·육아용에서 같이 켜지고 꺼지던 버그 수정(탭 key를 gov_preg/gov_born으로 분리, 레거시 데이터 마이그레이션 포함). "출산 준비물" 단일 카테고리를 없애고 출산가방·산후조리원·신생아 맞이 준비(임산부용)와 여행(외박) 준비물·어린이집(유치원) 준비·상비약 체크리스트·이유식 준비(육아용) 7개 팩으로 세분화(guide 페이지 자동 반영). 임신 주차별 체크리스트에 태아보험·실손보험 등 9개 항목 보강 |
@@ -116,6 +117,14 @@
 | 29 | 폰트 전면 교체(Paperlogy+Pretendard), 캘린더 타임존 버그 수정, 생후 일수 계산 변경, 성장 예측·알림 기능 신규 |
 
 ---
+
+## [v0.3.4] 2026-07-16 — Android TWA 패키지 생성 + Digital Asset Links 배포
+
+- **옹짐꾼님이 PWABuilder(https://www.pwabuilder.com)로 momcal.app을 Android(TWA) 패키지로 생성 완료** — Package ID `app.momcal.www`, Signing key는 New로 생성(PWABuilder가 비밀번호 자동 생성, `signing-key-info.txt`에 기록됨). 결과물(.aab/.apk/keystore/signing-key-info.txt/assetlinks.json)을 전달받아 확인함 — .aab는 유효한 JAR(AAB 포맷 정상), .apk는 서명 블록 포함(정상 서명 확인)
+- **`.well-known/assetlinks.json` 신규 추가** — PWABuilder가 패키징 과정에서 서명 키의 SHA-256 지문을 이미 채워서 생성해줌, 그대로 프로젝트 루트에 추가. 배포 후 `https://momcal.app/.well-known/assetlinks.json`에서 JSON이 그대로 보이는지 확인 필요(Vercel이 정적 배포에서 `.well-known`처럼 점으로 시작하는 폴더를 못 내려주는 사례가 종종 있어 확인 권장 — 문제 시 `vercel.json` rewrite 규칙 추가로 해결 가능)
+- 서명 키(`signing.keystore`)와 비밀번호는 **옹짐꾼님이 직접 최소 2곳에 백업**하는 게 필수(잃어버리면 앱 업데이트가 영구히 불가능) — Claude가 다루는 파일들엔 포함하지 않음(민감정보라 저장소에 안 넣음)
+- `docs/product-specs/play-store-launch.md` 상태 갱신(1~4단계 진행 중으로) — 자세한 진행 상황은 문서 참고
+- `python3 -c "json.load(...)"` 로 assetlinks.json 유효성 확인, `sw.js` `CACHE_NAME` 상향(v78 → v79, `.well-known/`은 캐시 대상 아님)
 
 ## [v0.3.3] 2026-07-16 — 플레이스토어 출시 준비 시작 (PWABuilder 경고 해소 + 출시 가이드 문서)
 

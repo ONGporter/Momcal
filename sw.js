@@ -133,7 +133,11 @@
 // pregnancy.html 양쪽 다 반영 — icons/pregstage/*.png 신규 정적 파일. 캐시 버전 상향
 // v0.3.3: manifest.json 수정 — id·categories 필드 추가(플레이스토어 출시 준비 중 PWABuilder
 // 분석 경고 해소, 기존 동작에 영향 없는 선택 필드 추가) — 캐시 버전 상향
-const CACHE_NAME = 'momcal-shell-v78';
+// v0.3.4: .well-known/assetlinks.json 신규 추가 — PWABuilder가 생성해준 Android 서명 키
+// SHA-256 지문을 담은 파일(Digital Asset Links), TWA 앱에서 주소창을 없애는 데 필요.
+// sw.js 캐시 대상은 아님(ads.txt와 동일하게 독립 정적 파일 취급) — 버전 표시 갱신에 맞춰
+// 캐시 버전만 상향
+const CACHE_NAME = 'momcal-shell-v79';
 
 const APP_SHELL = [
   './',

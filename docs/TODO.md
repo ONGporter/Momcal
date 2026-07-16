@@ -18,6 +18,7 @@
 
 자세한 변경 내용은 CHANGELOG.md에 버전별로 다 있으니 여기선 한 줄 요약만 봅니다. "지금 무엇을 확인해야 하는지"는 이 문서 아래 "현재 확인 필요 항목"을, 재발 방지 교훈 등 기술적으로 알아둘 내용은 "알아두면 좋은 것"을 참고하세요.
 
+- **v0.3.4** — 옹짐꾼님이 PWABuilder로 Android TWA 패키지(.aab/.apk) 생성 완료(Package ID `app.momcal.www`, Signing key New로 생성). 결과물 확인(서명 정상) 후 `.well-known/assetlinks.json`(PWABuilder가 SHA-256 지문까지 채워서 생성해줌)을 프로젝트에 추가. 서명 키(keystore)와 비밀번호는 민감정보라 저장소엔 안 넣고 옹짐꾼님이 직접 백업하도록 안내함 — 자세한 내용은 CHANGELOG.md 및 `docs/product-specs/play-store-launch.md` 참고
 - **v0.3.3** — 플레이스토어 출시 준비 시작. 옹짐꾼님이 PWABuilder(momcal.app 분석)로 나온 경고 확인 요청 → `manifest.json`에 `id`·`categories` 필드 추가(선택 필드, 기존 동작 영향 없음), "서비스워커 없음" 경고는 `js/app.js`의 `window.addEventListener('load', ...)` 타이밍 때문에 크롤러가 못 잡은 오탐으로 확인(코드는 안 건드림). 플레이스토어 출시 가이드 문서(`docs/product-specs/play-store-launch.md`) 신규 작성 — 2026년 4월에 새로 생긴 "Android 개발자 인증" 절차 등 최신 정책 반영 — 자세한 내용은 CHANGELOG.md 참고
 - **v0.3.2** — 옹짐꾼님이 전달한 "태아 크기 비교 과일" 이미지 10종으로 임신 체크(`preg_w04`~`preg_w36`) 카테고리 라벨의 이모지(🫐/🍇/🥝 등)를 교체. 실제 임신 주차별 태아 크기(공개 자료 기준)와 가장 가까운 주수의 과일로 배정(예: 16~19주=avocado는 16주 크기와 정확히 일치). m0~m36·f6~f24와 같은 `growthStageIconImg()`/`applyGrowthStageGender()` 패턴 재사용(`GROWTH_STAGE_FILES`에 9개 항목만 추가). 전달받은 10장 중 melon.png은 카테고리 수(9개)보다 1장 많아 미사용(`icons/pregstage/`에 남겨둠) — 자세한 내용은 CHANGELOG.md 참고
 - **v0.3.1** — 옹짐꾼님 제보로 정부지원 표시/숨김이 임산부용·육아용에서 같이 켜지고 꺼지던 버그 수정(탭 key를 gov_preg/gov_born으로 분리, 레거시 hiddenTabs 마이그레이션 포함). "출산 준비물" 단일 카테고리를 없애고 출산가방·산후조리원·신생아 맞이 준비(임산부용)/여행(외박) 준비물·어린이집 준비·상비약 체크리스트·이유식 준비(육아용) 7개 팩으로 세분화. 임신 주차별 체크리스트에 태아보험·실손보험 등 9개 항목 보강 — 자세한 내용은 CHANGELOG.md 참고
@@ -27,7 +28,6 @@
 - **v0.2.3** — v0.2.2 회귀 버그 수정: 예방접종/발달/이유식 카테고리의 성장 단계 아이콘(`<img>`)이 v0.2.2의 escapeHtml 적용 위치 때문에 글자 그대로 깨져 보이던 문제. 이스케이프 위치를 렌더링 시점 3곳 → `getCats()`의 커스텀 체크리스트 분기 한 곳으로 이동해서 해결(신뢰 가능한 개발자 HTML과 사용자 입력을 같은 필드에서 다룰 땐 "출처를 아는 한 곳"에서만 이스케이프할 것 — 자세한 내용은 CHANGELOG.md v0.2.3 참고)
 - **v0.2.2** — 옹짐꾼님 요청으로 모든 `.md` 문서 전수 재검토 + v0.2.1에서 빠졌던 커스텀 체크리스트 이름 이스케이프 5곳 추가 수정. `scripts/check-docs.mjs` 신규(문서-코드 드리프트 자동 점검, 새 세션 시작 시 먼저 실행) — 자세한 내용은 CHANGELOG.md 참고
 - **v0.2.1** — 전체 코드 리뷰 후 발견한 XSS 위험 요소 수정(아이 이름·일정 제목/메모/병원명·체크리스트 커스텀 항목이 이스케이프 없이 innerHTML에 삽입되던 자리들) — `js/utils.js`에 공용 `escapeHtml()` 신설, 중복 로컬 함수 정리(`js/checklistSettings.js`)
-- **v0.2.0** — Google AdSense 사이트 심사 신청(자동 광고 스크립트 `index.html`에 삽입 + `ads.txt` 추가, 콘솔에서 자동 광고 사이트 전체 적용·검토 요청) — 퍼블리셔 ID `ca-pub-7510574343759724`, 승인 대기 중(자세한 내용은 `docs/product-specs/monetization.md` 참고)
 
 ### momcal.vercel.app 서비스워커 이슈 — "지금 방식 유지"로 결정됨
 momcal.vercel.app 접속자가 거의 없어서, 301 리다이렉트(momcal.vercel.app → momcal.app)는 그대로 유지하기로 결정. 참고로 momcal.vercel.app에 예전에 설치된 서비스워커는 리다이렉트 때문에 더 이상 자체 업데이트를 받을 수 없어 영구적으로 예전 버전에 머무름 — 코드로 고칠 수 없고 해당 사용자가 브라우저 사이트 데이터를 지워야만 해결됨. 감수하기로 함.
@@ -72,14 +72,15 @@ momcal.vercel.app 접속자가 거의 없어서, 301 리다이렉트(momcal.verc
 
 ## 현재 확인 필요 항목
 
-### v0.3.3 (이번 버전 — 플레이스토어 출시 준비 시작)
-- [ ] `manifest.json`을 배포한 뒤 PWABuilder(https://www.pwabuilder.com)에서 momcal.app을 다시 분석해서 "id 없음"/"categories 없음" 경고가 사라졌는지 확인
-- [ ] 기존 홈 화면 설치(PWA)가 여전히 정상 동작하는지 확인(manifest.json 필드 추가만 했지만, 혹시 모르니 설치 후 아이콘·이름 표시 재확인)
-- [ ] 화면 최하단 버전 표시가 "v0.3.3"으로 보이는지 확인(앱 본체 + 육아정보 페이지 양쪽)
+### v0.3.4 (이번 버전 — Android TWA 패키지 생성 + Digital Asset Links 배포)
+- [ ] **(중요, 옹짐꾼님)** `signing.keystore`·`signing-key-info.txt`를 최소 2곳에 백업했는지 확인(이 저장소엔 안 들어있음 — Claude가 못 챙겨주는 부분, 잃어버리면 이 앱을 다시는 업데이트 못 함)
+- [ ] 배포 후 `https://momcal.app/.well-known/assetlinks.json`에 접속해서 JSON이 그대로 보이는지 확인(리다이렉트되거나 404면 Claude에게 알릴 것 — `vercel.json` 규칙 추가 필요할 수 있음)
+- [ ] 받은 `.apk` 파일을 실제 안드로이드 폰에 설치해서 정상 실행되는지 확인(assetlinks.json 배포 전이라 주소창이 살짝 보일 수 있음 — 정상)
+- [ ] 화면 최하단 버전 표시가 "v0.3.4"로 보이는지 확인(앱 본체 + 육아정보 페이지 양쪽)
 - [ ] `node scripts/check-docs.mjs` 실행 결과가 "문서-코드 불일치 없음"으로 나오는지 확인
 
-### 지난 버전 (v0.3.2 — 임신 주차별 카테고리 이모지 → 이미지 교체)
-- [ ] 체크리스트 탭 → 임산부용 아이 선택 → "임신 체크" 탭에서 4~7주부터 36~40주까지 9개 카테고리 라벨에 이모지 대신 과일 이미지가 보이는지 확인
+### 지난 버전 (v0.3.3 — 플레이스토어 출시 준비 시작)
+- [ ] `manifest.json`을 배포한 뒤 PWABuilder에서 momcal.app을 다시 분석해서 "id 없음"/"categories 없음" 경고가 사라졌는지 확인
 
 ---
 

@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "app.momcal.www",
+        "sha256_cert_fingerprints": ["60:4A:85:13:CA:1A:F9:05:9F:CA:12:F0:54:39:13:C6:26:95:AC:A6:81:70:75:E8:3C:AC:59:70:16:FB:8A:AB"]
+      }
+    }]
