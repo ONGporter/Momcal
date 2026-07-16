@@ -51,6 +51,20 @@ check('버전 일치', () => {
   if (footerV && clV && footerV !== clV) {
     fail(`버전 불일치: index.html(${footerV}) ≠ CHANGELOG.md 최신 항목(${clV})`);
   }
+
+  // v0.3.11: privacy.html/terms.html/contact.html도 index.html과 똑같은
+  // .site-footer-version을 갖고 있는 독립 정적 페이지인데, 지금까지 버전 동기화
+  // 루틴(위 index.html/build-guide.mjs/CHANGELOG.md 3곳) 대상에서 빠져있어서
+  // v0.0.28에서 40여 버전째 방치된 채 발견됨(옹짐꾼님 제보, 2026-07-16) — 재발
+  // 방지를 위해 여기서도 함께 검사
+  if (footerV) {
+    for (const f of ['privacy.html', 'terms.html', 'contact.html']) {
+      const pageM = read(f).match(/site-footer-version[^>]*>[^v]*(v[\d.]+)/);
+      const pageV = pageM?.[1];
+      if (!pageV) fail(`${f}에서 .site-footer-version 버전을 못 찾음`);
+      else if (pageV !== footerV) fail(`버전 불일치: index.html(${footerV}) ≠ ${f}(${pageV})`);
+    }
+  }
 });
 
 // ── 2. CHANGELOG.md 버전 헤더가 이어지는가 (세션 규칙 기준) ──
