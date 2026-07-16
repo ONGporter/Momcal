@@ -18,6 +18,8 @@
 
 자세한 변경 내용은 CHANGELOG.md에 버전별로 다 있으니 여기선 한 줄 요약만 봅니다. "지금 무엇을 확인해야 하는지"는 이 문서 아래 "현재 확인 필요 항목"을, 재발 방지 교훈 등 기술적으로 알아둘 내용은 "알아두면 좋은 것"을 참고하세요.
 
+- **v0.3.14** — 옹짐꾼님 요청 4가지: (1) 모바일 알림 켜기 시 권한 팝업 최대 3번 뜨던 문제 — `js/push.js`의 `enablePushNotifications()`가 이미 승인된 권한을 다시 확인/재요청하던 경합 상태 제거(`alreadyGranted` 플래그 추가), (2)(3)(4) `js/familyShare.js` 전면 개편 — "배우자와 함께 쓰기" 카드 제거, "가족 그룹으로 공유"의 "(베타)" 표기 제거, "초대장 보내기" 버튼 신규(초대 코드 포함 문구를 Web Share API/클립보드로 전달) — 자세한 내용은 CHANGELOG.md 참고
+- **v0.3.13** — v0.3.12 배포 후에도 "PC에서 똑같이 안 된다"는 재제보(모바일은 됨, 시크릿 창은 됨) → `sw.js`의 fetch 전략이 stale-while-revalidate라 배포 직후 첫 새로고침엔 항상 예전 캐시가 먼저 뜨는 구조적 문제였음을 발견. HTML/JS/CSS를 network-first로 전환해서 근본 해결(아이콘·폰트는 기존 캐시 우선 유지) — v0.3.9의 "편집 버튼 안 보임" 제보도 같은 원인이었을 가능성 높음. 자세한 내용은 CHANGELOG.md 참고
 - **v0.3.12** — 옹짐꾼님이 "설정 탭이 전부 안 눌린다"고 제보 → 실제 원인은 `js/familyShare.js`의 `createFamilyGroup()`/`joinFamilyGroup()`이 실패했을 때 `cm()`(모달 닫기) 없이 `alert()`만 띄우던 버그 — `.mo` 모달 오버레이가 화면 전체(`position:fixed;inset:0;z-index:500`)를 덮어서, 안 닫히면 앱 전체가 클릭이 안 먹는 것처럼 보임. 두 함수의 catch 블록에 `cm()` 추가해서 수정. 조사 과정에서 `families/{familyId}` Firestore 보안 규칙은 이미 2026-07-10에 옹짐꾼님이 콘솔에서 직접 추가해두신 걸 확인함(제가 "아직 안 됐을 것"이라고 잘못 추측했었음) — 자세한 내용은 CHANGELOG.md 참고
 - **v0.3.11** — 옹짐꾼님 제보로 `privacy.html`/`terms.html`/`contact.html`의 버전 표시가 v0.0.28에서 40여 버전째 멈춰있던 걸 발견·수정. 원인은 이 3개 파일이 애초에 "버전 올릴 때 5곳 동시 업데이트" 루틴 대상에서 빠져있었던 것 — `node scripts/check-docs.mjs`와 `AGENTS.md` 체크리스트 3곳에 재발 방지 검사 추가. 자세한 내용은 CHANGELOG.md 참고
 - **v0.3.10** — 옹짐꾼님 질문("소셜 로그인이면 개인정보 동의 안 받아도 되나?")을 계기로 `privacy.html` 점검 → 카카오 로그인 수집 항목이 통째로 빠져있던 걸 발견해 보완(닉네임=필수, 프로필 사진=선택, 이메일 미수집 — Kakao Developers 실제 설정과 일치). 플레이스토어 5단계(개발자 계정 신원 확인) 완료 반영, 6단계(Android 개발자 인증) 진행 가이드 갱신(`docs/product-specs/play-store-launch.md`) — 옹짐꾼님이 전달한 앱 아이콘은 기존 `icons/icon-512.png`와 동일 파일이라 이미 요건 충족 확인. 자세한 내용은 CHANGELOG.md 참고
@@ -26,8 +28,6 @@
 - **v0.3.7** — 카카오 로그인 실제 테스트 중 `Kakao.Auth.login()`이 현재 SDK 버전엔 없다는 게 콘솔 에러로 확인됨(v0.3.5에서 예전 문서 기준으로 잘못 만든 것) — `Kakao.Auth.authorize()` 리다이렉트 방식으로 전면 재구현(`js/auth.js`·`js/app.js`·`functions/index.js`). REST API 키(JavaScript 키와 다른 값)로 인가 코드를 access token 교환하는 방식이라 Firebase Secret(`KAKAO_REST_API_KEY`) 신규 필요, Kakao Developers에 Redirect URI(`https://momcal.app/`) 등록도 필요. **옹짐꾼님이 아직 해야 할 일**: REST API 키 발급 → Redirect URI 등록 → `firebase functions:secrets:set KAKAO_REST_API_KEY` → 재배포 — 자세한 내용은 CHANGELOG.md 및 `docs/product-specs/kakao-login.md` 참고
 - **v0.3.6** — 옹짐꾼님이 발급받은 Kakao JavaScript 키(`c587...`)를 `js/auth.js`의 `KAKAO_JS_KEY`에 반영(placeholder → 실제 값). 아직 Cloud Functions 배포 전이라 실제 로그인은 안 됨(옹짐꾼님이 `cd functions && npm run deploy` 실행해야 함) — 자세한 내용은 CHANGELOG.md 참고
 - **v0.3.5** — 옹짐꾼님 요청으로 카카오 로그인 추가(한국 사용자 대상이라 가입 장벽 낮추기 목적). Kakao JS SDK 팝업 로그인 → Cloud Function `kakaoLogin`이 access token 검증 후 Firebase 커스텀 토큰 발급 → signInWithCustomToken()으로 로그인 완료. uid는 `kakao:{회원번호}` 별도 네임스페이스, 이메일은 의도적으로 미수집(기존 계정과 유니크 키 충돌 방지 — 대신 계정 자동 연결도 안 됨, 알려진 제약으로 문서화). **옹짐꾼님이 아직 해야 할 일**: Kakao Developers에서 JavaScript 키 발급받아 `js/auth.js`의 `KAKAO_JS_KEY`에 반영 + `functions/` 배포 — 둘 다 안 하면 로그인 버튼이 동작 안 함. 자세한 내용은 CHANGELOG.md 및 `docs/product-specs/kakao-login.md` 참고
-- **v0.3.4** — 옹짐꾼님이 PWABuilder로 Android TWA 패키지(.aab/.apk) 생성 완료(Package ID `app.momcal.www`, Signing key New로 생성). 결과물 확인(서명 정상) 후 `.well-known/assetlinks.json`(PWABuilder가 SHA-256 지문까지 채워서 생성해줌)을 프로젝트에 추가. 서명 키(keystore)와 비밀번호는 민감정보라 저장소엔 안 넣고 옹짐꾼님이 직접 백업하도록 안내함 — 자세한 내용은 CHANGELOG.md 및 `docs/product-specs/play-store-launch.md` 참고
-- **v0.3.3** — 플레이스토어 출시 준비 시작. 옹짐꾼님이 PWABuilder(momcal.app 분석)로 나온 경고 확인 요청 → `manifest.json`에 `id`·`categories` 필드 추가(선택 필드, 기존 동작 영향 없음), "서비스워커 없음" 경고는 `js/app.js`의 `window.addEventListener('load', ...)` 타이밍 때문에 크롤러가 못 잡은 오탐으로 확인(코드는 안 건드림). 플레이스토어 출시 가이드 문서(`docs/product-specs/play-store-launch.md`) 신규 작성 — 2026년 4월에 새로 생긴 "Android 개발자 인증" 절차 등 최신 정책 반영 — 자세한 내용은 CHANGELOG.md 참고
 
 ### momcal.vercel.app 서비스워커 이슈 — "지금 방식 유지"로 결정됨
 momcal.vercel.app 접속자가 거의 없어서, 301 리다이렉트(momcal.vercel.app → momcal.app)는 그대로 유지하기로 결정. 참고로 momcal.vercel.app에 예전에 설치된 서비스워커는 리다이렉트 때문에 더 이상 자체 업데이트를 받을 수 없어 영구적으로 예전 버전에 머무름 — 코드로 고칠 수 없고 해당 사용자가 브라우저 사이트 데이터를 지워야만 해결됨. 감수하기로 함.
@@ -77,14 +77,15 @@ momcal.vercel.app 접속자가 거의 없어서, 301 리다이렉트(momcal.verc
 
 ## 현재 확인 필요 항목
 
-### v0.3.12 (이번 버전 — 가족 그룹 생성/참여 실패 시 모달 안 닫히던 버그 수정)
-- [ ] 설정 탭 → "가족 그룹으로 공유(베타)" → **일부러 잘못된 초대 코드**로 "코드로 참여하기" 시도 → 실패 alert 뜬 뒤 **모달이 잘 닫히고 화면 조작이 다시 되는지** 확인
-- [ ] (참고용, 급하지 않음) "새 가족 그룹 만들기"가 실제로 성공하는지도 한 번 확인해보면 좋음 — 규칙 자체는 정상 확인됐으니 될 가능성 높음
+### v0.3.14 (이번 버전 — 알림 권한 팝업 중복 제거 + 가족 그룹 공유 UI 개편)
+- [ ] **(중요)** 모바일에서 알림 켜기 시도 → 권한 팝업이 **한 번만** 뜨고, 허용하면 바로 "알림 켜짐"으로 표시되는지 확인(이전엔 3번까지 뜨고 그래도 안 켜졌음 — 완전히 해결 안 됐으면 바로 알려주시면 원격 디버깅으로 더 파볼게요)
+- [ ] 설정 탭에서 "배우자와 함께 쓰기" 카드가 사라지고 "가족 그룹으로 공유"만 남아있는지, "(베타)" 표기도 없어졌는지 확인
+- [ ] 가족 그룹에 속한 상태에서 "초대장 보내기" 버튼 눌러서 공유 시트(또는 클립보드 복사 안내)가 뜨는지, 복사된 문구에 실제 초대 코드가 들어있는지 확인
 - [ ] `node scripts/check-docs.mjs` 실행 결과가 "문서-코드 불일치 없음"으로 나오는지 확인
 - [ ] **(옹짐꾼님, 계속 진행 중)** Play Console 스토어 등록정보(7단계) 작성 — `docs/product-specs/play-store-launch.md` 참고
 
-### 지난 버전 (v0.3.11 — privacy/terms/contact 버전 표시 방치 발견·수정)
-- [x] `privacy.html`/`terms.html`/`contact.html` 버전 표시 정상화 확인 완료(v0.3.12에서 이어서 버전 갱신 잘 되는 것으로 재확인됨)
+### 지난 버전 (v0.3.13 — 서비스워커 캐싱 전략 구조 개선)
+- [x] PC 브라우저에서 새로고침 한 번으로 최신 버전이 바로 뜨는 것 확인 완료(시크릿 창 테스트로 간접 확인됨)
 
 ---
 
@@ -108,4 +109,4 @@ momcal.vercel.app 접속자가 거의 없어서, 301 리다이렉트(momcal.verc
 
 > 발견된 버그는 여기에 추가하세요.
 
-- **[조사 중]** v0.3.9에서 체크리스트 "편집" 버튼·안내 문구를 "아이:" 선택 행으로 옮겼는데, 옹짐꾼님이 배포 후 "전혀 안 보인다"고 제보(2026-07-16). 코드 리뷰상으로는 문제를 못 찾았고 배포/서비스워커 캐시 문제일 가능성을 안내한 상태 — v0.3.10 배포 후에도 재현되면 우선순위 높여서 조사할 것(자세한 내용은 위 "현재 확인 필요 항목" > "지난 버전" 참고)
+- **[해명됨, v0.3.13에서 근본 수정]** v0.3.9에서 체크리스트 "편집" 버튼·안내 문구를 "아이:" 선택 행으로 옮겼는데, 옹짐꾼님이 배포 후 "전혀 안 보인다"고 제보(2026-07-16) → 당시엔 원인 특정을 못 했는데, v0.3.13에서 서비스워커가 stale-while-revalidate 방식이라 배포 직후 첫 새로고침엔 항상 예전 캐시가 뜨는 구조적 문제를 발견·수정하면서 같은 원인이었을 가능성이 높다고 결론지음(확정 재현 테스트는 못 했지만, v0.3.12의 "PC만 안 됨" 버그와 증상이 동일했음). network-first 전환 이후에도 재현되면 다시 조사할 것

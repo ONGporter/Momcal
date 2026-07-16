@@ -53,11 +53,23 @@ async function getMessagingSafe() {
 /** 버튼 클릭 — 알림 권한 요청 + FCM 토큰 발급 + Firestore 저장
  *  v0.0.42: 이 함수는 이제 단독 버튼이 아니라 js/notifications.js의 통합 알림 토글이
  *  로그인 사용자에 대해 자동으로 호출함 — 성공 여부와 무관하게 renderNotificationSettings()로
- *  통합 카드를 다시 그려서 "앱을 꺼도 받을 수 있어요" 문구 반영 여부를 갱신함 */
-export async function enablePushNotifications() {
+ *  통합 카드를 다시 그려서 "앱을 꺼도 받을 수 있어요" 문구 반영 여부를 갱신함
+ *
+ * v0.3.14: js/notifications.js가 이 함수를 부를 땐 항상 Notification.requestPermission()이
+ * 이미 'granted'로 resolve된 직후라, 여기서 Notification.permission을 다시 읽어 재확인하는
+ * 게 원래 목적(중복 요청 방지)이었음. 그런데 일부 모바일 브라우저(특히 Android Chrome)에서는
+ * requestPermission()의 Promise가 resolve된 직후에도 Notification.permission 값이 아주
+ * 짧게 'default'로 읽히는 타이밍 이슈가 있어서, 이 함수가 그걸 다시 'default'로 오판해
+ * Notification.requestPermission()을 또 호출 — 게다가 아래 fetchAndSaveToken()이 부르는
+ * Firebase의 getToken()도 권한이 없다고 판단되면 자체적으로 한 번 더 권한을 요청하는
+ * 동작이 있어서, 이 셋이 겹치면 같은 클릭 한 번에 네이티브 허용 팝업이 여러 번(최대 3번)
+ * 뜨는 문제로 이어졌음(옹짐꾼님 제보, 2026-07-17). 호출 측이 이미 승인된 것을 확실히 아는
+ * 경우 `alreadyGranted=true`로 넘겨서 이 함수가 Notification.permission을 다시 읽지 않고
+ * 곧장 진행하도록 함 — 재요청 경로 자체를 원천 차단 */
+export async function enablePushNotifications(alreadyGranted = false) {
   if (!getCurrentUser() || !('Notification' in window)) return;
 
-  const perm = Notification.permission === 'granted'
+  const perm = alreadyGranted || Notification.permission === 'granted'
     ? 'granted'
     : await Notification.requestPermission();
   if (perm !== 'granted') { window.renderNotificationSettings?.(); return; }

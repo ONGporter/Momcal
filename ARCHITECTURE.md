@@ -97,7 +97,7 @@ momcal/
 | `govSupport.js` | 정부지원 체크리스트 탭 |
 | `growth.js` / `growthChart.js` | 성장 기록 CRUD / 성장그래프(Chart.js)·성장 예측 |
 | `pwaInstall.js` | "어플로 추가" 링크 (설치 프롬프트/iOS 안내) |
-| `familyShare.js` | "배우자와 함께 쓰기" / 가족 그룹 공유 — 설정 탭 |
+| `familyShare.js` | 가족 그룹으로 공유(초대장 보내기 포함) — 설정 탭 |
 | `notifications.js` | 알림 기능 — 로컬 알림("앱을 열었을 때"만 확인) + 설정 탭 통합 알림 UI(v0.0.42부터 `push.js`의 FCM 등록도 여기서 같이 트리거) |
 | `push.js` | 진짜 FCM 푸시 알림 — 토큰 발급/저장, 포그라운드 수신 (v0.0.36). v0.0.42부터 자체 UI 없음(`notifications.js`가 흡수) — 자세한 구조는 `docs/product-specs/push-notifications.md` |
 | `theme.js` | 다크 모드 토글 — 설정 탭, localStorage 저장, 앱 본체 전용 |

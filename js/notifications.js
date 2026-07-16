@@ -99,7 +99,10 @@ export function toggleNotifications(enable) {
   renderNotificationSettings();
   if (enable) {
     checkAndNotify(true);
-    if (getCurrentUser()) enablePushNotifications(); // 완료되면 내부에서 renderNotificationSettings()를 다시 호출해 문구 갱신
+    // v0.3.14: 이 시점은 Notification.permission이 이미 'granted'인 게 확실한 경로(아래
+    // renderNotificationSettings()의 perm==='granted' 분기에서만 이 토글 버튼이 보임)라
+    // enablePushNotifications()가 권한을 다시 확인/재요청하지 않도록 alreadyGranted=true 전달
+    if (getCurrentUser()) enablePushNotifications(true);
   }
 }
 
@@ -200,7 +203,9 @@ export async function requestNotificationPermission() {
   renderNotificationSettings();
   if (result === 'granted') {
     checkAndNotify(true);
-    if (getCurrentUser()) enablePushNotifications();
+    // v0.3.14: 방금 이 함수 안에서 결과를 직접 확인했으므로(result === 'granted') 확실함 —
+    // alreadyGranted=true로 넘겨 enablePushNotifications()가 다시 확인/재요청하지 않게 함
+    if (getCurrentUser()) enablePushNotifications(true);
   }
 }
 
