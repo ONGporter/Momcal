@@ -2,6 +2,7 @@
   "name": "맘캘 MomCal — 임신부터 육아까지",
   "short_name": "맘캘",
   "description": "임신·출산·육아 일정, 예방접종, 정부지원, 성장 기록을 한 곳에서 관리하는 맘캘 앱",
+  "id": "./",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
@@ -10,6 +11,7 @@
   "theme_color": "#F06292",
   "lang": "ko",
   "dir": "ltr",
+  "categories": ["health", "lifestyle", "parenting"],
   "icons": [
     { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },

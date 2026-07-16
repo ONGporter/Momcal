@@ -8,6 +8,7 @@
 
 | 버전 | 주요 기능 |
 |:---:|------|
+| v0.3.3 | 플레이스토어 출시 준비 중 PWABuilder 분석에서 나온 경고 해소 — `manifest.json`에 `id`·`categories` 필드 추가(선택 항목, 기존 동작 영향 없음). 플레이스토어 출시 가이드 문서(`docs/product-specs/play-store-launch.md`) 신규 작성 |
 | v0.3.2 | 임신 주차별 체크리스트 카테고리 라벨(🫐/🍇/🥝 등)에 남아있던 이모지를 옹짐꾼님이 전달한 "태아 크기 비교 과일" 이미지로 교체(m0~m36·f6~f24와 같은 growthStageIconImg 패턴 재사용) — 앱·육아정보 pregnancy.html 양쪽 반영 |
 | v0.3.1 | 정부지원 표시/숨김이 임산부용·육아용에서 같이 켜지고 꺼지던 버그 수정(탭 key를 gov_preg/gov_born으로 분리, 레거시 데이터 마이그레이션 포함). "출산 준비물" 단일 카테고리를 없애고 출산가방·산후조리원·신생아 맞이 준비(임산부용)와 여행(외박) 준비물·어린이집(유치원) 준비·상비약 체크리스트·이유식 준비(육아용) 7개 팩으로 세분화(guide 페이지 자동 반영). 임신 주차별 체크리스트에 태아보험·실손보험 등 9개 항목 보강 |
 | v0.3.0 | v0.2.5에서 "고쳤다"고 했던 정부지원 항목 삭제 시 추가 모달이 뜨는 버그가 실제로는 안 고쳐졌던 것을 재수정 — 판단 기준을 `#govItemsList` DOM 존재 여부에서 `#modal.open` 클래스 여부로 변경 |
@@ -115,6 +116,13 @@
 | 29 | 폰트 전면 교체(Paperlogy+Pretendard), 캘린더 타임존 버그 수정, 생후 일수 계산 변경, 성장 예측·알림 기능 신규 |
 
 ---
+
+## [v0.3.3] 2026-07-16 — 플레이스토어 출시 준비 시작 (PWABuilder 경고 해소 + 출시 가이드 문서)
+
+- **플레이스토어 출시 가이드 문서 신규 작성**(`docs/product-specs/play-store-launch.md`, `index.md`에 등록) — PWA를 TWA(Trusted Web Activity)로 패키징, 서명 키 관리, Digital Asset Links, 2026년 4월에 새로 생긴 "Android 개발자 인증"(패키지 이름+SHA-256 사전 등록) 절차, 개인 개발자 계정의 비공개 테스트 요건(테스터 12명·14일 연속), 스토어 등록정보·데이터 보안 설문까지 전체 흐름 정리
+- **`manifest.json`에 `id`·`categories` 필드 추가** — PWABuilder(https://www.pwabuilder.com)로 momcal.app을 분석했을 때 나온 경고 2건(`id` 필드 없음, categories 없음) 해소용. 둘 다 선택 필드라 기존 설치·서비스워커 동작에는 영향 없음(`id: "./"`, `categories: ["health", "lifestyle", "parenting"]`)
+- PWABuilder가 "서비스워커가 없다"고 표시한 경고는 오탐으로 확인됨 — `js/app.js`가 `window.addEventListener('load', ...)` 안에서 서비스워커를 등록하는데, PWABuilder 크롤러가 그 타이밍 전에 스캔을 끝내는 것으로 보임. 실제로는 정상 등록·동작 중이라 코드 수정은 하지 않음(필요시 다음에 `load` 대기 없이 즉시 등록하도록 단순화하는 것을 고려할 수 있음, 지금은 요청 범위 밖이라 보류)
+- `node --check`·`python3 -c "json.load(...)"` 통과, `sw.js` `CACHE_NAME` 상향(v77 → v78)
 
 ## [v0.3.2] 2026-07-16 — 임신 주차별 카테고리 이모지 → 이미지 교체
 

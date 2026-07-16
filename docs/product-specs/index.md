@@ -12,5 +12,6 @@
 | [`push-notifications.md`](./push-notifications.md) | 진짜 FCM 푸시 알림 — 토큰 발급/저장/자동갱신, 서비스워커 수신, Cloud Functions 자동 발송 | ✅ 배포·테스트 완료 |
 | [`admin-push.md`](./admin-push.md) | 관리자 전용 푸시 발송(`admin.html`) — 커스텀 클레임 접근 제어, 대상별 발송, 예약 발송, 발송 이력 | 🟡 코드 구현 완료 · Firestore 규칙·관리자 클레임 설정 대기 |
 | [`checklist-customization.md`](./checklist-customization.md) | 체크리스트 커스터마이징 — 준비물형(플랫) 체크리스트, 사용자 정의 체크리스트, 탭 표시/캘린더 연동 설정 | ✅ 코드 완료 · 실기기 확인 대기 |
+| [`play-store-launch.md`](./play-store-launch.md) | 플레이스토어 출시 — PWA를 TWA로 패키징, 서명 키, Android 개발자 인증, 비공개 테스트 요건, 스토어 등록정보 | 🟡 진행 중 — TWA 패키징 단계 |
 
 새 기능을 설계하고 이 목록에 넣을 만한 분량이 생기면, `docs/PROJECT_SPEC.md`에 이어붙이지 말고 여기에 새 파일을 추가하고 이 표에 한 줄을 더하세요.

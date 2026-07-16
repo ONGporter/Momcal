@@ -131,7 +131,9 @@
 // f6~f24와 같은 growthStageIconImg()/applyGrowthStageGender() 재사용(GROWTH_STAGE_FILES에
 // preg_w04~preg_w36 9개 항목 추가, 성별 무관이라 boy/girl에 같은 파일 등록) — 앱·육아정보
 // pregnancy.html 양쪽 다 반영 — icons/pregstage/*.png 신규 정적 파일. 캐시 버전 상향
-const CACHE_NAME = 'momcal-shell-v77';
+// v0.3.3: manifest.json 수정 — id·categories 필드 추가(플레이스토어 출시 준비 중 PWABuilder
+// 분석 경고 해소, 기존 동작에 영향 없는 선택 필드 추가) — 캐시 버전 상향
+const CACHE_NAME = 'momcal-shell-v78';
 
 const APP_SHELL = [
   './',
