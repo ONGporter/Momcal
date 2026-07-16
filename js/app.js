@@ -13,7 +13,7 @@ import { auth, onAuthStateChanged } from './firebase.js';
 import {
   S, applyData, setCurrentUser, subscribeToUserData, unsubscribeUserData, saveState,
 } from './state.js';
-import { showApp } from './auth.js';
+import { showApp, handleKakaoRedirectIfNeeded } from './auth.js';
 import { enterGuestMode, hasGuestData, getGuestData, clearGuestData } from './guestMode.js';
 import { renderHome, renderRegList, renderSettings, gp } from './ui.js';
 import { renderCal, renderStickerPicker } from './calendar.js';
@@ -120,6 +120,12 @@ onAuthStateChanged(auth, (user) => {
     enterGuestMode();
   }
 });
+
+// v0.3.7: 카카오 로그인은 리다이렉트 방식이라, 카카오 로그인 페이지에서 돌아왔을 때
+// (URL에 ?code=...가 붙어서 옴) 로그인을 마무리해야 함 — 앱 시작 시 한 번 확인.
+// onAuthStateChanged 리스너를 먼저 등록해둔 다음에 불러야, 로그인이 완료되는 순간을
+// 놓치지 않고 확실히 잡을 수 있음.
+handleKakaoRedirectIfNeeded();
 
 /* ── PWA 서비스 워커 등록 (Sprint 11: 홈 화면 추가) ── */
 if ('serviceWorker' in navigator) {

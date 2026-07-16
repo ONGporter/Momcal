@@ -142,7 +142,11 @@
 // 교환 방식, docs/product-specs/kakao-login.md 참고) — 캐시 버전 상향
 // v0.3.6: js/auth.js 수정 — 옹짐꾼님이 발급받은 Kakao JavaScript 키를 KAKAO_JS_KEY에 반영
 // (placeholder였던 값을 실제 키로 교체) — 캐시 버전 상향
-const CACHE_NAME = 'momcal-shell-v81';
+// v0.3.7: js/auth.js·js/app.js·functions/index.js 수정 — 카카오 로그인 방식 전면 교체
+// (Kakao.Auth.login()이 실제 SDK 버전엔 없다는 게 콘솔 에러로 확인돼서, Kakao.Auth.authorize()
+// 리다이렉트 방식으로 다시 짬 — REST API 키·Redirect URI·Firebase Secret 필요,
+// docs/product-specs/kakao-login.md 참고) — 캐시 버전 상향
+const CACHE_NAME = 'momcal-shell-v82';
 
 const APP_SHELL = [
   './',

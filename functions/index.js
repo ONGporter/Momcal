@@ -22,6 +22,7 @@ import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { setGlobalOptions } from 'firebase-functions/v2';
+import { defineSecret } from 'firebase-functions/params';
 import { initializeApp } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { getMessaging } from 'firebase-admin/messaging';
@@ -36,6 +37,11 @@ initializeApp();
 const db = getFirestore();
 const messaging = getMessaging();
 const fbAuth = getAuth();
+
+// v0.3.7: 카카오 REST API 키 — kakaoLogin()이 인가 코드를 access token으로 교환할 때 씀
+// (JavaScript 키와는 다른 키, 클라이언트에 노출되면 안 되는 값이라 Secret Manager로 관리함).
+// 배포 전에 `firebase functions:secrets:set KAKAO_REST_API_KEY` 로 값을 등록해둬야 함.
+const kakaoRestApiKey = defineSecret('KAKAO_REST_API_KEY');
 
 // Firestore 리전(asia-northeast3, 서울)과 맞춤 — PROJECT_SPEC.md "Firebase 구조" 참고
 setGlobalOptions({ region: 'asia-northeast3' });
@@ -440,14 +446,21 @@ export const processScheduledBroadcasts = onSchedule(
 
 /**
  * ══════════════════════════════════════
- * 카카오 로그인 (v0.3.5)
+ * 카카오 로그인 (v0.3.5, v0.3.7에서 방식 변경)
  * ══════════════════════════════════════
- * Kakao는 Firebase Auth 기본 제공 provider가 아니라서, 클라이언트가 Kakao SDK로 받은
- * access token을 여기로 보내면 ① 그 토큰이 진짜 유효한지 카카오 서버에 직접 물어보고
- * (kapi.kakao.com/v2/user/me — 이 호출 자체가 토큰 검증 역할을 함, 유효하지 않으면 401),
- * ② 검증된 카카오 회원번호로 Firebase Auth 사용자를 만들거나 갱신하고,
- * ③ 그 사용자로 로그인할 수 있는 Firebase 커스텀 토큰을 발급해서 클라이언트에 돌려준다
- * (클라이언트는 이 토큰으로 signInWithCustomToken() 호출 — js/auth.js의 signInKakao() 참고).
+ * v0.3.7: 클라이언트가 Kakao.Auth.login()(팝업 방식)으로 access token을 직접 받아서 보내는
+ * 방식으로 만들었었는데, 그 함수가 현재 카카오 JS SDK 버전엔 없다는 게 실제 에러로 확인됨
+ * (TypeError: Kakao.Auth.login is not a function) — 지금 SDK가 지원하는 유일한 방식인
+ * Kakao.Auth.authorize()(리다이렉트 방식)로 전면 교체함.
+ *
+ * 흐름: 클라이언트가 Kakao.Auth.authorize()를 부르면 카카오 로그인 페이지로 이동했다가,
+ * 로그인이 끝나면 "?code=인가코드"를 붙여서 우리 앱으로 돌아온다(js/auth.js의
+ * handleKakaoRedirectIfNeeded() 참고). 이 함수는 그 인가 코드(code)를 받아서:
+ * ① kauth.kakao.com/oauth/token에 코드를 보내 access token으로 교환하고(REST API 키 필요 —
+ *    JavaScript 키와 다른 값, Secret Manager로 관리),
+ * ② 그 access token으로 kapi.kakao.com/v2/user/me를 호출해 사용자 정보를 얻고,
+ * ③ 검증된 카카오 회원번호로 Firebase Auth 사용자를 만들거나 갱신하고,
+ * ④ 그 사용자로 로그인할 수 있는 Firebase 커스텀 토큰을 발급해서 클라이언트에 돌려준다.
  *
  * uid는 'kakao:{카카오 회원번호}' 형식으로 별도 네임스페이스를 씀 — 기존 이메일/구글
  * 로그인 사용자의 uid(Firebase가 자동 생성하는 임의 문자열)와 절대 겹치지 않음.
@@ -460,22 +473,46 @@ export const processScheduledBroadcasts = onSchedule(
  * 계정 연결(병합) 기능은 아직 없음, 필요해지면 별도로 설계할 것
  * (docs/product-specs/kakao-login.md 참고).
  */
-export const kakaoLogin = onCall(async (request) => {
-  const kakaoAccessToken = request.data?.accessToken;
-  if (!kakaoAccessToken || typeof kakaoAccessToken !== 'string') {
-    throw new HttpsError('invalid-argument', '카카오 액세스 토큰이 없습니다');
+export const kakaoLogin = onCall({ secrets: [kakaoRestApiKey] }, async (request) => {
+  const code        = request.data?.code;
+  const redirectUri = request.data?.redirectUri;
+  if (!code || !redirectUri) {
+    throw new HttpsError('invalid-argument', '카카오 인가 코드가 없습니다');
   }
 
-  // 1) 카카오 서버에 이 토큰으로 사용자 정보를 요청 — 성공하면 토큰이 유효하다는 뜻
+  // 1) 인가 코드를 access token으로 교환 — redirect_uri는 authorize() 호출 때 쓴 값과
+  //    정확히 같아야 카카오가 유효한 요청으로 인정함
+  let accessToken;
+  try {
+    const tokenResp = await fetch('https://kauth.kakao.com/oauth/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        client_id: kakaoRestApiKey.value(),
+        redirect_uri: redirectUri,
+        code,
+      }),
+    });
+    const tokenData = await tokenResp.json();
+    if (!tokenResp.ok || !tokenData.access_token) {
+      throw new Error(tokenData.error_description || '카카오 토큰 교환 실패');
+    }
+    accessToken = tokenData.access_token;
+  } catch (e) {
+    throw new HttpsError('unauthenticated', '카카오 인증에 실패했습니다');
+  }
+
+  // 2) access token으로 사용자 정보 요청
   let kakaoUser;
   try {
     const resp = await fetch('https://kapi.kakao.com/v2/user/me', {
-      headers: { Authorization: `Bearer ${kakaoAccessToken}` },
+      headers: { Authorization: `Bearer ${accessToken}` },
     });
     if (!resp.ok) throw new Error(`카카오 API 응답 오류: ${resp.status}`);
     kakaoUser = await resp.json();
   } catch (e) {
-    throw new HttpsError('unauthenticated', '카카오 인증에 실패했습니다');
+    throw new HttpsError('unauthenticated', '카카오 사용자 정보를 확인할 수 없습니다');
   }
 
   const kakaoId = kakaoUser?.id;
@@ -486,7 +523,7 @@ export const kakaoLogin = onCall(async (request) => {
   const displayName = profile.nickname || profile.nickName || '카카오 사용자';
   const photoURL = profile.profile_image_url || profile.profile_image || undefined;
 
-  // 2) Firebase Auth 사용자 생성 또는 최신 프로필로 갱신
+  // 3) Firebase Auth 사용자 생성 또는 최신 프로필로 갱신
   const userFields = { displayName, ...(photoURL ? { photoURL } : {}) };
   try {
     await fbAuth.updateUser(uid, userFields);
@@ -498,7 +535,7 @@ export const kakaoLogin = onCall(async (request) => {
     }
   }
 
-  // 3) 이 uid로 로그인 가능한 Firebase 커스텀 토큰 발급
+  // 4) 이 uid로 로그인 가능한 Firebase 커스텀 토큰 발급
   const token = await fbAuth.createCustomToken(uid, { provider: 'kakao' });
   return { token };
 });

@@ -8,6 +8,7 @@
 
 | 버전 | 주요 기능 |
 |:---:|------|
+| v0.3.7 | 카카오 로그인 방식 전면 교체 — 실제 테스트 중 `Kakao.Auth.login()`이 현재 SDK 버전엔 없다는 게 확인돼(`TypeError`), `Kakao.Auth.authorize()` 리다이렉트 방식으로 재구현. REST API 키·Redirect URI 등록·Firebase Secret 설정 필요 |
 | v0.3.6 | 옹짐꾼님이 발급받은 Kakao JavaScript 키를 `js/auth.js`의 `KAKAO_JS_KEY`에 반영(placeholder → 실제 값) — Cloud Functions 배포 후 카카오 로그인 실제 사용 가능 |
 | v0.3.5 | 카카오 로그인 추가 — Kakao JS SDK 팝업 로그인 → Cloud Function(`kakaoLogin`)이 access token 검증 후 Firebase 커스텀 토큰 발급 → `signInWithCustomToken()`으로 로그인 완료. uid는 `kakao:{회원번호}`로 별도 네임스페이스, 이메일은 미수집(계정 충돌 방지) |
 | v0.3.4 | 플레이스토어 출시 진행 — PWABuilder로 Android TWA 패키지(.aab/.apk) 생성 완료(Package ID `app.momcal.www`), `.well-known/assetlinks.json` 추가(Digital Asset Links, TWA 주소창 제거용) |
@@ -119,6 +120,18 @@
 | 29 | 폰트 전면 교체(Paperlogy+Pretendard), 캘린더 타임존 버그 수정, 생후 일수 계산 변경, 성장 예측·알림 기능 신규 |
 
 ---
+
+## [v0.3.7] 2026-07-16 — 카카오 로그인 방식 전면 교체 (authorize 리다이렉트 방식)
+
+- **버그 발견**: Cloud Functions 배포 후 실제로 로그인 테스트했더니 브라우저 콘솔에 `Uncaught TypeError: Kakao.Auth.login is not a function` — v0.3.5에서 참고한 문서(일부 블로그·"advanced-guide")엔 `Kakao.Auth.login()`(팝업 방식)이 남아있었지만, 실제 로드되는 카카오 JS SDK 버전(2.8.0)엔 이 함수가 없었음. 카카오가 실질적으로 `Kakao.Auth.authorize()`(리다이렉트 방식)만 지원하는 쪽으로 정리한 것으로 보임
+- **전면 재구현**:
+  - `js/auth.js`: `signInKakao()`를 `Kakao.Auth.authorize({ redirectUri, scope })` 호출로 교체(페이지가 카카오 로그인 화면으로 이동) — `KAKAO_REDIRECT_URI`를 `https://momcal.app/`로 고정 하드코딩(진입 경로에 따라 동적 경로가 달라질 수 있어 안전하게 고정값 사용). `handleKakaoRedirectIfNeeded()` 신규 — 카카오가 `?code=인가코드`를 붙여서 되돌려주면 그 code를 Cloud Function에 보내 로그인을 마무리함
+  - `js/app.js`: 앱 시작 시(`onAuthStateChanged` 리스너 등록 직후) `handleKakaoRedirectIfNeeded()` 호출하도록 연결
+  - `functions/index.js`: `kakaoLogin`을 `{ accessToken }` 받는 방식에서 `{ code, redirectUri }` 받아 서버에서 `kauth.kakao.com/oauth/token`으로 access token 교환하는 방식으로 재작성 — 이 교환에 **REST API 키**가 필요해서(JavaScript 키와 다른 값, 클라이언트에 노출되면 안 됨) `defineSecret('KAKAO_REST_API_KEY')`로 Firebase Secret Manager에서 관리하도록 신규 추가
+  - 이전에 콘솔 에러가 화면에 안 찍히고 조용히 "로그인 실패" 메시지로만 삼켜지던 것도 함께 고침(`console.error()` 추가) — 다음에 비슷한 문제가 생기면 원인 파악이 더 쉬워짐
+- `docs/product-specs/kakao-login.md` 전면 재작성 — "왜 방식을 바꿨는지"와 "외부 SDK는 문서보다 실제 로드된 버전을 확인할 것"이라는 교훈을 기록해둠. Kakao 키 2종(JavaScript 키 vs REST API 키)의 용도 차이를 표로 명확히 구분
+- **옹짐꾼님이 새로 해야 할 일**(이전 안내와 달라짐): REST API 키 복사, Kakao Developers에 Redirect URI(`https://momcal.app/`) 등록, `firebase functions:secrets:set KAKAO_REST_API_KEY`로 Secret 설정, 재배포 — 자세한 순서는 `docs/product-specs/kakao-login.md` 참고
+- `node --check`로 수정한 파일 전체 구문 검사 통과, `sw.js` `CACHE_NAME` 상향(v81 → v82)
 
 ## [v0.3.6] 2026-07-16 — Kakao JavaScript 키 반영
 

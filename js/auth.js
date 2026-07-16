@@ -11,49 +11,70 @@ import {
 import { S } from './state.js';
 
 /**
- * v0.3.5: 카카오 로그인 — Kakao는 Firebase Auth 기본 제공 provider가 아니라서,
- * ① Kakao JS SDK로 access token을 받고 → ② Cloud Function(kakaoLogin, functions/index.js)에
- * 보내서 그 토큰을 검증하고 → ③ Firebase 커스텀 토큰을 발급받아 → ④ signInWithCustomToken()으로
- * 로그인을 완료하는 4단계 다리를 놔야 함. 로그인 화면 자체는 기존 signInGoogle()과 UX가
- * 동일하도록 맞춤(버튼 누르면 팝업 → 완료).
+ * v0.3.7: Kakao.Auth.login()(팝업 방식)이 현재 SDK 버전(2.8.0)에 없다는 게 실제 콘솔 에러로
+ * 확인됨(TypeError: Kakao.Auth.login is not a function) — v0.3.5에서 예전 문서를 믿고 만든
+ * 게 틀렸음. 지금 카카오 JS SDK가 지원하는 유일한 방식은 Kakao.Auth.authorize()(리다이렉트
+ * 방식)라, 로그인 흐름 전체를 이걸로 바꿈:
+ *   1) signInKakao() — Kakao.Auth.authorize() 호출 → 브라우저가 카카오 로그인 페이지로 이동
+ *   2) 로그인 완료되면 카카오가 KAKAO_REDIRECT_URI로 "?code=인가코드"를 붙여서 되돌려줌
+ *   3) 앱이 다시 로드되면서 handleKakaoRedirectIfNeeded()가 그 code를 발견 → Cloud Function에
+ *      보내 access token으로 교환(서버에서 REST API 키로 처리, functions/index.js 참고) →
+ *      Firebase 커스텀 토큰 발급 → signInWithCustomToken()으로 로그인 완료
+ * Google처럼 팝업으로 끝나는 방식이 아니라 페이지가 한 번 이동했다 돌아오는 방식이라 UX가
+ * 살짝 다름(로딩이 한 번 더 보임) — 대신 지금 SDK에서 실제로 동작하는 유일한 방식임.
  *
- * ⚠️ 카카오 계정에 이메일 동의항목을 안 받기로 했음(개인 개발자 앱은 이메일 제공이 기본
- * 막혀있어서) — 그래서 카카오로 로그인한 사용자는 Firebase Auth의 email 필드가 비어있음.
- * uid는 'kakao:{카카오 회원번호}'로 별도 네임스페이스를 씀 — 같은 사람이 이메일 계정과
- * 카카오 계정을 각각 만들면 서로 다른 두 계정으로 분리됨(계정 연결/병합 기능은 아직 없음,
- * 필요해지면 별도로 설계할 것 — docs/product-specs/kakao-login.md 참고).
+ * ⚠️ KAKAO_REDIRECT_URI는 Kakao Developers의 "카카오 로그인 > Redirect URI"에 등록한 값과
+ * 정확히 똑같아야 함(한 글자라도 다르면 카카오가 거부함) — 등록 안 돼있으면 로그인 페이지
+ * 이동 자체가 에러로 막힘.
  */
 const KAKAO_JS_KEY = 'c587496d93376a2b32061d18fb0a3e9b'; // Kakao Developers에서 발급받은 JavaScript 키(v0.3.6)
+const KAKAO_REDIRECT_URI = 'https://momcal.app/'; // Kakao Developers "Redirect URI"에 이 값 그대로 등록 필요
 
 function ensureKakaoInit() {
   if (!window.Kakao) throw new Error('카카오 SDK가 로드되지 않았어요');
   if (!window.Kakao.isInitialized()) window.Kakao.init(KAKAO_JS_KEY);
 }
 
-/* ── 카카오 로그인 ── */
-export async function signInKakao() {
-  const loader = document.getElementById('authLoading');
-  const errEl  = document.getElementById('authErr');
-  errEl.textContent = '';
-  loader.style.display = 'block';
+/* ── 카카오 로그인 시작 — 버튼 클릭 시 카카오 로그인 페이지로 이동 ── */
+export function signInKakao() {
   try {
     ensureKakaoInit();
-    // 1) 카카오 팝업으로 access token 발급 (Kakao.Auth.login은 팝업 방식 — Kakao.Auth.authorize의
-    //    리다이렉트 방식과 달리 페이지 이동이 없어서, 번들러·라우터 없는 이 SPA 구조에 훨씬 잘 맞음)
-    const kakaoAuthObj = await new Promise((resolve, reject) => {
-      window.Kakao.Auth.login({ success: resolve, fail: reject });
-    });
-    // 2) 그 access token으로 Cloud Function 호출 → Firebase 커스텀 토큰 발급
-    const kakaoLogin = httpsCallable(functionsApp, 'kakaoLogin');
-    const result = await kakaoLogin({ accessToken: kakaoAuthObj.access_token });
-    // 3) 커스텀 토큰으로 실제 Firebase 로그인 완료
+  } catch (e) {
+    document.getElementById('authErr').textContent = '카카오 로그인을 사용할 수 없어요';
+    return;
+  }
+  window.Kakao.Auth.authorize({
+    redirectUri: KAKAO_REDIRECT_URI,
+    scope: 'profile_nickname,profile_image',
+  });
+}
+
+/**
+ * 카카오 로그인 페이지에서 돌아왔을 때(URL에 ?code=... 붙어서 옴) 로그인을 마무리함 —
+ * js/app.js가 앱 시작 시 한 번 호출함. code가 없으면(카카오 로그인을 거치지 않은 일반
+ * 방문) 아무 일도 안 하고 조용히 리턴.
+ */
+export async function handleKakaoRedirectIfNeeded() {
+  const params = new URLSearchParams(location.search);
+  const code  = params.get('code');
+  const error = params.get('error'); // 사용자가 카카오 로그인 화면에서 취소한 경우 등
+  if (!code && !error) return;
+  history.replaceState(null, '', location.pathname); // 새로고침해도 code가 재사용되지 않도록 URL 정리
+  if (error) return; // 취소는 조용히 무시(Google 팝업 취소와 동일하게 처리)
+
+  const loader = document.getElementById('authLoading');
+  if (loader) loader.style.display = 'block';
+  try {
+    const kakaoLoginFn = httpsCallable(functionsApp, 'kakaoLogin');
+    const result = await kakaoLoginFn({ code, redirectUri: KAKAO_REDIRECT_URI });
     await signInWithCustomToken(auth, result.data.token);
   } catch (e) {
-    if (e?.error !== 'access_denied') { // 사용자가 취소한 경우엔 에러 메시지 안 띄움(Google 팝업 취소와 동일하게 조용히 무시)
-      errEl.textContent = '카카오 로그인에 실패했어요. 다시 시도해주세요';
-    }
+    console.error('카카오 로그인 실패', e); // v0.3.7: 원인 파악 쉽게 콘솔에도 남김
+    showAuthScreen();
+    const errEl = document.getElementById('authErr');
+    if (errEl) errEl.textContent = '카카오 로그인에 실패했어요. 다시 시도해주세요';
   }
-  loader.style.display = 'none';
+  if (loader) loader.style.display = 'none';
 }
 
 /* ── 로그인/회원가입 탭 전환 ── */

@@ -18,6 +18,7 @@
 
 자세한 변경 내용은 CHANGELOG.md에 버전별로 다 있으니 여기선 한 줄 요약만 봅니다. "지금 무엇을 확인해야 하는지"는 이 문서 아래 "현재 확인 필요 항목"을, 재발 방지 교훈 등 기술적으로 알아둘 내용은 "알아두면 좋은 것"을 참고하세요.
 
+- **v0.3.7** — 카카오 로그인 실제 테스트 중 `Kakao.Auth.login()`이 현재 SDK 버전엔 없다는 게 콘솔 에러로 확인됨(v0.3.5에서 예전 문서 기준으로 잘못 만든 것) — `Kakao.Auth.authorize()` 리다이렉트 방식으로 전면 재구현(`js/auth.js`·`js/app.js`·`functions/index.js`). REST API 키(JavaScript 키와 다른 값)로 인가 코드를 access token 교환하는 방식이라 Firebase Secret(`KAKAO_REST_API_KEY`) 신규 필요, Kakao Developers에 Redirect URI(`https://momcal.app/`) 등록도 필요. **옹짐꾼님이 아직 해야 할 일**: REST API 키 발급 → Redirect URI 등록 → `firebase functions:secrets:set KAKAO_REST_API_KEY` → 재배포 — 자세한 내용은 CHANGELOG.md 및 `docs/product-specs/kakao-login.md` 참고
 - **v0.3.6** — 옹짐꾼님이 발급받은 Kakao JavaScript 키(`c587...`)를 `js/auth.js`의 `KAKAO_JS_KEY`에 반영(placeholder → 실제 값). 아직 Cloud Functions 배포 전이라 실제 로그인은 안 됨(옹짐꾼님이 `cd functions && npm run deploy` 실행해야 함) — 자세한 내용은 CHANGELOG.md 참고
 - **v0.3.5** — 옹짐꾼님 요청으로 카카오 로그인 추가(한국 사용자 대상이라 가입 장벽 낮추기 목적). Kakao JS SDK 팝업 로그인 → Cloud Function `kakaoLogin`이 access token 검증 후 Firebase 커스텀 토큰 발급 → signInWithCustomToken()으로 로그인 완료. uid는 `kakao:{회원번호}` 별도 네임스페이스, 이메일은 의도적으로 미수집(기존 계정과 유니크 키 충돌 방지 — 대신 계정 자동 연결도 안 됨, 알려진 제약으로 문서화). **옹짐꾼님이 아직 해야 할 일**: Kakao Developers에서 JavaScript 키 발급받아 `js/auth.js`의 `KAKAO_JS_KEY`에 반영 + `functions/` 배포 — 둘 다 안 하면 로그인 버튼이 동작 안 함. 자세한 내용은 CHANGELOG.md 및 `docs/product-specs/kakao-login.md` 참고
 - **v0.3.4** — 옹짐꾼님이 PWABuilder로 Android TWA 패키지(.aab/.apk) 생성 완료(Package ID `app.momcal.www`, Signing key New로 생성). 결과물 확인(서명 정상) 후 `.well-known/assetlinks.json`(PWABuilder가 SHA-256 지문까지 채워서 생성해줌)을 프로젝트에 추가. 서명 키(keystore)와 비밀번호는 민감정보라 저장소엔 안 넣고 옹짐꾼님이 직접 백업하도록 안내함 — 자세한 내용은 CHANGELOG.md 및 `docs/product-specs/play-store-launch.md` 참고
@@ -27,7 +28,6 @@
 - **v0.3.0** — v0.2.5에서 "고쳤다"던 정부지원 항목 삭제 시 추가 모달이 뜨는 버그가 실제로는 안 고쳐졌던 것을 재수정(옹짐꾼님 재제보). 원인은 v0.2.5의 판단 기준(`#govItemsList`가 DOM에 있는지)이 "모달이 지금 열려있는지"가 아니라 "세션 중 한 번이라도 열었는지"를 확인하고 있었던 것 — `cm()`이 모달을 닫을 때 `#mB` 내용을 안 지우고 숨기기만 해서 생긴 문제. `#modal.open` 클래스 여부까지 함께 확인하도록 수정(자세한 원인은 아래 "알아두면 좋은 것" 및 CHANGELOG.md 참고)
 - **v0.2.5** — 옹짐꾼님 제보로 정부지원 항목을 체크리스트 탭에서 X로 삭제하면 엉뚱하게 "추가하기" 모달이 뜨던 버그 수정 시도(→ 실제로는 불완전, v0.3.0에서 재수정). 설정 화면·육아정보 허브의 정부지원 "공통" 그룹을 없애고 임산부용/육아용에 각각 통합(표시/숨김+직접추가 편집을 한 행에서). `check-docs.mjs`에 TODO.md 인계노트 10개 초과 자동 감지 체크 추가(추가 직후 정규식 범위 버그로 오탐한 것도 함께 수정) — 자세한 내용은 CHANGELOG.md 참고
 - **v0.2.4** — 옹짐꾼님 요청으로 "출산 준비물" 설정 탭 편집 지원 + 정부지원 탭에 지자체별 지원금 등 사용자 직접 추가 기능 신규(임산부용/육아용 구분). 작업 중 캘린더 월/주간 그리드의 이벤트 제목 이스케이프 누락(기존 "내 일정"에도 영향)과 게스트 모드 저장 목록 누락 필드 3종을 함께 발견·수정 — 자세한 내용은 CHANGELOG.md 참고
-- **v0.2.3** — v0.2.2 회귀 버그 수정: 예방접종/발달/이유식 카테고리의 성장 단계 아이콘(`<img>`)이 v0.2.2의 escapeHtml 적용 위치 때문에 글자 그대로 깨져 보이던 문제. 이스케이프 위치를 렌더링 시점 3곳 → `getCats()`의 커스텀 체크리스트 분기 한 곳으로 이동해서 해결(신뢰 가능한 개발자 HTML과 사용자 입력을 같은 필드에서 다룰 땐 "출처를 아는 한 곳"에서만 이스케이프할 것 — 자세한 내용은 CHANGELOG.md v0.2.3 참고)
 
 ### momcal.vercel.app 서비스워커 이슈 — "지금 방식 유지"로 결정됨
 momcal.vercel.app 접속자가 거의 없어서, 301 리다이렉트(momcal.vercel.app → momcal.app)는 그대로 유지하기로 결정. 참고로 momcal.vercel.app에 예전에 설치된 서비스워커는 리다이렉트 때문에 더 이상 자체 업데이트를 받을 수 없어 영구적으로 예전 버전에 머무름 — 코드로 고칠 수 없고 해당 사용자가 브라우저 사이트 데이터를 지워야만 해결됨. 감수하기로 함.
@@ -72,15 +72,18 @@ momcal.vercel.app 접속자가 거의 없어서, 301 리다이렉트(momcal.verc
 
 ## 현재 확인 필요 항목
 
-### v0.3.6 (이번 버전 — Kakao JavaScript 키 반영)
-- [ ] **(필수, 옹짐꾼님)** `functions/` 배포(`cd functions && npm install && npm run deploy`) — `kakaoLogin` 함수가 배포돼야 실제로 동작함(아직 안 하신 상태로 추정)
-- [ ] 배포 끝난 뒤: 로그인 화면에서 "카카오로 계속하기" 버튼 눌러서 팝업 뜨는지, 로그인 완료 후 홈 화면으로 잘 들어가는지, 닉네임이 화면에 표시되는지 확인
+### v0.3.7 (이번 버전 — 카카오 로그인 방식 전면 교체, authorize 리다이렉트)
+- [ ] **(필수, 옹짐꾼님)** Kakao Developers → 앱 키 → **REST API 키** 복사
+- [ ] **(필수, 옹짐꾼님)** Kakao Developers → 카카오 로그인 → **Redirect URI**에 `https://momcal.app/` 정확히 등록
+- [ ] **(필수, 옹짐꾼님)** `functions` 폴더에서 `firebase functions:secrets:set KAKAO_REST_API_KEY` 실행 → 위에서 복사한 REST API 키 붙여넣기
+- [ ] **(필수, 옹짐꾼님)** `npm run deploy` 재배포
+- [ ] 위 4개 끝난 뒤: 로그인 화면에서 "카카오로 계속하기" 버튼 눌러서 카카오 로그인 페이지로 이동하는지, 로그인 후 momcal.app으로 잘 돌아오는지, 홈 화면 진입·닉네임 표시까지 되는지 확인
 - [ ] 게스트 모드로 데이터 좀 넣어둔 상태에서 카카오로 로그인 → 기존 게스트 데이터가 정상적으로 이전되는지 확인
-- [ ] 화면 최하단 버전 표시가 "v0.3.6"으로 보이는지 확인(앱 본체 + 육아정보 페이지 양쪽)
+- [ ] 화면 최하단 버전 표시가 "v0.3.7"로 보이는지 확인(앱 본체 + 육아정보 페이지 양쪽)
 - [ ] `node scripts/check-docs.mjs` 실행 결과가 "문서-코드 불일치 없음"으로 나오는지 확인
 
-### 지난 버전 (v0.3.5 — 카카오 로그인 추가)
-- [ ] Kakao Developers 플랫폼 설정(Web, `https://momcal.app`)·동의항목(닉네임 필수, 프로필사진 선택, 이메일 미설정)이 안내대로 됐는지 재확인
+### 지난 버전 (v0.3.6 — Kakao JavaScript 키 반영)
+- [ ] JavaScript 키(`KAKAO_JS_KEY`)가 실제로 코드에 반영돼서 `Kakao.init()`이 정상 호출되는지(콘솔에 카카오 SDK 관련 초기화 에러가 없는지) 재확인
 
 ---
 
