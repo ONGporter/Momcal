@@ -18,6 +18,7 @@
 
 자세한 변경 내용은 CHANGELOG.md에 버전별로 다 있으니 여기선 한 줄 요약만 봅니다. "지금 무엇을 확인해야 하는지"는 이 문서 아래 "현재 확인 필요 항목"을, 재발 방지 교훈 등 기술적으로 알아둘 내용은 "알아두면 좋은 것"을 참고하세요.
 
+- **v0.3.8** — 실사용 중 카카오 로그인이 401(unauthenticated)로 실패했는데 서버 로그가 뭉뚱그려져 있어 원인 파악이 막힘 → `functions/index.js`의 `kakaoLogin`이 토큰 교환/사용자 조회 실패 시 카카오 응답 상세(error_description, HTTP 상태 등)를 `console.error()`로 남기도록 개선(클라이언트에 보내는 메시지 자체는 그대로 뭉뚱그림) — Firebase 콘솔 Functions 로그에서 실제 원인 확인 가능해짐. 자세한 내용은 CHANGELOG.md 참고
 - **v0.3.7** — 카카오 로그인 실제 테스트 중 `Kakao.Auth.login()`이 현재 SDK 버전엔 없다는 게 콘솔 에러로 확인됨(v0.3.5에서 예전 문서 기준으로 잘못 만든 것) — `Kakao.Auth.authorize()` 리다이렉트 방식으로 전면 재구현(`js/auth.js`·`js/app.js`·`functions/index.js`). REST API 키(JavaScript 키와 다른 값)로 인가 코드를 access token 교환하는 방식이라 Firebase Secret(`KAKAO_REST_API_KEY`) 신규 필요, Kakao Developers에 Redirect URI(`https://momcal.app/`) 등록도 필요. **옹짐꾼님이 아직 해야 할 일**: REST API 키 발급 → Redirect URI 등록 → `firebase functions:secrets:set KAKAO_REST_API_KEY` → 재배포 — 자세한 내용은 CHANGELOG.md 및 `docs/product-specs/kakao-login.md` 참고
 - **v0.3.6** — 옹짐꾼님이 발급받은 Kakao JavaScript 키(`c587...`)를 `js/auth.js`의 `KAKAO_JS_KEY`에 반영(placeholder → 실제 값). 아직 Cloud Functions 배포 전이라 실제 로그인은 안 됨(옹짐꾼님이 `cd functions && npm run deploy` 실행해야 함) — 자세한 내용은 CHANGELOG.md 참고
 - **v0.3.5** — 옹짐꾼님 요청으로 카카오 로그인 추가(한국 사용자 대상이라 가입 장벽 낮추기 목적). Kakao JS SDK 팝업 로그인 → Cloud Function `kakaoLogin`이 access token 검증 후 Firebase 커스텀 토큰 발급 → signInWithCustomToken()으로 로그인 완료. uid는 `kakao:{회원번호}` 별도 네임스페이스, 이메일은 의도적으로 미수집(기존 계정과 유니크 키 충돌 방지 — 대신 계정 자동 연결도 안 됨, 알려진 제약으로 문서화). **옹짐꾼님이 아직 해야 할 일**: Kakao Developers에서 JavaScript 키 발급받아 `js/auth.js`의 `KAKAO_JS_KEY`에 반영 + `functions/` 배포 — 둘 다 안 하면 로그인 버튼이 동작 안 함. 자세한 내용은 CHANGELOG.md 및 `docs/product-specs/kakao-login.md` 참고
@@ -27,13 +28,16 @@
 - **v0.3.1** — 옹짐꾼님 제보로 정부지원 표시/숨김이 임산부용·육아용에서 같이 켜지고 꺼지던 버그 수정(탭 key를 gov_preg/gov_born으로 분리, 레거시 hiddenTabs 마이그레이션 포함). "출산 준비물" 단일 카테고리를 없애고 출산가방·산후조리원·신생아 맞이 준비(임산부용)/여행(외박) 준비물·어린이집 준비·상비약 체크리스트·이유식 준비(육아용) 7개 팩으로 세분화. 임신 주차별 체크리스트에 태아보험·실손보험 등 9개 항목 보강 — 자세한 내용은 CHANGELOG.md 참고
 - **v0.3.0** — v0.2.5에서 "고쳤다"던 정부지원 항목 삭제 시 추가 모달이 뜨는 버그가 실제로는 안 고쳐졌던 것을 재수정(옹짐꾼님 재제보). 원인은 v0.2.5의 판단 기준(`#govItemsList`가 DOM에 있는지)이 "모달이 지금 열려있는지"가 아니라 "세션 중 한 번이라도 열었는지"를 확인하고 있었던 것 — `cm()`이 모달을 닫을 때 `#mB` 내용을 안 지우고 숨기기만 해서 생긴 문제. `#modal.open` 클래스 여부까지 함께 확인하도록 수정(자세한 원인은 아래 "알아두면 좋은 것" 및 CHANGELOG.md 참고)
 - **v0.2.5** — 옹짐꾼님 제보로 정부지원 항목을 체크리스트 탭에서 X로 삭제하면 엉뚱하게 "추가하기" 모달이 뜨던 버그 수정 시도(→ 실제로는 불완전, v0.3.0에서 재수정). 설정 화면·육아정보 허브의 정부지원 "공통" 그룹을 없애고 임산부용/육아용에 각각 통합(표시/숨김+직접추가 편집을 한 행에서). `check-docs.mjs`에 TODO.md 인계노트 10개 초과 자동 감지 체크 추가(추가 직후 정규식 범위 버그로 오탐한 것도 함께 수정) — 자세한 내용은 CHANGELOG.md 참고
-- **v0.2.4** — 옹짐꾼님 요청으로 "출산 준비물" 설정 탭 편집 지원 + 정부지원 탭에 지자체별 지원금 등 사용자 직접 추가 기능 신규(임산부용/육아용 구분). 작업 중 캘린더 월/주간 그리드의 이벤트 제목 이스케이프 누락(기존 "내 일정"에도 영향)과 게스트 모드 저장 목록 누락 필드 3종을 함께 발견·수정 — 자세한 내용은 CHANGELOG.md 참고
 
 ### momcal.vercel.app 서비스워커 이슈 — "지금 방식 유지"로 결정됨
 momcal.vercel.app 접속자가 거의 없어서, 301 리다이렉트(momcal.vercel.app → momcal.app)는 그대로 유지하기로 결정. 참고로 momcal.vercel.app에 예전에 설치된 서비스워커는 리다이렉트 때문에 더 이상 자체 업데이트를 받을 수 없어 영구적으로 예전 버전에 머무름 — 코드로 고칠 수 없고 해당 사용자가 브라우저 사이트 데이터를 지워야만 해결됨. 감수하기로 함.
 
 ### 알아두면 좋은 것
-- **`js/modal.js`의 `cm()`은 모달을 닫을 때 `#modal`의 `open` 클래스만 뗄 뿐 `#mB`(모달 본문) 내용은 지우지 않음(v0.3.0에서 재확인)** — CSS(`.mo.open { display:flex }`)로 안 보이게만 할 뿐, 마지막으로 열렸던 모달의 HTML(입력했던 id들 포함)은 닫은 뒤에도 다른 모달이 `#mB`를 새로 채우기 전까지 DOM에 그대로 남아있음. 그래서 "특정 모달 안 요소(`getElementById`)가 DOM에 있는지"로 "그 모달이 지금 열려있는지"를 판단하면 틀림(v0.2.5의 정부지원 삭제 버그 재발 원인) — 반드시 `document.getElementById('modal')?.classList.contains('open')`처럼 `#modal` 자체의 `open` 클래스도 함께 확인할 것. 근본적으로 `cm()`이 닫을 때 `#mB.innerHTML`도 비우게 고치면 이 클래스의 버그를 원천 차단할 수 있는데, 다른 모달 흐름에 영향이 있을 수 있어 아직 미적용(v0.3.0 시점, 옹짐꾼님 확인 필요)\n- 정식 도메인은 `momcal.app` — `momcal.vercel.app`도 301 리다이렉트로 계속 접속은 가능(단, 서비스워커 이슈로 예전 방문자는 갱신 안 될 수 있음, 감수하기로 결정됨)
+- **카카오 로그인 Redirect URI는 JavaScript 키·REST API 키 양쪽에 각각 등록해야 함(v0.3.7에서 실전으로 확인)** — Kakao Developers 콘솔이 키(JavaScript 키/REST API 키)마다 독립적으로 Redirect URI·도메인 화이트리스트를 관리하는 구조라, REST API 키 쪽에만 등록하면 JavaScript 키를 쓰는 흐름에서 `KOE006`(등록 안 된 리다이렉트 URI) 에러가 남 — 에러 페이지에 나오는 "사용한 리다이렉트 URI" 값이 등록한 값과 글자 그대로 똑같아 보여도 이 문제일 수 있음. 두 키 모두에 동일한 값을 등록할 것(`docs/product-specs/kakao-login.md` 참고)
+- **브라우저 캐시 때문에 배포했는데도 안 고쳐진 것처럼 보일 수 있음** — 이 앱은 서비스워커로 JS 파일을 캐시해서, 배포 직후엔 일반 브라우저 탭에서 예전 코드가 계속 실행될 수 있음. 재현/디버깅 중 "분명 고쳤는데 똑같다"는 보고가 오면 우선 시크릿 모드로 재현되는지부터 확인해서 캐시 문제인지 진짜 코드 문제인지 가려낼 것
+- **외부 SDK 연동은 문서보다 실제 로드된 버전에서 함수가 존재하는지가 우선**(v0.3.7 교훈) — `Kakao.Auth.login()`이 일부 문서·블로그엔 남아있었지만 실제 배포된 SDK 버전(2.8.0)엔 없어서 `TypeError`가 났음. 비슷한 걸 또 붙일 땐 브라우저 콘솔에서 `typeof 대상함수`로 직접 확인하고 시작할 것
+- **`js/modal.js`의 `cm()`은 모달을 닫을 때 `#modal`의 `open` 클래스만 뗄 뿐 `#mB`(모달 본문) 내용은 지우지 않음(v0.3.0에서 재확인)** — CSS(`.mo.open { display:flex }`)로 안 보이게만 할 뿐, 마지막으로 열렸던 모달의 HTML(입력했던 id들 포함)은 닫은 뒤에도 다른 모달이 `#mB`를 새로 채우기 전까지 DOM에 그대로 남아있음. 그래서 "특정 모달 안 요소(`getElementById`)가 DOM에 있는지"로 "그 모달이 지금 열려있는지"를 판단하면 틀림(v0.2.5의 정부지원 삭제 버그 재발 원인) — 반드시 `document.getElementById('modal')?.classList.contains('open')`처럼 `#modal` 자체의 `open` 클래스도 함께 확인할 것. 근본적으로 `cm()`이 닫을 때 `#mB.innerHTML`도 비우게 고치면 이 클래스의 버그를 원천 차단할 수 있는데, 다른 모달 흐름에 영향이 있을 수 있어 아직 미적용(v0.3.0 시점, 옹짐꾼님 확인 필요)
+- 정식 도메인은 `momcal.app` — `momcal.vercel.app`도 301 리다이렉트로 계속 접속은 가능(단, 서비스워커 이슈로 예전 방문자는 갱신 안 될 수 있음, 감수하기로 결정됨)
 - 폰트 2종 체제: 제목/본문/버튼/로고는 "온글잎 박다현체", "정보 글"은 "오뮤 다예쁨체" — 둘 다 `font-weight: normal` 고정
 - 하단 탭: 홈/캘린더/체크리스트/성장/설정 5개, "설정" 탭만 폭이 좁게 디자인됨
 - 체크리스트 실시간 동기화(onSnapshot) 관련 코드를 만질 땐 `js/state.js`의 `subscribeToUserData` 주석 참고 — `hasPendingWrites`로 "내 저장 에코"와 "실제 원격 변경"을 구분해야 화면이 불필요하게 중복 렌더링되지 않음
@@ -72,18 +76,15 @@ momcal.vercel.app 접속자가 거의 없어서, 301 리다이렉트(momcal.verc
 
 ## 현재 확인 필요 항목
 
-### v0.3.7 (이번 버전 — 카카오 로그인 방식 전면 교체, authorize 리다이렉트)
-- [ ] **(필수, 옹짐꾼님)** Kakao Developers → 앱 키 → **REST API 키** 복사
-- [ ] **(필수, 옹짐꾼님)** Kakao Developers → 카카오 로그인 → **Redirect URI**에 `https://momcal.app/` 정확히 등록
-- [ ] **(필수, 옹짐꾼님)** `functions` 폴더에서 `firebase functions:secrets:set KAKAO_REST_API_KEY` 실행 → 위에서 복사한 REST API 키 붙여넣기
-- [ ] **(필수, 옹짐꾼님)** `npm run deploy` 재배포
-- [ ] 위 4개 끝난 뒤: 로그인 화면에서 "카카오로 계속하기" 버튼 눌러서 카카오 로그인 페이지로 이동하는지, 로그인 후 momcal.app으로 잘 돌아오는지, 홈 화면 진입·닉네임 표시까지 되는지 확인
-- [ ] 게스트 모드로 데이터 좀 넣어둔 상태에서 카카오로 로그인 → 기존 게스트 데이터가 정상적으로 이전되는지 확인
-- [ ] 화면 최하단 버전 표시가 "v0.3.7"로 보이는지 확인(앱 본체 + 육아정보 페이지 양쪽)
+### v0.3.8 (이번 버전 — kakaoLogin 에러 로깅 개선) — 카카오 로그인 아직 완전히 안 끝남
+- [ ] **(필수, 옹짐꾼님)** `npm run deploy`로 재배포 후 다시 카카오 로그인 시도 → 또 실패하면 **Firebase 콘솔 → Functions → kakaoLogin → 로그**에서 이번엔 실제 원인(예: `invalid_client`, `KOE237` 등)이 보일 것 — 그 로그 내용 캡처해서 공유
+- [ ] Kakao Developers → REST API 키 → **클라이언트 시크릿** 활성화 여부 확인(ON이면 OFF로 끄는 걸 우선 시도 — v0.3.7 안내 당시 놓쳤을 가능성 있음)
+- [ ] 위 확인 후 로그인 재시도 → 성공하면 게스트 모드 데이터 이전 여부도 함께 확인
+- [ ] 화면 최하단 버전 표시가 "v0.3.8"로 보이는지 확인(앱 본체 + 육아정보 페이지 양쪽)
 - [ ] `node scripts/check-docs.mjs` 실행 결과가 "문서-코드 불일치 없음"으로 나오는지 확인
 
-### 지난 버전 (v0.3.6 — Kakao JavaScript 키 반영)
-- [ ] JavaScript 키(`KAKAO_JS_KEY`)가 실제로 코드에 반영돼서 `Kakao.init()`이 정상 호출되는지(콘솔에 카카오 SDK 관련 초기화 에러가 없는지) 재확인
+### 지난 버전 (v0.3.7 — 카카오 로그인 방식 전면 교체, authorize 리다이렉트)
+- [x] REST API 키 복사, Redirect URI 등록(JavaScript 키에도 등록 필요했음 — "알아두면 좋은 것" 참고), Secret 설정, 재배포까지 완료 — 다만 그 후 401 에러가 새로 발견돼 v0.3.8에서 계속 조사 중
 
 ---
 

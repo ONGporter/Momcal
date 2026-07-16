@@ -146,7 +146,10 @@
 // (Kakao.Auth.login()이 실제 SDK 버전엔 없다는 게 콘솔 에러로 확인돼서, Kakao.Auth.authorize()
 // 리다이렉트 방식으로 다시 짬 — REST API 키·Redirect URI·Firebase Secret 필요,
 // docs/product-specs/kakao-login.md 참고) — 캐시 버전 상향
-const CACHE_NAME = 'momcal-shell-v82';
+// v0.3.8: functions/index.js 수정 — kakaoLogin의 에러 처리 개선, 카카오 토큰 교환/사용자
+// 조회 실패 시 실제 원인을 서버 로그(console.error)에 남기도록 함(이전엔 클라이언트로 보내는
+// 메시지를 뭉뚱그리면서 원인 정보까지 같이 사라져서 디버깅이 오래 걸렸음) — 캐시 버전 상향
+const CACHE_NAME = 'momcal-shell-v83';
 
 const APP_SHELL = [
   './',

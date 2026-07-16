@@ -1,6 +1,6 @@
 # 카카오 로그인
 
-> **상태**: 🟡 코드 구현 완료(v0.3.7, authorize 리다이렉트 방식) · Redirect URI 등록·REST API 키·Firebase Secret 설정 대기
+> **상태**: 🟡 진행 중 — Redirect URI 문제는 해결됐으나 이어서 401(unauthenticated) 에러 발견, 원인 조사 중(v0.3.8에서 서버 로그 상세화)
 > **관련 코드**: `js/auth.js`(`signInKakao()`, `handleKakaoRedirectIfNeeded()`), `js/app.js`(앱 시작 시 리다이렉트 복귀 처리 호출), `js/firebase.js`(Functions SDK), `functions/index.js`(`kakaoLogin`), `index.html`(Kakao SDK 스크립트, 로그인 버튼), `css/auth.css`(`.btn-kakao`)
 
 ## ⚠️ v0.3.5 → v0.3.7: 팝업 방식에서 리다이렉트 방식으로 전면 교체함
@@ -39,6 +39,8 @@ Kakao는 Firebase Auth가 기본 제공하는 로그인 provider(이메일, Goog
 
 `KAKAO_REDIRECT_URI`는 `js/auth.js`에 `https://momcal.app/`로 고정 하드코딩돼 있다(동적으로 `location.origin + location.pathname`을 쓰지 않은 이유: 브라우저 직접 접속/PWA 설치/TWA 등 진입 경로에 따라 실제 경로가 `/`, `/index.html` 등으로 달라질 수 있어서, 하나로 고정하는 게 안전함). **Kakao Developers의 "카카오 로그인 > Redirect URI" 설정에 이 값을 정확히 똑같이 등록해야** 로그인이 동작한다(한 글자라도 다르면 카카오가 리다이렉트 자체를 거부함).
 
+**⚠️ 실전 트러블슈팅 교훈(2026-07-16)**: Redirect URI를 REST API 키 쪽(`[플랫폼 키] > REST API 키 수정`)에만 등록했더니 계속 `KOE006`(등록 안 된 리다이렉트 URI) 에러가 났음 — 에러 페이지의 "왜 에러가 발생하나요?"에 나온 값이 등록한 값과 글자 그대로 똑같았는데도 거부됨. **원인은 JavaScript 키 쪽(`[플랫폼 키] > JavaScript 키 수정`)에도 똑같은 Redirect URI를 별도로 등록해야 했던 것** — 카카오 콘솔이 키(JavaScript 키/REST API 키)마다 각각 독립적으로 Redirect URI·도메인 화이트리스트를 관리하는 구조라, 한쪽에만 등록하면 다른 쪽 흐름에서 거부당함. **두 키 모두에 똑같은 Redirect URI를 등록해야** 정상 동작함. 브라우저 캐시 문제도 겹쳐서 원인 파악이 오래 걸렸음(일반 모드에서 안 되다가 시크릿 모드에서 되는 걸로 캐시 문제 여부를 먼저 가려낸 뒤에야 이 설정 문제를 찾음) — 비슷한 문제가 생기면 ① 시크릿 모드로 캐시 문제부터 배제, ② 에러 페이지의 실제 전달값 확인, ③ 관련된 키 전부(JavaScript 키·REST API 키)에 Redirect URI가 등록됐는지 확인, 순서로 접근할 것.
+
 ## uid 설계 — `kakao:{카카오 회원번호}`
 
 기존 이메일/Google 로그인 사용자는 Firebase가 자동 생성하는 임의의 uid를 쓴다. 카카오 로그인 사용자는 `kakao:{id}` 형식의 uid를 써서 절대 겹치지 않게 분리했다.
@@ -65,7 +67,8 @@ Kakao는 Firebase Auth가 기본 제공하는 로그인 provider(이메일, Goog
 
 ## 다음에 할 일
 
-- [ ] 위 4단계(REST API 키 → Redirect URI 등록 → Secret 설정 → 재배포) 완료 후 실제 로그인 테스트
+- [x] REST API 키 → Redirect URI 등록(JavaScript 키에도 등록 필요했음, 위 교훈 참고) → Secret 설정 → 재배포 완료
+- [ ] **(v0.3.8에서 새로 발견)** 위까지 다 됐는데도 로그인 시 `401 (Unauthorized)` + `카카오 인증에 실패했습니다` 발생 — `functions/index.js`의 에러 로깅을 상세화해뒀으니(v0.3.8), 재배포 후 Firebase 콘솔 Functions 로그에서 실제 원인 확인 필요. 유력 후보: REST API 키의 **클라이언트 시크릿**이 켜져 있는데 `kakaoLogin`이 이를 안 보내는 경우(코드가 `client_secret` 파라미터를 안 보냄) — 꺼져 있는지 확인할 것
 - [ ] 게스트 모드 데이터가 있는 상태에서 카카오로 로그인했을 때, 기존 이메일/Google 로그인과 동일하게 게스트 데이터 이전이 되는지 확인
 - [ ] 플레이스토어 출시 후 TWA(Custom Tabs) 안에서 리다이렉트 로그인이 정상 동작하는지 실기기 확인
 - [ ] (선택) 계정 연결 기능 필요성 재검토

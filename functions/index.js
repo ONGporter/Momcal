@@ -496,6 +496,10 @@ export const kakaoLogin = onCall({ secrets: [kakaoRestApiKey] }, async (request)
     });
     const tokenData = await tokenResp.json();
     if (!tokenResp.ok || !tokenData.access_token) {
+      // v0.3.8: 실제 원인(카카오가 왜 거부했는지)을 서버 로그에 남김 — 이전엔 클라이언트로
+      // 보내는 에러 메시지를 뭉뚱그리면서 이 정보까지 같이 사라져서 디버깅이 오래 걸렸음
+      // (흔한 원인: 클라이언트 시크릿이 켜져있는데 안 보내는 경우 KOE237/invalid_client 등)
+      console.error('카카오 토큰 교환 실패:', JSON.stringify(tokenData));
       throw new Error(tokenData.error_description || '카카오 토큰 교환 실패');
     }
     accessToken = tokenData.access_token;
@@ -509,7 +513,11 @@ export const kakaoLogin = onCall({ secrets: [kakaoRestApiKey] }, async (request)
     const resp = await fetch('https://kapi.kakao.com/v2/user/me', {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
-    if (!resp.ok) throw new Error(`카카오 API 응답 오류: ${resp.status}`);
+    if (!resp.ok) {
+      const errBody = await resp.text().catch(() => '');
+      console.error('카카오 사용자 정보 조회 실패:', resp.status, errBody);
+      throw new Error(`카카오 API 응답 오류: ${resp.status}`);
+    }
     kakaoUser = await resp.json();
   } catch (e) {
     throw new HttpsError('unauthenticated', '카카오 사용자 정보를 확인할 수 없습니다');

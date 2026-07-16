@@ -13,6 +13,6 @@
 | [`admin-push.md`](./admin-push.md) | 관리자 전용 푸시 발송(`admin.html`) — 커스텀 클레임 접근 제어, 대상별 발송, 예약 발송, 발송 이력 | 🟡 코드 구현 완료 · Firestore 규칙·관리자 클레임 설정 대기 |
 | [`checklist-customization.md`](./checklist-customization.md) | 체크리스트 커스터마이징 — 준비물형(플랫) 체크리스트, 사용자 정의 체크리스트, 탭 표시/캘린더 연동 설정 | ✅ 코드 완료 · 실기기 확인 대기 |
 | [`play-store-launch.md`](./play-store-launch.md) | 플레이스토어 출시 — PWA를 TWA로 패키징, 서명 키, Android 개발자 인증, 비공개 테스트 요건, 스토어 등록정보 | 🟡 진행 중 — 1~4단계 완료, 5단계 계정 생성·신원 확인 대기 중 |
-| [`kakao-login.md`](./kakao-login.md) | 카카오 로그인 — Cloud Function으로 Kakao 인가 코드를 Firebase 커스텀 토큰으로 교환(authorize 리다이렉트 방식), uid 네임스페이스 설계, 알려진 제약(이메일 미수집·계정 미연결) | 🟡 코드 구현 완료(v0.3.7) · Redirect URI·REST API 키·Secret 설정 대기 |
+| [`kakao-login.md`](./kakao-login.md) | 카카오 로그인 — Cloud Function으로 Kakao 인가 코드를 Firebase 커스텀 토큰으로 교환(authorize 리다이렉트 방식), uid 네임스페이스 설계, 알려진 제약(이메일 미수집·계정 미연결) | 🟡 진행 중 — 401 에러 원인 조사 중 |
 
 새 기능을 설계하고 이 목록에 넣을 만한 분량이 생기면, `docs/PROJECT_SPEC.md`에 이어붙이지 말고 여기에 새 파일을 추가하고 이 표에 한 줄을 더하세요.

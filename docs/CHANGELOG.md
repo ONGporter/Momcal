@@ -8,6 +8,7 @@
 
 | 버전 | 주요 기능 |
 |:---:|------|
+| v0.3.8 | 실사용 중 카카오 로그인이 401(unauthenticated)로 실패, 서버 로그가 뭉뚱그려져 있어 원인 파악이 안 되던 문제 — `kakaoLogin`의 토큰 교환·사용자 조회 실패 시 실제 원인을 서버 로그에 상세히 남기도록 개선 |
 | v0.3.7 | 카카오 로그인 방식 전면 교체 — 실제 테스트 중 `Kakao.Auth.login()`이 현재 SDK 버전엔 없다는 게 확인돼(`TypeError`), `Kakao.Auth.authorize()` 리다이렉트 방식으로 재구현. REST API 키·Redirect URI 등록·Firebase Secret 설정 필요 |
 | v0.3.6 | 옹짐꾼님이 발급받은 Kakao JavaScript 키를 `js/auth.js`의 `KAKAO_JS_KEY`에 반영(placeholder → 실제 값) — Cloud Functions 배포 후 카카오 로그인 실제 사용 가능 |
 | v0.3.5 | 카카오 로그인 추가 — Kakao JS SDK 팝업 로그인 → Cloud Function(`kakaoLogin`)이 access token 검증 후 Firebase 커스텀 토큰 발급 → `signInWithCustomToken()`으로 로그인 완료. uid는 `kakao:{회원번호}`로 별도 네임스페이스, 이메일은 미수집(계정 충돌 방지) |
@@ -120,6 +121,13 @@
 | 29 | 폰트 전면 교체(Paperlogy+Pretendard), 캘린더 타임존 버그 수정, 생후 일수 계산 변경, 성장 예측·알림 기능 신규 |
 
 ---
+
+## [v0.3.8] 2026-07-16 — kakaoLogin 에러 로깅 개선
+
+- 실제 사용 중 카카오 로그인이 `401 (Unauthorized)`로 실패하고 콘솔엔 `카카오 인증에 실패했습니다`라는 뭉뚱그린 메시지만 뜸 — v0.3.7에서 만든 에러 처리가 실제 원인(카카오 토큰 교환/사용자 조회가 왜 실패했는지)을 서버 로그에도 안 남기고 그냥 삼켜버려서 디버깅이 막힘
+- `functions/index.js`의 `kakaoLogin` 수정 — 토큰 교환 실패 시 카카오가 반환한 응답 전체(`error`, `error_description` 등)를 `console.error()`로 남김, 사용자 정보 조회 실패 시에도 HTTP 상태 코드와 응답 본문을 남김 — Firebase 콘솔의 Functions 로그에서 실제 원인을 바로 확인할 수 있게 됨(예: 클라이언트 시크릿이 켜져 있는데 안 보내서 나는 `invalid_client` 같은 케이스)
+- 클라이언트로 보내는 에러 메시지 자체는 그대로 뭉뚱그려 둠(사용자에게 카카오 내부 에러 코드를 그대로 노출할 필요는 없음) — 서버 로그에만 상세 정보를 남기는 방식으로 균형을 맞춤
+- `node --check` 통과, `sw.js` `CACHE_NAME` 상향(v82 → v83)
 
 ## [v0.3.7] 2026-07-16 — 카카오 로그인 방식 전면 교체 (authorize 리다이렉트 방식)
 
