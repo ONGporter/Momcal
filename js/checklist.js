@@ -112,21 +112,29 @@ function getTier(reqDone, reqTotal, optDone, optTotal) {
  *  이 의미 변경이 기존 저장 데이터에 영향을 주지 않는다.
  */
 
-/** 내장 탭(임신/출산준비물/예방접종/발달/이유식/정부지원) — 항상 존재, key로 표시 여부만 결정됨 */
+/** 내장 탭(임신/예방접종/발달/이유식/정부지원) — 항상 존재, key로 표시 여부만 결정됨
+ *  v0.3.1: 정부지원(gov) 탭은 임신 단계와 육아 단계에 각각 따로 존재하는데(한 아이는 항상 둘 중
+ *  하나만 preg/born), 예전엔 두 단계가 key를 'gov' 하나로 공유해서 설정에서 한쪽을 숨기면
+ *  다른 쪽도 같이 숨겨지는 버그가 있었음(옹짐꾼님 제보) — key를 'gov_preg'/'gov_born'으로
+ *  분리해 hiddenTabs에 독립적으로 저장되게 함(kind는 'gov'로 그대로 둬서 렌더링 분기는
+ *  안 건드림, js/checklistSettings.js·js/state.js의 마이그레이션도 함께 참고)
+ *  v0.3.1: '출산 준비물'(prep, key='preg_prep') 단일 탭을 없애고 '출산가방'·'산후조리원'·
+ *  '신생아 맞이 준비' 등 여러 팩(data/checklist-packs.js, stage:'preg')으로 세분화함
+ *  (옹짐꾼님 요청) — packTabDefs()가 이 팩들을 자동으로 탭에 포함시키므로 여기선 그냥
+ *  삭제만 하면 됨(신규 렌더 코드 불필요) */
 function builtinTabDefs(child) {
   if (!child) return [];
   if (child.stage === 'preg') {
     return [
       { key: 'preg', kind: 'indexed', tabLabel: '<span class="icon icon-sm" translate="no" aria-hidden="true">pregnant_woman</span> 임신 체크' },
-      { key: 'prep', kind: 'indexed', tabLabel: '<span class="icon icon-sm" translate="no" aria-hidden="true">inventory_2</span> 출산 준비물' },
-      { key: 'gov',  kind: 'gov',     tabLabel: '<span class="icon icon-sm" translate="no" aria-hidden="true">account_balance</span> 정부지원' },
+      { key: 'gov_preg', kind: 'gov', tabLabel: '<span class="icon icon-sm" translate="no" aria-hidden="true">account_balance</span> 정부지원' },
     ];
   }
   return [
     { key: 'vax',  kind: 'indexed', tabLabel: '<span class="icon icon-sm" translate="no" aria-hidden="true">vaccines</span> 예방접종' },
     { key: 'dev',  kind: 'indexed', tabLabel: '<span class="icon icon-sm" translate="no" aria-hidden="true">child_care</span> 발달' },
     { key: 'food', kind: 'indexed', tabLabel: '<span class="icon icon-sm" translate="no" aria-hidden="true">restaurant</span> 이유식' },
-    { key: 'gov',  kind: 'gov',     tabLabel: '<span class="icon icon-sm" translate="no" aria-hidden="true">account_balance</span> 정부지원' },
+    { key: 'gov_born', kind: 'gov', tabLabel: '<span class="icon icon-sm" translate="no" aria-hidden="true">account_balance</span> 정부지원' },
   ];
 }
 
@@ -275,7 +283,7 @@ export function getTodayCategoryInfo(child) {
   // v0.0.31: 직접 추가한 항목도 탭별로 나뉘어 저장되므로(getCustomKey 참고), 여기서도
   // 예방접종/발달 각각의 customKey로 조회해서 합쳐야 홈 카드 진행률에서 누락되지 않음.
   const cats = child.stage === 'preg'
-    ? clData.preg.filter(c => c.key !== 'preg_prep')
+    ? clData.preg
     : clData.born_vax.map((vaxCat, i) => {
         const devCat = clData.born_dev[i];
         const catKey = `${child.id}_${vaxCat.key}`;
@@ -397,8 +405,12 @@ export function getCats() {
   const tab = tabDefs[S.clTab || 0];
   if (!tab) return [];
 
-  if (tab.key === 'preg') return clData.preg.filter(c => c.key !== 'preg_prep');
-  if (tab.key === 'prep') return clData.preg.filter(c => c.key === 'preg_prep');
+  // v0.3.1: '출산 준비물'(prep) 탭 폐지로 clData.preg를 그대로 반환(예전엔 preg_prep 카테고리를
+  // 걸러내야 했지만 그 카테고리 자체가 없어져서 더 이상 filter가 필요 없음)
+  // v0.3.2: 주차별 카테고리 라벨(🫐/🍇/🥝 등)을 태아 크기 비교 과일 이미지로 교체 —
+  // vax/dev/food와 동일하게 applyGrowthStageGender()로 처리(임신 단계는 성별이 의미 없어
+  // GROWTH_STAGE_FILES의 preg_w04~preg_w36 항목은 boy/girl에 같은 파일이 등록돼 있음)
+  if (tab.key === 'preg') return applyGrowthStageGender(clData.preg, child.gender);
   // v0.0.30: 육아 체크 탭이 예방접종/발달/이유식/정부지원으로 늘어남
   if (tab.key === 'vax')  return applyGrowthStageGender(clData.born_vax, child.gender);
   if (tab.key === 'dev')  return applyGrowthStageGender(clData.born_dev, child.gender);

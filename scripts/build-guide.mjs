@@ -33,7 +33,7 @@ const GUIDE = join(ROOT, 'guide');
 const SITE  = 'https://momcal.app';
 /* v0.0.2: 앱 본체(index.html 최하단)와 반드시 같은 값으로 유지 — 버전을 올릴 땐 이 값과
    index.html의 .site-footer-version 텍스트를 함께 수정해야 함 (docs/PROJECT_SPEC.md 버전 관리 정책 참고) */
-const APP_VERSION = 'v0.3.0';
+const APP_VERSION = 'v0.3.2';
 
 /* 정부지원 데이터는 {preg, postpartum, parenting} 키의 배열이라 체크리스트와 형태가 달라
    가이드 페이지용 카테고리 배열로 한 번 변환해준다. */
@@ -72,6 +72,15 @@ const bornMergedForGuide = bornMerged.map(cat => {
    넘기는 것뿐, 실제로는 아무 영향 없음(js/utils.js GROWTH_STAGE_FILES 참고).
    검색 인덱스는 원본 clData.food 라벨을 그대로 쓰므로 영향 없음. */
 const foodForGuide = clData.food.map(cat => {
+  const iconHtml = growthStageIconImg(cat.key, 'm', { iconRoot: `${SITE}/icons/` });
+  if (!iconHtml) return cat;
+  return { ...cat, label: cat.label.replace(/^\S+/, iconHtml) };
+});
+
+/* v0.3.2: 임신 주차별(preg_w04~preg_w36) 카테고리도 같은 방식으로 이미지 적용 — 성별 무관이라
+   'm' 인자는 형식상 넘기는 것뿐, 실제로는 아무 영향 없음(js/utils.js GROWTH_STAGE_FILES 참고).
+   검색 인덱스는 원본 clData.preg 라벨을 그대로 쓰므로 영향 없음. */
+const pregForGuide = clData.preg.map(cat => {
   const iconHtml = growthStageIconImg(cat.key, 'm', { iconRoot: `${SITE}/icons/` });
   if (!iconHtml) return cat;
   return { ...cat, label: cat.label.replace(/^\S+/, iconHtml) };
@@ -442,14 +451,14 @@ ${footer()}
 /* ── 1. 임신 가이드 ── */
 const pregHtml = page({
   title: '임신 주차별 체크리스트 총정리 (4주~40주) | 맘캘 MomCal',
-  desc: '임신 4주부터 40주까지 산부인과 검사, 영양제, 출산 준비물을 주차별로 정리했어요. 엽산·철분 복용 시기부터 기형아 검사 일정까지 한눈에 확인하세요.',
+  desc: '임신 4주부터 40주까지 산부인과 검사, 영양제, 태아보험·실손보험 가입 시기를 주차별로 정리했어요. 엽산·철분 복용 시기부터 기형아 검사 일정까지 한눈에 확인하세요.',
   path: '/guide/pregnancy.html',
   heroTitle: '<span class="icon icon-sm" translate="no" aria-hidden="true">pregnant_woman</span> 임신 주차별 체크리스트',
-  heroDesc: '4주부터 40주까지, 꼭 챙겨야 할 검사·영양제·준비물을 주차별로 정리했어요',
-  intro: '임신을 확인한 순간부터 출산까지, 시기별로 꼭 챙겨야 할 것들이 계속 바뀌어요. 아래는 임신 4주부터 40주까지, 그리고 출산 준비물까지 주차별로 정리한 체크리스트예요. 맘캘 앱에 등록하면 이 일정들이 자동으로 캘린더에 채워지고, 체크할 때마다 진행률도 확인할 수 있어요.',
-  cats: clData.preg,
+  heroDesc: '4주부터 40주까지, 꼭 챙겨야 할 검사·영양제·보험 가입 시기를 주차별로 정리했어요',
+  intro: '임신을 확인한 순간부터 출산까지, 시기별로 꼭 챙겨야 할 것들이 계속 바뀌어요. 아래는 임신 4주부터 40주까지 검사·영양제·보험 가입 시기 등을 주차별로 정리한 체크리스트예요(출산가방·산후조리원 같은 준비물은 이벤트 준비 가이드에 따로 정리했어요). 맘캘 앱에 등록하면 이 일정들이 자동으로 캘린더에 채워지고, 체크할 때마다 진행률도 확인할 수 있어요.',
+  cats: pregForGuide,
   ctaText: '이 일정, 캘린더에 자동으로 채워드릴까요?',
-  disclaimer: '이 페이지의 의학·영양 정보는 일반적인 참고용 요약이며, 병원의 공식 안내를 대체하지 않습니다. 개인 건강 상태에 따라 다를 수 있으니 담당 산부인과와 상담해주세요.',
+  disclaimer: '이 페이지의 의학·영양·보험 정보는 일반적인 참고용 요약이며, 병원·보험사의 공식 안내를 대체하지 않습니다. 개인 건강 상태나 보험 가입 가능 여부는 담당 산부인과·보험사와 상담해주세요.',
   questionFn: (it) => `${it.t}, 언제 어떻게 해야 하나요?`,
   answerFn:   (it) => it.dd || it.d || it.t,
 });
@@ -484,28 +493,31 @@ const foodHtml = page({
   answerFn:   (it) => it.dd || it.d || it.t,
 });
 
-/* ── 3-1. 임신 이벤트 준비 가이드 (v0.0.42 신규 — 예방접종 페이지에 섞여있던 걸 분리) ── */
+/* ── 3-1. 임신 이벤트 준비 가이드 (v0.0.42 신규 — 예방접종 페이지에 섞여있던 걸 분리)
+ *  v0.3.1: 출산가방·산후조리원·신생아 맞이 준비 3종 팩 추가로 문구도 함께 갱신 */
 const pregEventsHtml = page({
-  title: '태명 정하기 · 태교여행 준비 가이드 | 맘캘 MomCal',
-  desc: '태명은 어떻게 정하면 좋을지, 태교여행은 언제 가는 게 안전한지 정리했어요. 임신 중 챙기면 좋은 이벤트 준비를 확인하세요.',
+  title: '태명 정하기 · 태교여행 · 출산가방 · 산후조리원 준비 가이드 | 맘캘 MomCal',
+  desc: '태명은 어떻게 정하면 좋을지, 태교여행은 언제 가는 게 안전한지부터 출산가방·산후조리원·신생아 맞이 준비물까지 정리했어요.',
   path: '/guide/pregnancy-events.html',
   heroTitle: '<span class="icon icon-sm" translate="no" aria-hidden="true">favorite</span> 임신 중 이벤트 준비 가이드',
-  heroDesc: '태명 정하기부터 태교여행까지, 임신 중 챙기면 좋은 일들을 정리했어요',
-  intro: '검사·영양제 말고도 임신 기간에 챙기면 즐거운 일들이 있어요. 아래는 태명 정하기, 태교여행 준비처럼 임신 중 이벤트 준비를 정리한 가이드예요.',
+  heroDesc: '태명 정하기부터 출산가방·산후조리원까지, 임신 중 챙기면 좋은 일들을 정리했어요',
+  intro: '검사·영양제 말고도 임신 기간에 챙기면 좋은 일들이 있어요. 아래는 태명 정하기, 태교여행 준비부터 출산가방·산후조리원·신생아 맞이 준비물까지 임신 중 이벤트 준비를 정리한 가이드예요.',
   cats: packCatsPreg,
   ctaText: '태명 정하고 나만의 태교 기록도 맘캘에서 남겨보세요',
   questionFn: (it) => `${it.t}, 어떻게 준비하나요?`,
   answerFn:   (it) => it.dd || it.t,
 });
 
-/* ── 3-2. 육아 이벤트 준비 가이드 (v0.0.42 신규 — 예방접종 페이지에 섞여있던 걸 분리) ── */
+/* ── 3-2. 육아 이벤트 준비 가이드 (v0.0.42 신규 — 예방접종 페이지에 섞여있던 걸 분리)
+ *  v0.3.1: 여행(외박) 준비물·어린이집(유치원) 준비·상비약 체크리스트·이유식 준비 4종 팩 추가로
+ *  문구도 함께 갱신 */
 const parentingEventsHtml = page({
-  title: '외출 준비물 · 100일 · 돌잔치 · 돌사진 준비 가이드 | 맘캘 MomCal',
-  desc: '아기와 외출할 때 챙길 것부터 100일상, 돌잔치, 돌사진까지 시기별로 준비할 것들을 정리했어요.',
+  title: '외출·여행 준비물 · 어린이집 · 상비약 · 이유식 준비 가이드 | 맘캘 MomCal',
+  desc: '아기와 외출·여행할 때 챙길 것부터 100일상·돌잔치·돌사진, 어린이집 준비물, 상비약 체크리스트, 이유식 준비까지 시기별로 정리했어요.',
   path: '/guide/parenting-events.html',
   heroTitle: '<span class="icon icon-sm" translate="no" aria-hidden="true">celebration</span> 육아 이벤트 준비 가이드',
-  heroDesc: '외출 준비물부터 100일·돌잔치·돌사진까지, 시기별로 챙길 것들을 정리했어요',
-  intro: '예방접종·건강검진 말고도 육아 중엔 챙겨야 할 이벤트가 많아요. 아래는 외출 준비물, 100일 준비, 돌 준비, 돌사진 준비를 정리한 가이드예요.',
+  heroDesc: '외출·여행 준비물부터 어린이집·상비약·이유식 준비까지, 시기별로 챙길 것들을 정리했어요',
+  intro: '예방접종·건강검진 말고도 육아 중엔 챙겨야 할 일이 많아요. 아래는 외출·여행 준비물, 100일·돌 준비, 어린이집(유치원) 준비, 상비약 체크리스트, 이유식 준비를 정리한 가이드예요.',
   cats: packCatsBorn,
   ctaText: '이 준비물들, 체크리스트로 하나씩 관리해보세요',
   questionFn: (it) => `${it.t}, 어떻게 준비하나요?`,
@@ -633,7 +645,7 @@ ${header()}
     <a class="g-cat-card" href="./pregnancy-events.html">
       <div class="ico"><span class="icon icon-lg" translate="no" aria-hidden="true">favorite</span></div>
       <h2>임신 이벤트 준비</h2>
-      <p>태명 정하기, 태교여행 (${countItems(packCatsPreg)}개 항목)</p>
+      <p>태명 정하기, 태교여행, 출산가방·산후조리원 (${countItems(packCatsPreg)}개 항목)</p>
     </a>
     <a class="g-cat-card" href="./government-support.html#preg">
       <div class="ico"><span class="icon icon-lg" translate="no" aria-hidden="true">account_balance</span></div>
@@ -657,7 +669,7 @@ ${header()}
     <a class="g-cat-card" href="./parenting-events.html">
       <div class="ico"><span class="icon icon-lg" translate="no" aria-hidden="true">celebration</span></div>
       <h2>육아 이벤트 준비</h2>
-      <p>외출 준비물·100일·돌잔치·돌사진 (${countItems(packCatsBorn)}개 항목)</p>
+      <p>외출·여행 준비물·100일·돌잔치·어린이집·상비약·이유식 준비 (${countItems(packCatsBorn)}개 항목)</p>
     </a>
     <a class="g-cat-card" href="./government-support.html#postpartum">
       <div class="ico"><span class="icon icon-lg" translate="no" aria-hidden="true">account_balance</span></div>

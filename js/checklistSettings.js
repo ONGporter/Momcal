@@ -16,9 +16,13 @@
  *
  * v0.2.5: 정부지원(gov)은 원래 "공통" 그룹으로 따로 묶여 있었는데(단일 탭이라 임산부용/
  * 육아용 구분이 없어서), 옹짐꾼님 피드백으로 "공통" 그룹 자체를 없애고 임산부용·육아용
- * 화면에 각각 정부지원 행을 하나씩 넣기로 함 — 두 행 모두 실제로는 같은 탭(key='gov')의
- * 표시/숨김 상태를 공유해서 보여주고, 편집(직접 추가) 버튼만 단계별로 다른 목록(gov_preg/
- * gov_born pseudo-key)을 열도록 rowHtml()의 editKey로 분리함(renderChecklistSettings() 참고).
+ * 화면에 각각 정부지원 행을 하나씩 넣기로 함.
+ *
+ * v0.3.1: v0.2.5 시점엔 두 행이 표시/숨김 토글용 key를 'gov' 하나로 공유해서, 한쪽을
+ * 숨기면 다른 쪽도 같이 숨겨지는 버그가 있었음(옹짐꾼님 제보) — js/checklist.js의
+ * builtinTabDefs()가 이제 탭 key 자체를 stage별로 'gov_preg'/'gov_born'으로 나눠서
+ * 만들기 때문에, 이 파일의 두 행도 그 key를 그대로 써서 표시/숨김이 독립적으로 저장됨
+ * (기존 사용자의 레거시 'gov' 숨김 상태는 js/state.js의 마이그레이션으로 이전됨).
  *
  * 탭 목록·표시 로직 자체(getVisibleTabDefs 등)는 js/checklist.js에 있고, 이 파일은
  * "그 설정값을 사용자가 바꾸는 UI"만 담당함(순환 참조 방지를 위해 checklist.js를
@@ -31,13 +35,12 @@ import { clPacks } from '../data/checklist-packs.js';
 import { showModal, cm } from './modal.js';
 import { resyncTabForAllChildren } from './checklistCalendarLink.js';
 
-/** 내장 탭 6종 — js/checklist.js의 builtinTabDefs()와 key를 맞춰야 함(바뀌면 여기도 같이 고칠 것)
- *  v0.2.4: '출산 준비물'(prep)도 준비물 팩과 똑같이 "직접 추가한 항목" 편집을 지원하도록
- *  editable:true 추가 — clData.preg의 'preg_prep' 카테고리 하나뿐인 인덱스 탭이라 항목 자체
- *  (기본 제공 내용)는 못 바꾸고, 준비물 팩처럼 사용자가 덧붙인 항목만 관리 가능(BUILTIN_CAT_KEY_MAP 참고) */
+/** 내장 탭 — js/checklist.js의 builtinTabDefs()와 key를 맞춰야 함(바뀌면 여기도 같이 고칠 것)
+ *  v0.3.1: '출산 준비물'(prep, key='preg_prep')을 없애고 '출산가방'·'산후조리원'·'신생아 맞이
+ *  준비' 등 여러 팩(data/checklist-packs.js, stage:'preg')으로 세분화함(옹짐꾼님 요청) — 팩은
+ *  clPacks에서 자동으로 행을 만들어주므로(아래 packPregRows) 여기 PREG_ROWS엔 더 이상 안 둠 */
 const PREG_ROWS = [
   { key: 'preg', icon: 'pregnant_woman', label: '임신 체크' },
-  { key: 'prep', icon: 'inventory_2',    label: '출산 준비물', editable: true },
 ];
 const BORN_ROWS = [
   { key: 'vax',  icon: 'vaccines',   label: '예방접종', syncable: true },
@@ -46,10 +49,11 @@ const BORN_ROWS = [
 ];
 
 /** 설정 화면의 row key → 실제 항목 배열에서 쓰는 카테고리 key로 변환.
- *  대부분(준비물 팩)은 tab key와 cat.key가 같지만, '출산 준비물'(prep)만 js/checklist.js의
- *  getCats()에서 실제로 clData.preg의 'preg_prep' 카테고리를 반환하므로 여기서 매핑해줘야
- *  "직접 추가한 항목"이 체크리스트 탭에서 보는 것과 같은 자리(S.customClItems 키)에 저장됨. */
-const BUILTIN_CAT_KEY_MAP = { prep: 'preg_prep' };
+ *  준비물 팩은 tab key와 cat.key가 항상 같아서 지금은 실질적으로 항등 함수임 — 예전엔
+ *  '출산 준비물'(prep → clData.preg의 'preg_prep')처럼 내장 탭 key와 실제 데이터 key가
+ *  다른 경우를 위한 매핑이었는데, v0.3.1에서 그 탭 자체가 없어지면서 지금은 빈 맵임.
+ *  향후 비슷하게 tab key와 데이터 key가 어긋나는 내장 탭이 생기면 다시 채워 쓸 것. */
+const BUILTIN_CAT_KEY_MAP = {};
 function resolveCatKey(packKey) { return BUILTIN_CAT_KEY_MAP[packKey] || packKey; }
 
 function ensureClSettings() {
@@ -135,18 +139,18 @@ export function renderChecklistSettings() {
   const customBornRows = (S.customChecklists || []).filter(c => (c.stage || 'born') === 'born')
     .map(c => ({ key: c.key, icon: c.icon || 'checklist', label: c.label, deletable: true, editable: true }));
 
-  // v0.2.5: 정부지원은 원래 "표시/숨김"(공통 그룹, key='gov' 하나뿐)과 "직접 추가 편집"
-  // (임산부용/육아용 각각, hideToggle:true라 편집 버튼만 있던 행)이 화면에 총 3줄로 따로
-  // 있었는데, 옹짐꾼님 요청으로 "공통" 그룹 자체를 없애고 임산부용·육아용에 각각 정부지원
-  // 행 하나씩만 남기기로 함 — 표시/숨김 토글은 실제 탭 key(gov, 단일 탭이라 두 행이 결국
-  // 같은 hiddenTabs 상태를 공유·표시함)를, 편집 버튼은 이전과 동일하게 stage별 pseudo-key
-  // (gov_preg/gov_born)를 쓰도록 rowHtml()의 editKey로 분리함(openEditChecklistModal()의
-  // 기존 분기 로직은 그대로 재사용).
+  // v0.3.1: 정부지원 표시/숨김이 임산부용/육아용에서 같이 켜지고 같이 꺼지던 버그 수정
+  // (옹짐꾼님 제보) — 예전엔 두 행이 표시/숨김 토글용 key를 'gov' 하나로 공유하고 편집
+  // (직접 추가) 버튼만 pseudo-key(gov_preg/gov_born)로 분리돼 있어서, 토글 상태 자체는
+  // 어느 쪽을 눌러도 같은 곳(hiddenTabs의 'gov')을 갱신했음. 이제 js/checklist.js의
+  // builtinTabDefs()가 애초에 탭 key를 'gov_preg'/'gov_born'으로 나눠서 만들기 때문에,
+  // 이 두 행도 그 key를 그대로 쓰면 표시/숨김이 독립적으로 저장·동작함(editKey는 key와
+  // 같은 값이라 더 이상 별도로 안 줘도 openEditChecklistModal()의 기존 분기가 그대로 맞음).
   const govPregCount = (S.customGovItems || []).filter(it => it.stage === 'preg').length;
   const govBornCount = (S.customGovItems || []).filter(it => it.stage === 'born').length;
-  const govPregRow = { key: 'gov', icon: 'account_balance', editable: true, editKey: 'gov_preg',
+  const govPregRow = { key: 'gov_preg', icon: 'account_balance', editable: true,
     label: `정부지원${govPregCount ? ` (직접 추가 ${govPregCount}개)` : ''}` };
-  const govBornRow = { key: 'gov', icon: 'account_balance', editable: true, editKey: 'gov_born',
+  const govBornRow = { key: 'gov_born', icon: 'account_balance', editable: true,
     label: `정부지원${govBornCount ? ` (직접 추가 ${govBornCount}개)` : ''}` };
 
   wrap.innerHTML = `
@@ -261,8 +265,7 @@ function editItemRowHtml(it, idxAttr) {
 export function openEditChecklistModal(key) {
   if (key === 'gov_preg') return openGovItemsModal('preg');
   if (key === 'gov_born') return openGovItemsModal('born');
-  // v0.2.4: '출산 준비물'(prep)도 준비물 팩과 같은 "직접 추가한 항목만 편집" 방식을 씀
-  if (key.startsWith('pack_') || key === 'prep') return openEditPackExtrasModal(key);
+  if (key.startsWith('pack_')) return openEditPackExtrasModal(key);
   return openEditCustomChecklistModal(key);
 }
 
@@ -311,7 +314,9 @@ function openEditPackExtrasModal(packKey) {
   const child = S.children[S.selC];
   if (!child) { alert('먼저 체크리스트 탭에서 아이를 등록·선택해주세요'); return; }
   const pack = clPacks.find(p => p.key === packKey);
-  // v0.2.4: 'prep'(출산 준비물)처럼 clPacks에 없는 내장 탭은 PREG_ROWS/BORN_ROWS에서 라벨을 찾음
+  // v0.3.1: 예전엔 'prep'(출산 준비물)처럼 clPacks에 없는 내장 탭도 이 함수를 썼는데, 그 탭이
+  // 세분화된 팩들로 대체되면서 지금은 항상 pack_* 키만 들어옴 — PREG_ROWS/BORN_ROWS 폴백은
+  // 혹시 나중에 비슷한 내장 탭이 다시 생길 경우를 위한 안전장치로 남겨둠
   const label = pack ? pack.label : ([...PREG_ROWS, ...BORN_ROWS].find(r => r.key === packKey)?.label || '');
   const customKey = `${child.id}_${resolveCatKey(packKey)}`;
   const items = (S.customClItems && S.customClItems[customKey]) || [];

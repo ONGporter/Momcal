@@ -136,12 +136,20 @@ export function avatarDisplay(avatarValue, size) {
 }
 
 /**
- * 육아 체크 성장 단계 아이콘 파일명 — 월령 카테고리별(m0~m36) + 이유식 단계별(f6~f24).
- * m0~m12, f6~f24는 성별 구분 없는 이미지(boy/girl에 같은 파일)라 이름은 "성장 단계"지만
- * 실제로는 "카테고리 아이콘 스왑"에 더 가까움 — applyGrowthStageGender()가 두 종류 모두 처리함.
+ * 육아 체크 성장 단계 아이콘 파일명 — 월령 카테고리별(m0~m36) + 이유식 단계별(f6~f24) +
+ * 임신 주차별 태아 크기 비교(preg_w04~preg_w36, v0.3.2).
+ * m0~m12, f6~f24, preg_w04~preg_w36은 성별 구분 없는 이미지(boy/girl에 같은 파일)라 이름은
+ * "성장 단계"지만 실제로는 "카테고리 아이콘 스왑"에 더 가까움 — applyGrowthStageGender()가
+ * 세 종류 모두 처리함.
  * m0~m12는 "꽃·자연" 스티커 이미지 세트를 재사용(dir: 'stickers/flower-nature').
  * m18~m36은 아이 프로필과 같은 성별 이미지 세트(dir: 'avatars').
  * f6~f24(이유식 단계)는 전용 이미지 세트(dir: 'mealstage').
+ * preg_w04~preg_w36(임신 주차, v0.3.2)은 전용 이미지 세트(dir: 'pregstage') — 옹짐꾼님이
+ * 전달한 "태아 크기 비교 과일" 세트에서, 실제 임신 주차별 태아 크기(FirstCry 등 공개 자료
+ * 기준)와 가장 가까운 주수의 과일을 각 4주 단위 밴드에 배정함(예: preg_w04(4~7주)는 4주차
+ * 크기인 poppy_seed, preg_w36(36~40주)은 만삭 크기인 watermelon). melon.png은 이 세트에
+ * 포함돼 있었지만 현재 카테고리 수(9개)보다 이미지가 1장(10장) 더 많아 배정에서 제외됨
+ * (icons/pregstage/에는 그대로 남겨둠 — 추후 카테고리가 늘어나면 재사용 가능).
  */
 const GROWTH_STAGE_FILES = {
   m0:  { boy: 'sprout.png',       girl: 'sprout.png',       dir: 'stickers/flower-nature' },
@@ -158,6 +166,15 @@ const GROWTH_STAGE_FILES = {
   f10: { boy: 'soup_pot.png',          girl: 'soup_pot.png',          dir: 'mealstage' },
   f12: { boy: 'divided_plate.png',     girl: 'divided_plate.png',     dir: 'mealstage' },
   f24: { boy: 'toddler_meal_plate.png', girl: 'toddler_meal_plate.png', dir: 'mealstage' },
+  preg_w04: { boy: 'poppy_seed.png',   girl: 'poppy_seed.png',   dir: 'pregstage' },
+  preg_w08: { boy: 'blueberry.png',    girl: 'blueberry.png',    dir: 'pregstage' },
+  preg_w12: { boy: 'lime.png',         girl: 'lime.png',         dir: 'pregstage' },
+  preg_w16: { boy: 'avocado.png',      girl: 'avocado.png',      dir: 'pregstage' },
+  preg_w20: { boy: 'banana.png',       girl: 'banana.png',       dir: 'pregstage' },
+  preg_w24: { boy: 'corn.png',         girl: 'corn.png',         dir: 'pregstage' },
+  preg_w28: { boy: 'eggplant.png',     girl: 'eggplant.png',     dir: 'pregstage' },
+  preg_w32: { boy: 'napa_cabbage.png', girl: 'napa_cabbage.png', dir: 'pregstage' },
+  preg_w36: { boy: 'watermelon.png',   girl: 'watermelon.png',   dir: 'pregstage' },
 };
 
 /**

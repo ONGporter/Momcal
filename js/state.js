@@ -30,6 +30,22 @@ function migrateEventModKeys(eventMods) {
   return changed ? migrated : eventMods;
 }
 
+/**
+ * v0.3.1: 정부지원 탭은 원래 임산부용/육아용이 같은 키(`gov`) 하나를 공유해서, 설정에서
+ * 한쪽 표시/숨김을 누르면 다른 쪽도 같이 꺼지는 버그가 있었음(옹짐꾼님 제보) — 이제
+ * `gov_preg`/`gov_born`으로 키를 분리해 독립적으로 켜고 끌 수 있게 함(js/checklist.js의
+ * builtinTabDefs 참고). 이미 예전에 `hiddenTabs`에 레거시 키 `gov`를 저장해둔 사용자는
+ * (당시 "정부지원 탭 숨김" 상태였던 것이므로) 두 새 키 모두 숨김 상태로 그대로 이어지도록
+ * 1회성 이전 — 그 반대(가지고 있지 않던 사용자가 새로 숨겨지는 일)는 없음(멱등적).
+ */
+function migrateGovHiddenTabs(hiddenTabs) {
+  if (!Array.isArray(hiddenTabs) || !hiddenTabs.includes('gov')) return hiddenTabs;
+  const migrated = hiddenTabs.filter(k => k !== 'gov');
+  if (!migrated.includes('gov_preg')) migrated.push('gov_preg');
+  if (!migrated.includes('gov_born')) migrated.push('gov_born');
+  return migrated;
+}
+
 /* ── 기본 상태 팩토리 ── */
 export function emptyState() {
   return {
@@ -333,7 +349,7 @@ export function applyData(data) {
   S.theme       = fresh.theme       || 'rose';
   S.customChecklists = fresh.customChecklists || [];
   S.clSettings  = {
-    hiddenTabs:   fresh.clSettings?.hiddenTabs   || [],
+    hiddenTabs:   migrateGovHiddenTabs(fresh.clSettings?.hiddenTabs || []),
     calendarSync: fresh.clSettings?.calendarSync || {},
   };
   S.customGovItems = fresh.customGovItems || [];

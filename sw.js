@@ -120,7 +120,18 @@
 // 추가 기능 신규, 캘린더 그리드 이벤트 제목 이스케이프 누락 수정 — 캐시 버전 상향
 // v0.2.5: js/checklistSettings.js 수정 — 정부지원 항목 삭제 시 엉뚱한 모달이 뜨던 버그 수정,
 // 설정 화면 정부지원 "공통" 그룹 제거 후 임산부용/육아용에 통합 — 캐시 버전 상향
-const CACHE_NAME = 'momcal-shell-v75';
+// v0.3.0: js/checklistSettings.js 수정 — v0.2.5의 정부지원 삭제 버그 수정이 실제로는
+// 불완전했던 것을 재수정(#govItemsList DOM 존재 여부 → #modal.open 클래스 여부로 판단 기준
+// 변경) — 캐시 버전 상향
+// v0.3.1: js/checklist.js·js/checklistSettings.js·js/state.js·data/checklist-data.js·
+// data/checklist-packs.js 수정 — 정부지원 표시/숨김 독립화(gov_preg/gov_born 키 분리),
+// "출산 준비물" 단일 카테고리를 팩 7종으로 세분화, 임신 주차별 항목 9개 보강 — 캐시 버전 상향
+// v0.3.2: js/utils.js·js/checklist.js·scripts/build-guide.mjs 수정 — 임신 주차별(preg_w04~
+// preg_w36) 카테고리 라벨의 이모지(🫐/🍇/🥝 등)를 태아 크기 비교 과일 이미지로 교체, m0~m36·
+// f6~f24와 같은 growthStageIconImg()/applyGrowthStageGender() 재사용(GROWTH_STAGE_FILES에
+// preg_w04~preg_w36 9개 항목 추가, 성별 무관이라 boy/girl에 같은 파일 등록) — 앱·육아정보
+// pregnancy.html 양쪽 다 반영 — icons/pregstage/*.png 신규 정적 파일. 캐시 버전 상향
+const CACHE_NAME = 'momcal-shell-v77';
 
 const APP_SHELL = [
   './',
