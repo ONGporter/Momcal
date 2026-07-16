@@ -33,6 +33,7 @@
 momcal.vercel.app 접속자가 거의 없어서, 301 리다이렉트(momcal.vercel.app → momcal.app)는 그대로 유지하기로 결정. 참고로 momcal.vercel.app에 예전에 설치된 서비스워커는 리다이렉트 때문에 더 이상 자체 업데이트를 받을 수 없어 영구적으로 예전 버전에 머무름 — 코드로 고칠 수 없고 해당 사용자가 브라우저 사이트 데이터를 지워야만 해결됨. 감수하기로 함.
 
 ### 알아두면 좋은 것
+- **`createCustomToken()`을 쓰는 커스텀 인증(카카오 로그인 등)은 IAM에 `Service Account Token Creator` 역할이 미리 있어야 동작함** — 신규 Firebase 프로젝트엔 기본으로 없어서 `Permission 'iam.serviceAccounts.signBlob' denied` 에러가 남(v0.3.8에서 실전으로 확인). Google Cloud Console → IAM → `{프로젝트번호}-compute@developer.gserviceaccount.com` 계정에 그 역할을 추가해야 함 — Firestore 보안 규칙처럼 콘솔에서만 설정 가능한 영역이라 코드로는 못 고침. 한 번 해두면 카카오 외 다른 커스텀 인증(네이버 등)을 추가할 때도 이 단계는 다시 안 겪음
 - **카카오 로그인 Redirect URI는 JavaScript 키·REST API 키 양쪽에 각각 등록해야 함(v0.3.7에서 실전으로 확인)** — Kakao Developers 콘솔이 키(JavaScript 키/REST API 키)마다 독립적으로 Redirect URI·도메인 화이트리스트를 관리하는 구조라, REST API 키 쪽에만 등록하면 JavaScript 키를 쓰는 흐름에서 `KOE006`(등록 안 된 리다이렉트 URI) 에러가 남 — 에러 페이지에 나오는 "사용한 리다이렉트 URI" 값이 등록한 값과 글자 그대로 똑같아 보여도 이 문제일 수 있음. 두 키 모두에 동일한 값을 등록할 것(`docs/product-specs/kakao-login.md` 참고)
 - **브라우저 캐시 때문에 배포했는데도 안 고쳐진 것처럼 보일 수 있음** — 이 앱은 서비스워커로 JS 파일을 캐시해서, 배포 직후엔 일반 브라우저 탭에서 예전 코드가 계속 실행될 수 있음. 재현/디버깅 중 "분명 고쳤는데 똑같다"는 보고가 오면 우선 시크릿 모드로 재현되는지부터 확인해서 캐시 문제인지 진짜 코드 문제인지 가려낼 것
 - **외부 SDK 연동은 문서보다 실제 로드된 버전에서 함수가 존재하는지가 우선**(v0.3.7 교훈) — `Kakao.Auth.login()`이 일부 문서·블로그엔 남아있었지만 실제 배포된 SDK 버전(2.8.0)엔 없어서 `TypeError`가 났음. 비슷한 걸 또 붙일 땐 브라우저 콘솔에서 `typeof 대상함수`로 직접 확인하고 시작할 것
@@ -76,10 +77,9 @@ momcal.vercel.app 접속자가 거의 없어서, 301 리다이렉트(momcal.verc
 
 ## 현재 확인 필요 항목
 
-### v0.3.8 (이번 버전 — kakaoLogin 에러 로깅 개선) — 카카오 로그인 아직 완전히 안 끝남
-- [ ] **(필수, 옹짐꾼님)** `npm run deploy`로 재배포 후 다시 카카오 로그인 시도 → 또 실패하면 **Firebase 콘솔 → Functions → kakaoLogin → 로그**에서 이번엔 실제 원인(예: `invalid_client`, `KOE237` 등)이 보일 것 — 그 로그 내용 캡처해서 공유
-- [ ] Kakao Developers → REST API 키 → **클라이언트 시크릿** 활성화 여부 확인(ON이면 OFF로 끄는 걸 우선 시도 — v0.3.7 안내 당시 놓쳤을 가능성 있음)
-- [ ] 위 확인 후 로그인 재시도 → 성공하면 게스트 모드 데이터 이전 여부도 함께 확인
+### v0.3.8 (이번 버전 — kakaoLogin 에러 로깅 개선) — ✅ 카카오 로그인 전체 완료
+- [x] 실제 원인 5가지(SDK 함수 없음 → CLI 별칭 버그 → Redirect URI 이중 등록 → Secret 값 오염 → IAM 권한 누락)를 순서대로 해결, 실제 로그인 성공·닉네임 정상 표시 확인(2026-07-16) — 자세한 기록은 `docs/product-specs/kakao-login.md` "실전 트러블슈팅 전체 기록" 참고
+- [ ] 게스트 모드로 데이터 좀 넣어둔 상태에서 카카오로 로그인 → 기존 게스트 데이터가 정상적으로 이전되는지 확인(아직 미확인)
 - [ ] 화면 최하단 버전 표시가 "v0.3.8"로 보이는지 확인(앱 본체 + 육아정보 페이지 양쪽)
 - [ ] `node scripts/check-docs.mjs` 실행 결과가 "문서-코드 불일치 없음"으로 나오는지 확인
 

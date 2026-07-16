@@ -1,6 +1,6 @@
 # 카카오 로그인
 
-> **상태**: 🟡 진행 중 — Redirect URI 문제는 해결됐으나 이어서 401(unauthenticated) 에러 발견, 원인 조사 중(v0.3.8에서 서버 로그 상세화)
+> **상태**: ✅ 실사용 검증 완료(2026-07-16) — 실제 로그인 성공, 닉네임 정상 표시 확인됨
 > **관련 코드**: `js/auth.js`(`signInKakao()`, `handleKakaoRedirectIfNeeded()`), `js/app.js`(앱 시작 시 리다이렉트 복귀 처리 호출), `js/firebase.js`(Functions SDK), `functions/index.js`(`kakaoLogin`), `index.html`(Kakao SDK 스크립트, 로그인 버튼), `css/auth.css`(`.btn-kakao`)
 
 ## ⚠️ v0.3.5 → v0.3.7: 팝업 방식에서 리다이렉트 방식으로 전면 교체함
@@ -8,6 +8,18 @@
 **처음(v0.3.5)엔 `Kakao.Auth.login()`(팝업 방식)으로 만들었는데, 실제 배포 후 테스트하니 브라우저 콘솔에 `TypeError: Kakao.Auth.login is not a function` 에러가 떴다.** 확인해보니 예전 카카오 문서(일부 블로그·"advanced-guide" 문서)엔 남아있지만, 현재 카카오 JS SDK 버전(2.8.0)에는 이 함수가 없다 — 카카오가 실질적으로 `Kakao.Auth.authorize()`(리다이렉트 방식)만 지원하는 쪽으로 정리한 것으로 보인다. v0.3.7에서 전체 흐름을 리다이렉트 방식으로 다시 짰다.
 
 **교훈**: 외부 SDK 연동은 문서보다 실제 로드된 SDK 버전에서 함수가 존재하는지가 우선이다 — 다음에 비슷한 걸 붙일 땐 브라우저 콘솔에서 `typeof Kakao.Auth.login`처럼 직접 확인하고 시작할 것.
+
+## ⚠️ 실전 트러블슈팅 전체 기록 (2026-07-16, 총 5개 관문)
+
+배포부터 실제 로그인 성공까지 순서대로 다섯 가지 문제를 만났다. 비슷한 걸 또 붙일 때 참고할 것:
+
+1. **`Kakao.Auth.login is not a function`** — 예전 문서 기준으로 팝업 방식(`Kakao.Auth.login()`)을 썼는데 실제 SDK 버전(2.8.0)엔 없었음 → `Kakao.Auth.authorize()` 리다이렉트 방식으로 전면 교체(위 "v0.3.5 → v0.3.7" 섹션 참고)
+2. **`firebase functions:secrets:set` / `npm run deploy` 실행 시 `Project 'projects/default' not found'`** — Firebase CLI가 `.firebaserc`의 별칭(`default`)을 실제 프로젝트 ID로 못 풀어내는 버그성 문제. `--project momcal-fd12b`를 모든 명령어에 명시적으로 붙여서 해결
+3. **`KOE006`(등록 안 된 Redirect URI)** — Redirect URI를 REST API 키 쪽에만 등록해서 발생. **JavaScript 키에도 똑같이 등록해야** 함(카카오 콘솔이 키마다 독립적으로 화이트리스트를 관리하는 구조)
+4. **`invalid_client: Not exist client_id`** — Firebase Secret에 REST API 키 값을 등록할 때 붙여넣기가 꼬여서 값이 중복/오염됨(`...ab7e9c72e804...ab7e9ds`처럼 원래 값이 두 번 겹쳐 들어감). `firebase functions:secrets:set`을 다시 실행해서 정확한 32자 값만 재등록하고 해결(재등록 시 CLI가 "이 secret 쓰는 함수 재배포할까요?" 물어보면 Yes로 답하면 배포까지 자동으로 됨)
+5. **`Permission 'iam.serviceAccounts.signBlob' denied`** — `createCustomToken()` 호출에 필요한 IAM 권한이 신규 Firebase 프로젝트엔 기본으로 없음(Firestore 보안 규칙처럼 콘솔에서만 설정 가능한 영역). Google Cloud Console → IAM → `{프로젝트번호}-compute@developer.gserviceaccount.com` 계정에 **"Service Account Token Creator"** 역할 추가해서 해결 — **이건 카카오 로그인만의 문제가 아니라 `createCustomToken()`을 쓰는 모든 커스텀 인증 연동에 공통으로 필요한 설정**이라, 나중에 다른 소셜 로그인(네이버 등)을 추가할 때도 이미 해결돼 있어서 이 단계는 다시 안 겪어도 됨
+
+각 단계마다 Firebase 콘솔의 **Functions → 로그**를 직접 봐서 실제 원인을 확인한 게 결정적이었음(v0.3.8에서 서버 로그를 상세화해둔 덕분에 4·5번 원인을 바로 찾을 수 있었음) — 비슷한 문제가 생기면 클라이언트 에러 메시지만 보지 말고 항상 Functions 로그부터 확인할 것.
 
 ## 왜 Cloud Function이 필요한가
 
@@ -67,8 +79,7 @@ Kakao는 Firebase Auth가 기본 제공하는 로그인 provider(이메일, Goog
 
 ## 다음에 할 일
 
-- [x] REST API 키 → Redirect URI 등록(JavaScript 키에도 등록 필요했음, 위 교훈 참고) → Secret 설정 → 재배포 완료
-- [ ] **(v0.3.8에서 새로 발견)** 위까지 다 됐는데도 로그인 시 `401 (Unauthorized)` + `카카오 인증에 실패했습니다` 발생 — `functions/index.js`의 에러 로깅을 상세화해뒀으니(v0.3.8), 재배포 후 Firebase 콘솔 Functions 로그에서 실제 원인 확인 필요. 유력 후보: REST API 키의 **클라이언트 시크릿**이 켜져 있는데 `kakaoLogin`이 이를 안 보내는 경우(코드가 `client_secret` 파라미터를 안 보냄) — 꺼져 있는지 확인할 것
+- [x] 전체 흐름 실사용 검증 완료(2026-07-16) — 실제 로그인 성공, 닉네임 정상 표시 확인됨. 겪은 문제 5가지는 위 "실전 트러블슈팅 전체 기록" 참고
 - [ ] 게스트 모드 데이터가 있는 상태에서 카카오로 로그인했을 때, 기존 이메일/Google 로그인과 동일하게 게스트 데이터 이전이 되는지 확인
 - [ ] 플레이스토어 출시 후 TWA(Custom Tabs) 안에서 리다이렉트 로그인이 정상 동작하는지 실기기 확인
 - [ ] (선택) 계정 연결 기능 필요성 재검토
