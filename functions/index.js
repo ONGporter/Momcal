@@ -20,10 +20,12 @@
 
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { onDocumentCreated } from 'firebase-functions/v2/firestore';
+import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { setGlobalOptions } from 'firebase-functions/v2';
 import { initializeApp } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { getMessaging } from 'firebase-admin/messaging';
+import { getAuth } from 'firebase-admin/auth';
 
 import { vaxSched } from './data/vaccines.js';
 import { checkEvs } from './data/milestones.js';
@@ -33,6 +35,7 @@ import { govSupportSchedule } from './data/government-support.js';
 initializeApp();
 const db = getFirestore();
 const messaging = getMessaging();
+const fbAuth = getAuth();
 
 // Firestore 리전(asia-northeast3, 서울)과 맞춤 — PROJECT_SPEC.md "Firebase 구조" 참고
 setGlobalOptions({ region: 'asia-northeast3' });
@@ -434,3 +437,68 @@ export const processScheduledBroadcasts = onSchedule(
     await Promise.allSettled(tasks);
   },
 );
+
+/**
+ * ══════════════════════════════════════
+ * 카카오 로그인 (v0.3.5)
+ * ══════════════════════════════════════
+ * Kakao는 Firebase Auth 기본 제공 provider가 아니라서, 클라이언트가 Kakao SDK로 받은
+ * access token을 여기로 보내면 ① 그 토큰이 진짜 유효한지 카카오 서버에 직접 물어보고
+ * (kapi.kakao.com/v2/user/me — 이 호출 자체가 토큰 검증 역할을 함, 유효하지 않으면 401),
+ * ② 검증된 카카오 회원번호로 Firebase Auth 사용자를 만들거나 갱신하고,
+ * ③ 그 사용자로 로그인할 수 있는 Firebase 커스텀 토큰을 발급해서 클라이언트에 돌려준다
+ * (클라이언트는 이 토큰으로 signInWithCustomToken() 호출 — js/auth.js의 signInKakao() 참고).
+ *
+ * uid는 'kakao:{카카오 회원번호}' 형식으로 별도 네임스페이스를 씀 — 기존 이메일/구글
+ * 로그인 사용자의 uid(Firebase가 자동 생성하는 임의 문자열)와 절대 겹치지 않음.
+ *
+ * ⚠️ email 필드는 일부러 안 씀 — 카카오 동의항목에서 이메일을 안 받기로 했고(개인 개발자
+ * 앱은 이메일 제공이 기본 막혀있음), 설령 나중에 받더라도 이미 그 이메일로 가입된 기존
+ * Firebase 계정이 있으면 auth.createUser()/updateUser()가 'auth/email-already-exists'로
+ * 충돌할 수 있어서(Firebase는 이메일을 유니크 키로 취급함) 지금은 아예 안 건드리는 게 안전함.
+ * 즉 같은 사람이 이메일 계정과 카카오 계정을 각각 만들면 서로 다른 두 계정으로 남는다 —
+ * 계정 연결(병합) 기능은 아직 없음, 필요해지면 별도로 설계할 것
+ * (docs/product-specs/kakao-login.md 참고).
+ */
+export const kakaoLogin = onCall(async (request) => {
+  const kakaoAccessToken = request.data?.accessToken;
+  if (!kakaoAccessToken || typeof kakaoAccessToken !== 'string') {
+    throw new HttpsError('invalid-argument', '카카오 액세스 토큰이 없습니다');
+  }
+
+  // 1) 카카오 서버에 이 토큰으로 사용자 정보를 요청 — 성공하면 토큰이 유효하다는 뜻
+  let kakaoUser;
+  try {
+    const resp = await fetch('https://kapi.kakao.com/v2/user/me', {
+      headers: { Authorization: `Bearer ${kakaoAccessToken}` },
+    });
+    if (!resp.ok) throw new Error(`카카오 API 응답 오류: ${resp.status}`);
+    kakaoUser = await resp.json();
+  } catch (e) {
+    throw new HttpsError('unauthenticated', '카카오 인증에 실패했습니다');
+  }
+
+  const kakaoId = kakaoUser?.id;
+  if (!kakaoId) throw new HttpsError('unauthenticated', '카카오 사용자 정보를 확인할 수 없습니다');
+
+  const uid = `kakao:${kakaoId}`;
+  const profile = kakaoUser.kakao_account?.profile || kakaoUser.properties || {};
+  const displayName = profile.nickname || profile.nickName || '카카오 사용자';
+  const photoURL = profile.profile_image_url || profile.profile_image || undefined;
+
+  // 2) Firebase Auth 사용자 생성 또는 최신 프로필로 갱신
+  const userFields = { displayName, ...(photoURL ? { photoURL } : {}) };
+  try {
+    await fbAuth.updateUser(uid, userFields);
+  } catch (e) {
+    if (e.code === 'auth/user-not-found') {
+      await fbAuth.createUser({ uid, ...userFields });
+    } else {
+      throw new HttpsError('internal', '사용자 정보 처리 중 오류가 발생했습니다');
+    }
+  }
+
+  // 3) 이 uid로 로그인 가능한 Firebase 커스텀 토큰 발급
+  const token = await fbAuth.createCustomToken(uid, { provider: 'kakao' });
+  return { token };
+});

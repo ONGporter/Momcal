@@ -42,7 +42,7 @@
 
 - **프로젝트 ID**: `momcal-fd12b`
 - **리전**: `asia-northeast3` (서울)
-- **인증**: Email/Password + Google OAuth
+- **인증**: Email/Password + Google OAuth + 카카오 로그인(Cloud Function 경유, v0.3.5 — `docs/product-specs/kakao-login.md` 참고)
 - **요금제**: Blaze(종량제) — v0.0.38부터 Cloud Functions(FCM 예약 발송) 사용을 위해 전환됨
 - **Firestore 문서 경로**: `users/{uid}` (+ v0.0.12부터 `families/{familyId}`, 아래 "가족 그룹 공유" 참고 / + v0.0.39부터 `adminBroadcasts/{broadcastId}`, 아래 "관리자 푸시 발송" 참고)
 

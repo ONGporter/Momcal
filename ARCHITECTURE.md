@@ -131,7 +131,7 @@ momcal/
 
 ## Firebase 개요
 
-- **프로젝트 ID**: `momcal-fd12b` / **리전**: `asia-northeast3`(서울) / **인증**: Email+Password + Google OAuth
+- **프로젝트 ID**: `momcal-fd12b` / **리전**: `asia-northeast3`(서울) / **인증**: Email+Password + Google OAuth + 카카오 로그인(Cloud Function 경유, v0.3.5)
 - **문서 경로**: `users/{uid}` (가족 그룹에 속해있으면 `families/{familyId}`)
 - 전체 Firestore 스키마(필드별 상세)는 `docs/PROJECT_SPEC.md` "Firebase 구조" 참고
 

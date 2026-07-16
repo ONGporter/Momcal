@@ -137,7 +137,12 @@
 // SHA-256 지문을 담은 파일(Digital Asset Links), TWA 앱에서 주소창을 없애는 데 필요.
 // sw.js 캐시 대상은 아님(ads.txt와 동일하게 독립 정적 파일 취급) — 버전 표시 갱신에 맞춰
 // 캐시 버전만 상향
-const CACHE_NAME = 'momcal-shell-v79';
+// v0.3.5: js/auth.js·js/firebase.js·index.html·css/auth.css·functions/index.js 수정 —
+// 카카오 로그인 추가(Kakao access token → Cloud Function kakaoLogin → Firebase 커스텀 토큰
+// 교환 방식, docs/product-specs/kakao-login.md 참고) — 캐시 버전 상향
+// v0.3.6: js/auth.js 수정 — 옹짐꾼님이 발급받은 Kakao JavaScript 키를 KAKAO_JS_KEY에 반영
+// (placeholder였던 값을 실제 키로 교체) — 캐시 버전 상향
+const CACHE_NAME = 'momcal-shell-v81';
 
 const APP_SHELL = [
   './',

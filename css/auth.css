@@ -73,6 +73,16 @@
 }
 .btn-google:hover { background: #FAFAFA; border-color: #CCC; }
 
+/* v0.3.5: 카카오 로그인 버튼 — 카카오 브랜드 가이드 기준 배경 #FEE500, 텍스트 #391B1B */
+.btn-kakao {
+  width: 100%; padding: 11px; border-radius: 13px; border: none;
+  background: #FEE500; cursor: pointer; font-family: inherit; font-weight: 800;
+  font-size: .83rem; color: #391B1B;
+  display: flex; align-items: center; justify-content: center; gap: 9px; transition: all .2s;
+  margin-top: 10px;
+}
+.btn-kakao:hover { background: #FDD800; }
+
 .auth-loading { display: none; font-size: .78rem; color: var(--txl); margin-top: 14px; }
 
 /* ── Sprint 8: 체험하기(데모 모드) ── */

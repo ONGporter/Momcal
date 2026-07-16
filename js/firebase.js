@@ -11,6 +11,7 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signInWithPopup,
+  signInWithCustomToken,
   GoogleAuthProvider,
   signOut,
   updateProfile,
@@ -35,6 +36,13 @@ import {
   limit,
   getDocs,
 } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
+// v0.3.5: 카카오 로그인 — Kakao access token을 functions/index.js의 kakaoLogin()에 보내서
+// Firebase 커스텀 토큰을 발급받고, 그 토큰으로 로그인함(Kakao는 Firebase Auth 기본 제공
+// provider가 아니라서 이렇게 다리를 놔야 함). js/auth.js의 signInKakao() 참고.
+import {
+  getFunctions,
+  httpsCallable,
+} from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-functions.js';
 // v0.0.36: FCM 진짜 푸시 알림 — 웹 푸시 지원 여부 확인(isSupported)·토큰 발급(getToken)·
 // 포그라운드 수신(onMessage). 실제 사용 로직은 js/push.js에 있음(이 파일은 기존 관례대로
 // Firebase SDK를 직접 import하는 유일한 파일 역할만 유지)
@@ -61,12 +69,16 @@ export const auth           = getAuth(app);
 export const db             = getFirestore(app);
 export const googleProvider = new GoogleAuthProvider();
 export const firebaseApp    = app; // v0.0.36: js/push.js에서 getMessaging(firebaseApp) 호출용
+// v0.3.5: 카카오 로그인용 Cloud Functions 호출 인스턴스 — asia-northeast3(서울) 리전으로
+// 맞춤(functions/index.js의 setGlobalOptions와 일치해야 함, 안 맞으면 함수를 못 찾음)
+export const functionsApp   = getFunctions(app, 'asia-northeast3');
 
 export {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signInWithPopup,
+  signInWithCustomToken,
   signOut,
   updateProfile,
   deleteUser,
@@ -90,4 +102,5 @@ export {
   getToken,
   onMessage,
   isMessagingSupported,
+  httpsCallable,
 };

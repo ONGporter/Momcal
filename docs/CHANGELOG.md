@@ -8,6 +8,8 @@
 
 | 버전 | 주요 기능 |
 |:---:|------|
+| v0.3.6 | 옹짐꾼님이 발급받은 Kakao JavaScript 키를 `js/auth.js`의 `KAKAO_JS_KEY`에 반영(placeholder → 실제 값) — Cloud Functions 배포 후 카카오 로그인 실제 사용 가능 |
+| v0.3.5 | 카카오 로그인 추가 — Kakao JS SDK 팝업 로그인 → Cloud Function(`kakaoLogin`)이 access token 검증 후 Firebase 커스텀 토큰 발급 → `signInWithCustomToken()`으로 로그인 완료. uid는 `kakao:{회원번호}`로 별도 네임스페이스, 이메일은 미수집(계정 충돌 방지) |
 | v0.3.4 | 플레이스토어 출시 진행 — PWABuilder로 Android TWA 패키지(.aab/.apk) 생성 완료(Package ID `app.momcal.www`), `.well-known/assetlinks.json` 추가(Digital Asset Links, TWA 주소창 제거용) |
 | v0.3.3 | 플레이스토어 출시 준비 중 PWABuilder 분석에서 나온 경고 해소 — `manifest.json`에 `id`·`categories` 필드 추가(선택 항목, 기존 동작 영향 없음). 플레이스토어 출시 가이드 문서(`docs/product-specs/play-store-launch.md`) 신규 작성 |
 | v0.3.2 | 임신 주차별 체크리스트 카테고리 라벨(🫐/🍇/🥝 등)에 남아있던 이모지를 옹짐꾼님이 전달한 "태아 크기 비교 과일" 이미지로 교체(m0~m36·f6~f24와 같은 growthStageIconImg 패턴 재사용) — 앱·육아정보 pregnancy.html 양쪽 반영 |
@@ -117,6 +119,26 @@
 | 29 | 폰트 전면 교체(Paperlogy+Pretendard), 캘린더 타임존 버그 수정, 생후 일수 계산 변경, 성장 예측·알림 기능 신규 |
 
 ---
+
+## [v0.3.6] 2026-07-16 — Kakao JavaScript 키 반영
+
+- 옹짐꾼님이 Kakao Developers에서 애플리케이션을 만들고 발급받은 **JavaScript 키**를 `js/auth.js`의 `KAKAO_JS_KEY` 상수에 반영(v0.3.5에서 `'YOUR_KAKAO_JS_KEY'` placeholder였던 값을 실제 키로 교체)
+- 이 값은 클라이언트에 노출돼도 안전한 공개 키라 그대로 코드에 둠(REST API 키·Admin 키가 아님)
+- 아직 남은 것: **Cloud Functions 배포**(`cd functions && npm install && npm run deploy`) — 이게 끝나야 `kakaoLogin` 함수가 실제로 만들어져서 로그인이 동작함. 배포 전까지는 버튼을 눌러도 "카카오 로그인에 실패했어요" 에러가 뜸(정상 — Cloud Function이 아직 없어서)
+- `node --check` 통과, `sw.js` `CACHE_NAME` 상향(v80 → v81)
+
+## [v0.3.5] 2026-07-16 — 카카오 로그인 추가
+
+- **카카오 로그인 신규 구현**(옹짐꾼님 요청, 한국 사용자 대상 앱이라 가입 장벽을 낮추기 위함) — 전체 아키텍처는 `docs/product-specs/kakao-login.md`에 상세 정리
+  - `index.html`: Kakao JS SDK(v2.8.0) 스크립트 추가, 로그인 화면에 카카오 브랜드 가이드 색상(#FEE500) 버튼 신규
+  - `js/auth.js`: `signInKakao()` 신규 — Kakao.Auth.login()으로 팝업 로그인(리다이렉트 방식인 authorize()보다 번들러 없는 SPA 구조에 더 적합) → access token을 Cloud Function에 전달 → 커스텀 토큰으로 signInWithCustomToken()
+  - `js/firebase.js`: Firebase Functions SDK(`getFunctions`/`httpsCallable`) 및 `signInWithCustomToken` 추가, `functionsApp` export 신규(리전 asia-northeast3로 서버와 일치시킴)
+  - `functions/index.js`: `kakaoLogin` Cloud Function 신규 — access token을 `kapi.kakao.com/v2/user/me`로 검증 → `kakao:{회원번호}` uid로 Firebase Auth 사용자 생성/갱신(닉네임·프로필사진만, 이메일 필드는 의도적으로 미사용 — 기존 이메일 계정과의 유니크 키 충돌 방지) → 커스텀 토큰 발급
+  - `css/auth.css`: `.btn-kakao` 신규
+- Kakao SDK 스크립트는 integrity 해시를 일부러 안 붙임(버전마다 해시가 바뀌는데 정확한 값을 검증할 방법이 없어서, 틀린 해시를 넣으면 스크립트 로딩 자체가 막히는 게 더 위험하다고 판단)
+- **옹짐꾼님이 별도로 해야 할 일**: Kakao Developers에서 애플리케이션 등록 후 JavaScript 키를 `js/auth.js`의 `KAKAO_JS_KEY`에 반영, `functions/` 배포(`npm run deploy`) 필요 — 둘 다 아직 안 됨, 코드만 준비된 상태
+- **알려진 제약**(문서에 상세 기록): 이메일 미수집이라 기존 이메일/Google 계정과 자동으로 연결되지 않음(같은 사람이 두 계정을 갖게 될 수 있음) — 계정 연결 기능은 아직 없음
+- `node --check`로 수정한 파일 전체 구문 검사 통과, `sw.js` `CACHE_NAME` 상향(v79 → v80)
 
 ## [v0.3.4] 2026-07-16 — Android TWA 패키지 생성 + Digital Asset Links 배포
 

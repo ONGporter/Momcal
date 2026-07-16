@@ -18,6 +18,8 @@
 
 자세한 변경 내용은 CHANGELOG.md에 버전별로 다 있으니 여기선 한 줄 요약만 봅니다. "지금 무엇을 확인해야 하는지"는 이 문서 아래 "현재 확인 필요 항목"을, 재발 방지 교훈 등 기술적으로 알아둘 내용은 "알아두면 좋은 것"을 참고하세요.
 
+- **v0.3.6** — 옹짐꾼님이 발급받은 Kakao JavaScript 키(`c587...`)를 `js/auth.js`의 `KAKAO_JS_KEY`에 반영(placeholder → 실제 값). 아직 Cloud Functions 배포 전이라 실제 로그인은 안 됨(옹짐꾼님이 `cd functions && npm run deploy` 실행해야 함) — 자세한 내용은 CHANGELOG.md 참고
+- **v0.3.5** — 옹짐꾼님 요청으로 카카오 로그인 추가(한국 사용자 대상이라 가입 장벽 낮추기 목적). Kakao JS SDK 팝업 로그인 → Cloud Function `kakaoLogin`이 access token 검증 후 Firebase 커스텀 토큰 발급 → signInWithCustomToken()으로 로그인 완료. uid는 `kakao:{회원번호}` 별도 네임스페이스, 이메일은 의도적으로 미수집(기존 계정과 유니크 키 충돌 방지 — 대신 계정 자동 연결도 안 됨, 알려진 제약으로 문서화). **옹짐꾼님이 아직 해야 할 일**: Kakao Developers에서 JavaScript 키 발급받아 `js/auth.js`의 `KAKAO_JS_KEY`에 반영 + `functions/` 배포 — 둘 다 안 하면 로그인 버튼이 동작 안 함. 자세한 내용은 CHANGELOG.md 및 `docs/product-specs/kakao-login.md` 참고
 - **v0.3.4** — 옹짐꾼님이 PWABuilder로 Android TWA 패키지(.aab/.apk) 생성 완료(Package ID `app.momcal.www`, Signing key New로 생성). 결과물 확인(서명 정상) 후 `.well-known/assetlinks.json`(PWABuilder가 SHA-256 지문까지 채워서 생성해줌)을 프로젝트에 추가. 서명 키(keystore)와 비밀번호는 민감정보라 저장소엔 안 넣고 옹짐꾼님이 직접 백업하도록 안내함 — 자세한 내용은 CHANGELOG.md 및 `docs/product-specs/play-store-launch.md` 참고
 - **v0.3.3** — 플레이스토어 출시 준비 시작. 옹짐꾼님이 PWABuilder(momcal.app 분석)로 나온 경고 확인 요청 → `manifest.json`에 `id`·`categories` 필드 추가(선택 필드, 기존 동작 영향 없음), "서비스워커 없음" 경고는 `js/app.js`의 `window.addEventListener('load', ...)` 타이밍 때문에 크롤러가 못 잡은 오탐으로 확인(코드는 안 건드림). 플레이스토어 출시 가이드 문서(`docs/product-specs/play-store-launch.md`) 신규 작성 — 2026년 4월에 새로 생긴 "Android 개발자 인증" 절차 등 최신 정책 반영 — 자세한 내용은 CHANGELOG.md 참고
 - **v0.3.2** — 옹짐꾼님이 전달한 "태아 크기 비교 과일" 이미지 10종으로 임신 체크(`preg_w04`~`preg_w36`) 카테고리 라벨의 이모지(🫐/🍇/🥝 등)를 교체. 실제 임신 주차별 태아 크기(공개 자료 기준)와 가장 가까운 주수의 과일로 배정(예: 16~19주=avocado는 16주 크기와 정확히 일치). m0~m36·f6~f24와 같은 `growthStageIconImg()`/`applyGrowthStageGender()` 패턴 재사용(`GROWTH_STAGE_FILES`에 9개 항목만 추가). 전달받은 10장 중 melon.png은 카테고리 수(9개)보다 1장 많아 미사용(`icons/pregstage/`에 남겨둠) — 자세한 내용은 CHANGELOG.md 참고
@@ -26,8 +28,6 @@
 - **v0.2.5** — 옹짐꾼님 제보로 정부지원 항목을 체크리스트 탭에서 X로 삭제하면 엉뚱하게 "추가하기" 모달이 뜨던 버그 수정 시도(→ 실제로는 불완전, v0.3.0에서 재수정). 설정 화면·육아정보 허브의 정부지원 "공통" 그룹을 없애고 임산부용/육아용에 각각 통합(표시/숨김+직접추가 편집을 한 행에서). `check-docs.mjs`에 TODO.md 인계노트 10개 초과 자동 감지 체크 추가(추가 직후 정규식 범위 버그로 오탐한 것도 함께 수정) — 자세한 내용은 CHANGELOG.md 참고
 - **v0.2.4** — 옹짐꾼님 요청으로 "출산 준비물" 설정 탭 편집 지원 + 정부지원 탭에 지자체별 지원금 등 사용자 직접 추가 기능 신규(임산부용/육아용 구분). 작업 중 캘린더 월/주간 그리드의 이벤트 제목 이스케이프 누락(기존 "내 일정"에도 영향)과 게스트 모드 저장 목록 누락 필드 3종을 함께 발견·수정 — 자세한 내용은 CHANGELOG.md 참고
 - **v0.2.3** — v0.2.2 회귀 버그 수정: 예방접종/발달/이유식 카테고리의 성장 단계 아이콘(`<img>`)이 v0.2.2의 escapeHtml 적용 위치 때문에 글자 그대로 깨져 보이던 문제. 이스케이프 위치를 렌더링 시점 3곳 → `getCats()`의 커스텀 체크리스트 분기 한 곳으로 이동해서 해결(신뢰 가능한 개발자 HTML과 사용자 입력을 같은 필드에서 다룰 땐 "출처를 아는 한 곳"에서만 이스케이프할 것 — 자세한 내용은 CHANGELOG.md v0.2.3 참고)
-- **v0.2.2** — 옹짐꾼님 요청으로 모든 `.md` 문서 전수 재검토 + v0.2.1에서 빠졌던 커스텀 체크리스트 이름 이스케이프 5곳 추가 수정. `scripts/check-docs.mjs` 신규(문서-코드 드리프트 자동 점검, 새 세션 시작 시 먼저 실행) — 자세한 내용은 CHANGELOG.md 참고
-- **v0.2.1** — 전체 코드 리뷰 후 발견한 XSS 위험 요소 수정(아이 이름·일정 제목/메모/병원명·체크리스트 커스텀 항목이 이스케이프 없이 innerHTML에 삽입되던 자리들) — `js/utils.js`에 공용 `escapeHtml()` 신설, 중복 로컬 함수 정리(`js/checklistSettings.js`)
 
 ### momcal.vercel.app 서비스워커 이슈 — "지금 방식 유지"로 결정됨
 momcal.vercel.app 접속자가 거의 없어서, 301 리다이렉트(momcal.vercel.app → momcal.app)는 그대로 유지하기로 결정. 참고로 momcal.vercel.app에 예전에 설치된 서비스워커는 리다이렉트 때문에 더 이상 자체 업데이트를 받을 수 없어 영구적으로 예전 버전에 머무름 — 코드로 고칠 수 없고 해당 사용자가 브라우저 사이트 데이터를 지워야만 해결됨. 감수하기로 함.
@@ -72,15 +72,15 @@ momcal.vercel.app 접속자가 거의 없어서, 301 리다이렉트(momcal.verc
 
 ## 현재 확인 필요 항목
 
-### v0.3.4 (이번 버전 — Android TWA 패키지 생성 + Digital Asset Links 배포)
-- [ ] **(중요, 옹짐꾼님)** `signing.keystore`·`signing-key-info.txt`를 최소 2곳에 백업했는지 확인(이 저장소엔 안 들어있음 — Claude가 못 챙겨주는 부분, 잃어버리면 이 앱을 다시는 업데이트 못 함)
-- [ ] 배포 후 `https://momcal.app/.well-known/assetlinks.json`에 접속해서 JSON이 그대로 보이는지 확인(리다이렉트되거나 404면 Claude에게 알릴 것 — `vercel.json` 규칙 추가 필요할 수 있음)
-- [ ] 받은 `.apk` 파일을 실제 안드로이드 폰에 설치해서 정상 실행되는지 확인(assetlinks.json 배포 전이라 주소창이 살짝 보일 수 있음 — 정상)
-- [ ] 화면 최하단 버전 표시가 "v0.3.4"로 보이는지 확인(앱 본체 + 육아정보 페이지 양쪽)
+### v0.3.6 (이번 버전 — Kakao JavaScript 키 반영)
+- [ ] **(필수, 옹짐꾼님)** `functions/` 배포(`cd functions && npm install && npm run deploy`) — `kakaoLogin` 함수가 배포돼야 실제로 동작함(아직 안 하신 상태로 추정)
+- [ ] 배포 끝난 뒤: 로그인 화면에서 "카카오로 계속하기" 버튼 눌러서 팝업 뜨는지, 로그인 완료 후 홈 화면으로 잘 들어가는지, 닉네임이 화면에 표시되는지 확인
+- [ ] 게스트 모드로 데이터 좀 넣어둔 상태에서 카카오로 로그인 → 기존 게스트 데이터가 정상적으로 이전되는지 확인
+- [ ] 화면 최하단 버전 표시가 "v0.3.6"으로 보이는지 확인(앱 본체 + 육아정보 페이지 양쪽)
 - [ ] `node scripts/check-docs.mjs` 실행 결과가 "문서-코드 불일치 없음"으로 나오는지 확인
 
-### 지난 버전 (v0.3.3 — 플레이스토어 출시 준비 시작)
-- [ ] `manifest.json`을 배포한 뒤 PWABuilder에서 momcal.app을 다시 분석해서 "id 없음"/"categories 없음" 경고가 사라졌는지 확인
+### 지난 버전 (v0.3.5 — 카카오 로그인 추가)
+- [ ] Kakao Developers 플랫폼 설정(Web, `https://momcal.app`)·동의항목(닉네임 필수, 프로필사진 선택, 이메일 미설정)이 안내대로 됐는지 재확인
 
 ---
 
