@@ -98,6 +98,11 @@ async function createFamilyGroup() {
     alert(`가족 그룹을 만들었어요! 초대 코드: ${id}\n\n배우자에게 이 코드를 알려주고, 설정 탭 "가족 그룹으로 공유"에서 코드로 참여하게 해주세요.`);
     location.reload();
   } catch (e) {
+    // v0.3.12: 실패 시 cm()을 안 불러서 .mo(모달 오버레이, position:fixed;inset:0;z-index:500)가
+    // 열린 채로 남아있었음 — 화면 전체를 덮는 투명하지 않은 배경이라 alert 확인 후에도
+    // 설정 탭을 포함해 앱 전체가 아예 클릭이 안 되는 것처럼 보이는 버그였음(옹짐꾼님 제보,
+    // 2026-07-17). alert보다 먼저 닫아야 사용자가 뒤 화면을 다시 조작할 수 있음
+    cm();
     alert('가족 그룹 생성에 실패했어요: ' + e.message);
   }
 }
@@ -112,6 +117,9 @@ async function joinFamilyGroup() {
     cm();
     location.reload();
   } catch (e) {
+    // v0.3.12: createFamilyGroup()과 동일한 버그 — 실패 시 모달이 안 닫혀서 화면 전체가
+    // 먹통처럼 보였음
+    cm();
     alert('참여에 실패했어요: ' + e.message);
   }
 }
