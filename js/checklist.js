@@ -199,14 +199,13 @@ export function renderChecklist() {
   tb.innerHTML = tabDefs.map((t, i) =>
     `<button class="cl-tab-btn ${(S.clTab || 0) === i ? 'on' : ''}"
              onclick="switchClTab(${i})">${t.tabLabel}</button>`
-  ).join('') + (child
-    ? `<button type="button" class="cl-tab-settings-btn" title="체크리스트 표시·연동 설정" onclick="gp('settings')">
-         <span class="icon icon-sm" translate="no" aria-hidden="true">tune</span> 편집
-       </button>`
-    : '');
+  ).join('');
 
-  const hintEl = document.getElementById('clTabHint');
-  if (hintEl) hintEl.style.display = child ? '' : 'none'; // v0.0.43: "편집" 버튼이 뭘 하는지 처음 보는 사람도 알 수 있게 짧은 안내 추가
+  // v0.3.9: "편집" 버튼 + 안내 문구는 이제 탭 바가 아니라 "아이:" 선택 행에 정적 마크업으로
+  // 있음(index.html의 #clChildRowActions) — 여기선 아이가 있을 때만 그 행을 보여줌
+  // (v0.0.43: "편집" 버튼이 뭘 하는지 처음 보는 사람도 알 수 있게 짧은 안내 추가했던 로직 유지)
+  const rowActionsEl = document.getElementById('clChildRowActions');
+  if (rowActionsEl) rowActionsEl.style.display = child ? '' : 'none';
 
   renderContextBanner(child);
   renderClSidebar();

@@ -411,9 +411,16 @@
             style="padding:7px 12px;border:1.5px solid #EEE0F0;border-radius:11px;
                    font-family:inherit;font-size:.81rem;color:var(--tx);outline:none;
                    background:var(--wh);box-shadow:0 2px 7px rgba(160,80,140,.07)"></select>
+    <!-- v0.3.9: 예전엔 탭 바 오른쪽 끝에 있던 "편집" 버튼 + 안내 문구를 "아이:" 선택 행으로
+         이동(옹짐꾼님 요청) — 표시/숨김은 js/checklist.js의 renderChecklist()가 담당 -->
+    <div class="cl-child-row-actions" id="clChildRowActions" style="display:none">
+      <span class="cl-tab-hint" id="clTabHint">더 많은 체크리스트는<br>여기서→</span>
+      <button type="button" class="cl-tab-settings-btn" title="체크리스트 표시·연동 설정" onclick="gp('settings')">
+        <span class="icon icon-sm" translate="no" aria-hidden="true">tune</span> 편집
+      </button>
+    </div>
   </div>
   <div class="cl-tab-bar" id="clTabBar"></div>
-  <div class="cl-tab-hint" id="clTabHint" style="display:none">체크리스트 켜고 끄기·편집은 여기서 ↑</div>
   <!-- Sprint 3: 현재 주차/월령 컨텍스트 배너 -->
   <div class="cl-context-banner" id="clContextBanner"></div>
   <div class="cl-layout">
@@ -469,7 +476,7 @@
     <a href="./terms.html"><span class="icon icon-sm" translate="no" aria-hidden="true">description</span> 이용약관</a>
     <a href="./contact.html"><span class="icon icon-sm" translate="no" aria-hidden="true">mail</span> 문의</a>
   </div>
-  <div class="site-footer-version">맘캘 MomCal v0.3.8</div>
+  <div class="site-footer-version">맘캘 MomCal v0.3.9</div>
 </footer>
 
 <!-- ════════════════════════════════════

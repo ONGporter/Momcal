@@ -11,10 +11,18 @@
   color: #fff; box-shadow: 0 3px 10px rgba(200,80,180,.22);
 }
 
-/* v0.0.43: 탭 바 옆 "편집" 버튼 — 예전엔 아이콘만 있는 원형 버튼이라 뭘 하는 버튼인지
+/* v0.3.9: "편집" 버튼 + 안내 문구를 감싸는 그룹 — "아이:" 선택 행 오른쪽 끝에 붙음
+   (예전엔 탭 바 안에 있었는데, 탭이 많아지면 편집 버튼 위치가 계속 밀려서 옹짐꾼님
+   요청으로 아이 선택 행으로 이동) */
+.cl-child-row-actions {
+  margin-left: auto; flex-shrink: 0;
+  display: flex; align-items: center; gap: 8px;
+}
+
+/* v0.0.43: "편집" 버튼 — 예전엔 아이콘만 있는 원형 버튼이라 뭘 하는 버튼인지
    알기 어렵다는 피드백을 받아 짧은 텍스트를 추가하고 알약 모양으로 바꿈 */
 .cl-tab-settings-btn {
-  margin-left: auto; flex-shrink: 0;
+  flex-shrink: 0;
   display: flex; align-items: center; gap: 4px;
   padding: 8px 14px; border-radius: 40px;
   border: 1.5px solid #EEE0F0; background: var(--wh); color: var(--txl);
@@ -24,8 +32,10 @@
 .cl-tab-settings-btn:hover { border-color: var(--pk); color: var(--pkd); }
 
 /* v0.0.43: "편집" 버튼이 뭘 하는지 알려주는 짧은 안내문 — 설정 탭에 있던 긴 문구를
-   여기로 옮기고 짧게 줄임(옹짐꾼님 피드백: 설정이 아니라 체크리스트 탭 쪽에 필요했음) */
-.cl-tab-hint { font-size: .7rem; color: var(--txl); margin: -10px 0 14px; text-align: right; }
+   여기로 옮기고 짧게 줄임(옹짐꾼님 피드백: 설정이 아니라 체크리스트 탭 쪽에 필요했음)
+   v0.3.9: 아이 선택 행으로 옮기며 문구를 "더 많은 체크리스트는 여기서→"로 변경하고,
+   글씨 크기를 줄이는 대신 <br>로 의도적으로 두 줄 처리(자동 줄바꿈으로 어색해지는 것 방지) */
+.cl-tab-hint { font-size: .7rem; color: var(--txl); text-align: right; line-height: 1.35; }
 
 /* v0.0.40: 설정 탭 — 체크리스트 관리 섹션 */
 .cl-settings-group-label {

@@ -57,7 +57,10 @@ const BUILTIN_CAT_KEY_MAP = {};
 function resolveCatKey(packKey) { return BUILTIN_CAT_KEY_MAP[packKey] || packKey; }
 
 function ensureClSettings() {
-  if (!S.clSettings) S.clSettings = { hiddenTabs: [], calendarSync: {} };
+  // v0.3.9: 안전망 경로(정상적으론 항상 js/state.js의 applyData()가 먼저 clSettings를
+  // 채워줌) — 혹시 여기서 처음 생성되는 경우에도 대표 탭 3개 기본 숨김 로직이 재적용되지
+  // 않도록 defaultTabsApplied를 true로 둠(applyDefaultHiddenTabs와 동일한 계약)
+  if (!S.clSettings) S.clSettings = { hiddenTabs: [], calendarSync: {}, defaultTabsApplied: true };
   if (!S.clSettings.hiddenTabs)   S.clSettings.hiddenTabs = [];
   if (!S.clSettings.calendarSync) S.clSettings.calendarSync = {};
   return S.clSettings;
