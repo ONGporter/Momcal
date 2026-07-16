@@ -149,7 +149,13 @@
 // v0.3.8: functions/index.js 수정 — kakaoLogin의 에러 처리 개선, 카카오 토큰 교환/사용자
 // 조회 실패 시 실제 원인을 서버 로그(console.error)에 남기도록 함(이전엔 클라이언트로 보내는
 // 메시지를 뭉뚱그리면서 원인 정보까지 같이 사라져서 디버깅이 오래 걸렸음) — 캐시 버전 상향
-const CACHE_NAME = 'momcal-shell-v87';
+// v0.3.9~v0.3.12: 체크리스트 탭바 UI 개선, privacy/terms/contact 정적 페이지 버전 동기화,
+// 가족 그룹 생성/참여 실패 시 모달이 안 닫히던 버그 수정 등 — 자세한 내용은 CHANGELOG.md 참고
+// v0.3.13: fetch 핸들러의 캐싱 전략 변경 — HTML/JS/CSS는 기존 stale-while-revalidate(캐시
+// 우선 응답)에서 network-first로 전환. 예전 방식은 배포 직후 첫 새로고침에서 항상 예전
+// 버전이 먼저 뜨는 구조적 문제가 있었음(옹짐꾼님이 "PC는 안 되고 시크릿 창은 된다"고 겪은
+// 문제의 원인) — 아래 fetch 리스너의 v0.3.13 주석 참고. 캐시 버전 상향
+const CACHE_NAME = 'momcal-shell-v88';
 
 const APP_SHELL = [
   './',
@@ -234,6 +240,35 @@ self.addEventListener('fetch', (event) => {
   // 같은 출처(same-origin) 요청만 캐싱 대상 — Firebase Auth/Firestore, CDN 등은 그대로 네트워크로
   if (url.origin !== self.location.origin) return;
   if (event.request.method !== 'GET') return;
+
+  // v0.3.13: HTML/JS/CSS(=코드가 들어있는 파일)는 network-first로 전환.
+  //
+  // 예전 stale-while-revalidate 방식은 "캐시가 있으면 일단 그걸 즉시 보여주고, 백그라운드로
+  // 최신본을 받아서 캐시만 갱신"하는 구조라, 배포 직후 첫 새로고침에서는 항상 예전 버전이
+  // 먼저 뜨고(캐시 우선 응답) 다음 새로고침에야 최신본이 보였음 — self.skipWaiting()/
+  // clients.claim()으로 새 서비스워커가 즉시 활성화돼도 이 문제와는 무관했음(문제는 SW 교체
+  // 시점이 아니라 fetch 전략 자체였음). 실제로 옹짐꾼님이 "PC는 안 되고 모바일은 되고,
+  // 시크릿 창은 된다"고 겪은 문제가 바로 이거였음(시크릿 창=캐시 자체가 없어서 항상 네트워크로만 감).
+  //
+  // 아이콘·폰트처럼 자주 안 바뀌고 용량이 큰 파일은 그대로 캐시 우선(stale-while-revalidate)
+  // 유지 — 오프라인 지원과 로딩 속도 이점을 살림. 코드 파일만 "온라인이면 무조건 최신,
+  // 오프라인일 때만 캐시로 대체"로 바꿔서 이 클래스의 버그를 구조적으로 없앰.
+  const isCodeFile = /\.(html|js|css)$/.test(url.pathname) || url.pathname === '/' || url.pathname.endsWith('/');
+
+  if (isCodeFile) {
+    event.respondWith(
+      fetch(event.request)
+        .then((res) => {
+          if (res && res.status === 200) {
+            const clone = res.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return res;
+        })
+        .catch(() => caches.match(event.request)) // 오프라인일 때만 캐시로 대체
+    );
+    return;
+  }
 
   event.respondWith(
     caches.match(event.request).then((cached) => {
