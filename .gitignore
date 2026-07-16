@@ -1,0 +1,19 @@
+# 의존성 폴더 — npm install로 언제든 재생성 가능, Git에 올릴 필요 없음
+node_modules/
+functions/node_modules/
+
+# Firebase CLI가 로컬에 만드는 캐시/로그 — 사람마다 다르고 재생성 가능
+.firebase/
+firebase-debug.log
+firebase-debug.*.log
+ui-debug.log
+
+# OS/에디터가 자동으로 만드는 파일
+.DS_Store
+Thumbs.db
+.vscode/
+
+# 혹시 나중에 쓰게 될 환경변수 파일(비밀값 — 절대 커밋 금지)
+.env
+.env.local
+.env.*.local
