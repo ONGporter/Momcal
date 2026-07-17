@@ -164,7 +164,14 @@
 // 안 눌린다"는 제보의 유력한 원인). js/notifications.js 수정 — 알림 권한 허용 직후
 // Notification.permission이 짧게 'default'로 오독되는 레이스 컨디션 때문에 허용 팝업이
 // 한 클릭에 2번 뜨고 "알림 켜짐"으로 안 바뀌던 문제 수정 — 캐시 버전 상향
-const CACHE_NAME = 'momcal-shell-v90';
+// v0.3.16: js/state.js·js/app.js 수정 — 체크리스트 항목을 누르고(디바운스 저장 대기 중)
+// 곧바로 다른 항목을 누르면 먼저 누른 게 화면에서 도로 풀리던 버그의 실제 원인을 발견·수정.
+// 로컬에 아직 서버로 안 보낸 변경이 있는 동안 들어오는 onSnapshot을 applyData()가 그대로
+// S에 덮어써버려서 생긴 문제였음(hasPendingLocalWrite() 신설, js/app.js의 onDataLoaded()가
+// 이 상태인 동안 스냅샷을 통째로 무시하도록 변경) — 설정 탭 버튼이 처음엔 하나도 안
+// 눌리던 v0.3.15의 그 버그도 사실 이게 근본 원인이었을 가능성이 높음(renderSettings()가
+// 스냅샷마다 무조건 다시 그려져서 방금 누른 걸 되돌리는 것처럼 보였을 것) — 캐시 버전 상향
+const CACHE_NAME = 'momcal-shell-v91';
 
 const APP_SHELL = [
   './',

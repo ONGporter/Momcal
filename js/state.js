@@ -143,47 +143,70 @@ export function dataDocRef() {
   return S.familyId ? familyDocRef(S.familyId) : userDocRef();
 }
 
+/* ── 저장 대기/진행 상태 추적 (v0.3.16) ──
+ * 디바운스 타이머가 아직 안 끝났거나(로컬에 아직 서버로 안 보낸 변경이 있음) setDoc()
+ * 자체가 서버로 가는 중일 때, 그 사이 들어오는 onSnapshot을 applyData()로 그대로 S에
+ * 반영해버리면 "방금 로컬에서 바꾼 값"이 아직 그 변경을 모르는 더 오래된 원격 데이터로
+ * 조용히 덮어써짐 — 체크리스트에서 항목 하나를 누르고(디바운스 대기 중) 곧바로 다른
+ * 항목을 누르면 첫 번째 항목이 화면에서 도로 풀리던 버그의 원인으로 확인됨(옹짐꾼님
+ * 제보, 2026-07-17). js/app.js의 onDataLoaded()가 이 값이 true인 동안엔 들어온 스냅샷을
+ * 통째로 무시하도록 함(hasPendingWrites만으론 부족함 — 그 값은 "이 스냅샷이 내 저장의
+ * 에코인지"만 알려줄 뿐, "그새 더 최신 로컬 변경이 쌓였는지"는 알려주지 않음) */
+let _saveTimer = null;
+let _saveInFlight = false;
+
+export function hasPendingLocalWrite() {
+  return _saveTimer !== null || _saveInFlight;
+}
+
 /* ── 상태 저장 ── */
 export async function saveState() {
-  // Sprint 15: 게스트 모드(로그인 안 함)는 로컬(localStorage)에 저장 — js/guestMode.js가 처리
-  // (순환 import 방지를 위해 window 경유 호출 — 프로젝트 전반의 기존 패턴과 동일)
-  if (S.isGuestMode) {
-    window.saveGuestData?.();
-    return;
-  }
-  if (!_currentUser) return;
+  _saveInFlight = true;
   try {
-    // v0.0.12: dataDocRef() — 가족 그룹에 속해있으면 families/{familyId}에,
-    // 아니면 기존처럼 users/{uid}에 저장. merge:true로 저장해서 가족 문서의
-    // members 배열이나 familyId 포인터 필드가 매번 자동저장 때마다 지워지지 않게 함.
-    await setDoc(dataDocRef(), {
-      children:    S.children,
-      customEvs:   S.customEvs,
-      dayStickers: S.dayStickers,
-      checks:      S.checks,
-      customClItems: S.customClItems || {},
-      eventMods:   S.eventMods || {},
-      growthRecords: S.growthRecords || [],
-      itemFeedback: S.itemFeedback || {},
-      evColors:    S.evColors || {},
-      theme:       S.theme,
-      selC:        S.selC,
-      customChecklists: S.customChecklists || [],
-      clSettings:  S.clSettings || { hiddenTabs: [], calendarSync: {} },
-      customGovItems: S.customGovItems || [],
-      updatedAt:   Date.now(),
-    }, { merge: true });
-    flashSave();
-  } catch (e) {
-    console.error('저장 실패', e);
+    // Sprint 15: 게스트 모드(로그인 안 함)는 로컬(localStorage)에 저장 — js/guestMode.js가 처리
+    // (순환 import 방지를 위해 window 경유 호출 — 프로젝트 전반의 기존 패턴과 동일)
+    if (S.isGuestMode) {
+      window.saveGuestData?.();
+      return;
+    }
+    if (!_currentUser) return;
+    try {
+      // v0.0.12: dataDocRef() — 가족 그룹에 속해있으면 families/{familyId}에,
+      // 아니면 기존처럼 users/{uid}에 저장. merge:true로 저장해서 가족 문서의
+      // members 배열이나 familyId 포인터 필드가 매번 자동저장 때마다 지워지지 않게 함.
+      await setDoc(dataDocRef(), {
+        children:    S.children,
+        customEvs:   S.customEvs,
+        dayStickers: S.dayStickers,
+        checks:      S.checks,
+        customClItems: S.customClItems || {},
+        eventMods:   S.eventMods || {},
+        growthRecords: S.growthRecords || [],
+        itemFeedback: S.itemFeedback || {},
+        evColors:    S.evColors || {},
+        theme:       S.theme,
+        selC:        S.selC,
+        customChecklists: S.customChecklists || [],
+        clSettings:  S.clSettings || { hiddenTabs: [], calendarSync: {} },
+        customGovItems: S.customGovItems || [],
+        updatedAt:   Date.now(),
+      }, { merge: true });
+      flashSave();
+    } catch (e) {
+      console.error('저장 실패', e);
+    }
+  } finally {
+    _saveInFlight = false;
   }
 }
 
 /* ── 디바운스 저장 (600ms) ── */
-let _saveTimer;
 export function debounceSave() {
   clearTimeout(_saveTimer);
-  _saveTimer = setTimeout(saveState, 600);
+  _saveTimer = setTimeout(() => {
+    _saveTimer = null;
+    saveState();
+  }, 600);
 }
 
 /**

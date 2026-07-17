@@ -11,7 +11,7 @@
 
 import { auth, onAuthStateChanged } from './firebase.js';
 import {
-  S, applyData, setCurrentUser, subscribeToUserData, unsubscribeUserData, saveState,
+  S, applyData, setCurrentUser, subscribeToUserData, unsubscribeUserData, saveState, hasPendingLocalWrite,
 } from './state.js';
 import { showApp, handleKakaoRedirectIfNeeded } from './auth.js';
 import { enterGuestMode, hasGuestData, getGuestData, clearGuestData } from './guestMode.js';
@@ -50,6 +50,14 @@ function syncThemeUI() {
  * @param {Object|null} data
  */
 function onDataLoaded(data, hasPendingWrites) {
+  // v0.3.16: 로컬에 아직 서버로 안 보낸(또는 보내는 중인) 변경사항이 있는 동안 들어온
+  // 스냅샷은 통째로 무시함 — applyData()가 S를 그 스냅샷으로 덮어써버리면 "방금 로컬에서
+  // 바꾼 값"이 아직 그 변경을 모르는 원격 데이터로 조용히 사라짐(체크리스트 항목을 누르고
+  // 곧바로 다른 항목을 누르면 첫 번째가 화면에서 도로 풀리던 버그의 원인, js/state.js의
+  // hasPendingLocalWrite() 주석 참고). 최초 로드(_firstLoad) 시점엔 사용자가 아직 아무것도
+  // 편집할 수 없어 이 상황이 생길 수 없으므로 가드 대상에서 제외함.
+  if (!_firstLoad && hasPendingLocalWrite()) return;
+
   if (!data && hasGuestData()) {
     applyData(getGuestData());
     S.isGuestMode = false;
