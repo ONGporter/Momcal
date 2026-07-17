@@ -127,11 +127,43 @@ onAuthStateChanged(auth, (user) => {
 // 놓치지 않고 확실히 잡을 수 있음.
 handleKakaoRedirectIfNeeded();
 
-/* ── PWA 서비스 워커 등록 (Sprint 11: 홈 화면 추가) ── */
+/* ── PWA 서비스 워커 등록 (Sprint 11: 홈 화면 추가) ──
+ * v0.3.15: "PC에서 설정 탭 버튼이 하나도 안 눌린다 → F12로 서비스워커 Unregister하면
+ * 다시 된다"는 제보(2026-07-17) 조사 중 발견한 구조적 빈틈 — sw.js 자체는 v0.3.13부터
+ * network-first라 배포되면 다음 접속 때 최신 파일을 받아오지만, "언제 새 sw.js가 있는지
+ * 확인하느냐"는 전적으로 브라우저에 맡겨져 있었음(보통 약 24시간에 한 번, 그것도 새
+ * 페이지 로드 시에만 체크). PC에서 탭을 며칠씩 안 닫고 쓰는 사용자는 그동안 새 서비스
+ * 워커가 있는지 브라우저가 확인조차 안 해서, 이미 열려있는 탭은 훨씬 예전(예: 가족 그룹
+ * 생성/참여 실패 시 모달이 안 닫히던 v0.3.12 이전) 코드를 계속 실행하고 있었을 가능성이
+ * 큼 — 실제로 "가족 그룹 공유가 안 되어 있는(=생성/참여를 시도했다가 실패했을 수 있는)
+ * 계정만" 재현된다는 제보와 맞아떨어짐(그 버그의 증상이 정확히 "화면 전체 클릭 안 됨"이었음,
+ * docs/TODO.md v0.3.12 항목 참고 — 확정 재현 테스트는 못 했지만 정황이 일치함). 아래
+ * 두 가지로 "새 코드가 나오면 사용자가 수동으로 Unregister 안 해도 알아서 최신으로
+ * 맞춰지도록" 구조적으로 막음:
+ *   1) 등록 직후 registration.update()를 명시적으로 호출 — 브라우저의 자체 체크 주기를
+ *      기다리지 않고 페이지를 열 때마다 새 버전이 있는지 바로 확인
+ *   2) 이미 이 탭을 통제하고 있던 서비스워커가 다른 버전으로 교체되는 순간(controllerchange)
+ *      한 번만 자동 새로고침 — sw.js가 이미 self.skipWaiting()+clients.claim()으로 새
+ *      버전을 즉시 활성화시키지만, 활성화만으론 "이미 메모리에 로드된 이 탭의 JS 모듈"까지
+ *      바뀌진 않으므로 새로고침으로 마무리함. 최초 설치(이 탭이 원래 서비스워커 통제를
+ *      안 받고 있던 경우)에는 controllerchange가 한 번 발생해도 무시해서 불필요한 새로고침
+ *      루프가 생기지 않도록 함
+ */
 if ('serviceWorker' in navigator) {
+  const hadController = !!navigator.serviceWorker.controller; // 이미 이 탭을 통제 중인 SW가 있었는지(=재방문)
+
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(() => {
+    navigator.serviceWorker.register('./sw.js').then((reg) => {
+      reg.update().catch(() => {});
+    }).catch(() => {
       // 서비스 워커 등록 실패해도 앱 사용에는 지장 없음 (오프라인 캐싱만 못 함)
     });
+  });
+
+  let _swAutoReloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController || _swAutoReloaded) return;
+    _swAutoReloaded = true;
+    location.reload();
   });
 }

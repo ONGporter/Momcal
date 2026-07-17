@@ -53,6 +53,32 @@ const TIME_WINDOWS = [
   { key: 'evening',   label: '저녁 (18~24시)' },
 ];
 
+/**
+ * v0.3.15: requestPermission() 프로미스가 'granted'로 resolve된 직후에도, 일부 모바일
+ * 브라우저(특히 Android Chrome)에서는 전역 Notification.permission 값이 아주 짧게(수십~
+ * 수백ms) 'default'로 읽히는 타이밍 버그가 있음(js/push.js v0.3.14 주석에서 이미 확인된
+ * 문제). 이 함수 바로 아래 requestNotificationPermission()이 renderNotificationSettings()를
+ * 그 즉시 다시 부르면서 이 값을 재조회하다 보니, 실제로는 방금 허용됐는데도 "알림 받기"
+ * 화면으로 도로 튕겨 보이고, 뒤이어 enablePushNotifications()가 부르는 Firebase
+ * getToken()도 같은 순간 권한이 없다고 오판해 requestPermission()을 한 번 더 호출해서
+ * 네이티브 허용 팝업이 한 클릭에 2번 뜨는 문제로 이어졌음(옹짐꾼님 제보, 2026-07-17).
+ * 실제로 'granted'로 읽힐 때까지 짧게(최대 250ms) 폴링해서 이 레이스를 피함 — 이미
+ * 허용된 상태라면 대부분 첫 체크에서 바로 통과되고, 최악의 경우에도 250ms만 더 기다리면
+ * 원래 동작(재확인 없이 진행)으로 돌아감.
+ */
+function waitForGrantedPermission(maxWaitMs = 250, stepMs = 40) {
+  return new Promise((resolve) => {
+    const start = Date.now();
+    (function poll() {
+      if (Notification.permission === 'granted' || Date.now() - start >= maxWaitMs) {
+        resolve();
+        return;
+      }
+      setTimeout(poll, stepMs);
+    })();
+  });
+}
+
 /** v0.0.2: 알림 사용 여부 — 값이 없으면(처음 권한을 받았을 때) 기본 켜짐으로 취급 */
 function isNotifEnabled() {
   return localStorage.getItem(NOTIF_ENABLED_KEY) !== 'false';
@@ -195,11 +221,18 @@ export function renderNotificationSettings() {
 }
 
 /** 알림 권한 요청 (버튼 클릭 시)
- *  v0.0.42: 로그인 사용자면 허용과 동시에 진짜 푸시(FCM)도 함께 등록 시도 */
+ *  v0.0.42: 로그인 사용자면 허용과 동시에 진짜 푸시(FCM)도 함께 등록 시도
+ *  v0.3.15: result === 'granted'가 확정된 뒤에도 곧장 renderNotificationSettings()/
+ *  enablePushNotifications()로 넘어가면 위 waitForGrantedPermission() 주석에 적은 레이스
+ *  컨디션에 걸릴 수 있어서, 그 사이에 짧게 대기해 실제로 Notification.permission이
+ *  'granted'로 읽히는 걸 확인하고 넘어감 */
 export async function requestNotificationPermission() {
   if (!('Notification' in window)) return;
   const result = await Notification.requestPermission();
-  if (result === 'granted') localStorage.setItem(NOTIF_ENABLED_KEY, 'true'); // v0.0.2: 새로 허용하면 항상 켜짐 상태로 시작
+  if (result === 'granted') {
+    await waitForGrantedPermission(); // v0.3.15: 레이스 컨디션 회피
+    localStorage.setItem(NOTIF_ENABLED_KEY, 'true'); // v0.0.2: 새로 허용하면 항상 켜짐 상태로 시작
+  }
   renderNotificationSettings();
   if (result === 'granted') {
     checkAndNotify(true);

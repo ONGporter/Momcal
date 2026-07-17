@@ -158,7 +158,13 @@
 // v0.3.14: js/push.js·js/notifications.js 수정(알림 권한 재요청 중복 호출 제거),
 // js/familyShare.js 전면 개편("배우자와 함께 쓰기" 제거, "(베타)" 표기 제거, 초대장 보내기
 // 신규) — 캐시 버전 상향
-const CACHE_NAME = 'momcal-shell-v89';
+// v0.3.15: js/app.js 수정 — 서비스워커 등록 직후 update() 호출 + controllerchange 시
+// 자동 새로고침 추가(PC에서 탭을 오래 켜두면 새 서비스워커가 있는지 브라우저가 한동안
+// 확인을 안 해서 아주 오래된 코드가 계속 실행되던 구조적 문제 해결, "설정 탭 버튼이 하나도
+// 안 눌린다"는 제보의 유력한 원인). js/notifications.js 수정 — 알림 권한 허용 직후
+// Notification.permission이 짧게 'default'로 오독되는 레이스 컨디션 때문에 허용 팝업이
+// 한 클릭에 2번 뜨고 "알림 켜짐"으로 안 바뀌던 문제 수정 — 캐시 버전 상향
+const CACHE_NAME = 'momcal-shell-v90';
 
 const APP_SHELL = [
   './',
