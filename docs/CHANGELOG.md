@@ -8,6 +8,7 @@
 
 | 버전 | 주요 기능 |
 |:---:|------|
+| v0.3.19 | 모바일에서 알림 권한 팝업이 v0.3.18 이후에도 여전히 2번 뜨고 "알림 받기"에서 "알림 켜짐"으로 안 넘어가던 잔여 버그 수정 — `js/notifications.js`의 `waitForGrantedPermission()` 최대 대기 시간을 250ms에서 2.5초로 크게 늘리고, 그 안에도 권한이 확정 안 되면 Firebase의 이중 팝업 유발 경로(`enablePushNotifications()`) 자체를 건너뛰도록 함 |
 | v0.3.18 | **[근본 원인 발견·수정]** PC 설정 탭 버튼 먹통(v0.3.15/16)과 모바일 Legend 뱃지 급속 깜빡임(v0.3.17)이 사실 같은 원인이었음을 확인 — 옹짐꾼님이 보내주신 콘솔 캡처에서 Firestore `resource-exhausted: Write stream exhausted maximum allowed queued writes` 에러를 발견, `js/push.js`의 `refreshTokenIfNeeded()`가 앱이 데이터를 불러올 때마다 FCM 토큰을 조건 없이 재저장하면서(매번 `updatedAt`이 바뀌어 "문서 변경"으로 처리됨) 이 기기 자신의 `onSnapshot`을 다시 울리고, 그게 다시 저장을 부르는 **무한 저장 루프**였음(`debounceSave()`를 안 거치는 직접 저장이라 v0.3.16의 가드로도 못 막았음). 이 루프가 도는 동안 현재 화면이 계속 통째로 다시 그려져서 PC에서는 클릭이 씹히고 모바일에서는 뱃지가 깜빡였던 것 — 토큰이 실제로 바뀌었거나 24시간이 지났을 때만 저장하도록 수정해 루프 자체를 원천 차단. v0.3.17의 임시 진단 로그는 모두 제거 |
 | v0.3.17 | [임시 진단 빌드] "체크리스트에서 Legend 뱃지가 아주 빠르게 깜빡이고 무지개 진행률 바는 움직이지 않는다"는 제보 — 화면이 아주 짧은 간격으로 계속 다시 그려지고 있다는 정황인데 원인 코드 경로를 코드 리뷰만으로 못 찾음. `js/checklist.js`의 `renderClMain()`, `js/state.js`의 `debounceSave()`, `js/app.js`의 `onDataLoaded()`에 호출 횟수·간격을 콘솔에 남기는 임시 진단 로그 추가(화면엔 안 보임, `console.log`만) — 원인 확인되는 대로 다음 버전에서 반드시 제거 |
 | v0.3.16 | "체크리스트에서 한 항목을 누르고 곧바로 다른 항목을 누르면 먼저 누른 게 도로 풀린다"는 제보로 실제 원인을 발견 — 로컬에 아직 서버로 안 보낸 변경(디바운스 저장 대기 중/저장 진행 중)이 있는 동안 들어오는 onSnapshot을 `applyData()`가 그대로 덮어써버리던 구조적 버그. `hasPendingLocalWrite()` 신설, 이 상태인 동안엔 스냅샷을 통째로 무시하도록 수정(`js/state.js`·`js/app.js`) — v0.3.15의 "PC 설정 탭 버튼이 하나도 안 눌린다"던 버그도 사실 같은 원인이었을 가능성이 높음(`renderSettings()`가 스냅샷마다 무조건 다시 그려졌음) |
@@ -132,6 +133,13 @@
 
 ---
 
+## [v0.3.19] 2026-07-17 — 모바일 알림 권한 팝업 중복/미확정 잔여 버그 수정
+
+- **모바일에서 알림 권한 팝업이 v0.3.14·v0.3.15 수정 이후에도 여전히 2번 뜨고, "알림 받기"에서 "알림 켜짐"으로 안 넘어가던 문제(옹짐꾼님 재제보, 2026-07-17)**: PC는 "알림 꺼짐"/"알림 켜짐" 토글이 뜨는데 모바일만 "알림 받기"로 남아있다는 관찰이 정확한 단서였음 — 이 UI 차이는 `js/notifications.js`의 `renderNotificationSettings()`가 실제 `Notification.permission` 값을 그대로 반영한 것이라, 모바일 기기에서 권한이 실제로 `'granted'`까지 확정되지 못하고 있다는 뜻이었음
+- **원인**: v0.3.15에서 추가한 `waitForGrantedPermission()`이 최대 250ms만 기다리도록 되어 있었는데, 일부 모바일 기기에서는 `Notification.requestPermission()`의 Promise가 resolve된 뒤 전역 `Notification.permission` 값이 실제로 반영되기까지 그보다 더 오래 걸렸던 것으로 추정됨. 250ms 안에 확정을 못 보고 넘어가면 뒤이어 부르는 Firebase `getToken()`이 아직 권한이 없다고 오판해 자체적으로 한 번 더 허용 팝업을 띄우는데, 브라우저가 짧은 시간에 팝업이 연달아 뜨는 것을 스팸으로 보고 두 번째 요청을 조용히 무시하면서 권한이 영영 `'granted'`로 안 넘어갔던 것으로 보임
+- **수정**: `js/notifications.js`의 `waitForGrantedPermission()` 최대 대기 시간을 250ms → 2.5초로 크게 늘림(한 번만 하는 동작이라 몇 초 더 기다리는 건 감수할 만하다고 판단). 그 안에도 권한이 확정되지 않으면(아주 느린 기기) `enablePushNotifications()` 호출 자체를 건너뛰어서 Firebase의 이중 팝업 유발 경로를 원천 차단 — 이 경우 이번엔 진짜 푸시(FCM) 등록만 못 하고 넘어가고, 다음에 앱을 열 때 `js/push.js`의 `refreshTokenIfNeeded()`가 그때는 권한이 이미 확정돼 있을 테니 조용히 등록을 마무리함(로컬 알림 자체는 즉시 정상 동작)
+- `node --check` 통과, 5곳 버전 갱신, `sw.js` `CACHE_NAME` 상향(v93 → v94)
+
 ## [v0.3.18] 2026-07-17 — [근본 원인 발견·수정] FCM 토큰 무한 저장 루프 — PC 설정 탭 먹통·모바일 Legend 깜빡임의 진짜 원인
 
 - **결정적 증거**: 옹짐꾼님이 "콘솔에 시간 지나니깐 이런 게 생겼어"라며 보내주신 캡처에 Firestore `[code=resource-exhausted]: Write stream exhausted maximum allowed queued writes`, `Using maximum backoff delay to prevent overloading the backend`가 반복해서 찍혀있었음 — 앱이 Firestore에 쓰기를 감당 못 할 만큼 계속 반복해서 보내고 있었다는 뜻으로, 무한 저장 루프의 명백한 증거
@@ -139,6 +147,7 @@
 - **두 버그가 사실 하나였음**: 이 루프가 도는 동안 그 순간 화면에 열려있는 페이지가 `onDataLoaded()`의 렌더 분기(`pg-settings`/`pg-checklist` 등이 `on`이면 다시 그림)를 타고 계속 통째로 다시 그려졌음
   - **PC 설정 탭 버튼 먹통(v0.3.15/16에서 헛짚었던 그 버그)**: 로그인 직후엔 루프가 가장 빠른 속도로 돌아서 버튼을 누르는 그 찰나에도 화면이 갈아치워져 클릭이 씹혔고, 시간이 지나며 Firestore 자체의 백오프(속도 제한)로 루프 간격이 점점 느려지면서 클릭이 먹힐 만큼 여유가 생겼던 것 — "체크박스 몇 개 하고 나서 설정 탭 가면 된다"던 것도 결국 그 사이 시간이 흘러 백오프가 걸린 덕분이었을 뿐, 체크박스 자체와는 무관했음
   - **모바일 Legend 뱃지 급속 깜빡임(v0.3.17)**: `refreshTokenIfNeeded()`는 푸시 알림 권한이 켜져 있는 기기에서만 동작하는데(`Notification.permission !== 'granted'`면 즉시 return), 옹짐꾼님이 최근 푸시를 켠 게 모바일이라 이 루프는 모바일에서만 돌고 있었음 — PC 테스트 계정은 애초에 푸시를 안 켜서 이 루프 자체가 없었던 것. "설정 탭 버그는 PC만, Legend 버그는 모바일만"이라는 옹짐꾼님의 정확한 구분이 없었으면 원인을 좁히기 훨씬 어려웠을 것
+  - **왜 가족 그룹 공유 계정은 이 버그를 안 겪었는가**: `js/state.js`의 `subscribeToUserData()`는 `users/{uid}` 문서를 항상 구독하지만, `familyId`가 있으면(=가족 그룹에 속해있으면) 실제 앱 데이터는 `families/{familyId}`에서만 가져오고 `familyId` 값 자체가 안 바뀌는 한 `users/{uid}` 문서 변경으로는 `onData()`(=`onDataLoaded()`)를 다시 부르지 않도록 애초에 짜여 있었음(코드 주석: "familyId가 그대로면 이미 걸려있는 _familyUnsub이 알아서 계속 갱신해줌"). `refreshTokenIfNeeded()`가 반복 저장한 곳이 바로 이 `users/{uid}` 문서였기 때문에, 가족 그룹 계정은 그 변화 자체를 감지하지 않아 애초에 루프가 시작되지 않았음 — 의도한 방어가 아니라 완전히 우연히 안전했던 것
 - **수정**: `js/push.js`에 마지막으로 실제 저장한 토큰 값·시각을 `localStorage`에 기억해두는 로직 추가 — 토큰이 이전과 완전히 같고 24시간이 안 지났으면 이번 호출에서는 Firestore 저장 자체를 건너뜀. `getToken()` 호출(FCM SDK 캐시라 가벼움)은 기존대로 매번 하되, 불필요한 Firestore 쓰기(및 그로 인한 재귀 호출)만 원천 차단
 - v0.3.17에서 추가했던 임시 진단 로그(`renderClMain()`/`debounceSave()`/`onDataLoaded()`의 `console.log`)는 모두 제거
 - `node --check` 전체 통과, 5곳 버전 갱신, `sw.js` `CACHE_NAME` 상향(v92 → v93)

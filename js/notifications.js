@@ -62,16 +62,24 @@ const TIME_WINDOWS = [
  * 화면으로 도로 튕겨 보이고, 뒤이어 enablePushNotifications()가 부르는 Firebase
  * getToken()도 같은 순간 권한이 없다고 오판해 requestPermission()을 한 번 더 호출해서
  * 네이티브 허용 팝업이 한 클릭에 2번 뜨는 문제로 이어졌음(옹짐꾼님 제보, 2026-07-17).
- * 실제로 'granted'로 읽힐 때까지 짧게(최대 250ms) 폴링해서 이 레이스를 피함 — 이미
- * 허용된 상태라면 대부분 첫 체크에서 바로 통과되고, 최악의 경우에도 250ms만 더 기다리면
- * 원래 동작(재확인 없이 진행)으로 돌아감.
+ *
+ * v0.3.19: 처음엔 최대 250ms만 기다렸는데, 옹짐꾼님이 재확인해보니 일부 모바일 기기에서는
+ * 그걸로 부족해서 여전히 팝업이 2번 뜨고, 심지어 두 번째 팝업이 브라우저의 "짧은 시간에
+ * 팝업 연타" 스팸 방지에 걸려 조용히 무시되면서 권한이 영영 'granted'로 안 넘어가는(=계속
+ * "알림 받기" 화면에 머무는) 문제로 이어진 것으로 추정됨. 한 번만 하는 동작이라 사용자가
+ * 몇 초 더 기다리는 건 감수할 만하다고 보고 최대 대기 시간을 2.5초로 크게 늘림. 그래도
+ * 시간 안에 못 넘어가면(아주 느린 기기) 아래 enablePushNotifications() 호출 자체를 건너뛰어서
+ * Firebase의 이중 팝업 유발 경로를 원천 차단 — 이 경우 진짜 푸시(FCM) 등록만 이번엔
+ * 못 하고 넘어가고, 다음에 앱을 열 때 js/push.js의 refreshTokenIfNeeded()가 그때는
+ * 권한이 이미 확정돼 있을 테니 조용히 등록을 마무리함(로컬 알림 자체는 즉시 정상 동작).
  */
-function waitForGrantedPermission(maxWaitMs = 250, stepMs = 40) {
+function waitForGrantedPermission(maxWaitMs = 2500, stepMs = 50) {
   return new Promise((resolve) => {
     const start = Date.now();
     (function poll() {
-      if (Notification.permission === 'granted' || Date.now() - start >= maxWaitMs) {
-        resolve();
+      const granted = Notification.permission === 'granted';
+      if (granted || Date.now() - start >= maxWaitMs) {
+        resolve(granted);
         return;
       }
       setTimeout(poll, stepMs);
@@ -222,23 +230,27 @@ export function renderNotificationSettings() {
 
 /** 알림 권한 요청 (버튼 클릭 시)
  *  v0.0.42: 로그인 사용자면 허용과 동시에 진짜 푸시(FCM)도 함께 등록 시도
- *  v0.3.15: result === 'granted'가 확정된 뒤에도 곧장 renderNotificationSettings()/
+ *  v0.3.19: result === 'granted'가 확정된 뒤에도 곧장 renderNotificationSettings()/
  *  enablePushNotifications()로 넘어가면 위 waitForGrantedPermission() 주석에 적은 레이스
- *  컨디션에 걸릴 수 있어서, 그 사이에 짧게 대기해 실제로 Notification.permission이
- *  'granted'로 읽히는 걸 확인하고 넘어감 */
+ *  컨디션에 걸릴 수 있어서, 그 사이에 넉넉히 대기해 실제로 Notification.permission이
+ *  'granted'로 읽히는 걸 확인하고 넘어감 — 그 안에도 못 넘어가면(아주 느린 기기)
+ *  enablePushNotifications()를 아예 안 불러서 Firebase의 이중 팝업 유발 경로를 차단함 */
 export async function requestNotificationPermission() {
   if (!('Notification' in window)) return;
   const result = await Notification.requestPermission();
+  let confirmedGranted = false;
   if (result === 'granted') {
-    await waitForGrantedPermission(); // v0.3.15: 레이스 컨디션 회피
+    confirmedGranted = await waitForGrantedPermission(); // v0.3.19: 레이스 컨디션 회피
     localStorage.setItem(NOTIF_ENABLED_KEY, 'true'); // v0.0.2: 새로 허용하면 항상 켜짐 상태로 시작
   }
   renderNotificationSettings();
   if (result === 'granted') {
     checkAndNotify(true);
-    // v0.3.14: 방금 이 함수 안에서 결과를 직접 확인했으므로(result === 'granted') 확실함 —
-    // alreadyGranted=true로 넘겨 enablePushNotifications()가 다시 확인/재요청하지 않게 함
-    if (getCurrentUser()) enablePushNotifications(true);
+    // v0.3.19: 위에서 실제로 'granted'로 확정된 걸 직접 확인했을 때만 진행 — 확정 안 됐는데
+    // 밀어붙이면 Firebase getToken()이 또 권한을 요청해서 팝업이 한 번 더 뜨고, 그마저도
+    // 브라우저의 팝업 연타 방지에 걸려 조용히 실패할 수 있음(이 경우 다음 앱 실행 시
+    // refreshTokenIfNeeded()가 조용히 등록을 마무리함)
+    if (confirmedGranted && getCurrentUser()) enablePushNotifications(true);
   }
 }
 

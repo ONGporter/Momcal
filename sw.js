@@ -187,7 +187,13 @@
 // 다시 그려져서 PC 설정 탭 버튼 먹통(v0.3.15/16)·모바일 Legend 뱃지 깜빡임(v0.3.17)이 둘 다
 // 이게 근본 원인이었던 것으로 확인됨 — 토큰 값이 실제로 바뀌었거나 24시간이 지났을
 // 때만 저장하도록 수정해서 무의미한 반복 쓰기 자체를 원천 차단(js/push.js) — 캐시 버전 상향
-const CACHE_NAME = 'momcal-shell-v93';
+// v0.3.19: 모바일에서 알림 권한 팝업이 여전히 2번 뜨고 "알림 받기"에서 안 넘어가던 잔여
+// 버그 수정 — js/notifications.js의 waitForGrantedPermission() 최대 대기 시간을 250ms→
+// 2.5초로 늘리고, 그 안에도 Notification.permission이 'granted'로 확정 안 되면
+// enablePushNotifications() 호출 자체를 건너뛰도록 함(Firebase getToken()이 또 권한을
+// 요청해 팝업이 한 번 더 뜨고, 그마저 브라우저의 팝업 연타 방지에 걸려 조용히 실패하며
+// 영영 'granted'로 안 넘어가던 문제 차단) — 캐시 버전 상향
+const CACHE_NAME = 'momcal-shell-v94';
 
 const APP_SHELL = [
   './',
