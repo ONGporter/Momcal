@@ -171,7 +171,23 @@
 // 이 상태인 동안 스냅샷을 통째로 무시하도록 변경) — 설정 탭 버튼이 처음엔 하나도 안
 // 눌리던 v0.3.15의 그 버그도 사실 이게 근본 원인이었을 가능성이 높음(renderSettings()가
 // 스냅샷마다 무조건 다시 그려져서 방금 누른 걸 되돌리는 것처럼 보였을 것) — 캐시 버전 상향
-const CACHE_NAME = 'momcal-shell-v91';
+// v0.3.17: [임시 진단 빌드] "Legend 뱃지가 아주 빠르게 깜빡이고 무지개 진행률 바는 안
+// 움직인다"는 제보(2026-07-17) — 화면이 아주 짧은 간격으로 계속 다시 그려지고 있다는
+// 정황인데 원인 코드 경로를 못 찾아서, js/checklist.js의 renderClMain()·js/state.js의
+// debounceSave()·js/app.js의 onDataLoaded()에 호출 횟수/간격을 콘솔에 남기는 진단 로그를
+// 추가함(console.log, 화면엔 안 보임) — 캐시 버전 상향
+// v0.3.18: [진짜 원인 발견·수정, v0.3.17 진단 로그는 제거] 옹짐꾼님이 보내주신 콘솔 캡처에
+// Firestore의 "Write stream exhausted maximum allowed queued writes" 에러가 찍혀있어서
+// 무한 저장 루프를 확인함 — js/push.js의 refreshTokenIfNeeded()가 앱이 데이터를 불러올
+// 때마다(js/app.js의 onDataLoaded()) 무조건 FCM 토큰을 다시 저장했는데, updatedAt이 매번
+// 새로 찍혀서 "문서가 바뀜"으로 처리돼 이 기기 자신의 onSnapshot을 다시 울리고, 그게
+// onDataLoaded()를 다시 부르고, 그 안에서 refreshTokenIfNeeded()가 또 저장하는 무한
+// 루프였음(js/state.js의 debounceSave()를 안 거치는 직접 저장이라 v0.3.16의
+// hasPendingLocalWrite() 가드로도 못 막았음). 이 루프가 도는 동안 현재 화면이 계속 통째로
+// 다시 그려져서 PC 설정 탭 버튼 먹통(v0.3.15/16)·모바일 Legend 뱃지 깜빡임(v0.3.17)이 둘 다
+// 이게 근본 원인이었던 것으로 확인됨 — 토큰 값이 실제로 바뀌었거나 24시간이 지났을
+// 때만 저장하도록 수정해서 무의미한 반복 쓰기 자체를 원천 차단(js/push.js) — 캐시 버전 상향
+const CACHE_NAME = 'momcal-shell-v93';
 
 const APP_SHELL = [
   './',

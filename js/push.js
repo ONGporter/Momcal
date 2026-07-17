@@ -29,6 +29,13 @@ const VAPID_KEY = 'BPDAP4TNZW3vHCF80G1OWRY8FvbvXKiLNcdaGzLFcNKd3cByXiacCpJ3zlCmy
 const PUSH_TOKEN_SAVED_KEY = 'momcal_push_token_saved'; // 이 기기·브라우저에 토큰 저장을 완료했는지(로컬 캐시, 재요청 방지용)
 export { PUSH_TOKEN_SAVED_KEY }; // v0.0.42: js/notifications.js가 통합 알림 카드에서 "진짜 푸시로 켜졌는지" 표시할 때 씀
 
+/* v0.3.18: 아래 두 키는 "마지막으로 Firestore에 실제 저장한 토큰 값·시각"을 기억해서
+ * saveTokenToFirestore()의 무의미한 반복 호출을 막는 용도(무한 루프 버그 수정, 아래
+ * fetchAndSaveToken() 주석 참고) */
+const PUSH_TOKEN_VALUE_KEY    = 'momcal_push_token_value';
+const PUSH_TOKEN_SAVED_AT_KEY = 'momcal_push_token_saved_at';
+const TOKEN_RESAVE_INTERVAL_MS = 24 * 60 * 60 * 1000; // 토큰이 그대로여도 하루에 한 번은 updatedAt 갱신 겸 재저장
+
 let _messagingInstance; // undefined = 아직 확인 안 함, null = 미지원, 그 외 = 인스턴스
 
 /** Messaging 인스턴스를 안전하게 얻음(미지원 브라우저에서 예외로 앱이 죽지 않도록) */
@@ -94,7 +101,34 @@ export async function refreshTokenIfNeeded() {
   await fetchAndSaveToken();
 }
 
-/** getToken() 호출 + Firestore 저장 — enablePushNotifications/refreshTokenIfNeeded 공용 */
+/**
+ * getToken() 호출 + Firestore 저장 — enablePushNotifications/refreshTokenIfNeeded 공용
+ *
+ * v0.3.18: [심각한 버그 수정] 이 함수는 앱이 데이터를 새로 불러올 때마다(js/app.js의
+ * onDataLoaded()) refreshTokenIfNeeded()를 통해 매번 호출됐는데, 예전엔 getToken()이
+ * (대부분 이전과 같은 값을 돌려주는데도) 매번 saveTokenToFirestore()로 무조건 다시
+ * 저장했음 — 그 안에서 updatedAt: Date.now()가 매번 새 값이라 "문서가 바뀜"으로 처리돼,
+ * 이게 곧바로 이 기기 자신의 onSnapshot을 다시 울리고 → onDataLoaded()가 또 불리고 →
+ * refreshTokenIfNeeded()가 또 저장하고… 자기 자신을 끝없이 재호출하는 무한 저장 루프였음.
+ * 이 저장은 js/state.js의 debounceSave()를 거치지 않고 여기서 직접 setDoc()을 부르는
+ * 별도 경로라 v0.3.16의 hasPendingLocalWrite() 가드로도 못 막았음.
+ *
+ * 실제 증상: (1) 이 루프가 도는 동안 지금 열려있는 화면(설정 탭이면 설정 탭, 체크리스트면
+ * 체크리스트)이 계속 통째로 다시 그려져서, PC에서는 버튼을 눌러도 그 찰나에 화면이 갈아
+ * 치워져 클릭이 씹혔고(로그인 직후일수록 루프가 빨라 더 자주 씹힘, 시간이 지나면 Firestore
+ * 자체의 백오프로 루프가 느려지며 클릭이 먹히기 시작함), 모바일 체크리스트에서는 Legend
+ * 뱃지가 빠르게 깜빡이는 것처럼 보였음(등장 애니메이션이 매번 재시작됨). 이 루프는 푸시
+ * 알림 권한이 켜져 있는 기기에서만 돌아서(refreshTokenIfNeeded()의 권한 체크 참고),
+ * PC 테스트 계정처럼 푸시를 안 켠 기기에는 아예 영향이 없었음(옹짐꾼님이 "설정 탭 버그는
+ * PC만, Legend 버그는 모바일만"이라고 정확히 구분해주셔서 여기까지 좁힐 수 있었음).
+ * 결국 Firestore가 "Write stream exhausted maximum allowed queued writes"로 쓰기 자체를
+ * 거부하기 시작하는 지경까지 갔었음(2026-07-17, 옹짐꾼님 콘솔 캡처로 확인).
+ *
+ * 수정: 마지막으로 실제 저장한 토큰 값·시각을 로컬(localStorage)에 기억해뒀다가, 토큰이
+ * 그때와 완전히 같고 24시간이 안 지났으면 이번엔 아예 저장을 건너뜀 — 매번 부르는
+ * getToken() 자체(FCM SDK 캐시라 가벼움)는 그대로 두되, 불필요한 Firestore 쓰기(및 그로
+ * 인한 재귀 호출)만 원천 차단함.
+ */
 async function fetchAndSaveToken() {
   const messaging = await getMessagingSafe();
   if (!messaging) return;
@@ -105,7 +139,14 @@ async function fetchAndSaveToken() {
     const reg = await navigator.serviceWorker.ready;
     const token = await getToken(messaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: reg });
     if (token) {
-      await saveTokenToFirestore(token);
+      const lastToken  = localStorage.getItem(PUSH_TOKEN_VALUE_KEY);
+      const lastSaved  = Number(localStorage.getItem(PUSH_TOKEN_SAVED_AT_KEY) || 0);
+      const needsSave  = token !== lastToken || (Date.now() - lastSaved) > TOKEN_RESAVE_INTERVAL_MS;
+      if (needsSave) {
+        await saveTokenToFirestore(token);
+        localStorage.setItem(PUSH_TOKEN_VALUE_KEY, token);
+        localStorage.setItem(PUSH_TOKEN_SAVED_AT_KEY, String(Date.now()));
+      }
       localStorage.setItem(PUSH_TOKEN_SAVED_KEY, 'true');
     }
   } catch (e) {

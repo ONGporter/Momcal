@@ -23,7 +23,7 @@
 ## 구조 — 1단계(수신 인프라)
 
 - **클라이언트**: `js/push.js`가 알림 권한 요청 → `getToken()`으로 이 기기의 FCM 토큰 발급 → `users/{uid}.fcmTokens`에 저장. 앱이 열려있는 동안 오는 메시지는 `onMessage()`로 직접 처리(포그라운드), 앱이 꺼져있을 때는 서비스워커가 대신 받음(백그라운드)
-- **토큰 자동 갱신** (v0.0.38): 권한이 이미 허용된 상태라면 앱을 열 때마다(`js/app.js`의 `onDataLoaded`) `refreshTokenIfNeeded()`가 조용히 다시 `getToken()`을 호출해 최신 토큰을 Firestore에 반영함 — 모듈형 FCM SDK에는 `onTokenRefresh()` 이벤트가 없어서 "앱을 열 때마다 다시 물어보고 바뀌었으면 갱신"하는 방식으로 대신함
+- **토큰 자동 갱신** (v0.0.38, v0.3.18에서 저장 조건 추가): 권한이 이미 허용된 상태라면 앱을 열 때마다(`js/app.js`의 `onDataLoaded`) `refreshTokenIfNeeded()`가 조용히 다시 `getToken()`을 호출함 — 모듈형 FCM SDK에는 `onTokenRefresh()` 이벤트가 없어서 "앱을 열 때마다 다시 물어보고 바뀌었으면 갱신"하는 방식으로 대신함. 단, Firestore에 실제로 저장(`setDoc`)하는 건 **토큰 값이 마지막 저장 때와 다르거나 24시간이 지났을 때만** — 매번 무조건 저장하면 `updatedAt` 필드가 항상 바뀌어 이 기기 자신의 `onSnapshot`을 다시 울리고, 그게 `onDataLoaded()`를 또 불러 다시 저장하는 무한 루프가 됐던 실제 장애가 있었음(v0.3.18, `docs/CHANGELOG.md` 참고)
 - **서비스워커**: 전용 `firebase-messaging-sw.js`를 따로 두지 않고, 기존 앱쉘 캐싱용 `sw.js`가 "브링 유어 오운 서비스워커" 방식으로 `push`/`notificationclick` 이벤트를 직접 처리함(Firebase 공식 지원 방식) — 서비스워커를 2개 등록하면 스코프 충돌 위험이 있어서 하나로 통합
 - **Firestore 스키마 추가** (`users/{uid}` 문서, 가족 그룹에 속해있어도 **항상** 개인 계정 문서에 저장):
   ```json

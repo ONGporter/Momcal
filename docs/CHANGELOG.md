@@ -8,6 +8,8 @@
 
 | 버전 | 주요 기능 |
 |:---:|------|
+| v0.3.18 | **[근본 원인 발견·수정]** PC 설정 탭 버튼 먹통(v0.3.15/16)과 모바일 Legend 뱃지 급속 깜빡임(v0.3.17)이 사실 같은 원인이었음을 확인 — 옹짐꾼님이 보내주신 콘솔 캡처에서 Firestore `resource-exhausted: Write stream exhausted maximum allowed queued writes` 에러를 발견, `js/push.js`의 `refreshTokenIfNeeded()`가 앱이 데이터를 불러올 때마다 FCM 토큰을 조건 없이 재저장하면서(매번 `updatedAt`이 바뀌어 "문서 변경"으로 처리됨) 이 기기 자신의 `onSnapshot`을 다시 울리고, 그게 다시 저장을 부르는 **무한 저장 루프**였음(`debounceSave()`를 안 거치는 직접 저장이라 v0.3.16의 가드로도 못 막았음). 이 루프가 도는 동안 현재 화면이 계속 통째로 다시 그려져서 PC에서는 클릭이 씹히고 모바일에서는 뱃지가 깜빡였던 것 — 토큰이 실제로 바뀌었거나 24시간이 지났을 때만 저장하도록 수정해 루프 자체를 원천 차단. v0.3.17의 임시 진단 로그는 모두 제거 |
+| v0.3.17 | [임시 진단 빌드] "체크리스트에서 Legend 뱃지가 아주 빠르게 깜빡이고 무지개 진행률 바는 움직이지 않는다"는 제보 — 화면이 아주 짧은 간격으로 계속 다시 그려지고 있다는 정황인데 원인 코드 경로를 코드 리뷰만으로 못 찾음. `js/checklist.js`의 `renderClMain()`, `js/state.js`의 `debounceSave()`, `js/app.js`의 `onDataLoaded()`에 호출 횟수·간격을 콘솔에 남기는 임시 진단 로그 추가(화면엔 안 보임, `console.log`만) — 원인 확인되는 대로 다음 버전에서 반드시 제거 |
 | v0.3.16 | "체크리스트에서 한 항목을 누르고 곧바로 다른 항목을 누르면 먼저 누른 게 도로 풀린다"는 제보로 실제 원인을 발견 — 로컬에 아직 서버로 안 보낸 변경(디바운스 저장 대기 중/저장 진행 중)이 있는 동안 들어오는 onSnapshot을 `applyData()`가 그대로 덮어써버리던 구조적 버그. `hasPendingLocalWrite()` 신설, 이 상태인 동안엔 스냅샷을 통째로 무시하도록 수정(`js/state.js`·`js/app.js`) — v0.3.15의 "PC 설정 탭 버튼이 하나도 안 눌린다"던 버그도 사실 같은 원인이었을 가능성이 높음(`renderSettings()`가 스냅샷마다 무조건 다시 그려졌음) |
 | v0.3.15 | PC에서 가족 그룹 공유가 안 된 계정만 설정 탭 버튼이 하나도 안 눌리던 버그 조사 — 서비스워커 업데이트 감지가 브라우저에 전적으로 맡겨져 있어 PC에서 탭을 오래 켜둔 사용자는 아주 오래된 코드(v0.3.12 이전, 모달이 안 닫히던 버전 포함 가능성)를 계속 실행 중이었을 걸로 추정 → `js/app.js`에 등록 직후 `update()` 호출 + 새 서비스워커로 교체되는 순간 자동 새로고침 추가. 모바일 알림 권한 팝업이 v0.3.14 이후에도 2번 뜨고 "알림 켜짐"으로 안 바뀌던 문제 — `Notification.permission`이 허용 직후 아주 짧게 오독되는 레이스 컨디션이 남아있던 게 원인, 실제로 'granted'로 읽힐 때까지 짧게 대기하는 로직 추가(`js/notifications.js`) |
 | v0.3.14 | 옹짐꾼님 요청 4가지: (1) 모바일에서 알림 켜기 시 권한 팝업이 최대 3번 뜨던 문제 — `js/push.js`의 `enablePushNotifications()`가 이미 승인된 권한을 다시 확인/재요청하던 경합 상태 제거, (2)(3)(4) `js/familyShare.js` 전면 개편 — "배우자와 함께 쓰기" 카드 제거, "가족 그룹으로 공유"의 "(베타)" 표기 제거, "초대장 보내기" 버튼 신규(초대 코드 포함 문구를 Web Share API/클립보드로 전달, "배우자와 함께 쓰기"의 공유 기능을 대체·흡수) |
@@ -129,6 +131,24 @@
 | 29 | 폰트 전면 교체(Paperlogy+Pretendard), 캘린더 타임존 버그 수정, 생후 일수 계산 변경, 성장 예측·알림 기능 신규 |
 
 ---
+
+## [v0.3.18] 2026-07-17 — [근본 원인 발견·수정] FCM 토큰 무한 저장 루프 — PC 설정 탭 먹통·모바일 Legend 깜빡임의 진짜 원인
+
+- **결정적 증거**: 옹짐꾼님이 "콘솔에 시간 지나니깐 이런 게 생겼어"라며 보내주신 캡처에 Firestore `[code=resource-exhausted]: Write stream exhausted maximum allowed queued writes`, `Using maximum backoff delay to prevent overloading the backend`가 반복해서 찍혀있었음 — 앱이 Firestore에 쓰기를 감당 못 할 만큼 계속 반복해서 보내고 있었다는 뜻으로, 무한 저장 루프의 명백한 증거
+- **실제 원인**: `js/push.js`의 `refreshTokenIfNeeded()`는 앱이 데이터를 새로 불러올 때마다(`js/app.js`의 `onDataLoaded()`, 즉 로그인 사용자가 앱을 쓰는 내내 계속) 무조건 `fetchAndSaveToken()` → `saveTokenToFirestore()`를 호출해 FCM 토큰을 Firestore(`users/{uid}`)에 다시 저장했음. 토큰 값 자체는 대부분 안 바뀌는데도 그 안의 `updatedAt: Date.now()`가 매번 새 값이라 Firestore 입장에선 "문서가 바뀜"으로 처리됨 → 이게 곧바로 이 기기 자신의 `onSnapshot`을 다시 울림 → `onDataLoaded()`가 또 불림 → `refreshTokenIfNeeded()`가 또 저장… **자기 자신을 끝없이 재호출하는 무한 루프**였음. 이 저장은 `js/state.js`의 `debounceSave()`를 거치지 않고 `push.js`에서 직접 `setDoc()`을 부르는 별도 경로라, v0.3.16에서 추가한 `hasPendingLocalWrite()` 가드로도 전혀 못 막았음
+- **두 버그가 사실 하나였음**: 이 루프가 도는 동안 그 순간 화면에 열려있는 페이지가 `onDataLoaded()`의 렌더 분기(`pg-settings`/`pg-checklist` 등이 `on`이면 다시 그림)를 타고 계속 통째로 다시 그려졌음
+  - **PC 설정 탭 버튼 먹통(v0.3.15/16에서 헛짚었던 그 버그)**: 로그인 직후엔 루프가 가장 빠른 속도로 돌아서 버튼을 누르는 그 찰나에도 화면이 갈아치워져 클릭이 씹혔고, 시간이 지나며 Firestore 자체의 백오프(속도 제한)로 루프 간격이 점점 느려지면서 클릭이 먹힐 만큼 여유가 생겼던 것 — "체크박스 몇 개 하고 나서 설정 탭 가면 된다"던 것도 결국 그 사이 시간이 흘러 백오프가 걸린 덕분이었을 뿐, 체크박스 자체와는 무관했음
+  - **모바일 Legend 뱃지 급속 깜빡임(v0.3.17)**: `refreshTokenIfNeeded()`는 푸시 알림 권한이 켜져 있는 기기에서만 동작하는데(`Notification.permission !== 'granted'`면 즉시 return), 옹짐꾼님이 최근 푸시를 켠 게 모바일이라 이 루프는 모바일에서만 돌고 있었음 — PC 테스트 계정은 애초에 푸시를 안 켜서 이 루프 자체가 없었던 것. "설정 탭 버그는 PC만, Legend 버그는 모바일만"이라는 옹짐꾼님의 정확한 구분이 없었으면 원인을 좁히기 훨씬 어려웠을 것
+- **수정**: `js/push.js`에 마지막으로 실제 저장한 토큰 값·시각을 `localStorage`에 기억해두는 로직 추가 — 토큰이 이전과 완전히 같고 24시간이 안 지났으면 이번 호출에서는 Firestore 저장 자체를 건너뜀. `getToken()` 호출(FCM SDK 캐시라 가벼움)은 기존대로 매번 하되, 불필요한 Firestore 쓰기(및 그로 인한 재귀 호출)만 원천 차단
+- v0.3.17에서 추가했던 임시 진단 로그(`renderClMain()`/`debounceSave()`/`onDataLoaded()`의 `console.log`)는 모두 제거
+- `node --check` 전체 통과, 5곳 버전 갱신, `sw.js` `CACHE_NAME` 상향(v92 → v93)
+
+## [v0.3.17] 2026-07-17 — [임시 진단 빌드] Legend 뱃지 급속 깜빡임 원인 조사용 로그 추가
+
+- **모바일에서 체크리스트 전부 체크해 Legend 등급 달성 시, Legend 뱃지가 아주 빠르게 깜빡이고 무지개색 진행률 바는 움직이지 않는 문제(옹짐꾼님 제보, 2026-07-17)**: 콘솔에 에러는 안 뜬다고 하심. 증상을 뜯어보면 — `.cl-badge`의 `fadeUp` 등장 애니메이션(.22초, 1회성)이 계속 처음부터 다시 재생되는 것처럼 보이고(=화면이 아주 짧은 간격으로 반복해서 다시 그려지고 있다는 뜻), 반면 `.progress-fill.rainbow`의 `rainbowShift`(2초, 무한반복) 애니메이션은 진행될 틈도 없이 계속 리셋돼서 안 움직이는 것처럼 보이는 것으로 추정됨. `js/checklist.js`(`renderClSidebar`/`renderClMain`), `js/state.js`(`debounceSave`/`saveState`), `js/app.js`(`onDataLoaded`, v0.3.16의 `hasPendingLocalWrite()` 가드 관련) 전부 다시 읽어봤지만 이 셋 중 어느 것도 스스로를 재호출하는 경로를 코드만으론 못 찾음(`setInterval`/`requestAnimationFrame`/`MutationObserver` 등 반복 실행 메커니즘 자체가 프로젝트 전체에 없음도 확인함)
+  - **임시 조치**: 정확한 원인을 코드 리뷰만으로 특정하지 못해 추측성 수정을 하는 대신, `renderClMain()`(호출 번호·직전 호출과의 간격을 `console.log`로 출력, 300ms 이내 연속 호출 시 `console.trace()`로 호출 스택까지 남김), `debounceSave()`(호출 번호), `onDataLoaded()`(진입 시 `hasPendingWrites`/`hasPendingLocalWrite()` 상태) 세 곳에 진단용 로그를 추가함 — 화면에는 아무 영향 없고 브라우저 콘솔에만 찍힘
+  - **다음 세션에서 할 일**: 옹짐꾼님이 재현 후 콘솔 로그(`🔍[진단]`로 시작하는 줄들, 특히 `renderClMain()` 호출 간격과 `console.trace()` 스택)를 캡처해주시면 정확한 원인을 특정하고 이 로그들을 제거하면서 진짜 수정을 넣을 예정
+- `node --check` 전체 통과, 5곳 버전 갱신, `sw.js` `CACHE_NAME` 상향(v91 → v92) — **주의**: 이번 버전은 진단 목적이라 실제 버그 수정은 없음, 다음 버전에서 로그 제거 필수
 
 ## [v0.3.16] 2026-07-17 — 로컬 미저장 변경이 onSnapshot 에코에 덮어써지던 데이터 레이스 컨디션 수정
 
