@@ -58,7 +58,7 @@ check('버전 일치', () => {
   // v0.0.28에서 40여 버전째 방치된 채 발견됨(옹짐꾼님 제보, 2026-07-16) — 재발
   // 방지를 위해 여기서도 함께 검사
   if (footerV) {
-    for (const f of ['privacy.html', 'terms.html', 'contact.html']) {
+    for (const f of ['privacy.html', 'terms.html', 'contact.html', 'account-deletion.html']) {
       const pageM = read(f).match(/site-footer-version[^>]*>[^v]*(v[\d.]+)/);
       const pageV = pageM?.[1];
       if (!pageV) fail(`${f}에서 .site-footer-version 버전을 못 찾음`);

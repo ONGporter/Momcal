@@ -142,6 +142,7 @@
   - **수정**: 플레이스토어 등록용으로 만든 피처 그래픽과 같은 스타일(로고 `icons/logo-mark.png` + 브랜드 컬러 `--pk`/`--pk2` 그라데이션 + 온글잎 박다현체/오뮤 다예쁨체)로 1200×630 규격에 맞춰 새로 제작, `icons/og-image-v2.png`로 추가하고 기존 `icons/og-image.png`는 삭제
   - 참조 위치 2곳(`index.html`의 `og:image`/`twitter:image` 메타 태그, `scripts/build-guide.mjs`의 og:image 템플릿) 모두 갱신 후 `node scripts/build-guide.mjs` 재실행해 `guide/*.html` 7개 페이지에 반영
   - 파일명을 `og-image.png` → `og-image-v2.png`로 바꾼 이유: `CACHE_NAME` 상향만으로는 Vercel CDN 레이어 캐시까지 항상 뚫리지 않는다는 기존 원칙(v0.0.51/52) 적용
+- **플레이스토어 데이터 보안 설문(계정 삭제 URL) 대응**: Play Console이 "계정 생성을 지원하는 앱은 계정 삭제를 요청하는 방법을 안내하는 공개 URL이 필요하다"고 요구 → `account-deletion.html` 신규 추가(앱 내 "계정 영구 삭제" 단계 안내 + 삭제되는 데이터 항목·보관 예외 명시 + 이메일 문의 경로). `privacy.html`/`terms.html`/`contact.html`과 동일한 독립 정책 페이지로 취급(`sw.js` APP_SHELL에는 미포함, `sitemap.xml`에 추가). `scripts/check-docs.mjs`의 버전 동기화 검사 대상에도 추가해 향후 방치되지 않도록 함
 - `node --check` 통과, 5곳 버전 갱신, `sw.js` `CACHE_NAME` 상향(v96 → v97)
 
 ## [v0.3.21] 2026-07-17 — 모바일 알림 잔여 버그 2가지 추가 수정 (대기 체감 지연, 하위 설정 변경 시 초기화)
