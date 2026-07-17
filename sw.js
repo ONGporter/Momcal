@@ -193,7 +193,15 @@
 // enablePushNotifications() 호출 자체를 건너뛰도록 함(Firebase getToken()이 또 권한을
 // 요청해 팝업이 한 번 더 뜨고, 그마저 브라우저의 팝업 연타 방지에 걸려 조용히 실패하며
 // 영영 'granted'로 안 넘어가던 문제 차단) — 캐시 버전 상향
-const CACHE_NAME = 'momcal-shell-v94';
+// v0.3.20: v0.3.19 적용 후 팝업 중복은 없어졌는데, "허용"을 눌러도 화면이 "알림 켜짐"으로
+// 안 바뀌는 기기가 있다는 재제보 — Notification.permission 라이브 값 자체가 일부 기기에서
+// 2.5초를 기다려도 안 바뀌는 것으로 확인됨. js/notifications.js의
+// renderNotificationSettings()가 forcedPerm(파라미터)을 받으면 라이브 값을 다시 안 읽고
+// 그 값을 그대로 쓰도록 수정 → requestNotificationPermission()이 이미 확실히 아는
+// result 값을 직접 넘겨서, 라이브 프로퍼티가 늦게 갱신되는 기기에서도 화면만큼은 즉시
+// 정확하게 반영되도록 함(진짜 FCM 푸시 등록은 여전히 라이브 값이 확인된 경우에만 시도해서
+// 팝업 중복은 그대로 안 남) — 캐시 버전 상향
+const CACHE_NAME = 'momcal-shell-v95';
 
 const APP_SHELL = [
   './',

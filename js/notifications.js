@@ -164,8 +164,10 @@ function renderNotifSubSettings() {
     </div>`;
 }
 
-/** 설정 탭 — 알림 권한 상태에 따른 안내/버튼 렌더 */
-export function renderNotificationSettings() {
+/** 설정 탭 — 알림 권한 상태에 따른 안내/버튼 렌더
+ *  v0.3.20: forcedPerm을 넘기면 Notification.permission을 다시 읽지 않고 그 값을 그대로
+ *  씀 — 아래 requestNotificationPermission() 주석 참고 */
+export function renderNotificationSettings(forcedPerm) {
   const wrap = document.getElementById('notifSettingsWrap');
   if (!wrap) return;
 
@@ -174,7 +176,7 @@ export function renderNotificationSettings() {
     return;
   }
 
-  const perm = Notification.permission; // 'default' | 'granted' | 'denied'
+  const perm = forcedPerm || Notification.permission; // 'default' | 'granted' | 'denied'
 
   if (perm === 'granted') {
     if (isNotifEnabled()) {
@@ -230,11 +232,18 @@ export function renderNotificationSettings() {
 
 /** 알림 권한 요청 (버튼 클릭 시)
  *  v0.0.42: 로그인 사용자면 허용과 동시에 진짜 푸시(FCM)도 함께 등록 시도
- *  v0.3.19: result === 'granted'가 확정된 뒤에도 곧장 renderNotificationSettings()/
- *  enablePushNotifications()로 넘어가면 위 waitForGrantedPermission() 주석에 적은 레이스
- *  컨디션에 걸릴 수 있어서, 그 사이에 넉넉히 대기해 실제로 Notification.permission이
- *  'granted'로 읽히는 걸 확인하고 넘어감 — 그 안에도 못 넘어가면(아주 느린 기기)
- *  enablePushNotifications()를 아예 안 불러서 Firebase의 이중 팝업 유발 경로를 차단함 */
+ *  v0.3.20: [추가 수정] v0.3.19로 팝업 중복은 없어졌는데, 옹짐꾼님이 재확인해보니 "허용"을
+ *  눌러도 화면이 "알림 켜짐"으로 안 바뀌는 새 증상이 나타남 — result는 'granted'로 정상
+ *  resolve되는데도, waitForGrantedPermission()이 2.5초를 다 기다려도 Notification.permission
+ *  라이브 값 자체가 안 바뀌는 기기가 실제로 있는 것으로 보임(단순 수십~수백ms 레이스가
+ *  아니라 이 프로퍼티가 훨씬 오래 지연되거나 다음 로드 전까진 아예 안 갱신되는 기기별
+ *  특성일 수 있음). renderNotificationSettings()가 그 라이브 값을 다시 읽으니 화면이 안
+ *  바뀌는 것처럼 보였던 것 — 정작 requestPermission()의 result는 이미 확실한 값이므로,
+ *  이 시점 화면만큼은 그 값을 직접 넘겨서 라이브 프로퍼티 재조회를 건너뜀. 진짜 FCM 푸시
+ *  등록(enablePushNotifications)은 여전히 confirmedGranted(라이브 값이 실제로 'granted'로
+ *  확인된 경우)에서만 시도해서 팝업 중복은 그대로 안 남 — 그 기기에서 라이브 값이 늦게라도
+ *  'granted'로 정리되면 다음 앱 실행 때 js/push.js의 refreshTokenIfNeeded()가 조용히
+ *  등록을 마무리함 */
 export async function requestNotificationPermission() {
   if (!('Notification' in window)) return;
   const result = await Notification.requestPermission();
@@ -243,7 +252,7 @@ export async function requestNotificationPermission() {
     confirmedGranted = await waitForGrantedPermission(); // v0.3.19: 레이스 컨디션 회피
     localStorage.setItem(NOTIF_ENABLED_KEY, 'true'); // v0.0.2: 새로 허용하면 항상 켜짐 상태로 시작
   }
-  renderNotificationSettings();
+  renderNotificationSettings(result); // v0.3.20: 방금 확인한 확실한 값을 그대로 반영(라이브 재조회 안 함)
   if (result === 'granted') {
     checkAndNotify(true);
     // v0.3.19: 위에서 실제로 'granted'로 확정된 걸 직접 확인했을 때만 진행 — 확정 안 됐는데

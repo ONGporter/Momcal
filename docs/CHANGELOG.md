@@ -8,6 +8,7 @@
 
 | 버전 | 주요 기능 |
 |:---:|------|
+| v0.3.20 | 모바일에서 알림 "허용"을 눌러도 화면이 "알림 켜짐"으로 안 바뀌던 잔여 버그 수정 — 일부 기기에서 `Notification.permission` 라이브 값이 2.5초를 기다려도 안 바뀌는 것으로 확인되어, `js/notifications.js`의 `renderNotificationSettings()`가 `requestNotificationPermission()`이 이미 확실히 아는 값(`result`)을 직접 전달받아 라이브 프로퍼티 재조회 없이 화면에 즉시 반영하도록 수정. 또한 PC는 새 계정 로그인 시 "알림 꺼짐"으로, 모바일은 "알림 받기"로 다르게 보이는 이유(브라우저/기기별로 알림 권한과 로컬 알림 설정이 origin 단위로 남아있어서 계정과 무관함)를 옹짐꾼님께 설명 |
 | v0.3.19 | 모바일에서 알림 권한 팝업이 v0.3.18 이후에도 여전히 2번 뜨고 "알림 받기"에서 "알림 켜짐"으로 안 넘어가던 잔여 버그 수정 — `js/notifications.js`의 `waitForGrantedPermission()` 최대 대기 시간을 250ms에서 2.5초로 크게 늘리고, 그 안에도 권한이 확정 안 되면 Firebase의 이중 팝업 유발 경로(`enablePushNotifications()`) 자체를 건너뛰도록 함 |
 | v0.3.18 | **[근본 원인 발견·수정]** PC 설정 탭 버튼 먹통(v0.3.15/16)과 모바일 Legend 뱃지 급속 깜빡임(v0.3.17)이 사실 같은 원인이었음을 확인 — 옹짐꾼님이 보내주신 콘솔 캡처에서 Firestore `resource-exhausted: Write stream exhausted maximum allowed queued writes` 에러를 발견, `js/push.js`의 `refreshTokenIfNeeded()`가 앱이 데이터를 불러올 때마다 FCM 토큰을 조건 없이 재저장하면서(매번 `updatedAt`이 바뀌어 "문서 변경"으로 처리됨) 이 기기 자신의 `onSnapshot`을 다시 울리고, 그게 다시 저장을 부르는 **무한 저장 루프**였음(`debounceSave()`를 안 거치는 직접 저장이라 v0.3.16의 가드로도 못 막았음). 이 루프가 도는 동안 현재 화면이 계속 통째로 다시 그려져서 PC에서는 클릭이 씹히고 모바일에서는 뱃지가 깜빡였던 것 — 토큰이 실제로 바뀌었거나 24시간이 지났을 때만 저장하도록 수정해 루프 자체를 원천 차단. v0.3.17의 임시 진단 로그는 모두 제거 |
 | v0.3.17 | [임시 진단 빌드] "체크리스트에서 Legend 뱃지가 아주 빠르게 깜빡이고 무지개 진행률 바는 움직이지 않는다"는 제보 — 화면이 아주 짧은 간격으로 계속 다시 그려지고 있다는 정황인데 원인 코드 경로를 코드 리뷰만으로 못 찾음. `js/checklist.js`의 `renderClMain()`, `js/state.js`의 `debounceSave()`, `js/app.js`의 `onDataLoaded()`에 호출 횟수·간격을 콘솔에 남기는 임시 진단 로그 추가(화면엔 안 보임, `console.log`만) — 원인 확인되는 대로 다음 버전에서 반드시 제거 |
@@ -132,6 +133,13 @@
 | 29 | 폰트 전면 교체(Paperlogy+Pretendard), 캘린더 타임존 버그 수정, 생후 일수 계산 변경, 성장 예측·알림 기능 신규 |
 
 ---
+
+## [v0.3.20] 2026-07-17 — 모바일 알림 "허용"해도 화면이 안 바뀌던 문제 수정 + PC/모바일 초기 상태 차이 설명
+
+- **모바일에서 "허용" 눌러도 화면이 "알림 켜짐"으로 안 바뀌던 문제(옹짐꾼님 재제보, 2026-07-17)**: v0.3.19로 팝업 중복은 사라졌지만, 그 대신 "허용해도 화면이 안 바뀐다"는 새 증상이 나타남. `Notification.requestPermission()`의 Promise는 `'granted'`로 정상 resolve되는데도, `waitForGrantedPermission()`이 2.5초를 다 기다려도 `Notification.permission` 라이브 값 자체가 그 기기에서는 바뀌지 않는 것으로 확인됨 — 단순 수십~수백ms 레이스가 아니라, 일부 기기에서는 이 프로퍼티가 훨씬 오래 지연되거나 다음 페이지 로드 전까진 아예 안 갱신되는 것으로 보임. `renderNotificationSettings()`가 매번 이 라이브 값을 다시 읽어서 화면을 그리다 보니, 사용자가 방금 명확히 허용했는데도 "알림 받기" 화면에 계속 머물러 있었던 것
+- **수정**: `js/notifications.js`의 `renderNotificationSettings()`에 `forcedPerm` 파라미터를 추가해서, 값이 주어지면 라이브 프로퍼티를 다시 안 읽고 그 값을 그대로 씀. `requestNotificationPermission()`이 이미 확실히 알고 있는 `result`(Promise가 resolve한 값)를 이 파라미터로 직접 넘겨서, 화면만큼은 라이브 값이 늦게 갱신되는 기기에서도 사용자의 방금 행동을 즉시 정확하게 반영하도록 함. 진짜 FCM 푸시 등록(`enablePushNotifications`)은 v0.3.19와 동일하게 라이브 값이 실제로 `'granted'`로 확인된 경우에만 시도해서 팝업 중복은 그대로 안 남음 — 그 기기에서 라이브 값이 나중에라도 정리되면 다음 앱 실행 때 `js/push.js`의 `refreshTokenIfNeeded()`가 조용히 등록을 마무리함
+- **"PC는 새 계정에서 '알림 꺼짐'으로 시작하는데 모바일은 '알림 받기'로 시작하는 이유"(옹짐꾼님 질문)**: 버그가 아니라 정상 동작 — 알림 권한(`Notification.permission`)과 "알림 사용 여부" 로컬 플래그(`localStorage`)는 둘 다 **브라우저(더 정확히는 origin momcal.app)에 귀속되는 값**이라 Firebase 계정과는 무관함. 옹짐꾼님의 PC 브라우저는 예전 테스트 세션에서 이미 알림 권한을 허용해뒀고(그래서 `'granted'`) 그때 "끄기"를 눌러 로컬 플래그가 꺼진 채로 남아있어서, 새 계정으로 로그인해도 그 브라우저의 상태를 그대로 물려받아 "알림 꺼짐"으로 보이는 것. 반면 그 모바일 기기는 momcal.app에 알림 권한을 요청한 적이 아예 없어서 `Notification.permission`이 여전히 `'default'`라 "알림 받기"로 보이는 것 — 같은 계정이라도 기기(브라우저)를 바꾸면 각자 독립적으로 권한을 다시 물어봐야 함
+- `node --check` 통과, 5곳 버전 갱신, `sw.js` `CACHE_NAME` 상향(v94 → v95)
 
 ## [v0.3.19] 2026-07-17 — 모바일 알림 권한 팝업 중복/미확정 잔여 버그 수정
 
