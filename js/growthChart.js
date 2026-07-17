@@ -325,10 +325,19 @@ function renderFetalChart(child, metric) {
 
   setChartWrapAutoHeight(canvas, false);
 
+  // v0.3.23 버그 수정: 이 함수의 "기록 없음" 경로(위)는 canvas.parentElement.innerHTML을
+  // 통째로 새로 그려서 안내 문구 <p>를 넣는데, 기록이 있는 이 경로(성공)는 기존 canvas에
+  // getContext만 호출해서 형제 요소(직전에 남아있던 안내 문구 <p>)를 지우지 않았음 — 그래서
+  // 탭 전환 등으로 "기록 없음" 문구가 한 번이라도 그려진 뒤 실제 기록이 있는 상태로 넘어오면
+  // 문구가 그래프 옆에 그대로 남아 겹쳐 보이는 버그였음. 캔버스를 새로 만들어 형제 요소를
+  // 확실히 제거한 뒤 그 위에 그래프를 그림.
+  canvas.parentElement.innerHTML = '<canvas id="growthChartCanvas"></canvas>';
+  const freshCanvas = document.getElementById('growthChartCanvas');
+
   const points = records.map(r => ({ x: r.week, y: r[metric] }));
   const weekMax = Math.max(40, ...points.map(p => p.x)) + 2;
 
-  _chart = new Chart(canvas.getContext('2d'), {
+  _chart = new Chart(freshCanvas.getContext('2d'), {
     type: 'line',
     data: {
       datasets: [{
@@ -585,6 +594,13 @@ function renderChart(child, metric) {
 
   setChartWrapAutoHeight(canvas, false);
 
+  // v0.3.23 버그 수정: renderFetalChart와 동일한 패턴의 버그 — "기록 없음" 경로(위)는
+  // canvas.parentElement.innerHTML을 새로 그려서 안내 문구 <p>를 넣는데, 기록이 있는 이
+  // 성공 경로는 기존 canvas에 getContext만 호출해서 형제 요소(직전에 남아있던 안내 문구)를
+  // 지우지 않았음. 캔버스를 새로 만들어 형제 요소를 확실히 제거한 뒤 그 위에 그래프를 그림.
+  canvas.parentElement.innerHTML = '<canvas id="growthChartCanvas"></canvas>';
+  const freshCanvas = document.getElementById('growthChartCanvas');
+
   // 실측(우리 아이)은 진한 분홍 실선, WHO 참고 백분위선은 얇은 회색·점선 계열로 표시.
   // 바깥쪽(P3/P97)일수록 더 흐리게 해서 중앙(P50)이 시각적으로 강조되도록 함.
   const bandStyle = (label, data, opts) => ({
@@ -633,7 +649,7 @@ function renderChart(child, metric) {
     });
   }
 
-  _chart = new Chart(canvas.getContext('2d'), {
+  _chart = new Chart(freshCanvas.getContext('2d'), {
     type: 'line',
     data: { datasets },
     options: {
