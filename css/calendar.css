@@ -162,8 +162,10 @@ html[data-cal-fontsize="xl"] .ev-more { font-size: 11px; }
 
 /* ── STICKER PICKER ── */
 .sticker-picker { background: var(--card); border-radius: var(--radius); box-shadow: var(--card-shadow); padding: 20px; margin-top: 14px; }
-.sp-tabs { display: flex; gap: 5px; margin-bottom: 12px; overflow-x: auto; scrollbar-width: none; }
-.sp-tabs::-webkit-scrollbar { display: none; }
+/* v0.3.25: 카테고리 8개가 한 줄에 다 안 들어가 가로로 넘겨야만 나머지가 보였는데("옆으로
+   넘겨야 잘 보인다"는 피드백, 2026-07-18), 스크롤 대신 줄바꿈으로 바꿔서 넘기지 않아도
+   전체 카테고리가 한 화면에 다 보이게 함(overflow-x:auto → flex-wrap:wrap) */
+.sp-tabs { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 12px; }
 .sp-tab {
   padding: 6px 12px; border-radius: 40px; border: none;
   background: #EEE5F4; color: var(--txl);
@@ -171,11 +173,13 @@ html[data-cal-fontsize="xl"] .ev-more { font-size: 11px; }
   font-family: inherit; white-space: nowrap; transition: all .2s;
 }
 .sp-tab.on { background: var(--pk); color: #fff; }
-.sp-grid   { display: flex; gap: 10px; flex-wrap: wrap; }
+.sp-grid   { display: flex; gap: 6px; flex-wrap: wrap; }
 .sp-sticker {
-  /* v0.0.57: 스티커 고르는 화면에서만 크기를 기존 대비 2배(1.45rem→2.9rem)로 키움 —
-     달력 안에 붙는 스티커 크기(stickerDisplay 호출부의 다른 size 값들)는 그대로 유지 */
-  font-size: 2.9rem; cursor: pointer; padding: 8px;
+  /* v0.0.57: 스티커 고르는 화면에서만 크기를 기존 대비 2배(1.45rem→2.9rem)로 키웠었는데,
+     너무 커졌다는 재피드백(2026-07-18)으로 2.0rem으로 축소 + 여백도 함께 줄임(8px→6px,
+     칸 사이 gap도 10px→6px) — 달력 안에 붙는 스티커 크기(stickerDisplay 호출부의 다른
+     size 값들)는 이 변경과 무관하게 그대로 유지 */
+  font-size: 2rem; cursor: pointer; padding: 6px;
   border-radius: 12px; transition: all .2s; border: 2px solid transparent;
 }
 .sp-sticker:hover { background: var(--pkl); border-color: var(--pk); transform: scale(1.2); }

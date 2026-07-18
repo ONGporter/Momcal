@@ -50,15 +50,20 @@ function migrateGovHiddenTabs(hiddenTabs) {
  * v0.3.9: 체크리스트 탭이 12개까지 늘어나면서 가독성이 떨어진다는 옹짐꾼님 피드백으로,
  * 아직 한 번도 탭 표시/숨김을 직접 건드리지 않은 사용자는 대표 탭 3개만 보이고 나머지는
  * 기본 숨김 상태로 시작하도록 함(설정 탭에서 언제든 다시 켤 수 있음, js/checklistSettings.js).
- *   - 육아용 대표 3개: 예방접종(vax)·발달(dev)·이유식(food) — 정부지원·모든 준비물 팩은 기본 숨김
+ *   - 육아용 대표 3개: 예방접종(vax)·발달(dev)·이유식(food) — 모든 준비물 팩은 기본 숨김
  *   - 임산부용 대표 3개: 임신 체크(preg)·정부지원(gov_preg)·출산가방(pack_hospitalbag) — 나머지
  *     준비물 팩(태명 정하기·태교여행·산후조리원·신생아 맞이 준비)은 기본 숨김
  * hiddenTabs가 비어있는(한 번도 손대지 않은) 상태에서만 1회 적용하고, 이후엔 clSettings에
  * defaultTabsApplied 플래그를 남겨서 — 사용자가 나중에 전부 다시 켜서 hiddenTabs를 빈 배열로
  * 되돌리더라도(=전부 표시하기로 한 의도적 선택) 이 로직이 다시 개입해 재적용하지 않게 함.
+ *
+ * v0.3.25: 옹짐꾼님 요청으로 육아용 정부지원(gov_born)도 기본 표시로 변경 — 이제 임신·육아
+ * 두 단계 모두 정부지원 탭이 기본으로 보임(gov_preg는 원래부터 대표 탭이라 안 바뀜).
+ * 이 변경은 앞으로 처음 시작하는 사용자에게만 적용되고, 이미 defaultTabsApplied가 true로
+ * 저장된 기존 사용자의 hiddenTabs는 그대로 유지됨(원한다면 설정 탭에서 직접 켤 수 있음).
  */
 const DEFAULT_HIDDEN_TABS = [
-  'gov_born', 'pack_outing', 'pack_100days', 'pack_firstbday', 'pack_bdayphoto',
+  'pack_outing', 'pack_100days', 'pack_firstbday', 'pack_bdayphoto',
   'pack_travel', 'pack_daycare', 'pack_medicine', 'pack_foodprep',
   'pack_babyname', 'pack_babymoon', 'pack_postpartumcare', 'pack_newbornwelcome',
 ];

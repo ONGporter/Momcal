@@ -76,6 +76,14 @@ export const govSupportSchedule = {
       deadlineDay: 60,
       link: 'https://www.bokjiro.go.kr',
     },
+    // v0.3.25: 아이돌봄서비스는 주로 출산 직후 바로 신청한다는 옹짐꾼님 요청으로, 원래
+    // 육아(parenting, 생후 4개월) 단계에 있던 걸 이 출산 직후(postpartum) 단계로 옮기고
+    // 권장일도 부모급여 신청과 동일한 day:5로 맞춤(month 기반 계산부터 day 기반 계산으로 전환).
+    {
+      key: 'idolbom-apply', title: '아이돌봄서비스 신청', day: 5, importance: 'rec',
+      desc: '양육 공백이 있는 가정에 돌보미가 방문해 아이를 돌봐주는 정부 지원 서비스예요.',
+      link: 'https://www.idolbom.go.kr',
+    },
     {
       key: 'child-allowance', title: '아동수당 신청', day: 5, importance: 'req',
       desc: '만 8세 미만 아동에게 매월 지급되는 아동수당을 신청하세요.',
@@ -103,11 +111,6 @@ export const govSupportSchedule = {
 
   /** 육아 — 출생일(birth) 기준 개월수(month)로 날짜 계산 */
   parenting: [
-    {
-      key: 'idolbom-apply', title: '아이돌봄서비스 신청', month: 4, importance: 'rec',
-      desc: '양육 공백이 있는 가정에 돌보미가 방문해 아이를 돌봐주는 정부 지원 서비스예요.',
-      link: 'https://www.idolbom.go.kr',
-    },
     {
       key: 'infant-checkup-support', title: '영유아 건강검진 국가지원 예약', month: 4, importance: 'rec',
       desc: '국가건강검진 대상 시기가 되면 지정 병원에 미리 예약하세요 (검진비 무료).',

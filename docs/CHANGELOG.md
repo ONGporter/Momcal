@@ -8,6 +8,8 @@
 
 | 버전 | 주요 기능 |
 |:---:|------|
+| v0.3.26 | 옹짐꾼님 재제보 2가지 — (1) 캘린더 셀 스티커 크기 축소는 요청 취지를 잘못 이해한 것이었어서 원래 크기(.8rem/.74rem)로 원복하고, 대신 실제로 요청하셨던 "스티커 고르는 화면"의 큰 아이콘(2.9rem→2rem)과 여백을 줄임, (2) "Chrome에서 실행 중" 알림에 대해 원인 조사 후 안내(TWA의 알려진 시스템 동작, 이 저장소 코드로는 수정 불가) |
+| v0.3.25 | 옹짐꾼님 요청 5가지 — 캘린더 스티커 크기 절반 축소·간격 축소(모바일 가독성), 스티커 카테고리 탭을 가로 스크롤 대신 줄바꿈으로 변경 + 이유식·꽃자연 순서 교체(이유식 맨 앞), 육아용 정부지원(gov_born) 탭도 기본 표시로 변경, 아이돌봄서비스 신청 권장일을 부모급여 신청일과 동일하게 이동, 캘린더 시간 입력을 네이티브 스핀 휠 대신 직접 타이핑 가능한 텍스트 입력으로 전환 |
 | v0.3.24 | 비공개 테스트 중 TWA에 브라우저 주소창이 뜨는 문제 발견 → `.well-known/assetlinks.json`에 Play 앱 서명 키의 SHA-256 지문이 빠져있던 게 원인, 업로드 키 지문과 함께 추가해 Digital Asset Links 검증 해결 |
 | v0.3.23 | 성장 그래프(태아·출생 후 둘 다)에서 "기록 없음" 안내 문구가 그다음 실제 그래프가 그려질 때도 옆에 그대로 남아 겹쳐 보이던 버그 수정 |
 | v0.3.22 | 카카오톡/문자 등 링크 공유 시 뜨는 미리보기 이미지(`og-image`)를 AI 생성 티가 나던 기존 이미지에서 로고·브랜드 컬러 기반 새 이미지로 교체(파일명을 `og-image-v2.png`로 바꿔 CDN 캐시 우회) |
@@ -137,6 +139,27 @@
 | 29 | 폰트 전면 교체(Paperlogy+Pretendard), 캘린더 타임존 버그 수정, 생후 일수 계산 변경, 성장 예측·알림 기능 신규 |
 
 ---
+
+## [v0.3.26] 2026-07-18 — 스티커 크기 원복+피커 크기 축소로 정정, "Chrome에서 실행 중" 알림 조사
+
+옹짐꾼님이 실기기 스크린샷과 함께 재제보 2가지:
+
+1. **캘린더 셀 스티커 크기 요청 취지 재확인**: v0.3.25에서 캘린더 셀(월간/주간 뷰) 안의 스티커 크기를 절반으로 줄였는데, 실제 요청은 "스티커 고르는 화면"(스티커 피커)의 아이콘 크기였음을 재확인 → 캘린더 셀 스티커는 원래 크기(`.sticker-on-cal` `.8rem`, `.food-sticker-on-cal` `.74rem`, 간격도 원래 값)로 전부 원복하고, 대신 스티커 피커(`.sp-sticker`)의 아이콘 크기를 `2.9rem → 2rem`으로 줄이고 여백(`padding: 8px→6px`)·그리드 간격(`.sp-grid` `gap: 10px→6px`)도 함께 줄임(`css/calendar.css`, `js/calendar.js`의 `stickerDisplay(s, '2rem')` 호출부)
+2. **"어플 실행하면 Chrome에서 실행 중이 뜬다"(알림창 스크린샷 첨부)**: 조사 결과, 이건 이 저장소(웹앱 코드)의 버그가 아니라 **Trusted Web Activity(TWA)의 잘 알려진 시스템 동작**임을 확인 — TWA는 Chrome의 렌더링 엔진과 로그인 세션·쿠키를 공유하기 때문에, 사용자가 헷갈리지 않도록 Android/Chrome이 앱 실행 시 "Chrome에서 실행 중" 알림을 자체적으로 띄우는 것(PWABuilder/`android-browser-helper` 공식 GitHub 이슈에서도 동일 문의가 다수 확인됨 — 앱 소유자가 웹 코드로 끌 수 있는 항목이 아니라 Chrome/Android OS가 직접 제어). 이 저장소엔 애초에 Android 네이티브 프로젝트(`AndroidManifest.xml`, `twa-manifest.json` 등)가 없고 `.aab`는 PWABuilder가 외부에서 생성하므로, 이번 대화에서 코드로 손댈 수 있는 범위 밖 — 옹짐꾼님께 원인과 "코드로는 못 고친다"는 점을 안내함(v0.3.24에서 고친 주소창 노출 문제와는 다른 별개 현상)
+
+`node --check` 통과, CSS 중괄호 짝 확인, `node scripts/check-docs.mjs` 통과, 5곳 버전 갱신(`account-deletion.html` 포함 6곳), `sw.js` `CACHE_NAME` 상향(v100 → v101)
+
+## [v0.3.25] 2026-07-18 — 캘린더 스티커·시간입력 UX 개선 + 정부지원 기본 표시 + 아이돌봄 권장일 수정
+
+옹짐꾼님이 비공개 테스트(12명 확보, 대기 중) 중에도 계속 수정해도 되는지 물어보셔서, 테스트 자체는 이미 배포된 빌드로 진행 중이고 이번 수정은 다음 배포에 반영될 예정이라 병행 가능하다고 안내 — 5가지 요청 처리:
+
+1. **캘린더 스티커 크기·간격 축소**: 모바일에서 스티커 아이콘이 너무 크다는 피드백 → 캘린더 셀(월간/주간 뷰 모두)에 표시되는 일반 스티커(`.8rem→.42rem`)·이유식 스티커(`.74rem→.4rem`) 크기를 절반 정도로 줄이고, `.sticker-row`/`.day-food-stickers`/`.week-head-food-stickers`의 아이콘 간 gap도 축소(`css/calendar.css`, `js/calendar.js`). 스티커 피커(고르는 화면)와 날짜 상세 패널의 큰 아이콘 크기는 그대로 유지(요청 범위 밖)
+2. **스티커 카테고리 탭 줄바꿈 + 이유식 순서 변경**: 8개 카테고리 탭이 한 줄에 다 안 들어가 가로로 넘겨야만 나머지가 보이던 것을, `overflow-x:auto` 스크롤 대신 `flex-wrap:wrap` 줄바꿈으로 바꿔 넘기지 않아도 전체가 한 화면에 보이게 함(`.sp-tabs`, `css/calendar.css`). `js/calendar.js`의 `stickerCats` 배열에서 '이유식'과 '꽃·자연' 순서를 교체해 이유식이 맨 앞(기본 선택 탭)에 오도록 변경 — 각 카테고리의 `items` 내용 자체는 그대로, 배열 위치만 이동
+3. **체크리스트 정부지원 기본 표시**: 처음 쓰는 사용자에게 육아용 대표 탭 3개(예방접종·발달·이유식)만 보이고 육아용 정부지원(`gov_born`)은 기본 숨김이었던 것을, `js/state.js`의 `DEFAULT_HIDDEN_TABS`에서 `gov_born`을 제거해 임산부용·육아용 정부지원 모두 기본 표시로 변경(임산부용 `gov_preg`는 원래부터 대표 탭이라 안 바뀜). 이미 `defaultTabsApplied`가 저장된 기존 사용자에겐 영향 없음(설정 탭에서 직접 켤 수 있음)
+4. **아이돌봄서비스 권장일 = 부모급여 신청일**: 아이돌봄서비스는 보통 출산 직후 바로 신청한다는 피드백으로, `data/government-support.js`에서 원래 육아(`parenting`, 생후 4개월 `month:4`) 단계에 있던 `idolbom-apply` 항목을 출산 직후(`postpartum`) 단계로 옮기고 `day:5`로 변경 — 부모급여 신청(`parental-benefit`, `day:5`)과 정확히 같은 날짜에 캘린더·체크리스트 정부지원 탭에 표시됨. `node scripts/build-guide.mjs` 재실행으로 `guide/government-support.html`·`guide/parenting-events.html`에도 반영
+5. **캘린더 시간 직접 타이핑**: "시간 입력하는 부분을 하나씩 찾아서 가려니 불편하다"는 피드백 → `input[type="time"]`(일부 모바일 브라우저는 네이티브 시간 피커가 스핀 휠 방식이라 값 하나 찾는 데도 여러 번 쓸어올려야 함)을 `type="text" inputmode="numeric"`으로 바꾸고, 숫자를 이어 입력하면 자동으로 "HH:MM"이 되는 마스킹(`attachTimeInputMask()`, `js/utils.js`)을 새로 도입해 "일정 직접 추가" 폼(`evTime`/`evEndTime`)과 일정 수정 모달(`evModTime`/`evModEndTime`) 양쪽에 적용. 저장 형식(24시간 "HH:MM" 문자열)은 그대로라 `buildEvTitleWithTime()`/`parseEvTitleWithTime()` 등 기존 로직은 안 건드림 — 다만 값이 항상 완전한 형식이라는 보장이 없어져서(예: blur 전에 바로 등록), `addCustomEv()`/`saveEventMod()`에 `validHHMM()` 검증을 추가해 형식이 안 맞으면 빈 값으로 처리
+
+`node --check` 전체 통과, CSS 중괄호 짝 확인 완료, `node scripts/check-docs.mjs` 통과, 5곳 버전 갱신(`account-deletion.html` 포함 6곳), `sw.js` `CACHE_NAME` 상향(v99 → v100)
 
 ## [v0.3.24] 2026-07-18 — TWA 주소창 노출 버그 수정 (Digital Asset Links)
 

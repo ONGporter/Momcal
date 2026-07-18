@@ -10,7 +10,7 @@
  */
 
 import { S, debounceSave } from './state.js';
-import { today, daysUntil, stripLeadingEmoji, icon, avatarDisplay, escapeHtml, sanitizeUrl } from './utils.js';
+import { today, daysUntil, stripLeadingEmoji, icon, avatarDisplay, escapeHtml, sanitizeUrl, attachTimeInputMask } from './utils.js';
 import { showModal, cm }   from './modal.js';
 import { vaxSched }        from '../data/vaccines.js';
 import { pregEvMap }       from '../data/pregnancy.js';
@@ -31,6 +31,11 @@ export function isGovDeadlineSoon(e) {
   const d = daysUntil(e.deadlineDate);
   return d !== null && d <= 7;
 }
+
+// v0.3.25: "일정 직접 추가" 폼의 시간 입력(index.html에 정적으로 존재)은 앱 시작 시 1회만
+// 붙이면 됨 — module script는 DOM 파싱 후 실행되므로 이 시점에 엘리먼트가 이미 존재함.
+attachTimeInputMask('evTime');
+attachTimeInputMask('evEndTime');
 
 /* ══════════════════════════════════════
  *  일정 색상 시스템 (Sprint 21)
@@ -438,8 +443,8 @@ export function openEvModal(idx) {
         <input id="evModTitle" value="${esc(parsedTitle)}">
       </div>
       <div class="fg2">
-        <div class="fg" style="margin:0"><label>시작 시간 (선택)</label><input type="time" id="evModTime" value="${parsedTime}"></div>
-        <div class="fg" style="margin:0"><label>종료 시간 (선택)</label><input type="time" id="evModEndTime" value="${parsedEndTime}"></div>
+        <div class="fg" style="margin:0"><label>시작 시간 (선택)</label><input type="text" inputmode="numeric" maxlength="5" placeholder="예: 09:30" id="evModTime" value="${parsedTime}"></div>
+        <div class="fg" style="margin:0"><label>종료 시간 (선택)</label><input type="text" inputmode="numeric" maxlength="5" placeholder="예: 10:30" id="evModEndTime" value="${parsedEndTime}"></div>
       </div>`}
 
     <div class="fg">
@@ -486,6 +491,12 @@ export function openEvModal(idx) {
                                   box-shadow:none;border:1px solid #FFCDD2"
               onclick="delCustomEv(${ev._id});cm()"><span class="icon icon-sm" translate="no" aria-hidden="true">delete</span> 삭제</button>` : ''}
   `);
+  // v0.3.25: 모달 안 시간 입력은 showModal()이 매번 #mB를 새로 채우면서 새 엘리먼트로
+  // 교체되므로, 열 때마다 다시 붙여줘야 함(요소별 _timeMaskAttached 플래그로 중복 방지)
+  if (!ev.auto) {
+    attachTimeInputMask('evModTime');
+    attachTimeInputMask('evModEndTime');
+  }
 }
 
 /** Sprint 6: 정부지원 진행 상태 버튼 클릭 */
@@ -516,8 +527,8 @@ export function saveEventMod() {
 
   // v0.0.17: "내 일정"(!ev.auto)은 제목·시작/종료 시간도 함께 검증·반영
   if (!ev.auto) {
-    const newTime    = document.getElementById('evModTime')?.value    || '';
-    const newEndTime = document.getElementById('evModEndTime')?.value || '';
+    const newTime    = validHHMM(document.getElementById('evModTime')?.value    || '');
+    const newEndTime = validHHMM(document.getElementById('evModEndTime')?.value || '');
     const newTitle   = document.getElementById('evModTitle')?.value.trim() || '';
     if (!newTitle) { alert('제목을 입력해주세요'); return; }
     if (newTime && newEndTime && newEndTime <= newTime) {
@@ -1426,12 +1437,17 @@ function parseEvTitleWithTime(fullTitle) {
   return { time: m[1], endTime: m[2] || '', title: m[3] };
 }
 
+/** v0.3.25: 시간 입력이 텍스트 필드로 바뀌면서(attachTimeInputMask) 값이 항상 완전한
+ *  "HH:MM"이라는 보장이 없어짐(예: blur 없이 바로 등록 버튼을 누른 경우) — 형식이 안 맞으면
+ *  빈 값 취급해서 잘못된 문자열이 그대로 저장되지 않도록 함 */
+function validHHMM(v) { return /^\d{2}:\d{2}$/.test(v) ? v : ''; }
+
 export function addCustomEv() {
   const date    = document.getElementById('evDate').value;
   const title   = document.getElementById('evTitle').value.trim();
   const note    = document.getElementById('evNote').value.trim();
-  const time    = document.getElementById('evTime').value;
-  const endTime = document.getElementById('evEndTime').value;
+  const time    = validHHMM(document.getElementById('evTime').value);
+  const endTime = validHHMM(document.getElementById('evEndTime').value);
   if (!date || !title) { alert('날짜와 제목을 입력해주세요'); return; }
 
   // v0.0.13: 종료 시간이 시작 시간보다 빠르거나 같으면 등록 막고 안내
@@ -1477,6 +1493,26 @@ export function delCustomEv(id) {
  *  스티커
  * ══════════════════════════════════════ */
 export const stickerCats = [
+  // v0.0.55: 이유식 카테고리도 기존 이모지 30종 → 자체 제작 이미지 48종으로 교체(패턴은
+  // 'momcal_action'·'nature'와 동일). food 카테고리는 특히 FOOD_STICKER_SET·isFoodSticker()가
+  // 이 items 배열을 그대로 기준 삼아 "이유식 스티커인지" 판별하므로, 여기 값을 바꾸는 것만으로
+  // 나머지 이유식 전용 로직(먹은 양 g 기록, 캘린더 셀 별도 표시 등)이 자동으로 새 값을 따라감.
+  // v0.3.25: 옹짐꾼님 요청으로 '꽃·자연'과 순서를 바꿔 맨 앞으로 옮김(이유식을 가장 많이
+  // 씀 — 스티커 피커를 열면 바로 보이도록) — items 내용 자체는 그대로, 배열 위치만 이동.
+  { key: 'food',   label: `${icon('restaurant', { size: 'sm' })} 이유식`, items: [
+      'momcal:food_rice', 'momcal:food_oatmeal', 'momcal:food_bread', 'momcal:food_barley',
+      'momcal:food_potato', 'momcal:food_sweet_potato', 'momcal:food_corn',
+      'momcal:food_beef', 'momcal:food_chicken', 'momcal:food_egg_yolk',
+      'momcal:food_salmon', 'momcal:food_cod', 'momcal:food_anchovy',
+      'momcal:food_tofu', 'momcal:food_kidney_bean', 'momcal:food_milk', 'momcal:food_cheese', 'momcal:food_yogurt',
+      'momcal:food_broccoli', 'momcal:food_carrot', 'momcal:food_spinach', 'momcal:food_sweet_pumpkin',
+      'momcal:food_zucchini', 'momcal:food_cucumber', 'momcal:food_avocado', 'momcal:food_tomato',
+      'momcal:food_onion', 'momcal:food_green_onion', 'momcal:food_cabbage', 'momcal:food_napa_cabbage', 'momcal:food_bok_choy',
+      'momcal:food_eggplant', 'momcal:food_paprika', 'momcal:food_radish', 'momcal:food_lotus_root', 'momcal:food_green_pea',
+      'momcal:food_shiitake_mushroom', 'momcal:food_enoki_mushroom', 'momcal:food_king_oyster_mushroom',
+      'momcal:food_apple', 'momcal:food_banana', 'momcal:food_pear', 'momcal:food_peach',
+      'momcal:food_strawberry', 'momcal:food_blueberry', 'momcal:food_kiwi', 'momcal:food_orange', 'momcal:food_korean_melon',
+    ] },
   // v0.0.52: 기존 이모지 16종 → 옹짐꾼님이 제작한 자체 일러스트(투명 배경 PNG) 25종으로 교체.
   // 'momcal_action' 카테고리와 동일한 패턴(momcal:xxx 토큰 + ICON_STICKERS 매핑)을 그대로 재사용.
   // 이미 저장된 기존 이모지 스티커(예: 날짜에 붙여둔 🌸)는 ICON_STICKERS에 없으므로
@@ -1525,24 +1561,6 @@ export const stickerCats = [
       'momcal:memorial_daycare_start', 'momcal:memorial_kindergarten_start', 'momcal:memorial_graduation',
       'momcal:memorial_first_trip', 'momcal:memorial_family_photo', 'momcal:memorial_anniversary',
       'momcal:memorial_special_day', 'momcal:memorial_memory_keeping',
-    ] },
-  // v0.0.55: 이유식 카테고리도 기존 이모지 30종 → 자체 제작 이미지 48종으로 교체(패턴은
-  // 'momcal_action'·'nature'와 동일). food 카테고리는 특히 FOOD_STICKER_SET·isFoodSticker()가
-  // 이 items 배열을 그대로 기준 삼아 "이유식 스티커인지" 판별하므로, 여기 값을 바꾸는 것만으로
-  // 나머지 이유식 전용 로직(먹은 양 g 기록, 캘린더 셀 별도 표시 등)이 자동으로 새 값을 따라감.
-  { key: 'food',   label: `${icon('restaurant', { size: 'sm' })} 이유식`, items: [
-      'momcal:food_rice', 'momcal:food_oatmeal', 'momcal:food_bread', 'momcal:food_barley',
-      'momcal:food_potato', 'momcal:food_sweet_potato', 'momcal:food_corn',
-      'momcal:food_beef', 'momcal:food_chicken', 'momcal:food_egg_yolk',
-      'momcal:food_salmon', 'momcal:food_cod', 'momcal:food_anchovy',
-      'momcal:food_tofu', 'momcal:food_kidney_bean', 'momcal:food_milk', 'momcal:food_cheese', 'momcal:food_yogurt',
-      'momcal:food_broccoli', 'momcal:food_carrot', 'momcal:food_spinach', 'momcal:food_sweet_pumpkin',
-      'momcal:food_zucchini', 'momcal:food_cucumber', 'momcal:food_avocado', 'momcal:food_tomato',
-      'momcal:food_onion', 'momcal:food_green_onion', 'momcal:food_cabbage', 'momcal:food_napa_cabbage', 'momcal:food_bok_choy',
-      'momcal:food_eggplant', 'momcal:food_paprika', 'momcal:food_radish', 'momcal:food_lotus_root', 'momcal:food_green_pea',
-      'momcal:food_shiitake_mushroom', 'momcal:food_enoki_mushroom', 'momcal:food_king_oyster_mushroom',
-      'momcal:food_apple', 'momcal:food_banana', 'momcal:food_pear', 'momcal:food_peach',
-      'momcal:food_strawberry', 'momcal:food_blueberry', 'momcal:food_kiwi', 'momcal:food_orange', 'momcal:food_korean_melon',
     ] },
   { key: 'health', label: `${icon('health_and_safety', { size: 'sm' })} 건강`, items: [
       'momcal:health_hospital_visit', 'momcal:health_appointment', 'momcal:health_health_checkup', 'momcal:health_vaccination',
@@ -1812,7 +1830,7 @@ export function renderStickerPicker() {
     `<button class="sp-tab ${i === S.selSCat ? 'on' : ''}" onclick="selSCat(${i})">${c.label}</button>`
   ).join('');
   document.getElementById('spGrid').innerHTML = stickerCats[S.selSCat].items.map(s =>
-    `<div class="sp-sticker" onclick="placeSticker('${s}')">${stickerDisplay(s, '2.9rem')}</div>`
+    `<div class="sp-sticker" onclick="placeSticker('${s}')">${stickerDisplay(s, '2rem')}</div>`
   ).join('');
 }
 

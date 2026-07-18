@@ -27,6 +27,36 @@ export const ageD = (b) => {
   return Math.max(0, diff) + 1;
 };
 
+/**
+ * v0.3.25: 시간 입력(캘린더 "일정 직접 추가"/일정 수정 모달)을 네이티브 `input[type="time"]`
+ * 위젯에서 `type="text" inputmode="numeric"`으로 바꾸고 이 마스킹을 붙여, 숫자를 직접
+ * 이어 타이핑하면 자동으로 "HH:MM"이 되도록 함 — 일부 모바일 기기(특히 삼성 인터넷 등)의
+ * 네이티브 시간 피커가 스핀 휠(스크롤) 방식이라 값 하나 찾는 데도 여러 번 쓸어올려야 하는
+ * 불편함이 있다는 피드백(2026-07-18)으로 도입. 저장 형식(24시간 "HH:MM" 문자열)은 그대로라
+ * buildEvTitleWithTime()/parseEvTitleWithTime() 등 기존 로직은 안 건드려도 됨.
+ * 사용법: 숫자 4자리(예 "0930")를 이어서 입력하면 자동으로 "09:30"이 됨. 콜론을 직접 쳐도 됨.
+ */
+export function attachTimeInputMask(id) {
+  const el = document.getElementById(id);
+  if (!el || el._timeMaskAttached) return;
+  el._timeMaskAttached = true;
+
+  el.addEventListener('input', () => {
+    const digits = el.value.replace(/\D/g, '').slice(0, 4);
+    el.value = digits.length > 2 ? `${digits.slice(0, 2)}:${digits.slice(2)}` : digits;
+  });
+
+  el.addEventListener('blur', () => {
+    const digits = el.value.replace(/\D/g, '').slice(0, 4);
+    if (!digits) { el.value = ''; return; }
+    const hRaw = digits.length <= 2 ? digits : digits.slice(0, 2);
+    const mRaw = digits.length <= 2 ? '0' : digits.slice(2).padEnd(2, '0');
+    const h = Math.min(parseInt(hRaw, 10) || 0, 23);
+    const m = Math.min(parseInt(mRaw, 10) || 0, 59);
+    el.value = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  });
+}
+
 /** 생년월일(문자열) → "N일 (M개월)" 형식 문자열 */
 export function ageFmt(b) {
   if (!b) return '';
