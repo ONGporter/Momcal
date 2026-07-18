@@ -173,16 +173,37 @@ html[data-cal-fontsize="xl"] .ev-more { font-size: 11px; }
   font-family: inherit; white-space: nowrap; transition: all .2s;
 }
 .sp-tab.on { background: var(--pk); color: #fff; }
-.sp-grid   { display: flex; gap: 6px; flex-wrap: wrap; }
-.sp-sticker {
-  /* v0.0.57: 스티커 고르는 화면에서만 크기를 기존 대비 2배(1.45rem→2.9rem)로 키웠었는데,
-     너무 커졌다는 재피드백(2026-07-18)으로 2.0rem으로 축소 + 여백도 함께 줄임(8px→6px,
-     칸 사이 gap도 10px→6px) — 달력 안에 붙는 스티커 크기(stickerDisplay 호출부의 다른
-     size 값들)는 이 변경과 무관하게 그대로 유지 */
-  font-size: 2rem; cursor: pointer; padding: 6px;
-  border-radius: 12px; transition: all .2s; border: 2px solid transparent;
+/* v0.3.27: "일정 추가 화면까지 내려가려면 스티커 목록을 한참 스크롤해야 한다" +
+   "한 줄에 4개는 너무 적다, 최소 6개는 보이게 해달라"는 재피드백(2026-07-18)으로 구조 변경.
+   기존엔 flex-wrap으로 카테고리 전체 스티커가 세로로 계속 이어졌는데(이유식 48종이면
+   페이지가 한참 길어짐), CSS Grid를 세로 3줄 고정 + grid-auto-flow:column으로 바꿔서
+   "3줄 높이 안에서 옆으로 넘기는" 가로 페이징 그리드로 전환. grid-auto-columns를 컨테이너
+   너비의 1/6(16.6667%)로 고정해서, 화면 크기·글자 크기 설정(15~23px 루트)과 무관하게
+   한 화면에 항상 최소 6열이 보장됨(글자 크기 설정에 영향 안 받도록 열 너비는 %, 아이콘은
+   px 고정 — js/calendar.js의 stickerDisplay(s, '38px') 호출부 참고) */
+.sp-grid {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(3, 1fr);
+  grid-auto-columns: 16.6667%;
+  height: 174px; /* 3줄 고정 높이 — 카테고리가 몇 종이든 이 높이 밖으로 안 자람 */
+  gap: 2px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
 }
-.sp-sticker:hover { background: var(--pkl); border-color: var(--pk); transform: scale(1.2); }
+.sp-grid::-webkit-scrollbar { display: none; }
+.sp-sticker {
+  display: flex; align-items: center; justify-content: center;
+  scroll-snap-align: start;
+  cursor: pointer; padding: 2px;
+  border-radius: 12px; transition: all .2s; border: 2px solid transparent;
+  font-size: 1.3rem; /* ICON_STICKERS에 없는 레거시 이모지 폴백 텍스트용 — 이미지 아이콘 크기는
+                        stickerDisplay()에 넘기는 px 값이 따로 결정함(위 주석 참고) */
+}
+.sp-sticker:hover { background: var(--pkl); border-color: var(--pk); transform: scale(1.12); }
 /* v0.0.50: '맘캘 육아' 이미지 스티커 — 기존 이모지 자리에 <img>로 들어가므로 정렬만 맞춰줌 */
 .sticker-img { display: inline-block; vertical-align: middle; object-fit: contain; }
 

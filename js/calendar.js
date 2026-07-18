@@ -1830,7 +1830,7 @@ export function renderStickerPicker() {
     `<button class="sp-tab ${i === S.selSCat ? 'on' : ''}" onclick="selSCat(${i})">${c.label}</button>`
   ).join('');
   document.getElementById('spGrid').innerHTML = stickerCats[S.selSCat].items.map(s =>
-    `<div class="sp-sticker" onclick="placeSticker('${s}')">${stickerDisplay(s, '2rem')}</div>`
+    `<div class="sp-sticker" onclick="placeSticker('${s}')">${stickerDisplay(s, '38px')}</div>`
   ).join('');
 }
 

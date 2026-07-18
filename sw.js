@@ -212,7 +212,7 @@
 // 확실히 허용된 걸 확인했다"는 사실을 로컬(localStorage)에 기억해두고, 라이브 값이
 // granted/denied 둘 다 아닐 때는 그 기억을 우선 신뢰하는 effectivePermission() 도입 —
 // 캐시 버전 상향
-const CACHE_NAME = 'momcal-shell-v101';
+const CACHE_NAME = 'momcal-shell-v102';
 
 const APP_SHELL = [
   './',
