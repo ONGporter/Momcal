@@ -1,4 +1,4 @@
-/* ── 온보딩 튜토리얼 (v0.4.4 신규) ──
+/* ── 온보딩 튜토리얼 (v0.4.4 신규, v0.4.5 스크린샷 추가) ──
    css/auth.css의 #authScreen과 같은 풀스크린 오버레이 패턴을 따름(position:fixed, inset:0,
    display:none↔flex 토글은 js/tutorial.js에서 담당) */
 #tutorialScreen {
@@ -10,28 +10,45 @@
 
 .tut-box {
   background: #fff; border-radius: 26px;
-  padding: 36px 28px 28px; width: 100%; max-width: 400px;
+  padding: 28px 24px 24px; width: 100%; max-width: 440px; /* v0.4.5: 스크린샷이 잘 보이도록 400→440px */
   box-shadow: 0 20px 60px rgba(120, 40, 100, .3);
   text-align: center;
+  max-height: 92vh; overflow-y: auto; /* 스크린샷이 있는 단계는 세로로 길어질 수 있어 스크롤 허용 */
 }
 
 .tut-icon {
   width: 76px; height: 76px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  margin: 0 auto 18px;
+  margin: 8px auto 18px;
 }
 .tut-icon .icon { font-size: 2.3rem; color: var(--pkd); }
 
-.tut-title {
-  font-size: 1.15rem; font-weight: 900; color: var(--tx);
-  margin-bottom: 10px; line-height: 1.35;
+/* v0.4.5: "아이콘 말고 실제 화면 캡처로 확대해서 보여달라"는 요청 —
+   옹짐꾼님이 준 스크린샷을 그대로 넣고(icons/tutorial/*.png), 탭하면 더 크게 보이는
+   라이트박스(#tutorialImgZoom)로 연결함 */
+.tut-shot-wrap {
+  position: relative; margin: 0 0 18px; cursor: zoom-in;
+  border-radius: 16px; overflow: hidden;
+  border: 1px solid #F0E0EC; box-shadow: 0 6px 20px rgba(120,40,100,.12);
 }
-.tut-desc {
-  font-size: .86rem; color: var(--txl); font-weight: 600;
-  line-height: 1.6; margin-bottom: 22px; min-height: 4.8em;
+.tut-shot { display: block; width: 100%; max-height: 46vh; object-fit: contain; object-position: top; background: #FCF7FA; }
+.tut-shot-zoom-hint {
+  position: absolute; right: 8px; bottom: 8px;
+  background: rgba(30,10,25,.62); color: #fff;
+  font-size: .66rem; font-weight: 800; padding: 5px 9px; border-radius: 20px;
+  display: flex; align-items: center; gap: 3px;
 }
 
-.tut-dots { display: flex; justify-content: center; gap: 6px; margin-bottom: 22px; }
+.tut-title {
+  font-size: 1.1rem; font-weight: 900; color: var(--tx);
+  margin-bottom: 8px; line-height: 1.35;
+}
+.tut-desc {
+  font-size: .83rem; color: var(--txl); font-weight: 600;
+  line-height: 1.55; margin-bottom: 20px;
+}
+
+.tut-dots { display: flex; justify-content: center; gap: 6px; margin-bottom: 20px; }
 .tut-dot { width: 6px; height: 6px; border-radius: 50%; background: #EEDCE8; transition: all .2s; }
 .tut-dot.on { width: 18px; background: var(--pk); }
 
@@ -45,5 +62,19 @@
 }
 .tut-skip-btn:hover { color: var(--pkd); }
 
-html[data-theme="dark"] .tut-box  { background: var(--card); }
-html[data-theme="dark"] .tut-dot  { background: rgba(255,255,255,.14); }
+/* v0.4.5: 스크린샷 확대 라이트박스 — 튜토리얼(z-index:1100)보다도 위에 떠야 함 */
+#tutorialImgZoom {
+  position: fixed; inset: 0; z-index: 1200;
+  background: rgba(20, 8, 16, .88);
+  display: none; align-items: center; justify-content: center;
+  padding: 24px; cursor: zoom-out;
+}
+#tutorialImgZoom img {
+  max-width: 100%; max-height: 100%; border-radius: 14px;
+  box-shadow: 0 10px 40px rgba(0,0,0,.4);
+}
+
+html[data-theme="dark"] .tut-box    { background: var(--card); }
+html[data-theme="dark"] .tut-dot    { background: rgba(255,255,255,.14); }
+html[data-theme="dark"] .tut-shot-wrap { border-color: rgba(255,255,255,.1); }
+html[data-theme="dark"] .tut-shot   { background: #2A2028; }

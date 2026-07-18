@@ -219,7 +219,9 @@
 // v0.4.4: [버그 수정] 멀티데이 일정 진짜 원인(max-width:100%가 음수 마진을 막고 있었음)
 // 수정 + 홈 위젯 팝업 오작동 수정 + 온보딩 튜토리얼 신규 추가 — 정적 리소스 변경으로
 // 캐시 버전 상향
-const CACHE_NAME = 'momcal-shell-v107';
+// v0.4.5: 튜토리얼에 아이콘 대신 실제 앱 스크린샷 추가(icons/tutorial/*.png) + 확대
+// 라이트박스 — 정적 리소스 변경으로 캐시 버전 상향
+const CACHE_NAME = 'momcal-shell-v108';
 
 const APP_SHELL = [
   './',
@@ -278,6 +280,10 @@ const APP_SHELL = [
   './icons/icon-512-maskable.png',
   './icons/apple-touch-icon.png',
   './icons/logo-mark.png',
+  './icons/tutorial/calendar-sync.png',
+  './icons/tutorial/checklist-settings.png',
+  './icons/tutorial/checklist-add-item.png',
+  './icons/tutorial/food-calendar.png',
   './fonts/OwnglyphParkDahyun.ttf', // v0.0.3: 커스텀 폰트 추가 — 오프라인에서도 폰트가 깨지지 않도록 미리 캐싱
   './fonts/OmyuPretty.ttf', // v0.0.5: 세부 정보용 폰트 추가
 ];
