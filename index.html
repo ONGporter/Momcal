@@ -378,10 +378,13 @@
   <div class="add-ev-form">
     <div class="sec" style="margin-bottom:14px">일정 직접 추가</div>
     <div class="fg2">
-      <div class="fg" style="margin:0"><label>날짜</label><input type="date" id="evDate"/></div>
-      <div class="fg" style="margin:0"><label>시작 시간 (선택)</label><input type="text" inputmode="numeric" maxlength="5" placeholder="예: 09:30" id="evTime"/></div>
+      <div class="fg" style="margin:0"><label>시작일</label><input type="date" id="evDate"/></div>
+      <div class="fg" style="margin:0"><label>종료일 (선택, 1박 이상이면)</label><input type="date" id="evEndDate"/></div>
     </div>
-    <div class="fg" style="margin-top:10px"><label>종료 시간 (선택)</label><input type="text" inputmode="numeric" maxlength="5" placeholder="예: 10:30" id="evEndTime"/></div>
+    <div class="fg2" style="margin-top:10px">
+      <div class="fg" style="margin:0"><label>시작 시간 (선택)</label><input type="text" inputmode="numeric" maxlength="5" placeholder="예: 09:30" id="evTime"/></div>
+      <div class="fg" style="margin:0"><label>종료 시간 (선택)</label><input type="text" inputmode="numeric" maxlength="5" placeholder="예: 10:30" id="evEndTime"/></div>
+    </div>
     <div class="fg" style="margin-top:10px">
       <label>제목</label>
       <input id="evTitle" placeholder="예) 소아과 방문, 이유식 시작"/>
@@ -396,6 +399,7 @@
     </div>
     <button class="btn bpk" style="margin-top:6px" onclick="addCustomEv()">일정 추가</button>
   </div>
+
 
   <!-- v0.1.0: 하단 색상 범례(필수/선택/이유식/접종/정부지원) 제거 — "일정 색상" 스와치에
        이미 종류별 색이 보이니 중복이라는 옹짐꾼님 피드백. 관련 렌더 함수(renderCalLegend 등,
@@ -481,7 +485,7 @@
     <a href="./contact.html"><span class="icon icon-sm" translate="no" aria-hidden="true">mail</span> 문의</a>
     <a href="./account-deletion.html"><span class="icon icon-sm" translate="no" aria-hidden="true">person_remove</span> 계정삭제</a>
   </div>
-  <div class="site-footer-version">맘캘 MomCal v0.4.0</div>
+  <div class="site-footer-version">맘캘 MomCal v0.4.1</div>
 </footer>
 
 <!-- ════════════════════════════════════

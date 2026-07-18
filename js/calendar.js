@@ -294,6 +294,19 @@ let _ghostEl        = null;
  *  이벤트 키 & 모드 유틸
  * ══════════════════════════════════════ */
 
+/**
+ * v0.4.1: "1박 이상이면 연결되게 표시하고 싶다"는 요청으로 멀티데이(여러 날에 걸친) 일정
+ * 지원 추가 — 사용자가 직접 추가한 일정(S.customEvs, ev.auto=false)에만 선택적으로
+ * `endDate`(시작일보다 늦은 날짜)를 저장할 수 있음. endDate가 없거나 date와 같으면 기존과
+ * 완전히 동일한 하루짜리 일정으로 취급(기존 저장 데이터·자동 생성 일정은 전혀 영향 없음).
+ */
+function evCoversDate(e, ds) {
+  return ds >= e.date && ds <= (e.endDate || e.date);
+}
+function isMultiDayEv(e) {
+  return !!e.endDate && e.endDate > e.date;
+}
+
 /** 이벤트마다 고유 키 생성 (Firebase 저장용) */
 function getEventKey(ev) {
   if (!ev.auto) return 'custom_' + ev._id;
@@ -370,8 +383,19 @@ function moveEvent(idxOrArr, newDate) {
       }
     } else {
       // 커스텀 이벤트 → 직접 날짜 변경
+      // v0.4.1: 1박 이상(멀티데이) 일정은 드래그로 옮겨도 여행 기간이 유지되도록
+      // endDate도 시작일과 같은 만큼 함께 밀어줌(끝나는 날만 그대로 두면 기간이 늘거나
+      // 줄거나 심하면 endDate < date가 되는 문제가 생김)
       const ce = S.customEvs.find(e => e._id === ev._id);
-      if (ce) ce.date = newDate;
+      if (ce) {
+        if (ce.endDate && ce.endDate > ce.date) {
+          const days = Math.round((new Date(ce.endDate) - new Date(ce.date)) / 86400000);
+          const nd = new Date(newDate);
+          nd.setDate(nd.getDate() + days);
+          ce.endDate = `${nd.getFullYear()}-${String(nd.getMonth() + 1).padStart(2, '0')}-${String(nd.getDate()).padStart(2, '0')}`;
+        }
+        ce.date = newDate;
+      }
     }
   });
 
@@ -464,6 +488,11 @@ export function openEvModal(idx) {
       <label><span class="icon icon-sm" translate="no" aria-hidden="true">calendar_month</span> ${isGov ? '신청 예정일' : '실제 일정'}</label>
       <input type="date" id="evModDate" value="${actDate}">
     </div>
+    ${!ev.auto ? `
+      <div class="fg">
+        <label><span class="icon icon-sm" translate="no" aria-hidden="true">date_range</span> 종료일 (선택, 1박 이상이면)</label>
+        <input type="date" id="evModEndDate" value="${ev.endDate || ''}">
+      </div>` : ''}
     ${(ev.type === 'custom' && !ev.auto) ? `
       <div class="fg">
         <label><span class="icon icon-sm" translate="no" aria-hidden="true">palette</span> 일정 색상</label>
@@ -548,10 +577,20 @@ export function saveEventMod() {
       alert('종료 시간이 시작 시간보다 늦어야 해요');
       return;
     }
+    // v0.4.1: "1박 이상이면 연결되게 표시하고 싶다"는 요청으로 종료일(선택) 필드도 함께 반영 —
+    // 시작일(actualDate)보다 빠르면 저장을 막고, 시작일과 같거나 비워두면 하루짜리 일정으로
+    // 되돌림(ce.endDate 자체를 지워서 evCoversDate/isMultiDayEv가 예전처럼 동작하게 함)
+    const newEndDateRaw = document.getElementById('evModEndDate')?.value || '';
+    if (newEndDateRaw && newEndDateRaw < actualDate) {
+      alert('종료일이 시작일보다 늦어야 해요');
+      return;
+    }
     const ce = S.customEvs.find(e => e._id === ev._id);
     if (ce) {
       ce.date  = actualDate;
       ce.title = buildEvTitleWithTime(newTime, newEndTime, newTitle);
+      if (newEndDateRaw && newEndDateRaw > actualDate) ce.endDate = newEndDateRaw;
+      else delete ce.endDate;
       if (ev.type === 'custom') {
         const colorInput = document.getElementById('evModColor');
         if (colorInput) ce.color = colorInput.value;
@@ -928,7 +967,7 @@ export function cellHTML(ds, d, other, evs, td, th) {
   // 나머지 일정·스티커는 숨김 — 필터를 눌렀을 때 실제로 뭔가 달라지게 하기 위함
   // (이유식은 더 이상 자동 일정이 아니라 스티커로만 기록되므로, 이벤트 필터와는 다르게 다룸)
   const isFoodFilterOn = !!(S.calFilter && S.calFilter.food);
-  const de           = groupVaxEvents(applyCalFilter(evs.filter(e => e.date === ds)));
+  const de           = groupVaxEvents(applyCalFilter(evs.filter(e => evCoversDate(e, ds))));
   const stickersAll  = S.dayStickers[ds] || [];
 
   // v0.0.12: 토요일·일요일·한국 공휴일은 날짜 숫자를 붉은색 계열로 표시
@@ -969,7 +1008,7 @@ export function cellHTML(ds, d, other, evs, td, th) {
        </div>`
     : '';
 
-  const evsHtml = renderCellEvents(de);
+  const evsHtml = renderCellEvents(de, ds);
 
   // 오늘 날짜면 기존처럼 원형 강조가 우선, 아니면 주말/공휴일 여부에 따라 붉은 글자색만 적용
   const dayNumStyle = ds === td
@@ -1002,13 +1041,13 @@ export function cellHTML(ds, d, other, evs, td, th) {
  *   근본 원인이었음 — 박스를 없애고 나니 훨씬 많은 글자가 그대로 보임
  * - 최대 3건까지 각각 한 줄씩 색상 텍스트로 보여주고, 그 이상은 "+N"으로 표시
  */
-function renderCellEvents(de) {
+function renderCellEvents(de, ds) {
   if (!de.length) return '';
   const MAX = 3;
   const sorted  = [...de].sort((a, b) => evPriority(a) - evPriority(b));
   const shown   = sorted.slice(0, MAX);
   const overflow = sorted.length - shown.length;
-  const lines = shown.map(renderEventLine).join('');
+  const lines = shown.map(e => renderEventLine(e, ds)).join('');
   const moreHtml = overflow > 0 ? `<div class="ev-more">+${overflow}건 더보기</div>` : '';
   return `<div class="ev-lines">${lines}${moreHtml}</div>`;
 }
@@ -1149,15 +1188,36 @@ function renderWeekTimedBlock(e, top, height, track, trackCount) {
 // v0.2.1: js/utils.js의 공용 escapeHtml()로 통일(기존엔 따옴표만 이스케이프하던 로컬 함수였음)
 const esc = escapeHtml;
 
-/** 이벤트 1건 — 배경 없이 카테고리 색상 그대로 텍스트에 입힘 (네이티브 캘린더 스타일) */
-function renderEventLine(e) {
+/**
+ * v0.4.1: 이벤트 1건 — 배경 없이 카테고리 색상 그대로 텍스트에 입힘 (네이티브 캘린더 스타일)
+ * 1박 이상(멀티데이) 일정은 이 칸이 그 일정의 어느 지점인지(시작/중간/끝)에 따라 이어지는
+ * 쪽의 모서리를 각지게 만들고 칸 여백(4px)만큼 밀어 붙여서, 여러 날짜 칸에 걸쳐 하나의
+ * 색상 바가 이어진 것처럼 보이게 함. 주(week) 경계에서는 다음 줄로 넘어가므로 일요일/토요일
+ * 칸에서는 그 줄 안에서만 이어지고 새 줄에서 다시 이어짐(달력이 요일별 칸으로 이루어진
+ * 구조상 자연스러운 처리 — 대부분의 캘린더 앱도 주 경계에서는 같은 방식으로 끊어 보여줌)
+ */
+function renderEventLine(e, ds) {
   const urgent = isGovDeadlineSoon(e);
   const color  = urgent ? '#C62828' : getEvDisplayColor(e);
   const bg     = color + '2B'; // 형광펜 느낌의 옅은 배경 (~17% 불투명도) — 뱃지와 같은 "연한 배경 + 진한 글자" 톤
   const label  = stripLeadingEmoji(e.title);
   const safe   = esc(label);
   const doneCss = e.done ? 'text-decoration:line-through;opacity:.55;' : '';
-  const style  = `background:${bg};color:${color};${doneCss}`;
+
+  const multi = ds != null && isMultiDayEv(e);
+  let joinCss = '';
+  let joinClass = '';
+  if (multi) {
+    const dow = new Date(ds).getDay();
+    const roundLeft  = ds === e.date  || dow === 0;
+    const roundRight = ds === e.endDate || dow === 6;
+    joinClass = ' ev-line-multi';
+    joinCss =
+      `border-top-left-radius:${roundLeft ? '4px' : '0'};border-bottom-left-radius:${roundLeft ? '4px' : '0'};` +
+      `border-top-right-radius:${roundRight ? '4px' : '0'};border-bottom-right-radius:${roundRight ? '4px' : '0'};` +
+      `${roundLeft ? '' : 'margin-left:-4px;padding-left:6px;'}${roundRight ? '' : 'margin-right:-4px;padding-right:6px;'}`;
+  }
+  const style = `background:${bg};color:${color};${doneCss}${joinCss}`;
 
   if (e._isVaxGroup) {
     const groupIndices = `[${e._groupItems.map(item => item._idx).join(',')}]`;
@@ -1175,7 +1235,7 @@ function renderEventLine(e) {
   }
 
   return `
-    <div class="ev-line"
+    <div class="ev-line${joinClass}"
          style="${style}"
          draggable="true"
          ondragstart="onDragStart(event,${e._idx})"
@@ -1235,7 +1295,7 @@ function renderWeekView() {
   html += `<div class="week-grid-line" style="grid-column:1;grid-row:1;font-size:.62rem;color:var(--txl);font-weight:700;padding:10px 4px;text-align:right;border-bottom:1px solid #F5EEF8">종일</div>`;
   weekDays.forEach((d, di) => {
     const ds  = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    const de  = groupVaxEvents(applyCalFilter(evs.filter(e => e.date === ds && !getEvTimeRangeMinutes(e))));
+    const de  = groupVaxEvents(applyCalFilter(evs.filter(e => evCoversDate(e, ds) && (!getEvTimeRangeMinutes(e) || isMultiDayEv(e)))));
     const isTd = ds === td;
 
     const otherStickers = (S.dayStickers[ds] || []).filter(s => !isFoodSticker(s));
@@ -1266,7 +1326,7 @@ function renderWeekView() {
            ondrop="onDrop(event,'${ds}')"
            onmouseover="this.style.background='var(--pkl)'"
            onmouseout="this.style.background='${isTd ? th.cell : 'var(--wh)'}'">
-        ${isFoodFilterOn ? foodCenterHtml : `${renderCellEvents(de)}${stickerHtml}`}
+        ${isFoodFilterOn ? foodCenterHtml : `${renderCellEvents(de, ds)}${stickerHtml}`}
       </div>`;
   });
 
@@ -1283,7 +1343,7 @@ function renderWeekView() {
     const ds  = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     const isTd = ds === td;
 
-    const timedEvs = groupVaxEvents(applyCalFilter(evs.filter(e => e.date === ds && !!getEvTimeRangeMinutes(e))));
+    const timedEvs = groupVaxEvents(applyCalFilter(evs.filter(e => e.date === ds && !!getEvTimeRangeMinutes(e) && !isMultiDayEv(e))));
     const items = timedEvs.map(e => {
       const tr  = getEvTimeRangeMinutes(e);
       const top = weekMinutesToY(tr.start);
@@ -1325,7 +1385,7 @@ function renderWeekView() {
  * ══════════════════════════════════════ */
 export function showDayPanel(ds) {
   const allEvs   = getAllEvs();
-  const evs      = groupVaxEvents(applyCalFilter(allEvs.filter(e => e.date === ds)));
+  const evs      = groupVaxEvents(applyCalFilter(allEvs.filter(e => evCoversDate(e, ds))));
   const stickers = S.dayStickers[ds] || [];
   const panel    = document.getElementById('dayPanel');
   const dow      = ['일', '월', '화', '수', '목', '금', '토'][new Date(ds).getDay()];
@@ -1408,6 +1468,8 @@ export function showDayPanel(ds) {
                     ${urgent ? `<span class="badge-r" style="margin-left:5px"><span class="icon icon-sm" translate="no" aria-hidden="true">schedule</span> 마감임박</span>` : ''}
                   </div>
                   ${e.hospital ? `<div class="dp-ev-note"><span class="icon icon-sm" translate="no" aria-hidden="true">local_hospital</span> ${esc(e.hospital)}</div>` : ''}
+                  ${isMultiDayEv(e)
+                    ? `<div class="dp-ev-note" style="color:var(--pk);font-weight:800"><span class="icon icon-sm" translate="no" aria-hidden="true">date_range</span> ${e.date} ~ ${e.endDate}</div>` : ''}
                   ${e.note     ? `<div class="dp-ev-note"><span class="icon icon-sm" translate="no" aria-hidden="true">edit_note</span> ${esc(e.note)}</div>`     : ''}
                   ${e.recDate && e.recDate !== e.date
                     ? `<div class="dp-ev-note" style="color:var(--pu)"><span class="icon icon-sm" translate="no" aria-hidden="true">event_available</span> 권장일: ${e.recDate}</div>` : ''}
@@ -1462,10 +1524,14 @@ function validHHMM(v) { return /^\d{2}:\d{2}$/.test(v) ? v : ''; }
  * v0.4.0: 날짜를 한 번 더 눌러 여는 팝업(openQuickAddModal)도 이 함수를 그대로 재사용하도록
  * suffix 파라미터 추가 — suffix=''(기본값)는 하단 "일정 직접 추가" 폼(기존 동작 그대로),
  * suffix='Qa'는 팝업 전용 필드(evDateQa 등)를 읽고, 저장 후 팝업을 닫음(cm()).
+ * v0.4.1: "1박 이상이면 연결되게 표시하고 싶다"는 요청으로 종료일(선택) 필드 추가 —
+ * 비워두면 기존과 동일한 하루짜리 일정, 시작일보다 늦은 날짜를 넣으면 그 범위 전체 날짜
+ * 칸에 이어지는 색상 바로 표시됨(evCoversDate/isMultiDayEv, renderEventLine 참고).
  */
 export function addCustomEv(suffix = '') {
   const $ = (id) => document.getElementById(id + suffix);
   const date    = $('evDate').value;
+  const endDateRaw = $('evEndDate')?.value || '';
   const title   = $('evTitle').value.trim();
   const note    = $('evNote').value.trim();
   const time    = validHHMM($('evTime').value);
@@ -1477,6 +1543,12 @@ export function addCustomEv(suffix = '') {
     alert('종료 시간이 시작 시간보다 늦어야 해요');
     return;
   }
+  // v0.4.1: 종료일이 시작일보다 빠르면 등록 막고 안내(같은 날짜면 그냥 하루짜리 일정으로 처리)
+  if (endDateRaw && endDateRaw < date) {
+    alert('종료일이 시작일보다 늦어야 해요');
+    return;
+  }
+  const endDate = endDateRaw && endDateRaw > date ? endDateRaw : '';
 
   // v0.0.32: "종류" 버튼을 없애고 색상 스와치가 종류를 겸함(evTypeSwatchesHtml 참고) —
   // 필수/선택/접종은 항상 범례의 카테고리 공통 색을 그대로 씀(getEvDisplayColor가 e.color가
@@ -1492,6 +1564,7 @@ export function addCustomEv(suffix = '') {
     note,
     type,
     ...(color ? { color } : {}),
+    ...(endDate ? { endDate } : {}),
     auto: false,
     _id:  Date.now(),
   });
@@ -1503,6 +1576,7 @@ export function addCustomEv(suffix = '') {
     $('evNote').value    = '';
     $('evTime').value    = '';
     $('evEndTime').value = '';
+    if ($('evEndDate')) $('evEndDate').value = '';
   }
   renderCal();
   if (S.selDate === date) showDayPanel(date);
@@ -1514,12 +1588,17 @@ export function addCustomEv(suffix = '') {
  * 완전히 같은 필드 구성을 쓰되 id에 'Qa' suffix를 붙여 겹치지 않게 함(evTypeSwatchesHtml/
  * addCustomEv의 suffix 파라미터 참고). 날짜는 누른 그 날짜로 미리 채워두고 수정 불가로
  * 두지 않음(다른 날짜로 바꿔서 추가하고 싶을 수도 있어 그대로 편집 가능하게 둠).
+ * v0.4.1: "1박 이상이면 연결되게 표시하고 싶다"는 요청으로 종료일(선택) 필드 추가 —
+ * 하단 폼과 마찬가지로 시작일/종료일을 한 줄로 붙여 보여줌.
  */
 export function openQuickAddModal(ds) {
   showModal('일정 추가', `
-    <div class="fg"><label><span class="icon icon-sm" translate="no" aria-hidden="true">calendar_month</span> 날짜</label>
-      <input type="date" id="evDateQa" value="${ds}"></div>
     <div class="fg2">
+      <div class="fg" style="margin:0"><label><span class="icon icon-sm" translate="no" aria-hidden="true">calendar_month</span> 시작일</label>
+        <input type="date" id="evDateQa" value="${ds}"></div>
+      <div class="fg" style="margin:0"><label>종료일 (선택, 1박 이상이면)</label><input type="date" id="evEndDateQa"></div>
+    </div>
+    <div class="fg2" style="margin-top:10px">
       <div class="fg" style="margin:0"><label>시작 시간 (선택)</label><input type="text" inputmode="numeric" maxlength="5" placeholder="예: 09:30" id="evTimeQa"></div>
       <div class="fg" style="margin:0"><label>종료 시간 (선택)</label><input type="text" inputmode="numeric" maxlength="5" placeholder="예: 10:30" id="evEndTimeQa"></div>
     </div>
