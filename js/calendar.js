@@ -1236,7 +1236,11 @@ function renderEventLine(e, ds) {
   // 시작되는 칸(roundLeft)에서만 제목 글자를 보여주고, 이어지는 칸들은 색만 이어지는 빈 바로
   // 표시함(제목이 매 칸마다 반복돼 보이던 문제 해결). 호버 시 툴팁(title 속성)은 모든 칸에서
   // 항상 전체 제목을 보여주므로 정보 자체가 사라지진 않음
-  const displayLabel = (multi && !roundLeft) ? '' : safe;
+  // v0.4.3: [버그 수정] 이어지는 칸의 글자를 완전히 빈 문자열로 비웠더니, `.ev-line`의
+  // 세로 패딩이 0이라 내용이 하나도 없는 블록은 줄 높이 자체가 0으로 찌그러져서 색 바가
+  // 통째로 안 보이는 버그였음(옹짐꾼님이 스크린샷으로 재확인해주심 — 13·14일 칸이 완전히
+  // 빈 채로 보임). 화면엔 안 보이지만 줄 높이는 정상적으로 잡아주는 `&nbsp;`로 대체
+  const displayLabel = (multi && !roundLeft) ? '&nbsp;' : safe;
 
   if (e._isVaxGroup) {
     const groupIndices = `[${e._groupItems.map(item => item._idx).join(',')}]`;
