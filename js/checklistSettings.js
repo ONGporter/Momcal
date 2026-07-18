@@ -72,41 +72,38 @@ function escapeAttr(s) { return escapeHtml(s).replace(/\n/g, '&#10;'); }
 function isHidden(key)  { return ensureClSettings().hiddenTabs.includes(key); }
 function isSyncOff(key) { return ensureClSettings().calendarSync[key] === false; }
 
-/** 탭 표시/숨김 토글 */
-export function toggleClTabHidden(key) {
-  const s = ensureClSettings();
-  const i = s.hiddenTabs.indexOf(key);
-  if (i >= 0) s.hiddenTabs.splice(i, 1); else s.hiddenTabs.push(key);
-  debounceSave();
-  renderChecklistSettings();
-  window.renderChecklist?.(); // 지금 체크리스트 탭을 보고 있으면 탭 구성을 즉시 반영
-}
+/**
+ * v0.4.2: "설정 화면이 너무 길어서 가독성이 안 좋다"는 피드백으로, 예전엔 임산부용·육아용
+ * 모든 항목(내장 탭+준비물 팩+커스텀 체크리스트+정부지원)을 표시/숨김 토글과 함께 설정 탭에
+ * 전부 나열했는데, 이제 그 목록 자체를 팝업(openChecklistSettingsModal)으로 옮기고 팝업
+ * 안에서도 기본은 "지금 표시 중인 항목"만 보여줌 — 숨겨진 항목은 "＋ 추가하기"를 눌러야
+ * 펼쳐지는 별도 목록으로 뺌(_clSettingsShowHidden). 설정 탭(#clSettingsWrap)에는 몇 개가
+ * 표시 중인지 요약과 "설정하기" 버튼만 남음. "새 체크리스트 만들기"는 이 팝업과 무관하게
+ * 기존처럼 설정 탭에 항상 보이는 별도 버튼으로 유지(옹짐꾼님 요청).
+ */
+let _clSettingsShowHidden = { preg: false, born: false };
 
-/** 캘린더 연동 켜기/끄기 (예방접종·발달 탭만 대상)
- *  v0.0.42: 끄면 js/calendar.js의 getAutoEvs()가 해당 카테고리 일정을 통째로 숨기고,
- *  다시 켜면 지금 체크리스트 상태를 기준으로 캘린더 완료 표시를 재동기화한 뒤 다시 보여줌 */
-export function toggleClCalendarSync(key) {
-  const s = ensureClSettings();
-  const turningOn = isSyncOff(key);
-  if (turningOn) {
-    delete s.calendarSync[key]; // 기본값(연동 켜짐)이면 굳이 저장하지 않음
-    resyncTabForAllChildren(key);
-  } else {
-    s.calendarSync[key] = false;
-  }
-  debounceSave();
-  renderChecklistSettings();
-  // 지금 캘린더 탭을 보고 있으면 화면에도 즉시 반영
-  if (document.getElementById('pg-calendar')?.classList.contains('on')) {
-    window.renderCal?.();
-  }
+/** 특정 단계(임산부용/육아용)의 전체 행 목록(내장 탭+준비물 팩+커스텀 체크리스트+정부지원) */
+function allRowsForStage(stage) {
+  const builtinRows = stage === 'preg' ? PREG_ROWS : BORN_ROWS;
+  const packRows = clPacks.filter(p => (p.stage || 'born') === stage)
+    .map(p => ({ key: p.key, icon: p.icon, label: p.label, editable: true }));
+  const customRows = (S.customChecklists || []).filter(c => (c.stage || 'born') === stage)
+    .map(c => ({ key: c.key, icon: c.icon || 'checklist', label: c.label, deletable: true, editable: true }));
+  // v0.3.1: 정부지원 표시/숨김이 임산부용/육아용에서 같이 켜지고 같이 꺼지던 버그 수정
+  // (옹짐꾼님 제보) — js/checklist.js의 builtinTabDefs()가 탭 key를 'gov_preg'/'gov_born'으로
+  // 나눠서 만들기 때문에, 이 행도 그 key를 그대로 쓰면 표시/숨김이 독립적으로 저장·동작함
+  const govKey = stage === 'preg' ? 'gov_preg' : 'gov_born';
+  const govCount = (S.customGovItems || []).filter(it => it.stage === stage).length;
+  const govRow = { key: govKey, icon: 'account_balance', editable: true,
+    label: `정부지원${govCount ? ` (직접 추가 ${govCount}개)` : ''}` };
+  return [...builtinRows, ...packRows, ...customRows, govRow];
 }
 
 /** v0.2.5: editKey — 편집(연필) 버튼이 표시/숨김 토글과 다른 key로 라우팅해야 하는 경우
  *  (정부지원처럼 "표시 여부"는 실제 탭 key(gov)로, "직접 추가 편집"은 별도 pseudo-key
  *  (gov_preg/gov_born)로 openEditChecklistModal()에 분기해야 할 때 씀). 안 주면 key와 동일. */
-function rowHtml({ key, icon, label, syncable, deletable, editable, editKey, hideToggle }) {
-  const hidden = isHidden(key);
+function rowHtmlVisible({ key, icon, label, syncable, deletable, editable, editKey }) {
   return `
     <div class="cl-settings-row">
       <span class="icon icon-sm cl-settings-row-icon" translate="no" aria-hidden="true">${icon}</span>
@@ -124,52 +121,110 @@ function rowHtml({ key, icon, label, syncable, deletable, editable, editKey, hid
           <button type="button" class="ci-expand-btn" aria-label="삭제" onclick="deleteCustomChecklist('${key}')">
             <span class="ci-expand-arrow"><span class="icon icon-sm" translate="no" aria-hidden="true">delete</span></span>
           </button>` : ''}
-        ${hideToggle ? '' : `
-        <button type="button" class="notif-toggle-btn" onclick="toggleClTabHidden('${key}')">${hidden ? '숨김' : '표시중'}</button>`}
+        <button type="button" class="notif-toggle-btn" onclick="toggleClTabHidden('${key}')">숨기기</button>
       </div>
     </div>`;
 }
 
-/** 설정 탭 — #clSettingsWrap에 렌더 */
+/** "＋ 추가하기"를 펼쳤을 때 나오는 숨김 항목 행 — 표시로 되돌리는 버튼만 둠(간단하게) */
+function rowHtmlHidden({ key, icon, label }) {
+  return `
+    <div class="cl-settings-row">
+      <span class="icon icon-sm cl-settings-row-icon" translate="no" aria-hidden="true">${icon}</span>
+      <span class="cl-settings-row-label">${escapeHtml(label)}</span>
+      <div class="cl-settings-row-actions">
+        <button type="button" class="notif-toggle-btn" onclick="toggleClTabHidden('${key}')">표시하기</button>
+      </div>
+    </div>`;
+}
+
+function groupSectionHtml(stage, groupLabel, groupIcon) {
+  const rows = allRowsForStage(stage);
+  const visibleRows = rows.filter(r => !isHidden(r.key));
+  const hiddenRows  = rows.filter(r => isHidden(r.key));
+  const showHidden  = _clSettingsShowHidden[stage];
+  return `
+    <div class="cl-settings-group-label"><span class="icon icon-sm" translate="no" aria-hidden="true">${groupIcon}</span> ${groupLabel}</div>
+    ${visibleRows.length
+      ? visibleRows.map(rowHtmlVisible).join('')
+      : '<p style="font-size:.76rem;color:var(--txl);text-align:center;padding:10px 0;margin:0">표시 중인 항목이 없어요</p>'}
+    ${hiddenRows.length ? (showHidden
+      ? `${hiddenRows.map(rowHtmlHidden).join('')}
+         <button type="button" class="cl-settings-addmore-btn" onclick="toggleClSettingsShowHidden('${stage}')">숨기기</button>`
+      : `<button type="button" class="cl-settings-addmore-btn" onclick="toggleClSettingsShowHidden('${stage}')">＋ 추가하기 (${hiddenRows.length}개 숨김)</button>`)
+      : ''}`;
+}
+
+/** 팝업(#clSettingsModalBody) 내용 갱신 — 토글/삭제 등 팝업 안에서 상태가 바뀔 때마다 다시 그림.
+ *  팝업이 안 열려있으면(다른 화면/다른 모달이 열려있으면) 조용히 아무것도 안 함 */
+function renderChecklistSettingsModalBody() {
+  const body = document.getElementById('clSettingsModalBody');
+  if (!body) return;
+  body.innerHTML = `${groupSectionHtml('preg', '임산부용', 'pregnant_woman')}${groupSectionHtml('born', '육아용', 'child_care')}`;
+}
+
+/** "설정하기" 버튼 — 체크리스트 표시/숨김 팝업 열기 */
+export function openChecklistSettingsModal() {
+  _clSettingsShowHidden = { preg: false, born: false };
+  showModal('체크리스트 설정', '<div id="clSettingsModalBody"></div>');
+  renderChecklistSettingsModalBody();
+}
+
+/** 그룹별 "＋ 추가하기" 펼침/접힘 토글 */
+export function toggleClSettingsShowHidden(stage) {
+  _clSettingsShowHidden[stage] = !_clSettingsShowHidden[stage];
+  renderChecklistSettingsModalBody();
+}
+
+/** 탭 표시/숨김 토글 */
+export function toggleClTabHidden(key) {
+  const s = ensureClSettings();
+  const i = s.hiddenTabs.indexOf(key);
+  if (i >= 0) s.hiddenTabs.splice(i, 1); else s.hiddenTabs.push(key);
+  debounceSave();
+  renderChecklistSettings();          // 설정 탭 요약(표시 중 개수) 갱신
+  renderChecklistSettingsModalBody(); // 팝업이 열려있으면 그 안 목록도 즉시 갱신
+  window.renderChecklist?.(); // 지금 체크리스트 탭을 보고 있으면 탭 구성을 즉시 반영
+}
+
+/** 캘린더 연동 켜기/끄기 (예방접종·발달 탭만 대상)
+ *  v0.0.42: 끄면 js/calendar.js의 getAutoEvs()가 해당 카테고리 일정을 통째로 숨기고,
+ *  다시 켜면 지금 체크리스트 상태를 기준으로 캘린더 완료 표시를 재동기화한 뒤 다시 보여줌 */
+export function toggleClCalendarSync(key) {
+  const s = ensureClSettings();
+  const turningOn = isSyncOff(key);
+  if (turningOn) {
+    delete s.calendarSync[key]; // 기본값(연동 켜짐)이면 굳이 저장하지 않음
+    resyncTabForAllChildren(key);
+  } else {
+    s.calendarSync[key] = false;
+  }
+  debounceSave();
+  renderChecklistSettingsModalBody();
+  // 지금 캘린더 탭을 보고 있으면 화면에도 즉시 반영
+  if (document.getElementById('pg-calendar')?.classList.contains('on')) {
+    window.renderCal?.();
+  }
+}
+
+/** 설정 탭 — #clSettingsWrap에 렌더. v0.4.2부터 전체 목록 대신 요약 한 줄 + "설정하기" 버튼만 표시 */
 export function renderChecklistSettings() {
   const wrap = document.getElementById('clSettingsWrap');
   if (!wrap) return;
 
-  const packPregRows = clPacks.filter(p => p.stage === 'preg').map(p => ({ key: p.key, icon: p.icon, label: p.label, editable: true }));
-  const packBornRows = clPacks.filter(p => (p.stage || 'born') === 'born').map(p => ({ key: p.key, icon: p.icon, label: p.label, editable: true }));
-  const customPregRows = (S.customChecklists || []).filter(c => c.stage === 'preg')
-    .map(c => ({ key: c.key, icon: c.icon || 'checklist', label: c.label, deletable: true, editable: true }));
-  const customBornRows = (S.customChecklists || []).filter(c => (c.stage || 'born') === 'born')
-    .map(c => ({ key: c.key, icon: c.icon || 'checklist', label: c.label, deletable: true, editable: true }));
-
-  // v0.3.1: 정부지원 표시/숨김이 임산부용/육아용에서 같이 켜지고 같이 꺼지던 버그 수정
-  // (옹짐꾼님 제보) — 예전엔 두 행이 표시/숨김 토글용 key를 'gov' 하나로 공유하고 편집
-  // (직접 추가) 버튼만 pseudo-key(gov_preg/gov_born)로 분리돼 있어서, 토글 상태 자체는
-  // 어느 쪽을 눌러도 같은 곳(hiddenTabs의 'gov')을 갱신했음. 이제 js/checklist.js의
-  // builtinTabDefs()가 애초에 탭 key를 'gov_preg'/'gov_born'으로 나눠서 만들기 때문에,
-  // 이 두 행도 그 key를 그대로 쓰면 표시/숨김이 독립적으로 저장·동작함(editKey는 key와
-  // 같은 값이라 더 이상 별도로 안 줘도 openEditChecklistModal()의 기존 분기가 그대로 맞음).
-  const govPregCount = (S.customGovItems || []).filter(it => it.stage === 'preg').length;
-  const govBornCount = (S.customGovItems || []).filter(it => it.stage === 'born').length;
-  const govPregRow = { key: 'gov_preg', icon: 'account_balance', editable: true,
-    label: `정부지원${govPregCount ? ` (직접 추가 ${govPregCount}개)` : ''}` };
-  const govBornRow = { key: 'gov_born', icon: 'account_balance', editable: true,
-    label: `정부지원${govBornCount ? ` (직접 추가 ${govBornCount}개)` : ''}` };
+  const pregVisible = allRowsForStage('preg').filter(r => !isHidden(r.key)).length;
+  const bornVisible = allRowsForStage('born').filter(r => !isHidden(r.key)).length;
 
   wrap.innerHTML = `
-    <div class="cl-settings-group-label"><span class="icon icon-sm" translate="no" aria-hidden="true">pregnant_woman</span> 임산부용</div>
-    ${PREG_ROWS.map(rowHtml).join('')}
-    ${packPregRows.map(rowHtml).join('')}
-    ${customPregRows.length ? customPregRows.map(rowHtml).join('') : ''}
-    ${rowHtml(govPregRow)}
-
-    <div class="cl-settings-group-label"><span class="icon icon-sm" translate="no" aria-hidden="true">child_care</span> 육아용</div>
-    ${BORN_ROWS.map(rowHtml).join('')}
-    ${packBornRows.map(rowHtml).join('')}
-    ${customBornRows.length ? customBornRows.map(rowHtml).join('') : ''}
-    ${rowHtml(govBornRow)}
-
-    <button type="button" class="btn bmn" style="margin-top:14px" onclick="openCreateChecklistModal()">＋ 새 체크리스트 만들기</button>
+    <div class="install-link" onclick="openChecklistSettingsModal()">
+      <span class="install-ico"><span class="icon icon-sm" translate="no" aria-hidden="true">tune</span></span>
+      <div class="install-txt">
+        <div class="install-title">표시 중인 체크리스트</div>
+        <div class="install-sub">임산부용 ${pregVisible}개 · 육아용 ${bornVisible}개 표시 중</div>
+      </div>
+      <button type="button" class="notif-toggle-btn" onclick="event.stopPropagation();openChecklistSettingsModal()">설정하기</button>
+    </div>
+    <button type="button" class="btn bmn" style="margin-top:10px" onclick="openCreateChecklistModal()">＋ 새 체크리스트 만들기</button>
   `;
 }
 
@@ -244,6 +299,7 @@ export function deleteCustomChecklist(key) {
 
   debounceSave();
   renderChecklistSettings();
+  renderChecklistSettingsModalBody();
   window.renderChecklist?.();
 }
 
@@ -522,18 +578,20 @@ export function deleteCustomGovItem(id) {
   if (document.getElementById('pg-calendar')?.classList.contains('on')) window.renderCal?.();
 }
 
-window.toggleClTabHidden        = toggleClTabHidden;
-window.toggleClCalendarSync     = toggleClCalendarSync;
-window.renderChecklistSettings  = renderChecklistSettings;
-window.openCreateChecklistModal = openCreateChecklistModal;
-window.setNewClStage            = setNewClStage;
-window.submitCreateChecklist    = submitCreateChecklist;
-window.deleteCustomChecklist    = deleteCustomChecklist;
-window.openEditChecklistModal   = openEditChecklistModal;
-window.submitEditPackExtras     = submitEditPackExtras;
-window.addEditClItemRow         = addEditClItemRow;
-window.submitEditChecklist      = submitEditChecklist;
-window.openGovItemsModal        = openGovItemsModal;
-window.setNewGovImp             = setNewGovImp;
-window.submitAddGovItem         = submitAddGovItem;
-window.deleteCustomGovItem      = deleteCustomGovItem;
+window.toggleClTabHidden           = toggleClTabHidden;
+window.toggleClCalendarSync        = toggleClCalendarSync;
+window.renderChecklistSettings     = renderChecklistSettings;
+window.openChecklistSettingsModal  = openChecklistSettingsModal;
+window.toggleClSettingsShowHidden  = toggleClSettingsShowHidden;
+window.openCreateChecklistModal    = openCreateChecklistModal;
+window.setNewClStage               = setNewClStage;
+window.submitCreateChecklist       = submitCreateChecklist;
+window.deleteCustomChecklist       = deleteCustomChecklist;
+window.openEditChecklistModal      = openEditChecklistModal;
+window.submitEditPackExtras        = submitEditPackExtras;
+window.addEditClItemRow            = addEditClItemRow;
+window.submitEditChecklist         = submitEditChecklist;
+window.openGovItemsModal           = openGovItemsModal;
+window.setNewGovImp                = setNewGovImp;
+window.submitAddGovItem            = submitAddGovItem;
+window.deleteCustomGovItem         = deleteCustomGovItem;

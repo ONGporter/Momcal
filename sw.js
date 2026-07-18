@@ -214,9 +214,9 @@
 // 캐시 버전 상향
 // v0.4.0: 캘린더 테마 선택 UI 삭제, 스티커 피커 아코디언+PC 가로 넘김, 날짜 재클릭 시
 // 일정 추가 팝업 — index.html/CSS/JS 정적 리소스 변경으로 캐시 버전 상향
-// v0.4.1: 캘린더 1박 이상(멀티데이) 일정 지원(연결된 색상 바 표시) — index.html/CSS/JS
-// 정적 리소스 변경으로 캐시 버전 상향
-const CACHE_NAME = 'momcal-shell-v104';
+// v0.4.2: 멀티데이 일정 완전 연결(테두리 제거+줄당 텍스트 1회) + 체크리스트 설정 팝업화 —
+// index.html/CSS/JS 정적 리소스 변경으로 캐시 버전 상향
+const CACHE_NAME = 'momcal-shell-v105';
 
 const APP_SHELL = [
   './',

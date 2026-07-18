@@ -1010,6 +1010,12 @@ export function cellHTML(ds, d, other, evs, td, th) {
 
   const evsHtml = renderCellEvents(de, ds);
 
+  // v0.4.2: "색 연결이 안 된다"는 피드백 — 이 칸에 있는 멀티데이 일정 중 하나라도 이 칸이
+  // 그 줄(요일 행)의 마지막 칸이 아니면서 실제 종료일도 아직 아니라면(=오른쪽 칸으로 계속
+  // 이어짐), 이 칸의 오른쪽 테두리 자체를 지워서 옆 칸과 완전히 맞닿게 함(테두리가 남아있으면
+  // 아무리 색을 밀착시켜도 그 1px만큼은 항상 끊겨 보임 — css/calendar.css의 .cal-cell 주석 참고)
+  const connRight = de.some(e => isMultiDayEv(e) && evCoversDate(e, ds) && ds !== e.endDate && dow !== 6);
+
   // 오늘 날짜면 기존처럼 원형 강조가 우선, 아니면 주말/공휴일 여부에 따라 붉은 글자색만 적용
   const dayNumStyle = ds === td
     ? `background:${th.today};color:#fff;border-radius:50%`
@@ -1022,7 +1028,7 @@ export function cellHTML(ds, d, other, evs, td, th) {
          ondragover="onDragOver(event)"
          ondragleave="onDragLeave(event)"
          ondrop="onDrop(event,'${ds}')"
-         style="${isSel ? `background:${th.cell};border:1.5px solid var(--pk)` : ''}">
+         style="${isSel ? `background:${th.cell};border:1.5px solid var(--pk)` : (connRight ? 'border-right:none' : '')}">
       <div class="day-num-row">
         <div class="day-num" style="${dayNumStyle}">${d}</div>
         ${isFoodFilterOn ? '' : foodHtml}
@@ -1052,8 +1058,15 @@ function renderCellEvents(de, ds) {
   return `<div class="ev-lines">${lines}${moreHtml}</div>`;
 }
 
-/** 대표로 보여줄 순서를 고르는 우선순위 (숫자가 작을수록 먼저 표시) */
+/**
+ * 대표로 보여줄 순서를 고르는 우선순위 (숫자가 작을수록 먼저 표시)
+ * v0.4.2: 멀티데이 일정은 항상 최우선(맨 윗줄)으로 고정 — 그렇지 않으면 그날 다른 일정이
+ * 몇 건 있느냐에 따라 칸마다 줄 위치(1번째/2번째 줄...)가 달라져서, 색이 이어지긴 해도
+ * 위아래로 어긋나 보이는 문제가 생김(연결된 바가 정확히 이어지려면 모든 칸에서 같은 줄
+ * 위치를 차지해야 함)
+ */
 function evPriority(e) {
+  if (isMultiDayEv(e)) return -1;
   if (isGovDeadlineSoon(e)) return 0;
   const order = { vax: 1, req: 2, gov: 3, food: 4, rec: 5, custom: 6 };
   return order[getEvCategory(e)] ?? 9;
@@ -1207,9 +1220,10 @@ function renderEventLine(e, ds) {
   const multi = ds != null && isMultiDayEv(e);
   let joinCss = '';
   let joinClass = '';
+  let roundLeft = true;
   if (multi) {
     const dow = new Date(ds).getDay();
-    const roundLeft  = ds === e.date  || dow === 0;
+    roundLeft = ds === e.date  || dow === 0;
     const roundRight = ds === e.endDate || dow === 6;
     joinClass = ' ev-line-multi';
     joinCss =
@@ -1218,6 +1232,11 @@ function renderEventLine(e, ds) {
       `${roundLeft ? '' : 'margin-left:-4px;padding-left:6px;'}${roundRight ? '' : 'margin-right:-4px;padding-right:6px;'}`;
   }
   const style = `background:${bg};color:${color};${doneCss}${joinCss}`;
+  // v0.4.2: "글씨도 하나만 되어야 해" 피드백 — 멀티데이 일정은 그 줄(요일 행) 안에서 세그먼트가
+  // 시작되는 칸(roundLeft)에서만 제목 글자를 보여주고, 이어지는 칸들은 색만 이어지는 빈 바로
+  // 표시함(제목이 매 칸마다 반복돼 보이던 문제 해결). 호버 시 툴팁(title 속성)은 모든 칸에서
+  // 항상 전체 제목을 보여주므로 정보 자체가 사라지진 않음
+  const displayLabel = (multi && !roundLeft) ? '' : safe;
 
   if (e._isVaxGroup) {
     const groupIndices = `[${e._groupItems.map(item => item._idx).join(',')}]`;
@@ -1245,7 +1264,7 @@ function renderEventLine(e, ds) {
          ontouchend="onTouchEnd(event)"
          ontouchcancel="onTouchCancel(event)"
          onclick="event.stopPropagation();openEvModal(${e._idx})"
-         title="${safe}${urgent ? ' — ⏰ 마감 임박' : ''}">${safe}</div>`;
+         title="${safe}${urgent ? ' — ⏰ 마감 임박' : ''}">${displayLabel}</div>`;
 }
 
 /* ── 주간 뷰 ── */
@@ -1314,12 +1333,16 @@ function renderWeekView() {
          </div>`
       : '';
 
+    // v0.4.2: 월간 뷰(cellHTML)의 connRight와 대칭 — 주간 뷰 칸은 border-left로 경계를
+    // 그리므로, 멀티데이 일정이 왼쪽 칸에서 이어져 들어오는 칸은 이 칸의 왼쪽 테두리를 지움
+    const connLeft = de.some(e => isMultiDayEv(e) && evCoversDate(e, ds) && ds !== e.date && di !== 0);
+
     html += `
       <div onclick="selectDate('${ds}')"
            data-date="${ds}"
            class="week-grid-line${isTd ? ' week-today-cell' : ''}"
            style="grid-column:${di + 2};grid-row:1;min-height:56px;display:flex;flex-direction:column;
-                  border-left:1px solid #F5EEF8;border-bottom:1px solid #F5EEF8;
+                  ${connLeft ? '' : 'border-left:1px solid #F5EEF8;'}border-bottom:1px solid #F5EEF8;
                   padding:4px;cursor:pointer;background:${isTd ? th.cell : 'var(--wh)'};transition:background .14s"
            ondragover="onDragOver(event)"
            ondragleave="onDragLeave(event)"

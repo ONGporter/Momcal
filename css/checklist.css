@@ -51,6 +51,15 @@
 .cl-settings-row-icon { color: var(--pkd); flex-shrink: 0; }
 .cl-settings-row-label { font-size: .8rem; font-weight: 700; color: var(--tx); flex: 1; min-width: 0; }
 .cl-settings-row-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+/* v0.4.2: 체크리스트 설정 팝업의 "＋ 추가하기"(숨김 항목 펼치기) 버튼 — .cl-add-item-btn과
+   같은 점선 스타일을 재사용해 "새로운 걸 더한다"는 느낌을 통일함 */
+.cl-settings-addmore-btn {
+  display: block; width: 100%; margin: 4px 0 14px; padding: 10px;
+  background: none; border: 1.5px dashed #E0C8D8; border-radius: 13px;
+  color: var(--txl); font-family: inherit; font-size: .76rem; font-weight: 800;
+  cursor: pointer; transition: all .15s;
+}
+.cl-settings-addmore-btn:hover { background: var(--pkl); border-color: var(--pk); color: var(--pkd); }
 .cl-form-msg { font-size: .76rem; font-weight: 700; margin-top: 8px; min-height: 1em; }
 .cl-form-msg-err { color: #E53935; }
 
