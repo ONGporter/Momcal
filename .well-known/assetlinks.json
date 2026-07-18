@@ -3,6 +3,9 @@
       "target": {
         "namespace": "android_app",
         "package_name": "app.momcal.www",
-        "sha256_cert_fingerprints": ["60:4A:85:13:CA:1A:F9:05:9F:CA:12:F0:54:39:13:C6:26:95:AC:A6:81:70:75:E8:3C:AC:59:70:16:FB:8A:AB"]
+        "sha256_cert_fingerprints": [
+          "60:4A:85:13:CA:1A:F9:05:9F:CA:12:F0:54:39:13:C6:26:95:AC:A6:81:70:75:E8:3C:AC:59:70:16:FB:8A:AB",
+          "1A:02:2D:CD:1D:05:35:CE:95:AB:F7:AE:15:96:44:E6:50:2D:44:BC:4F:02:43:15:D7:1B:41:44:79:96:5D:E3"
+        ]
       }
     }]

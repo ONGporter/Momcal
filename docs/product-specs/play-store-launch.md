@@ -72,7 +72,8 @@
 Bubblewrap/PWABuilder가 만든 keystore 파일(`.jks`/`.keystore`)과 비밀번호를 **잃어버리면 이 앱을 다시는 업데이트할 방법이 없어요.** 새 앱으로 처음부터 다시 등록해야 하고, 리뷰·설치 수가 전부 날아가요.
 
 - [x] keystore 파일 + 비밀번호를 **최소 2곳**(예: 1Password + 클라우드 백업)에 보관 — ✅ 2026-07-16 옹짐꾼님 확인 완료
-- [ ] Play Console의 **"Play App Signing"** 에 업로드 키로 등록해두는 걸 추천(기본으로 켜짐) — Google이 최종 서명 키를 별도로 관리해줘서, 업로드 키가 유출돼도 복구 절차가 있음
+- [x] Play Console의 **"Play App Signing"** 에 업로드 키로 등록해두는 걸 추천(기본으로 켜짐) — Google이 최종 서명 키를 별도로 관리해줘서, 업로드 키가 유출돼도 복구 절차가 있음
+  - ✅ **완료(2026-07-18)**: 비공개 테스트로 실제 설치해보니 TWA에 주소창이 뜨는 문제 발견(옹짐꾼님 제보, 스크린샷) → Play App Signing이 기본 활성화라 실제 배포되는 앱은 업로드 키가 아닌 **Play 앱 서명 키**로 재서명됨을 확인. Play Console → "Google Play로 보호됨" → "Play 스토어 보호" 에서 앱 서명 키 인증서 SHA-256 지문(`1A:02:2D:...5D:E3`) 확인 후 `.well-known/assetlinks.json`의 `sha256_cert_fingerprints`에 업로드 키 지문과 함께 추가(배열에 둘 다 포함)
 
 ## 4단계 — Digital Asset Links (주소창 없애기)
 
