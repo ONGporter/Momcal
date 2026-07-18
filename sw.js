@@ -212,7 +212,9 @@
 // 확실히 허용된 걸 확인했다"는 사실을 로컬(localStorage)에 기억해두고, 라이브 값이
 // granted/denied 둘 다 아닐 때는 그 기억을 우선 신뢰하는 effectivePermission() 도입 —
 // 캐시 버전 상향
-const CACHE_NAME = 'momcal-shell-v102';
+// v0.4.0: 캘린더 테마 선택 UI 삭제, 스티커 피커 아코디언+PC 가로 넘김, 날짜 재클릭 시
+// 일정 추가 팝업 — index.html/CSS/JS 정적 리소스 변경으로 캐시 버전 상향
+const CACHE_NAME = 'momcal-shell-v103';
 
 const APP_SHELL = [
   './',

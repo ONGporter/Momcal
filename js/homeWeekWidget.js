@@ -56,7 +56,7 @@ export function renderHomeWeek() {
   const monEl = document.getElementById('homeWeekMonth');
   if (!grid) return;
 
-  const th    = themes[S.theme] || themes.rose;
+  const th    = themes.rose; // v0.4.0: 캘린더 색상 테마 선택 기능 삭제 — 항상 rose 고정
   const start = sundayOf(focusDate());
   const end   = new Date(start); end.setDate(start.getDate() + 6);
   const td    = today();

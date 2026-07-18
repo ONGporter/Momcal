@@ -35,13 +35,6 @@ import { refreshTokenIfNeeded } from './push.js'; // v0.0.36: FCM 진짜 푸시 
 /* ── 초기 로드 여부 플래그 ── */
 let _firstLoad = true;
 
-/* ── 테마 버튼 UI 동기화 ── */
-function syncThemeUI() {
-  const themeMap = { rose: 0, mint: 1, sunny: 2, lavender: 3, peach: 4 };
-  const idx = themeMap[S.theme] ?? 0;
-  document.querySelectorAll('.theme-btn').forEach((b, i) => b.classList.toggle('on', i === idx));
-}
-
 /**
  * Firestore 데이터를 S에 적용하고 현재 페이지 렌더
  * Sprint 15: Firestore에 아직 문서가 없는 완전히 새 계정(data === null)이고
@@ -66,7 +59,6 @@ function onDataLoaded(data, hasPendingWrites) {
   } else {
     applyData(data);
   }
-  syncThemeUI();
   renderHome();
   renderRegList();
 

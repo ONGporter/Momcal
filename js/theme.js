@@ -8,8 +8,9 @@
  *   페이지를 열 때 밝은 화면이 잠깐 번쩍이는 현상(FOUC)이 없음
  * - 육아정보 페이지(guide/)는 정적 SEO 페이지라 이번 버전에서는 다크 모드 대상에서 제외함
  *   (앱 본체에서만 지원 — docs/TODO.md 참고)
- * ⚠️ 캘린더 탭의 색상 테마(장미/민트/맑음/라벤더/복숭아, S.theme, Firestore에 저장)와는
- *   다른 별개 기능임 — 이 다크 모드는 기기별 localStorage 설정이라 Firestore에 저장되지 않음
+ * ⚠️ 캘린더 탭에 예전에 있던 색상 테마 선택 기능(장미/민트/맑음/라벤더/복숭아, S.theme)과는
+ *   다른 별개 기능임 — 그 기능은 v0.4.0에서 삭제됨(js/calendar.js의 themes 참고).
+ *   이 다크 모드는 기기별 localStorage 설정이라 Firestore에 저장되지 않음
  */
 
 const THEME_KEY = 'momcal_theme';

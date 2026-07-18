@@ -148,38 +148,47 @@ window.selectEvColorSwatch = selectEvColorSwatch;
  */
 const ADDABLE_EV_TYPES = ['custom', 'req', 'rec', 'vax', 'gov'];
 
-function evTypeSwatchesHtml(selectedType, selectedCustomColor) {
+/**
+ * v0.4.0: 캘린더 날짜를 한 번 더 누르면 뜨는 "일정 추가" 팝업(openQuickAddModal)이 이 스와치를
+ * 그대로 재사용할 수 있도록 id에 suffix를 붙일 수 있게 함(suffix='' → 기존 하단 폼과 완전히
+ * 동일, suffix='Qa' → 팝업 전용 id). 팝업과 하단 폼이 같은 페이지에 동시에 존재해도(모달은
+ * #mB 안에 별도로 그려짐) id가 겹치지 않아 서로 값을 덮어쓰지 않음.
+ */
+function evTypeSwatchesHtml(selectedType, selectedCustomColor, suffix = '') {
   const sel = selectedType || 'custom';
   const customColor = (selectedCustomColor || CUSTOM_EV_COLOR_PRESETS_FOR_ADD[0].color).toLowerCase();
+  const typeId   = 'evType' + suffix;
+  const colorId  = 'evColor' + suffix;
+  const pickerId = 'evCustomColorPicker' + suffix;
   return `
-    <input type="hidden" id="evType" value="${sel}">
+    <input type="hidden" id="${typeId}" value="${sel}">
     <div class="ev-type-swatches">
       ${ADDABLE_EV_TYPES.map(cat => `
         <button type="button" class="ev-type-swatch${cat === sel ? ' on' : ''}"
-                onclick="selectEvTypeSwatch('${cat}', this)">
+                onclick="selectEvTypeSwatch('${cat}', this, '${suffix}')">
           <span class="ev-type-dot" style="background:${getEvColor(cat)}"></span>
           <span class="ev-type-label">${EV_CATEGORY_LABELS[cat]}</span>
         </button>
       `).join('')}
     </div>
-    <div id="evCustomColorPicker" style="display:${sel === 'custom' ? 'flex' : 'none'};gap:8px;flex-wrap:wrap;margin-top:8px">
-      <input type="hidden" id="evColor" value="${customColor}">
+    <div id="${pickerId}" style="display:${sel === 'custom' ? 'flex' : 'none'};gap:8px;flex-wrap:wrap;margin-top:8px">
+      <input type="hidden" id="${colorId}" value="${customColor}">
       ${CUSTOM_EV_COLOR_PRESETS_FOR_ADD.map(p => `
         <button type="button"
                 class="ev-color-swatch${p.color.toLowerCase() === customColor ? ' on' : ''}"
                 style="background:${p.color}" title="${p.name}"
-                onclick="selectEvColorSwatch('evColor', '${p.color}', this)"></button>
+                onclick="selectEvColorSwatch('${colorId}', '${p.color}', this)"></button>
       `).join('')}
     </div>`;
 }
 
 /** 종류+색상 스와치 클릭 핸들러 — "내 일정"을 고르면 개별 색상 선택지를 함께 보여줌 */
-export function selectEvTypeSwatch(cat, btn) {
-  const input = document.getElementById('evType');
+export function selectEvTypeSwatch(cat, btn, suffix = '') {
+  const input = document.getElementById('evType' + suffix);
   if (input) input.value = cat;
   btn.parentElement.querySelectorAll('.ev-type-swatch').forEach(b => b.classList.remove('on'));
   btn.classList.add('on');
-  const picker = document.getElementById('evCustomColorPicker');
+  const picker = document.getElementById('evCustomColorPicker' + suffix);
   if (picker) picker.style.display = cat === 'custom' ? 'flex' : 'none';
 }
 window.selectEvTypeSwatch = selectEvTypeSwatch;
@@ -194,6 +203,7 @@ export function renderAddEvColorSwatches() {
   const prevColor = document.getElementById('evColor')?.value;
   wrap.innerHTML = evTypeSwatchesHtml(prevType || 'custom', prevColor);
 }
+
 
 /** 사용자가 특정 카테고리 색상을 직접 지정 */
 export function setEvColor(cat, color) {
@@ -248,14 +258,17 @@ window.setEvColor   = setEvColor;
 window.resetEvColor = resetEvColor;
 
 /* ══════════════════════════════════════
- *  테마
+ *  캘린더 헤더/선택 날짜 색상
  * ══════════════════════════════════════ */
+/**
+ * v0.4.0: 캘린더 탭의 색상 테마 선택 기능(장미/민트/맑음/라벤더/복숭아 5종, S.theme) 삭제 —
+ * "의미가 없는 것 같다"는 옹짐꾼님 피드백으로, 고를 수 있던 5색 중 브랜드 기본색인
+ * "장미(rose)"로 고정함. S.theme 필드 자체는 기존 Firebase 스키마 유지 원칙에 따라
+ * state.js/demoMode.js/guestMode.js에서 계속 읽고 쓰지만(과거 데이터 호환), 실제 렌더링에는
+ * 더 이상 쓰이지 않음 — 아래 `themes.rose` 값만 항상 사용(themes[S.theme] 참조를 모두 제거).
+ */
 export const themes = {
-  rose:     { g: 'linear-gradient(135deg,#F48FB1,#CE93D8)', cell: '#FFF5FA', today: '#F06292' },
-  mint:     { g: 'linear-gradient(135deg,#80DEEA,#4DB6AC)', cell: '#F0FAF8', today: '#4DB6AC' },
-  sunny:    { g: 'linear-gradient(135deg,#FFD54F,#FF8A65)', cell: '#FFFDE7', today: '#FF8A65' },
-  lavender: { g: 'linear-gradient(135deg,#B39DDB,#80CBC4)', cell: '#F3EFF9', today: '#9575CD' },
-  peach:    { g: 'linear-gradient(135deg,#FFAB91,#F48FB1)', cell: '#FFF3EE', today: '#FF8A65' },
+  rose: { g: 'linear-gradient(135deg,#F48FB1,#CE93D8)', cell: '#FFF5FA', today: '#F06292' },
 };
 
 /* ══════════════════════════════════════
@@ -709,14 +722,6 @@ window.addEventListener('blur', resetTouchDrag);
  *  네비게이션
  * ══════════════════════════════════════ */
 
-export function setTheme(t, btn) {
-  S.theme = t;
-  document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('on'));
-  btn.classList.add('on');
-  renderCal();
-  debounceSave();
-}
-
 /**
  * v0.0.11 버그 수정: 주간 뷰에서 ◀/▶ 를 눌러도 한 주가 아니라 "한 달"씩 이동해서
  * 계속 같은 주(그 달 1일이 속한 주)만 보이던 문제.
@@ -767,7 +772,18 @@ export function setCalView(v, btn) {
   renderCal();
 }
 
+/**
+ * v0.4.0: "날짜를 한번 더 누르면 일정 추가 팝업이 뜨면 좋겠다"는 피드백 —
+ * 이미 선택돼 있는 날짜(day panel이 이미 열려있는 그 날짜)를 다시 누르면 하단 "일정 직접
+ * 추가" 폼까지 스크롤할 필요 없이 openQuickAddModal()이 바로 뜸. 처음 누르는 날짜(아직
+ * 선택 안 된 상태)는 기존처럼 day panel만 열림 — 이래야 "그냥 그 날 뭐가 있나 보기"와
+ * "그 날에 뭘 추가하기"가 각각 1번 클릭·2번 클릭으로 자연스럽게 구분됨.
+ */
 export function selectDate(ds) {
+  if (S.selDate === ds) {
+    openQuickAddModal(ds);
+    return;
+  }
   S.selDate = ds;
   document.getElementById('evDate').value = ds;
   renderCal();
@@ -805,7 +821,7 @@ export function renderCal() {
 
 /* ── 월간 뷰 ── */
 function renderMonthView() {
-  const th    = themes[S.theme];
+  const th    = themes.rose;
   const evs   = getAllEvs();
   const y = S.calY, m = S.calM;
   const first    = new Date(y, m, 1).getDay();
@@ -1174,7 +1190,7 @@ function renderEventLine(e) {
 
 /* ── 주간 뷰 ── */
 function renderWeekView() {
-  const th   = themes[S.theme];
+  const th   = themes.rose;
   const evs  = getAllEvs();
   // v0.0.11: 이전엔 항상 "그 달 1일"을 기준으로 주를 계산해서, calMove()로 아무리 이동해도
   // (월 단위로만 바뀌다 보니) 사실상 그 달의 첫 주만 계속 보였음.
@@ -1442,12 +1458,18 @@ function parseEvTitleWithTime(fullTitle) {
  *  빈 값 취급해서 잘못된 문자열이 그대로 저장되지 않도록 함 */
 function validHHMM(v) { return /^\d{2}:\d{2}$/.test(v) ? v : ''; }
 
-export function addCustomEv() {
-  const date    = document.getElementById('evDate').value;
-  const title   = document.getElementById('evTitle').value.trim();
-  const note    = document.getElementById('evNote').value.trim();
-  const time    = validHHMM(document.getElementById('evTime').value);
-  const endTime = validHHMM(document.getElementById('evEndTime').value);
+/**
+ * v0.4.0: 날짜를 한 번 더 눌러 여는 팝업(openQuickAddModal)도 이 함수를 그대로 재사용하도록
+ * suffix 파라미터 추가 — suffix=''(기본값)는 하단 "일정 직접 추가" 폼(기존 동작 그대로),
+ * suffix='Qa'는 팝업 전용 필드(evDateQa 등)를 읽고, 저장 후 팝업을 닫음(cm()).
+ */
+export function addCustomEv(suffix = '') {
+  const $ = (id) => document.getElementById(id + suffix);
+  const date    = $('evDate').value;
+  const title   = $('evTitle').value.trim();
+  const note    = $('evNote').value.trim();
+  const time    = validHHMM($('evTime').value);
+  const endTime = validHHMM($('evEndTime').value);
   if (!date || !title) { alert('날짜와 제목을 입력해주세요'); return; }
 
   // v0.0.13: 종료 시간이 시작 시간보다 빠르거나 같으면 등록 막고 안내
@@ -1461,8 +1483,8 @@ export function addCustomEv() {
   // 없으면 자동으로 그렇게 처리함)
   // v0.0.33: "내 일정"만은 원래대로 일정별 개별 색을 저장함(다른 종류 색과 안 겹치는
   // 팔레트 — CUSTOM_EV_COLOR_PRESETS_FOR_ADD 참고)
-  const type  = document.getElementById('evType')?.value || 'custom';
-  const color = type === 'custom' ? (document.getElementById('evColor')?.value || '') : '';
+  const type  = $('evType')?.value || 'custom';
+  const color = type === 'custom' ? ($('evColor')?.value || '') : '';
 
   S.customEvs.push({
     date,
@@ -1473,14 +1495,54 @@ export function addCustomEv() {
     auto: false,
     _id:  Date.now(),
   });
-  document.getElementById('evTitle').value   = '';
-  document.getElementById('evNote').value    = '';
-  document.getElementById('evTime').value    = '';
-  document.getElementById('evEndTime').value = '';
+  if (suffix) {
+    // 팝업은 제출 후 그대로 닫음(하단 폼처럼 필드를 비우고 계속 보여줄 필요가 없음)
+    cm();
+  } else {
+    $('evTitle').value   = '';
+    $('evNote').value    = '';
+    $('evTime').value    = '';
+    $('evEndTime').value = '';
+  }
   renderCal();
   if (S.selDate === date) showDayPanel(date);
   debounceSave();
 }
+
+/**
+ * v0.4.0: 날짜를 한 번 더 눌렀을 때 뜨는 "일정 추가" 팝업 — 하단 "일정 직접 추가" 폼과
+ * 완전히 같은 필드 구성을 쓰되 id에 'Qa' suffix를 붙여 겹치지 않게 함(evTypeSwatchesHtml/
+ * addCustomEv의 suffix 파라미터 참고). 날짜는 누른 그 날짜로 미리 채워두고 수정 불가로
+ * 두지 않음(다른 날짜로 바꿔서 추가하고 싶을 수도 있어 그대로 편집 가능하게 둠).
+ */
+export function openQuickAddModal(ds) {
+  showModal('일정 추가', `
+    <div class="fg"><label><span class="icon icon-sm" translate="no" aria-hidden="true">calendar_month</span> 날짜</label>
+      <input type="date" id="evDateQa" value="${ds}"></div>
+    <div class="fg2">
+      <div class="fg" style="margin:0"><label>시작 시간 (선택)</label><input type="text" inputmode="numeric" maxlength="5" placeholder="예: 09:30" id="evTimeQa"></div>
+      <div class="fg" style="margin:0"><label>종료 시간 (선택)</label><input type="text" inputmode="numeric" maxlength="5" placeholder="예: 10:30" id="evEndTimeQa"></div>
+    </div>
+    <div class="fg">
+      <label>제목</label>
+      <input id="evTitleQa" placeholder="예) 소아과 방문, 이유식 시작">
+    </div>
+    <div class="fg">
+      <label>메모</label>
+      <input id="evNoteQa" placeholder="추가 메모 (선택)">
+    </div>
+    <div class="fg">
+      <label><span class="icon icon-sm" translate="no" aria-hidden="true">palette</span> 일정 색상</label>
+      <div id="evColorSwatchWrapQa"></div>
+    </div>
+    <button class="btn bpk" style="margin-top:6px" onclick="addCustomEv('Qa')">일정 추가</button>
+  `);
+  document.getElementById('evColorSwatchWrapQa').innerHTML = evTypeSwatchesHtml('custom', null, 'Qa');
+  attachTimeInputMask('evTimeQa');
+  attachTimeInputMask('evEndTimeQa');
+}
+
+
 
 export function delCustomEv(id) {
   S.customEvs = S.customEvs.filter(e => e._id !== id);
@@ -1834,6 +1896,72 @@ export function renderStickerPicker() {
   ).join('');
 }
 
+/**
+ * v0.4.0: "스티커가 바로 보이지 말고 눌렀을 때 열렸으면 좋겠다"는 피드백으로,
+ * 스티커 피커를 기본 접힘 아코디언으로 변경 — 헤더(.sp-header)를 누르면 #spBody(탭+그리드)가
+ * 열림/닫힘. 열림 상태는 DOM에만 있고 S(Firestore)엔 저장하지 않음(기기별·탭 전환마다 매번
+ * 다시 접힌 채로 시작해도 무방한 순수 UI 상태라 스키마에 추가할 필요가 없음).
+ */
+export function toggleStickerPicker() {
+  const body     = document.getElementById('spBody');
+  const chevron  = document.getElementById('spHeaderChevron');
+  if (!body) return;
+  const opening = !body.classList.contains('open');
+  body.classList.toggle('open', opening);
+  if (chevron) chevron.textContent = opening ? 'expand_less' : 'expand_more';
+}
+
+/** v0.4.0: PC용 좌우 화살표 버튼 — 그리드 폭의 90%만큼 부드럽게 스크롤 */
+export function scrollStickerGrid(dir) {
+  const grid = document.getElementById('spGrid');
+  if (!grid) return;
+  grid.scrollBy({ left: dir * grid.clientWidth * 0.9, behavior: 'smooth' });
+}
+
+/**
+ * v0.4.0: "스티커 옆으로 넘기는 게 모바일에서는 좋은데 PC에서는 잘 안 된다"는 피드백 —
+ * 마우스로도 자연스럽게 넘길 수 있도록 3가지를 추가함:
+ * (1) 마우스 휠의 세로 스크롤을 가로 스크롤로 변환(트랙패드의 가로 휠 입력은 그대로 둠)
+ * (2) 클릭 드래그로 좌우 스크롤(모바일 스와이프의 PC 버전)
+ * (3) 좌우 화살표 버튼(scrollStickerGrid, 위)
+ * #spGrid는 index.html에 정적으로 있는 컨테이너라(카테고리 전환 시 내부 스티커만
+ * renderStickerPicker()가 다시 채움) attachTimeInputMask()와 같은 멱등 가드로 앱 시작 시
+ * 1회만 붙이면 됨.
+ */
+function initStickerGridPcNav() {
+  const grid = document.getElementById('spGrid');
+  if (!grid || grid._pcNavAttached) return;
+  grid._pcNavAttached = true;
+
+  grid.addEventListener('wheel', (e) => {
+    if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return; // 이미 가로 입력(트랙패드)이면 기본 동작 유지
+    e.preventDefault();
+    grid.scrollLeft += e.deltaY;
+  }, { passive: false });
+
+  let dragging = false, startX = 0, startScroll = 0, moved = false;
+  grid.addEventListener('mousedown', (e) => {
+    dragging = true; moved = false;
+    startX = e.pageX; startScroll = grid.scrollLeft;
+    grid.classList.add('sp-grid-dragging');
+  });
+  window.addEventListener('mousemove', (e) => {
+    if (!dragging) return;
+    const dx = e.pageX - startX;
+    if (Math.abs(dx) > 4) moved = true;
+    grid.scrollLeft = startScroll - dx;
+  });
+  window.addEventListener('mouseup', () => {
+    dragging = false;
+    grid.classList.remove('sp-grid-dragging');
+  });
+  // 드래그로 조금이라도 움직였으면 그 클릭이 스티커 선택(placeSticker)으로 이어지지 않게 막음
+  grid.addEventListener('click', (e) => {
+    if (moved) { e.stopPropagation(); e.preventDefault(); }
+  }, true);
+}
+initStickerGridPcNav();
+
 export function selSCat(i) { S.selSCat = i; renderStickerPicker(); }
 
 export function placeSticker(s) {
@@ -1983,12 +2111,13 @@ export function getAutoEvs(child) {
 window.renderCal           = renderCal;
 window.calMove             = calMove;
 window.setCalView          = setCalView;
-window.setTheme            = setTheme;
 window.selectDate          = selectDate;
 window.showDayPanel        = showDayPanel;
 window.addCustomEv         = addCustomEv;
 window.delCustomEv         = delCustomEv;
 window.renderStickerPicker = renderStickerPicker;
+window.toggleStickerPicker = toggleStickerPicker;
+window.scrollStickerGrid   = scrollStickerGrid;
 window.selSCat             = selSCat;
 window.placeSticker        = placeSticker;
 window.removeSticker       = removeSticker;

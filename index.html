@@ -340,19 +340,11 @@
     <button class="cal-filter-btn" data-filter="gov"  onclick="toggleCalFilter('gov',this)"><span class="icon icon-sm" translate="no" aria-hidden="true">account_balance</span> 정부지원</button>
   </div>
 
-  <!-- 뷰 전환 + 테마 -->
-  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px">
+  <!-- 뷰 전환 -->
+  <div style="display:flex;align-items:center;margin-bottom:14px">
     <div class="cal-view-toggle">
       <button class="cvt on" onclick="setCalView('month',this)">월간</button>
       <button class="cvt"    onclick="setCalView('week',this)">주간</button>
-    </div>
-    <div class="theme-bar">
-      <span class="theme-label">테마</span>
-      <div class="theme-btn on" style="background:linear-gradient(135deg,#F48FB1,#CE93D8)" onclick="setTheme('rose',this)"></div>
-      <div class="theme-btn"    style="background:linear-gradient(135deg,#80DEEA,#4DB6AC)" onclick="setTheme('mint',this)"></div>
-      <div class="theme-btn"    style="background:linear-gradient(135deg,#FFD54F,#FF8A65)" onclick="setTheme('sunny',this)"></div>
-      <div class="theme-btn"    style="background:linear-gradient(135deg,#B39DDB,#80CBC4)" onclick="setTheme('lavender',this)"></div>
-      <div class="theme-btn"    style="background:linear-gradient(135deg,#FFAB91,#F48FB1)" onclick="setTheme('peach',this)"></div>
     </div>
   </div>
 
@@ -363,12 +355,23 @@
   <div id="dayPanel" style="display:none"></div>
 
   <!-- 스티커 피커 -->
+  <!-- v0.4.0: "일정 추가가 너무 밑에 있어서 내리기 불편하다"는 피드백으로, 스티커 피커를
+       기본 접힘(아코디언) 상태로 바꿔 헤더를 누르면 열리게 함(toggleStickerPicker, js/calendar.js).
+       탭/그리드(#spTabs/#spGrid)는 그대로 두고 감싸는 #spBody만 여닫음 —
+       renderStickerPicker()는 열림/닫힘과 무관하게 항상 내용을 채워둠 -->
   <div class="sticker-picker">
-    <div class="sec" style="margin-bottom:10px">
-      <span class="icon icon-sm" translate="no" aria-hidden="true">sell</span> 스티커 <span style="font-size:.7rem;color:var(--txl);font-weight:500;letter-spacing:0">날짜 선택 후 붙이기</span>
+    <div class="sec sp-header" onclick="toggleStickerPicker()">
+      <span><span class="icon icon-sm" translate="no" aria-hidden="true">sell</span> 스티커 <span style="font-size:.7rem;color:var(--txl);font-weight:500;letter-spacing:0">날짜 선택 후 붙이기</span></span>
+      <span class="icon icon-sm sp-header-chevron" id="spHeaderChevron" translate="no" aria-hidden="true">expand_more</span>
     </div>
-    <div class="sp-tabs" id="spTabs"></div>
-    <div class="sp-grid" id="spGrid"></div>
+    <div class="sp-body" id="spBody">
+      <div class="sp-tabs" id="spTabs"></div>
+      <div class="sp-grid-wrap">
+        <button type="button" class="sp-nav sp-nav-prev" onclick="scrollStickerGrid(-1)" aria-label="이전 스티커"><span class="icon icon-sm" translate="no" aria-hidden="true">chevron_left</span></button>
+        <div class="sp-grid" id="spGrid"></div>
+        <button type="button" class="sp-nav sp-nav-next" onclick="scrollStickerGrid(1)" aria-label="다음 스티커"><span class="icon icon-sm" translate="no" aria-hidden="true">chevron_right</span></button>
+      </div>
+    </div>
   </div>
 
   <!-- 일정 직접 추가 폼 -->
@@ -478,7 +481,7 @@
     <a href="./contact.html"><span class="icon icon-sm" translate="no" aria-hidden="true">mail</span> 문의</a>
     <a href="./account-deletion.html"><span class="icon icon-sm" translate="no" aria-hidden="true">person_remove</span> 계정삭제</a>
   </div>
-  <div class="site-footer-version">맘캘 MomCal v0.3.27</div>
+  <div class="site-footer-version">맘캘 MomCal v0.4.0</div>
 </footer>
 
 <!-- ════════════════════════════════════
