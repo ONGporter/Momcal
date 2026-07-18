@@ -1,0 +1,49 @@
+/* ── 온보딩 튜토리얼 (v0.4.4 신규) ──
+   css/auth.css의 #authScreen과 같은 풀스크린 오버레이 패턴을 따름(position:fixed, inset:0,
+   display:none↔flex 토글은 js/tutorial.js에서 담당) */
+#tutorialScreen {
+  position: fixed; inset: 0; z-index: 1100; /* 모달(.mo)보다도 위 — 튜토리얼 중엔 다른 팝업이 안 끼어들게 */
+  background: rgba(60, 20, 50, .55);
+  display: none; align-items: center; justify-content: center;
+  padding: 20px;
+}
+
+.tut-box {
+  background: #fff; border-radius: 26px;
+  padding: 36px 28px 28px; width: 100%; max-width: 400px;
+  box-shadow: 0 20px 60px rgba(120, 40, 100, .3);
+  text-align: center;
+}
+
+.tut-icon {
+  width: 76px; height: 76px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 18px;
+}
+.tut-icon .icon { font-size: 2.3rem; color: var(--pkd); }
+
+.tut-title {
+  font-size: 1.15rem; font-weight: 900; color: var(--tx);
+  margin-bottom: 10px; line-height: 1.35;
+}
+.tut-desc {
+  font-size: .86rem; color: var(--txl); font-weight: 600;
+  line-height: 1.6; margin-bottom: 22px; min-height: 4.8em;
+}
+
+.tut-dots { display: flex; justify-content: center; gap: 6px; margin-bottom: 22px; }
+.tut-dot { width: 6px; height: 6px; border-radius: 50%; background: #EEDCE8; transition: all .2s; }
+.tut-dot.on { width: 18px; background: var(--pk); }
+
+.tut-actions { display: flex; gap: 10px; }
+.tut-actions .btn { flex: 1; }
+
+.tut-skip-btn {
+  flex: 1; background: none; border: none; cursor: pointer;
+  font-family: inherit; font-size: .82rem; font-weight: 800; color: var(--txl);
+  transition: color .15s;
+}
+.tut-skip-btn:hover { color: var(--pkd); }
+
+html[data-theme="dark"] .tut-box  { background: var(--card); }
+html[data-theme="dark"] .tut-dot  { background: rgba(255,255,255,.14); }

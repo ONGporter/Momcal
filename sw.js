@@ -216,7 +216,10 @@
 // 일정 추가 팝업 — index.html/CSS/JS 정적 리소스 변경으로 캐시 버전 상향
 // v0.4.3: [버그 수정] 멀티데이 일정 이어지는 칸이 완전히 안 보이던 문제(빈 텍스트 줄
 // 높이 0 붕괴) 수정 — index.html/CSS/JS 정적 리소스 변경으로 캐시 버전 상향
-const CACHE_NAME = 'momcal-shell-v106';
+// v0.4.4: [버그 수정] 멀티데이 일정 진짜 원인(max-width:100%가 음수 마진을 막고 있었음)
+// 수정 + 홈 위젯 팝업 오작동 수정 + 온보딩 튜토리얼 신규 추가 — 정적 리소스 변경으로
+// 캐시 버전 상향
+const CACHE_NAME = 'momcal-shell-v107';
 
 const APP_SHELL = [
   './',
@@ -228,6 +231,7 @@ const APP_SHELL = [
   './css/checklist.css',
   './css/modal.css',
   './css/growth.css',
+  './css/tutorial.css',
   './js/accountDelete.js',
   './js/adSlot.js',
   './js/app.js',
@@ -253,6 +257,7 @@ const APP_SHELL = [
   './js/splash.js',
   './js/state.js',
   './js/theme.js',
+  './js/tutorial.js',
   './js/ui.js',
   './js/utils.js',
   './js/vaccineSeries.js',

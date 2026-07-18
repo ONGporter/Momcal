@@ -812,6 +812,24 @@ export function setCalView(v, btn) {
 }
 
 /**
+ * v0.4.4: [버그 수정] 홈 화면 주간 위젯에서 날짜를 눌러 캘린더 탭으로 이동할 때, 그 날짜가
+ * 이미 S.selDate였던 적이 있으면(예: 캘린더 탭에서 보다가 홈으로 돌아온 뒤 같은 날짜를 다시
+ * 누른 경우) 첫 클릭인데도 바로 일정 추가 팝업이 떠버리는 문제가 있었음 — 원인은 홈 위젯이
+ * 화면 이동 후 재사용 삼아 selectDate(ds)를 그대로 불렀는데, v0.4.0부터 selectDate() 자체에
+ * "이미 선택된 날짜를 다시 누르면 팝업" 로직이 들어있어서였음. 그래서 "선택하고 보여주기"만
+ * 하는 순수 로직을 selectDateForViewing()으로 분리하고, selectDate()는 그 위에 "같은 날짜
+ * 재클릭 시 팝업" 판단만 얹은 얇은 래퍼로 남김 — 캘린더 셀 클릭(2번 눌러야 팝업)은 그대로
+ * selectDate()를 쓰고, 다른 화면에서 넘어와 날짜를 "보여주기"만 할 때는(homeWeekWidget.js)
+ * selectDateForViewing()을 직접 써서 팝업 조건 자체를 건너뜀.
+ */
+export function selectDateForViewing(ds) {
+  S.selDate = ds;
+  document.getElementById('evDate').value = ds;
+  renderCal();
+  showDayPanel(ds);
+}
+
+/**
  * v0.4.0: "날짜를 한번 더 누르면 일정 추가 팝업이 뜨면 좋겠다"는 피드백 —
  * 이미 선택돼 있는 날짜(day panel이 이미 열려있는 그 날짜)를 다시 누르면 하단 "일정 직접
  * 추가" 폼까지 스크롤할 필요 없이 openQuickAddModal()이 바로 뜸. 처음 누르는 날짜(아직
@@ -823,10 +841,7 @@ export function selectDate(ds) {
     openQuickAddModal(ds);
     return;
   }
-  S.selDate = ds;
-  document.getElementById('evDate').value = ds;
-  renderCal();
-  showDayPanel(ds);
+  selectDateForViewing(ds);
 }
 
 /* ══════════════════════════════════════
@@ -1226,7 +1241,15 @@ function renderEventLine(e, ds) {
     roundLeft = ds === e.date  || dow === 0;
     const roundRight = ds === e.endDate || dow === 6;
     joinClass = ' ev-line-multi';
+    // v0.4.4: [진짜 원인 발견] v0.4.2/v0.4.3에서 넣은 음수 마진(margin:-4px)이 실제로는
+    // 전혀 효과가 없었음 — css/calendar.css의 `.ev-line`에 `max-width:100%`가 걸려있어서,
+    // 칸(.ev-lines, align-items:stretch)이 "음수 마진만큼 더 넓게 늘어나려는" 걸 이 max-width가
+    // 계속 100%로 눌러버리고 있었음(마진 자체는 계산에 들어가지만 결과 너비가 상한에 막혀
+    // 그대로였던 것 — 그래서 테두리를 지워도 정작 색 막대는 원래 칸 안쪽에 그대로 머물러
+    // 있었고, 옹짐꾼님 스크린샷에도 여전히 칸 사이 흰 여백이 남아있었던 것). 멀티데이 칸은
+    // 이 상한을 인라인 스타일로 풀어줘야 음수 마진이 실제로 칸 경계 밖까지 넓혀줌
     joinCss =
+      `max-width:none;` +
       `border-top-left-radius:${roundLeft ? '4px' : '0'};border-bottom-left-radius:${roundLeft ? '4px' : '0'};` +
       `border-top-right-radius:${roundRight ? '4px' : '0'};border-bottom-right-radius:${roundRight ? '4px' : '0'};` +
       `${roundLeft ? '' : 'margin-left:-4px;padding-left:6px;'}${roundRight ? '' : 'margin-right:-4px;padding-right:6px;'}`;

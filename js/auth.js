@@ -7,8 +7,10 @@ import {
   auth, googleProvider, functionsApp,
   signInWithEmailAndPassword, createUserWithEmailAndPassword,
   signInWithPopup, signInWithCustomToken, signOut, updateProfile, httpsCallable,
+  getAdditionalUserInfo,
 } from './firebase.js';
 import { S } from './state.js';
+import { openTutorial } from './tutorial.js';
 
 /**
  * v0.3.7: Kakao.Auth.login()(팝업 방식)이 현재 SDK 버전(2.8.0)에 없다는 게 실제 콘솔 에러로
@@ -120,6 +122,7 @@ export async function submitAuth() {
     if (authMode === 'signup') {
       const cred = await createUserWithEmailAndPassword(auth, email, pw);
       await updateProfile(cred.user, { displayName: name });
+      openTutorial(); // v0.4.4: 신규 가입 직후 핵심 기능 온보딩 튜토리얼 자동 표시
     } else {
       await signInWithEmailAndPassword(auth, email, pw);
     }
@@ -134,7 +137,11 @@ export async function signInGoogle() {
   const loader = document.getElementById('authLoading');
   loader.style.display = 'block';
   try {
-    await signInWithPopup(auth, googleProvider);
+    const cred = await signInWithPopup(auth, googleProvider);
+    // v0.4.4: Google 로그인은 "로그인"과 "가입"이 버튼 하나로 합쳐져 있어서, 신규 계정으로
+    // 처음 만들어진 경우에만(isNewUser) 온보딩 튜토리얼을 자동으로 보여줌 — 기존 사용자가
+    // 로그인할 때마다 튜토리얼이 또 뜨는 건 원치 않으므로 이 판별이 꼭 필요함
+    if (getAdditionalUserInfo(cred)?.isNewUser) openTutorial();
   } catch (e) {
     document.getElementById('authErr').textContent = authErrMsg(e.code);
   }

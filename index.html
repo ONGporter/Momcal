@@ -74,6 +74,7 @@
 <link rel="stylesheet" href="./css/checklist.css">
 <link rel="stylesheet" href="./css/modal.css">
 <link rel="stylesheet" href="./css/growth.css">
+<link rel="stylesheet" href="./css/tutorial.css">
 
 <!-- Chart.js (성장그래프 전용). cdnjs가 막히는 네트워크 환경 대비 jsDelivr 폴백 포함 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"
@@ -171,6 +172,11 @@
       <a href="./account-deletion.html" style="color:var(--txl)">계정삭제</a>
     </div>
   </div>
+</div>
+
+<!-- 온보딩 튜토리얼 (v0.4.4 신규) -->
+<div id="tutorialScreen">
+  <div class="tut-box" id="tutorialBody"></div>
 </div>
 
 <!-- 체험 모드 안내 배너 -->
@@ -277,6 +283,15 @@
 
   <div class="sec" style="margin-top:22px"><span class="icon icon-sm" translate="no" aria-hidden="true">checklist</span> 체크리스트 관리</div>
   <div id="clSettingsWrap"></div>
+
+  <div class="sec" style="margin-top:22px"><span class="icon icon-sm" translate="no" aria-hidden="true">help</span> 도움말</div>
+  <div class="install-link" onclick="openTutorial()">
+    <span class="install-ico"><span class="icon icon-sm" translate="no" aria-hidden="true">school</span></span>
+    <div class="install-txt">
+      <div class="install-title">튜토리얼 다시보기</div>
+      <div class="install-sub">맘캘의 핵심 기능을 다시 한번 안내해드려요</div>
+    </div>
+  </div>
 </div>
 
 <!-- ════════════════════════════════════
@@ -485,7 +500,7 @@
     <a href="./contact.html"><span class="icon icon-sm" translate="no" aria-hidden="true">mail</span> 문의</a>
     <a href="./account-deletion.html"><span class="icon icon-sm" translate="no" aria-hidden="true">person_remove</span> 계정삭제</a>
   </div>
-  <div class="site-footer-version">맘캘 MomCal v0.4.3</div>
+  <div class="site-footer-version">맘캘 MomCal v0.4.4</div>
 </footer>
 
 <!-- ════════════════════════════════════

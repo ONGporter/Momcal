@@ -21,7 +21,7 @@
 
 import { S } from './state.js';
 import { today } from './utils.js';
-import { themes, getAllEvs, cellHTML, selectDate } from './calendar.js';
+import { themes, getAllEvs, cellHTML, selectDateForViewing } from './calendar.js';
 
 const DOW_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -81,8 +81,20 @@ export function renderHomeWeek() {
   grid.innerHTML = `
     <div class="cal-wrap">
       <div class="cal-head-row" style="background:${th.g}">${headHtml}</div>
-      <div class="cal-body" onclick="onHomeWeekCellClick(event)">${bodyHtml}</div>
+      <div class="cal-body">${bodyHtml}</div>
     </div>`;
+
+  // v0.4.4: [버그 수정] "홈 화면에서 달력 한번만 눌러도 바로 일정 추가 팝업이 뜬다"는 제보 —
+  // cellHTML이 각 셀에 심어둔 자체 onclick="selectDate(ds)"가 버블링 단계에서 이 컨테이너의
+  // onclick보다 먼저 실행돼서였음(v0.4.0부터 selectDate()가 "이미 선택된 날짜 재클릭 시
+  // 팝업" 로직을 갖게 됐는데, S.selDate가 마침 그 날짜였다면 첫 클릭에도 셀 자체 핸들러가
+  // 먼저 팝업을 열어버림). 캡처 단계 리스너로 바꿔서 셀 자체 핸들러보다 먼저 가로채고
+  // stopPropagation()으로 아예 실행되지 않게 막음 — 매번 innerHTML을 새로 그리므로(위) 이
+  // .cal-body는 항상 새 엘리먼트라 리스너가 중복으로 쌓일 걱정은 없음
+  grid.querySelector('.cal-body').addEventListener('click', (evt) => {
+    evt.stopPropagation();
+    onHomeWeekCellClick(evt);
+  }, true);
 }
 
 /** 이전/다음 주 이동 (delta: -1 | 1) — 기준일을 7일 단위로 옮기고, 캘린더 탭 월간 뷰의 연/월도 함께 맞춤 */
@@ -98,8 +110,10 @@ export function moveHomeWeek(delta) {
 
 /**
  * 홈 위젯의 날짜 셀을 클릭했을 때 캘린더 탭(월간 뷰)으로 이동한다.
- * cellHTML이 이미 각 셀에 data-date·자체 onclick(selectDate)을 넣어주므로,
- * 여기서는 클릭된 셀을 event delegation으로 찾아 캘린더 탭 이동만 담당한다.
+ * cellHTML이 이미 각 셀에 data-date·자체 onclick(selectDate)을 심어주므로, 클릭된 셀을
+ * event delegation으로 찾아 캘린더 탭 이동만 담당한다 — 단, 셀 자체의 onclick(selectDate)이
+ * 그대로 실행되면 안 되므로(v0.4.4 버그 수정 참고) renderHomeWeek()에서 캡처 단계 +
+ * stopPropagation()으로 이 함수만 실행되도록 걸어둠.
  */
 function onHomeWeekCellClick(evt) {
   const cell = evt.target.closest('.cal-cell');
@@ -121,9 +135,12 @@ function goToCalendarDay(ds) {
   document.querySelectorAll('.cvt').forEach(b => b.classList.remove('on'));
   const monthBtn = [...document.querySelectorAll('.cvt')].find(b => b.textContent.trim() === '월간');
   if (monthBtn) monthBtn.classList.add('on');
-  selectDate(ds); // 선택 상태·세부일정 패널까지 확실히 맞춤(멱등적이라 다시 호출해도 안전)
+  // v0.4.4: [버그 수정] selectDate()는 "이미 선택된 날짜 재클릭 시 팝업" 로직이 있어서,
+  // 홈 위젯에서 넘어올 때 그 날짜가 우연히 이미 S.selDate였으면 첫 클릭에 팝업이 떠버리는
+  // 문제가 있었음 — 여기서는 항상 "그냥 보여주기"만 해야 하므로 selectDateForViewing() 사용
+  selectDateForViewing(ds); // 선택 상태·세부일정 패널까지 확실히 맞춤(멱등적이라 다시 호출해도 안전)
 }
 
 // 인라인 onclick에서 접근할 수 있도록 전역 노출 (js/ui.js gp()·calendar.js 패턴과 동일)
+// v0.4.4: onHomeWeekCellClick은 이제 addEventListener(capture)로만 붙으므로 window 노출 불필요
 window.moveHomeWeek        = moveHomeWeek;
-window.onHomeWeekCellClick = onHomeWeekCellClick;
