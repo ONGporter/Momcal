@@ -224,7 +224,9 @@
 // v0.4.6: 뒤로가기=이전 탭 이동(js/backButton.js 신규), 캘린더 일정 클릭 시 바로 수정
 // 뜨는 동작 제거, 스플래시를 가운데 로고 이미지만 뜨는 가벼운 형태로 변경 —
 // 정적 리소스 변경으로 캐시 버전 상향
-const CACHE_NAME = 'momcal-shell-v109';
+// v0.4.7: [버그 수정] 뒤로가기 재설계(히스토리 state에 탭 스택 직접 저장) + 새로고침 시
+// 로그인 화면 깜빡임(FOUC) 제거 — 정적 리소스 변경으로 캐시 버전 상향
+const CACHE_NAME = 'momcal-shell-v110';
 
 const APP_SHELL = [
   './',

@@ -1,8 +1,16 @@
 /* ── AUTH SCREEN ── */
+/* v0.4.7: [버그 수정] "새로고침하면 로그인 화면이 한번 보이고 홈으로 간다"는 제보 —
+   원래도 있던 문제였지만, v0.4.6에서 스플래시(#appSplash) 배경을 불투명에서 투명으로
+   바꾸면서 그동안 스플래시에 가려져 안 보이던 이 화면이 그대로 비쳐 보이게 됐음.
+   근본 원인은 #authScreen이 JS가 로그인 상태를 확인하기도 전부터 기본값으로 항상 보이고
+   있었던 것(Firebase의 onAuthStateChanged는 비동기라 로그인된 사용자여도 확인까지 짧게
+   시간이 걸림) — js/auth.js의 showApp()/enterGuestMode()가 이미 로그인/게스트 판정이
+   끝나는 대로 확실히 display를 none/flex로 맞춰주므로, 기본값을 아예 none으로 바꿔도
+   안전함(showAuthScreen()이 명시적으로 열 때만 flex로 바뀜) */
 #authScreen {
   position: fixed; inset: 0; z-index: 1000;
   background: linear-gradient(135deg, #F8BBD0 0%, #F06292 100%);
-  display: flex; align-items: center; justify-content: center;
+  display: none; align-items: center; justify-content: center;
   padding: 20px;
 }
 
