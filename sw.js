@@ -228,7 +228,10 @@
 // 로그인 화면 깜빡임(FOUC) 제거 — 정적 리소스 변경으로 캐시 버전 상향
 // v0.4.8: [버그 수정] 뒤로가기 종료 확인 후 실제로 안 닫히던 문제(history.back()이
 // 갈 곳 없어 무시되던 게 원인) — 정적 리소스 변경으로 캐시 버전 상향
-const CACHE_NAME = 'momcal-shell-v111';
+// v0.4.9: 뒤로가기 종료 확인 팝업 삭제, 홈에서 한 번 더 뒤로가기 시 브라우저/TWA가
+// 직접 앱을 닫도록 단순화(confirm()/window.close()가 안 먹히던 문제 근본 회피) —
+// 정적 리소스 변경으로 캐시 버전 상향
+const CACHE_NAME = 'momcal-shell-v112';
 
 const APP_SHELL = [
   './',
