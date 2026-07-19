@@ -19,6 +19,7 @@ import { renderCalFontSizeSettings } from './calFontSize.js';
 import { renderChecklistSettings } from './checklistSettings.js'; // v0.0.40: 체크리스트 표시/캘린더 연동/커스텀 만들기
 import { renderAdSlot }          from './adSlot.js';
 import { renderHomeWeek }        from './homeWeekWidget.js'; // v0.0.45: 홈 화면 간소화 주간 캘린더
+import { recordTabVisit }        from './backButton.js'; // v0.4.6: 뒤로가기 = 이전 탭 이동
 
 /* ════════════════════════════════════
  *  네비게이션
@@ -30,6 +31,7 @@ import { renderHomeWeek }        from './homeWeekWidget.js'; // v0.0.45: 홈 화
  * @param {Element} btn - 클릭된 nav 버튼
  */
 export function gp(id, btn) {
+  recordTabVisit(id); // v0.4.6: 뒤로가기 히스토리에 이 이동을 기록(자세한 내용은 js/backButton.js)
   document.querySelectorAll('.pg').forEach(p => p.classList.remove('on'));
   document.getElementById('pg-' + id).classList.add('on');
   document.querySelectorAll('.np').forEach(b => b.classList.remove('on'));

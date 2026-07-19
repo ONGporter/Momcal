@@ -31,6 +31,7 @@ import './fontSize.js'; // v0.0.7: 글자 크기 조절 — 설정 탭을 열지
 import './calFontSize.js'; // v0.0.16: 캘린더 전용 글자 크기 조절 — 설정 탭을 열지 않아도 window.setCalFontSize 등록되도록 임포트
 import { hideSplash } from './splash.js'; // v0.0.34: 앱 자체 스플래시 — 첫 렌더 완료 시점에 닫음
 import { refreshTokenIfNeeded } from './push.js'; // v0.0.36: FCM 진짜 푸시 알림 — import 자체가 window.enablePushNotifications 등 등록, v0.0.38: 토큰 자동 갱신 함수도 여기서 사용
+import { initBackButtonHandling } from './backButton.js'; // v0.4.6: 뒤로가기 = 앱 종료 대신 이전 탭 이동
 
 /* ── 초기 로드 여부 플래그 ── */
 let _firstLoad = true;
@@ -126,6 +127,11 @@ onAuthStateChanged(auth, (user) => {
 // onAuthStateChanged 리스너를 먼저 등록해둔 다음에 불러야, 로그인이 완료되는 순간을
 // 놓치지 않고 확실히 잡을 수 있음.
 handleKakaoRedirectIfNeeded();
+
+// v0.4.6: 뒤로가기 = 앱 종료 대신 이전 탭 이동(홈까지 다 돌아오면 종료 확인) —
+// 카카오 리다이렉트 URL 정리(위 handleKakaoRedirectIfNeeded의 동기 부분에서 실행됨)가
+// 끝난 뒤에 히스토리를 쌓기 시작해야 깨끗한 URL 위에서 동작함
+initBackButtonHandling();
 
 /* ── PWA 서비스 워커 등록 (Sprint 11: 홈 화면 추가) ──
  * v0.3.15: "PC에서 설정 탭 버튼이 하나도 안 눌린다 → F12로 서비스워커 Unregister하면

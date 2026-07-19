@@ -1196,7 +1196,7 @@ function renderWeekTimedBlock(e, top, height, track, trackCount) {
            ontouchmove="onTouchMove(event)"
            ontouchend="onTouchEnd(event)"
            ontouchcancel="onTouchCancel(event)"
-           title="${safe} — 탭하면 자세히, 꾹 눌러 이동">${safe}</div>`;
+           title="${safe} — 꾹 눌러 이동">${safe}</div>`;
   }
 
   return `
@@ -1209,7 +1209,6 @@ function renderWeekTimedBlock(e, top, height, track, trackCount) {
          ontouchmove="onTouchMove(event)"
          ontouchend="onTouchEnd(event)"
          ontouchcancel="onTouchCancel(event)"
-         onclick="event.stopPropagation();openEvModal(${e._idx})"
          title="${safe}${urgent ? ' — ⏰ 마감 임박' : ''}">${safe}</div>`;
 }
 
@@ -1277,7 +1276,7 @@ function renderEventLine(e, ds) {
            ontouchmove="onTouchMove(event)"
            ontouchend="onTouchEnd(event)"
            ontouchcancel="onTouchCancel(event)"
-           title="${safe} — 탭하면 자세히, 꾹 눌러 이동">${safe}</div>`;
+           title="${safe} — 꾹 눌러 이동">${safe}</div>`;
   }
 
   return `
@@ -1290,7 +1289,6 @@ function renderEventLine(e, ds) {
          ontouchmove="onTouchMove(event)"
          ontouchend="onTouchEnd(event)"
          ontouchcancel="onTouchCancel(event)"
-         onclick="event.stopPropagation();openEvModal(${e._idx})"
          title="${safe}${urgent ? ' — ⏰ 마감 임박' : ''}">${displayLabel}</div>`;
 }
 

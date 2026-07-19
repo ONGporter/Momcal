@@ -81,46 +81,38 @@ body {
    페이드아웃시킴. transitionend에서 display:none 처리(js/splash.js). 다크모드는
    <html data-theme="dark">가 head의 FOUC 방지 스크립트로 이미 먼저 적용돼 있어서
    --bg/--pk 변수가 처음부터 올바른 값으로 그려짐(깜빡임 없음) */
+/* v0.4.6: "새로고침하면 화면이 통째로 가려진다, 새로고침한 화면은 그대로 두고 맘캘
+   가운데 이미지만 뜨게 해달라"는 요청 — 화면 전체를 브랜드색으로 덮던 불투명 배경과
+   "맘캘"/"우리 아이 무럭무럭!" 문구를 없애고, 배경을 투명하게 바꿔서 새로고침 중인 화면이
+   그대로 비쳐 보이게 함. 로고 이미지만 가운데 작은 카드 안에 남겨서 "지금 뭔가 로딩 중"이라는
+   느낌은 유지하되(펄스 애니메이션 그대로), 화면을 전부 가리지는 않도록 함 */
 #appSplash {
   position: fixed;
   inset: 0;
   z-index: 9999;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--sp-md);
-  background: var(--bg);
+  background: transparent;
   opacity: 1;
   transition: opacity .35s ease;
 }
 #appSplash.out { opacity: 0; pointer-events: none; }
 #appSplash .splash-logo {
-  height: 88px;
+  height: 64px;
   width: auto;
+  padding: 22px;
+  border-radius: 24px;
+  background: var(--card);
+  box-shadow: 0 10px 34px rgba(120, 40, 100, .22);
   animation: splashPulse 1.6s ease-in-out infinite;
-}
-#appSplash .splash-word {
-  font-size: 1.5rem;
-  color: var(--pk);
-  letter-spacing: .02em;
-}
-#appSplash .splash-loading-text {
-  font-size: .95rem;
-  color: var(--txl);
-  animation: splashTextFade 1.6s ease-in-out infinite;
 }
 @keyframes splashPulse {
   0%, 100% { transform: scale(1); opacity: 1; }
   50% { transform: scale(1.06); opacity: .88; }
 }
-@keyframes splashTextFade {
-  0%, 100% { opacity: .5; }
-  50% { opacity: 1; }
-}
 @media (prefers-reduced-motion: reduce) {
-  #appSplash .splash-logo,
-  #appSplash .splash-loading-text { animation: none; }
+  #appSplash .splash-logo { animation: none; }
 }
 
 /* v0.0.3: 제목·로고·버튼 전부 같은 손글씨 폰트로 통일 (Bold 파일이 없어 font-weight는 normal 고정) */
